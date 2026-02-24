@@ -11,6 +11,7 @@ import {
   Bell,
   Wallet,
   CalendarRange,
+  Wrench,
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { SessionTouch } from "@/components/dashboard/session-touch";
@@ -57,6 +58,13 @@ export default function DashboardLayout({
             >
               <Wallet className="h-4 w-4" />
               Transactions
+            </Link>
+            <Link
+              href="/dashboard/tools"
+              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              <Wrench className="h-4 w-4" />
+              Tools
             </Link>
             <Link
               href="/dashboard/calendar"

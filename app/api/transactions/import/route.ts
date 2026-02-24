@@ -1,0 +1,323 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { TransactionType } from "@/lib/transactions";
+import {
+  parseTransactionsCsv,
+  type ParsedTransactionCsvRow,
+} from "@/lib/transactions-csv";
+import { createActivityLog } from "@/lib/activity-log";
+
+type SessionWithId = { user: { id?: string }; sessionId?: string };
+
+type ImportError = {
+  row: number;
+  message: string;
+};
+
+type ValidTransactionRow = {
+  rowNumber: number;
+  id: string | null;
+  type: (typeof TransactionType)[keyof typeof TransactionType];
+  amount: number;
+  category: string | null;
+  note: string | null;
+  occurredAt: Date;
+};
+
+const MAX_IMPORT_ROWS = 10_000;
+const MAX_IMPORT_TEXT_BYTES = 2 * 1024 * 1024; // ~2MB
+
+async function readCsvFromRequest(request: Request): Promise<string | null> {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const file = formData.get("file");
+    if (!file || !(file instanceof File)) {
+      return null;
+    }
+    if (file.size > MAX_IMPORT_TEXT_BYTES) {
+      throw new Error("File is too large");
+    }
+    return file.text();
+  }
+
+  const text = await request.text();
+  if (!text.trim()) {
+    return null;
+  }
+  if (text.length > MAX_IMPORT_TEXT_BYTES) {
+    throw new Error("File is too large");
+  }
+  return text;
+}
+
+function validateParsedRows(rows: ParsedTransactionCsvRow[]): {
+  valid: ValidTransactionRow[];
+  errors: ImportError[];
+} {
+  const errors: ImportError[] = [];
+  const valid: ValidTransactionRow[] = [];
+
+  for (const row of rows) {
+    const { rowNumber, values } = row;
+    const idRaw = values.id.trim();
+    const typeRaw = values.type.trim().toUpperCase();
+    const amountRaw = values.amount.trim();
+    const categoryRaw = values.category.trim();
+    const noteRaw = values.note.trim();
+    const occurredAtRaw = values.occurredAt.trim();
+
+    if (!typeRaw) {
+      errors.push({ row: rowNumber, message: "type is required" });
+      continue;
+    }
+    if (typeRaw !== TransactionType.INCOME && typeRaw !== TransactionType.EXPENSE) {
+      errors.push({
+        row: rowNumber,
+        message: "type must be INCOME or EXPENSE",
+      });
+      continue;
+    }
+
+    if (!amountRaw) {
+      errors.push({ row: rowNumber, message: "amount is required" });
+      continue;
+    }
+    const amountNumber = Number.parseFloat(amountRaw.replace(/,/g, ""));
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      errors.push({
+        row: rowNumber,
+        message: "amount must be a positive number",
+      });
+      continue;
+    }
+
+    if (!occurredAtRaw) {
+      errors.push({ row: rowNumber, message: "occurredAt is required" });
+      continue;
+    }
+    const occurredAt = new Date(occurredAtRaw);
+    if (Number.isNaN(occurredAt.getTime())) {
+      errors.push({
+        row: rowNumber,
+        message: "occurredAt must be a valid date",
+      });
+      continue;
+    }
+
+    const category =
+      categoryRaw.length > 0 ? categoryRaw : null;
+    const note =
+      noteRaw.length > 0 ? noteRaw : null;
+
+    valid.push({
+      rowNumber,
+      id: idRaw || null,
+      type: typeRaw,
+      amount: amountNumber,
+      category,
+      note,
+      occurredAt,
+    });
+  }
+
+  const seenIds = new Set<string>();
+  for (const row of valid) {
+    if (!row.id) continue;
+    if (seenIds.has(row.id)) {
+      errors.push({
+        row: row.rowNumber,
+        message: "Duplicate id in file",
+      });
+    } else {
+      seenIds.add(row.id);
+    }
+  }
+
+  if (errors.length > 0) {
+    return { valid: [], errors };
+  }
+
+  return { valid, errors: [] };
+}
+
+export async function POST(request: Request) {
+  const session = (await getServerSession(authOptions)) as SessionWithId | null;
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let csvText: string | null;
+  try {
+    csvText = await readCsvFromRequest(request);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error && error.message === "File is too large"
+            ? "CSV file is too large"
+            : "Failed to read CSV file",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (!csvText) {
+    return NextResponse.json(
+      { error: "No CSV content provided" },
+      { status: 400 },
+    );
+  }
+
+  let parsedRows: ParsedTransactionCsvRow[];
+  try {
+    parsedRows = parseTransactionsCsv(csvText);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error && error.message
+            ? error.message
+            : "Invalid CSV format",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (parsedRows.length === 0) {
+    return NextResponse.json(
+      { error: "No data rows found in CSV" },
+      { status: 400 },
+    );
+  }
+
+  if (parsedRows.length > MAX_IMPORT_ROWS) {
+    return NextResponse.json(
+      {
+        error: `CSV has too many rows (max ${MAX_IMPORT_ROWS})`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const { valid, errors } = validateParsedRows(parsedRows);
+  if (errors.length > 0) {
+    return NextResponse.json(
+      {
+        error: "CSV validation failed",
+        errorCount: errors.length,
+        errors,
+      },
+      { status: 400 },
+    );
+  }
+
+  const toCreate = valid.filter((row) => !row.id);
+  const toUpdate = valid.filter((row) => row.id);
+
+  const updateIds = Array.from(
+    new Set(toUpdate.map((row) => row.id as string)),
+  );
+
+  if (updateIds.length > 0) {
+    const existing = await prisma.transaction.findMany({
+      where: {
+        id: { in: updateIds },
+        userId,
+      },
+      select: { id: true },
+    });
+    const existingIds = new Set(existing.map((t) => t.id));
+
+    const missingIds = updateIds.filter((id) => !existingIds.has(id));
+    if (missingIds.length > 0) {
+      const missingRows = toUpdate.filter((row) =>
+        missingIds.includes(row.id as string),
+      );
+      const idList = Array.from(new Set(missingIds)).join(", ");
+      return NextResponse.json(
+        {
+          error:
+            "Some rows reference transactions that do not exist or do not belong to you",
+          errorCount: missingRows.length,
+          errors: missingRows.map((row) => ({
+            row: row.rowNumber,
+            message: `Transaction id ${row.id} does not exist for this user`,
+          })),
+          missingIds: idList,
+        },
+        { status: 400 },
+      );
+    }
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      let createdCount = 0;
+      let updatedCount = 0;
+
+      for (const row of toCreate) {
+        await tx.transaction.create({
+          data: {
+            userId,
+            type: row.type,
+            amount: row.amount,
+            category: row.category,
+            note: row.note,
+            occurredAt: row.occurredAt,
+          },
+        });
+        createdCount += 1;
+      }
+
+      for (const row of toUpdate) {
+        await tx.transaction.update({
+          where: {
+            id: row.id as string,
+            userId,
+          },
+          data: {
+            type: row.type,
+            amount: row.amount,
+            category: row.category,
+            note: row.note,
+            occurredAt: row.occurredAt,
+          },
+        });
+        updatedCount += 1;
+      }
+
+      return { createdCount, updatedCount };
+    });
+
+    void createActivityLog({
+      userId,
+      action: "TRANSACTION_IMPORT",
+      entityType: "transaction",
+      details: {
+        createdCount: result.createdCount,
+        updatedCount: result.updatedCount,
+        totalRows: valid.length,
+      },
+    });
+
+    return NextResponse.json({
+      createdCount: result.createdCount,
+      updatedCount: result.updatedCount,
+      totalRows: valid.length,
+      errorCount: 0,
+      errors: [] as ImportError[],
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to import transactions" },
+      { status: 500 },
+    );
+  }
+}
+
