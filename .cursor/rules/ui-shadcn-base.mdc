@@ -1,0 +1,25 @@
+---
+description: Use shadcn/ui and shadcn.io as the base when choosing UI components or simple features
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# UI: Prefer shadcn/ui
+
+When choosing **UI components** or implementing **simple UI features**, use **shadcn** and **shadcn.io** as the primary reference and source.
+
+## Do
+
+- **Check [shadcn.io](https://ui.shadcn.com)** first for an existing component or block before building from scratch.
+- Prefer adding components via the shadcn CLI (`npx shadcn@latest add <component>`) so they stay in the project and match existing style (this project uses **new-york** style and **lucide** icons).
+- For simple features (forms, dialogs, navigation, etc.), look at shadcn docs and examples before introducing other UI libraries.
+
+## Don’t
+
+- Don’t add a third-party UI library for something shadcn already covers unless there’s a clear reason (e.g. complex data grid, charting).
+- Don’t hand-roll components that duplicate shadcn components (Button, Card, Dialog, etc.) without checking shadcn first.
+
+## Reference
+
+- Components: https://ui.shadcn.com/docs/components
+- Project config: `components.json` (style: new-york, aliases: `@/components/ui`, etc.)

@@ -1,0 +1,88 @@
+// Prisma schema — MySQL. Auth.js (NextAuth) + User extensions.
+// Test connection: npx prisma db push (or npm run db:push)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// --- Auth.js required models ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  // Credentials: hashed password (null for OAuth-only users)
+  password      String?   @db.Text
+  // Active users: last activity timestamp
+  lastActiveAt  DateTime?
+  accounts       Account[]
+  // JWT session tracking (for list/revoke)
+  userSessions   UserSession[]
+  activityLogs   ActivityLog[]
+}
+
+// Tracks active JWT sessions per user (sessionId in JWT cookie).
+// Used for "active sessions" list and revoke-one/revoke-all.
+// revokedAt: null = active; set when user revokes (soft delete).
+model UserSession {
+  id           String    @id @default(cuid())
+  sessionId    String    @unique
+  userId       String
+  userAgent    String?   @db.Text
+  ipAddress    String?
+  lastActiveAt DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires   DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Activity Log (audit trail) ---
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  entityType String?
+  entityId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}

@@ -1,0 +1,30 @@
+---
+description: Terminal commands must be Windows/PowerShell compatible; no chaining with &&
+alwaysApply: true
+---
+
+# Terminal: Windows (PowerShell / CMD)
+
+Environment is **Windows**. All terminal commands must be PowerShell/CMD compatible.
+
+## Do
+
+- Prefer PowerShell-compatible commands.
+- If multiple steps are required, **run them as separate commands** (e.g. first `cd`, then the next command in a second invocation).
+- Use PowerShell syntax for environment variables: `$env:NODE_ENV="production"`
+- Use `Remove-Item` instead of `rm`, `Get-ChildItem` instead of `ls` when suggesting commands.
+
+## Don't
+
+- **Do not use `&&`** in terminal commands.
+- Do not chain commands with Unix-style operators (`&&`, `||`, `;` for chaining).
+- Avoid bash-specific syntax.
+
+## Example (correct)
+
+To change directory and run npm install, use **two separate commands**:
+
+1. `cd d:\personal\website-project\personal-workflow-pipeline`
+2. `npm install @auth/prisma-adapter`
+
+Wrong: `cd ... && npm install ...`

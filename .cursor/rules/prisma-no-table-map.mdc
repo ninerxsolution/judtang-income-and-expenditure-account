@@ -1,0 +1,40 @@
+---
+description: Prisma — ไม่ใช้ @@map เพื่อเปลี่ยนชื่อ table / Do not use @@map for table names
+globs: prisma/**/*.prisma
+alwaysApply: false
+---
+
+# Prisma: No @@map for Table Names
+
+ในโปรเจกต์นี้ **ไม่ใช้ `@@map("table_name")`** เพื่อเปลี่ยนชื่อ table ในฐานข้อมูล ให้ใช้ชื่อ model เป็นชื่อ table ตามค่าเริ่มต้นของ Prisma
+
+In this project, **do not use `@@map("table_name")`** to change table names. Use the default behavior: the model name is the table name.
+
+## Do
+
+- ใช้ชื่อ model เป็นชื่อ table โดยไม่ใส่ `@@map` ใน model
+- Use the model name as the table name; do not add `@@map` to the model.
+
+```prisma
+model Account {
+  id     String @id @default(cuid())
+  userId String
+  // ...
+  // ไม่มี @@map("accounts")
+}
+```
+
+## Don't
+
+- อย่าใส่ `@@map("accounts")` หรือ `@@map("sessions")` เป็นต้น ใน model
+- Do not add `@@map("accounts")`, `@@map("sessions")`, etc. to models.
+
+```prisma
+model Account {
+  // ...
+  @@map("accounts")  // ❌ ไม่ใช้
+}
+```
+
+**Note:** การใช้ `@map("column_name")` สำหรับ field (เช่น `userId` → `user_id`) ยังใช้ได้ตามต้องการ ถ้าต้องการชื่อ column แบบ snake_case ใน DB  
+Using `@map("column_name")` on **fields** (e.g. `userId` → `user_id`) is still allowed if you want snake_case column names in the database.

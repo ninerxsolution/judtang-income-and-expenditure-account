@@ -1,0 +1,27 @@
+---
+description: docs/ is the project documentation hub — use for searching info and updating docs
+alwaysApply: true
+---
+
+# Project Documentation (docs/)
+
+**docs/** คือแหล่งรวมเอกสารสำหรับทำโปรเจกต์ ใช้ในการค้นข้อมูลและอัปเดตเอกสาร
+
+**docs/** is the central project documentation. Use it to find information and to update documentation.
+
+## When to use
+
+- **Searching for project info:** Requirements, architecture, features, tech stack, and conventions live under `docs/`. Start from `docs/INDEX.md` for the mapping of split documents (structure/, core/, feature/).
+- **Updating documentation:** Add or edit content under `docs/`. When you create or modify any file under `docs/`, follow the **docs-changelog** rule (update `docs/PRD_CHANGE_LOG.md`). See `.cursor/rules/docs-changelog.mdc` and `docs/RULE.md`.
+
+## Quick reference
+
+| Area        | Location in docs/ |
+|------------|--------------------|
+| Index      | `docs/INDEX.md`    |
+| Source of truth | `docs/PRD.md`  |
+| Structure  | `docs/structure/`  |
+| Core       | `docs/core/`       |
+| Features   | `docs/feature/`    |
+
+When the user references **@docs** or asks about the project, prefer reading from `docs/` to answer.
