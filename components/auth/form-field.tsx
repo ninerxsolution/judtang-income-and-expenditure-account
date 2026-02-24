@@ -4,7 +4,7 @@
 type FormFieldProps = {
   id: string;
   label: string;
-  type?: "text" | "email" | "password" | "date";
+  type?: "text" | "email" | "password" | "date" | "number";
   required?: boolean;
   value: string;
   onChange: (value: string) => void;
