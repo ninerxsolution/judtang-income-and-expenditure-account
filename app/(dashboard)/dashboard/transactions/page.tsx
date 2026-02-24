@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { FormField } from "@/components/auth/form-field";
@@ -16,10 +17,17 @@ function formatTodayAsInputDate(): string {
 }
 
 export default function TransactionsPage() {
+  const searchParams = useSearchParams();
+  const initialDateFromQuery = searchParams.get("date");
+  const initialDate =
+    initialDateFromQuery && /^\d{4}-\d{2}-\d{2}$/.test(initialDateFromQuery)
+      ? initialDateFromQuery
+      : formatTodayAsInputDate();
+
   const [type, setType] = useState<TransactionType>("EXPENSE");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
-  const [occurredAt, setOccurredAt] = useState(formatTodayAsInputDate());
+  const [occurredAt, setOccurredAt] = useState(initialDate);
   const [note, setNote] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
