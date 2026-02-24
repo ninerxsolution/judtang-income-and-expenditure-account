@@ -105,6 +105,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from") ?? undefined;
   const toParam = searchParams.get("to") ?? undefined;
+  const dateParam = searchParams.get("date") ?? undefined;
   const limitParam = searchParams.get("limit");
   const offsetParam = searchParams.get("offset");
 
@@ -117,16 +118,28 @@ export async function GET(request: Request) {
   let fromDate: Date | undefined;
   let toDate: Date | undefined;
 
-  if (fromParam) {
-    const d = new Date(fromParam);
+  if (dateParam) {
+    const d = new Date(dateParam);
     if (!Number.isNaN(d.getTime())) {
-      fromDate = d;
+      const start = new Date(d);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(d);
+      end.setHours(23, 59, 59, 999);
+      fromDate = start;
+      toDate = end;
     }
-  }
-  if (toParam) {
-    const d = new Date(toParam);
-    if (!Number.isNaN(d.getTime())) {
-      toDate = d;
+  } else {
+    if (fromParam) {
+      const d = new Date(fromParam);
+      if (!Number.isNaN(d.getTime())) {
+        fromDate = d;
+      }
+    }
+    if (toParam) {
+      const d = new Date(toParam);
+      if (!Number.isNaN(d.getTime())) {
+        toDate = d;
+      }
     }
   }
 

@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { List, ArrowDownCircle, ArrowUpCircle, Plus } from "lucide-react";
+import {
+  List,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Plus,
+  CalendarRange,
+} from "lucide-react";
 
 type Transaction = {
   id: string;
@@ -76,13 +82,22 @@ export default function TransactionsListPage() {
             All recorded income and expenses for your account.
           </p>
         </div>
-        <Link
-          href="/dashboard/transactions"
-          className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          <Plus className="h-4 w-4" />
-          New transaction
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/calendar"
+            className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            <CalendarRange className="h-4 w-4" />
+            Calendar view
+          </Link>
+          <Link
+            href="/dashboard/transactions"
+            className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            <Plus className="h-4 w-4" />
+            New transaction
+          </Link>
+        </div>
       </div>
 
       {loading && (
