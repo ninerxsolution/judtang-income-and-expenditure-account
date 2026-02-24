@@ -10,6 +10,8 @@
 
 This system provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. It is built on Next.js with NextAuth and a MySQL database, and is intended as a reusable base for solutions that need login and audit trails.
 
+The current implementation also includes a lightweight **Income & Expense tracking** feature with a **calendar view** for personal finance-style usage. This tracker is intentionally simple and is treated as an example feature that can be reused or extended in future solutions.
+
 ---
 
 ## 2. Purpose (Short)

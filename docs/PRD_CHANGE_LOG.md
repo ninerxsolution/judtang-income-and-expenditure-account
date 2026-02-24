@@ -16,6 +16,9 @@ All notable changes to docs (PRD and split documents) are recorded here.
 - docs/structure/open-questions.md — Updated to current scope (dashboard layout, future integrations).
 - docs/core/activity-log.md — entityType and actions limited to user and session; examples updated.
 - docs/PRD_CHANGE_LOG.md — Changelog entry for docs clean (Auth + Activity Log only).
+ - docs/PRD.md — Added §18 Income & Expense Transactions & Calendar (data model, APIs, and UI behaviour) to document the current income/expense + calendar implementation.
+ - docs/structure/product-overview.md — Noted the presence of a lightweight Income & Expense tracker with calendar view in the current implementation.
+ - docs/PRD_CHANGE_LOG.md — Changelog entry for income/expense calendar docs update.
 
 ---
 
