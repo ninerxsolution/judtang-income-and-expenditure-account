@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-2xl font-semibold">Personal Workflow Pipeline</h1>
+      <h1 className="text-2xl font-semibold">Judtang Income and Expenditure Account</h1>
       <p className="text-zinc-600 dark:text-zinc-400">
         Sign in to access your dashboard.
       </p>

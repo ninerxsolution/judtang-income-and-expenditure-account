@@ -37,7 +37,7 @@ Environment variables are used exclusively for:
 
 ```
 APP_ENV=development
-APP_NAME=Personal Workflow Pipeline
+APP_NAME=Judtang
 
 DATABASE_URL=mysql://...
 NEXTAUTH_SECRET=...

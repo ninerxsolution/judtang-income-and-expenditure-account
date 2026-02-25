@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Personal Workflow Pipeline",
-    template: "%s | Personal Workflow Pipeline",
+    default: "Judtang",
+    template: "%s | Judtang",
   },
-  description: "Unified view of your work across organizations and projects",
+  description: "Judtang Income and Expenditure Account is a platform for tracking and managing your personal or organizational financial transactions efficiently.",
 };
 
 export default function RootLayout({
