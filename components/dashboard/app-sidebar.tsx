@@ -78,7 +78,7 @@ export function AppSidebarLayout({
     <>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <div className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0 transition-all">
+          <Link href="/dashboard" className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0 transition-all">
             <div className="bg-primary text-primary-foreground flex h-8 w-8 min-w-8 min-h-8 items-center justify-center rounded-lg text-xs font-semibold">
               JT
             </div>
@@ -88,7 +88,7 @@ export function AppSidebarLayout({
                 Dashboard
               </span>
             </div>
-          </div>
+          </Link>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -130,10 +130,13 @@ export function AppSidebarLayout({
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
+          <div>
+          {/* profile user with setting menu dropdown */}
+          </div>
         </header>
-        <main id="main-content" className="flex-1">
+        <div className="flex-1">
           {children}
-        </main>
+        </div>
       </SidebarInset>
     </>
   );
