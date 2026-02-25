@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ActivityLogEntry = {
   id: string;
@@ -139,7 +140,7 @@ export default function ActivityLogPage() {
   }, [filterEntityType, filterAction, filterDateFrom, filterDateTo]);
 
   return (
-    <div className="p-8 max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <Bell className="h-5 w-5" />
@@ -205,7 +206,12 @@ export default function ActivityLogPage() {
       </section>
 
       {loading && list.length === 0 ? (
-        <p className="text-zinc-600 dark:text-zinc-400">Loading…</p>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          ))}
+          <p className="text-muted-foreground text-sm">Loading…</p>
+        </div>
       ) : error ? (
         <p className="text-red-600 dark:text-red-400">{error}</p>
       ) : list.length === 0 ? (

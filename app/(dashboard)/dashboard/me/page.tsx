@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { User, Monitor, Trash2, LogOut } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FormField } from "@/components/auth/form-field";
 import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "@/lib/validation";
 
@@ -206,17 +207,32 @@ export default function UserPage() {
 
   if (loading && !profile) {
     return (
-      <div className="p-8">
-        <p className="text-zinc-600 dark:text-zinc-400">Loading…</p>
+      <div className="space-y-10">
+        <Skeleton className="h-7 w-40" />
+        <section className="space-y-4 rounded-lg border border-border bg-muted/30 p-6">
+          <Skeleton className="h-4 w-16" />
+          <div className="flex gap-4">
+            <Skeleton className="h-16 w-16 rounded-full" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          </div>
+        </section>
+        <section className="space-y-4 rounded-lg border border-border bg-muted/30 p-6">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-24" />
+        </section>
+        <p className="text-muted-foreground text-sm">Loading…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
-      </div>
+      <p className="text-red-600 dark:text-red-400">{error}</p>
     );
   }
 
@@ -226,7 +242,7 @@ export default function UserPage() {
   const otherSessions = sessions.filter((s) => !s.isCurrent);
 
   return (
-    <div className="p-8 max-w-2xl space-y-10">
+    <div className="space-y-10">
       <h1 className="text-xl font-semibold">User profile</h1>
 
       {/* Profile block */}
@@ -420,3 +436,4 @@ export default function UserPage() {
     </div>
   );
 }
+

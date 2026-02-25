@@ -1,6 +1,11 @@
 /**
  * Reusable form field: label + input + optional error message.
+ * Uses shadcn Input and Label.
  */
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
 type FormFieldProps = {
   id: string;
   label: string;
@@ -11,9 +16,6 @@ type FormFieldProps = {
   error?: string | null;
   autoComplete?: string;
 };
-
-const inputClass =
-  "w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100";
 
 export function FormField({
   id,
@@ -26,21 +28,20 @@ export function FormField({
   autoComplete,
 }: FormFieldProps) {
   return (
-    <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium">
-        {label}
-      </label>
-      <input
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
         id={id}
         type={type}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
         autoComplete={autoComplete}
+        aria-invalid={!!error}
+        className={cn(error && "border-destructive")}
       />
       {error && (
-        <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-destructive text-sm">{error}</p>
       )}
     </div>
   );

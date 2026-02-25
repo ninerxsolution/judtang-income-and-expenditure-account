@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { MIN_PASSWORD_LENGTH } from "@/lib/validation";
 import { FormField } from "./form-field";
 
@@ -19,11 +21,15 @@ export function RegisterForm() {
     e.preventDefault();
     setError(null);
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError("Password must be at least 8 characters.");
+      const msg = "Password must be at least 8 characters.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      const msg = "Passwords do not match.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
     setPending(true);
@@ -35,14 +41,19 @@ export function RegisterForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Registration failed");
+        const msg = data.error ?? "Registration failed";
+        setError(msg);
+        toast.error(msg);
         setPending(false);
         return;
       }
+      toast.success("Account created. Please sign in.");
       router.push("/sign-in");
       return;
     } catch {
-      setError("Registration failed");
+      const msg = "Registration failed";
+      setError(msg);
+      toast.error(msg);
     }
     setPending(false);
   }
@@ -86,19 +97,15 @@ export function RegisterForm() {
           autoComplete="name"
         />
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-destructive text-sm">{error}</p>
         )}
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
+        <Button type="submit" disabled={pending} className="w-full">
           {pending ? "Creating account…" : "Create account"}
-        </button>
+        </Button>
       </form>
-      <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-center text-muted-foreground text-sm">
         Already have an account?{" "}
-        <Link href="/sign-in" className="font-medium text-zinc-900 underline dark:text-zinc-100">
+        <Link href="/sign-in" className="font-medium text-primary underline underline-offset-4">
           Sign in
         </Link>
       </p>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Monitor, Trash2, LogOut } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SessionRow = {
   sessionId: string;
@@ -115,17 +116,21 @@ export default function SessionsPage() {
 
   if (loading && !data) {
     return (
-      <div className="p-8">
-        <p className="text-zinc-600 dark:text-zinc-400">Loading sessions…</p>
+      <div className="space-y-4">
+        <Skeleton className="h-7 w-48" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          ))}
+        </div>
+        <p className="text-muted-foreground text-sm">Loading sessions…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
-      </div>
+      <p className="text-red-600 dark:text-red-400">{error}</p>
     );
   }
 
@@ -133,7 +138,7 @@ export default function SessionsPage() {
   const otherSessions = sessions.filter((s) => !s.isCurrent);
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="space-y-4">
       <h1 className="text-xl font-semibold">Active sessions</h1>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         You can revoke individual sessions or sign out everywhere.
