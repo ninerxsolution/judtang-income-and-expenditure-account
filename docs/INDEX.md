@@ -38,4 +38,4 @@ Cross-cutting system capabilities.
 
 ## feature/
 
-User-facing domain features. This solution keeps only **Authentication** and **Activity Log**; other features will be rebuilt as needed. No separate feature docs under feature/ for the current scope — see [PRD.md](./PRD.md) §7–§8 and [core/](./core/) for Auth and Activity Log.
+User-facing domain features. This solution keeps **Authentication** and **Activity Log** as core scope; **Income & Expense** (transactions, calendar, import/export, Data Tools) are implemented and documented in [PRD.md](./PRD.md) §18. No separate feature docs under feature/ for the current scope — see [PRD.md](./PRD.md) §7–§8 and [core/](./core/) for Auth and Activity Log.

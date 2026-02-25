@@ -668,6 +668,40 @@ Response:
 
 Used by the **Year view** to highlight years that contain any transactions and give a coarse sense of volume.
 
+#### 18.3.6 Export — `GET /api/transactions/export`
+
+Query params:
+
+- `from?: string` — optional start date (parsed by `new Date(from)`)
+- `to?: string` — optional end date
+- `type?: string` — optional `"INCOME"` or `"EXPENSE"` (case-insensitive)
+
+Behaviour:
+
+- Requires authenticated user; otherwise `401`
+- Fetches transactions for the user in the given range/type (same filters as list)
+- Returns response body as **CSV** (UTF-8), with `Content-Disposition: attachment; filename="transactions-YYYYMMDD.csv"`
+- Records **Activity Log** with action `TRANSACTION_EXPORT`, entityType `transaction`, details (rowCount, hasFilter, from, to, type)
+
+Used by the **Data Tools** page for downloading transactions as CSV.
+
+#### 18.3.7 Import — `POST /api/transactions/import`
+
+Body: CSV as raw text, or `multipart/form-data` with `file` (CSV file). Max file size ~2MB; max rows 10,000.
+
+CSV columns: `id`, `type`, `amount`, `category`, `note`, `occurredAt`, `createdAt`. Header row required. For new rows, `id` may be empty; for updates, `id` must match an existing transaction of the current user.
+
+Behaviour:
+
+- Requires authenticated user; otherwise `401`
+- Parses and validates rows (type INCOME/EXPENSE, amount > 0, valid occurredAt). Duplicate `id` in file is invalid.
+- Rows with no `id`: **create** new transactions (createdAt in CSV ignored; server sets createdAt/updatedAt).
+- Rows with `id`: **update** existing transaction if it belongs to the user; otherwise validation error.
+- Returns JSON: `{ createdCount, updatedCount, totalRows, errorCount?, errors? }`. On validation failure returns `400` with `errors` array (row, message).
+- Records **Activity Log** with action `TRANSACTION_IMPORT`, entityType `transaction`, details (createdCount, updatedCount, totalRows, errorCount).
+
+Used by the **Data Tools** page for importing transactions from CSV.
+
 ---
 
 ### 18.4 UI & Calendar Behaviour
@@ -779,6 +813,12 @@ Core concepts:
     - Sets `year` to that year
     - Leaves `monthIndex` unchanged
     - Switches to **Month** view for that year
+
+##### Data Tools — `/dashboard/tools`
+
+- Single page for **Export** and **Import** of transactions as CSV.
+- **Export:** Button triggers `GET /api/transactions/export`; optional filters (from, to, type) can be supported; browser downloads the CSV file.
+- **Import:** User selects a CSV file; on submit, `POST /api/transactions/import`; UI shows result summary (created/updated counts, and any row-level errors if validation failed).
 
 ---
 

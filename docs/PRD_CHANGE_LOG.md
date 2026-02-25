@@ -5,6 +5,16 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 26/02/2026
+
+- docs/PRD.md — §18: Added 18.3.6 Export (GET /api/transactions/export), 18.3.7 Import (POST /api/transactions/import), and 18.4.4 Data Tools (/dashboard/tools) to match current implementation.
+- docs/core/activity-log.md — entityType extended with `transaction`; actions extended with TRANSACTION_CREATED, TRANSACTION_EXPORT, TRANSACTION_IMPORT; details format for export/import; UI path corrected to /dashboard/settings/activity-log (via Settings).
+- docs/INDEX.md — feature section updated to mention Income & Expense (PRD §18).
+- docs/structure/mvp-boundary.md — Note added that current implementation includes Income & Expense + Data Tools (PRD §18), not MVP must-have.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for docs sync with current features.
+
+---
+
 ## 24/02/2026
 
 - docs/feature/organization-management.md, docs/feature/project-management.md, docs/feature/task-management.md, docs/feature/data-center.md, docs/feature/note-management.md, docs/feature/conclusion.md — Removed (feature docs out of scope).

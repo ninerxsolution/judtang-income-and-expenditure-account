@@ -12,7 +12,7 @@ Records critical system events for auditing and tracking purposes.
 
 - **userId** — who performed the action (FK to User)
 - **action** — event type (see list below)
-- **entityType** — optional: `user` | `session` (other types reserved for future use)
+- **entityType** — optional: `user` | `session` | `transaction` (other types reserved for future use)
 - **entityId** — optional id of the related entity
 - **details** — optional JSON; format depends on action (see below)
 - **createdAt** — when the event occurred
@@ -24,11 +24,14 @@ Records critical system events for auditing and tracking purposes.
 - **Restore:** `{ "name": "..." }` — what was restored.
 - **Update / status change:** either `{ "from": "...", "to": "..." }` (e.g. status) or `{ "changes": [ { "field": "name", "from": "old", "to": "new" }, ... ] }` for multiple field changes.
 - **Session revoked:** `{ "scope": "one" | "others" | "all" }` — one session, all other sessions, or all sessions.
+- **Transaction export:** `{ "rowCount", "hasFilter", "from", "to", "type" }`.
+- **Transaction import:** `{ "createdCount", "updatedCount", "totalRows", "errorCount" }`.
 
 ## Logged events (actions)
 
 - **User:** USER_REGISTERED, USER_LOGGED_IN, USER_LOGGED_OUT, USER_PROFILE_UPDATED, USER_PASSWORD_CHANGED
 - **Session:** SESSION_REVOKED
+- **Transaction:** TRANSACTION_CREATED, TRANSACTION_EXPORT, TRANSACTION_IMPORT
 
 Events are emitted from the relevant API routes and from the auth flow (register, sign-in, sign-out) via `lib/activity-log.ts` (`createActivityLog`). Logout is recorded when the client calls POST /api/auth/logout before signOut(). Failed log writes do not fail the main request.
 
@@ -39,7 +42,7 @@ Events are emitted from the relevant API routes and from the auth flow (register
 
 ## UI
 
-- **Dashboard:** Activity Log page at `/dashboard/activity-log` (nav link with Bell icon). Read-only list/timeline with filters (entity type, action, date range).
+- **Dashboard:** Activity Log page at `/dashboard/settings/activity-log` (reached via **Settings**). Read-only list/timeline with filters (entity type, action, date range).
 - Each entry shows **who** (By: {userDisplayName} or "By: System"), **what** (action label), and **details** (e.g. "Deleted: « Name »", "Restored: « Name »", or "field: from → to" for updates). The "By" line and each detail item are shown on separate lines for readability.
 
 ## Examples (from PRD)

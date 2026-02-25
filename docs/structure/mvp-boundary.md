@@ -18,3 +18,5 @@
 - Advanced analytics
 - Real-time notifications
 - Third-party integrations
+
+**Note:** The current implementation also includes **Income & Expense** (transactions, calendar, Data Tools for CSV import/export), documented in PRD §18; these are not part of MVP must-have.
