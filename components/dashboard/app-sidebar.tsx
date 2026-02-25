@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   User,
@@ -129,6 +131,12 @@ export function AppSidebarLayout({
   const pathname = usePathname();
   const { profile } = useHeaderProfile();
 
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    toast.success("Signed out.");
+    await signOut({ callbackUrl: "/sign-in" });
+  }
+
   return (
     <>
       <Sidebar collapsible="icon">
@@ -218,7 +226,10 @@ export function AppSidebarLayout({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer">
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={() => void handleLogout()}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
