@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   User,
@@ -38,6 +40,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 
 type HeaderProfile = {
   name: string | null;
@@ -129,6 +132,12 @@ export function AppSidebarLayout({
   const pathname = usePathname();
   const { profile } = useHeaderProfile();
 
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    toast.success("Signed out.");
+    await signOut({ callbackUrl: "/sign-in" });
+  }
+
   return (
     <>
       <Sidebar collapsible="icon">
@@ -187,6 +196,7 @@ export function AppSidebarLayout({
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="ml-auto flex items-center gap-4">
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
                 <div className="bg-primary/10 text-primary hover:bg-primary/20 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
@@ -218,7 +228,10 @@ export function AppSidebarLayout({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer">
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={() => void handleLogout()}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
