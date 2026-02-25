@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Dashboard home (placeholder for testing flow).
  * Protected by proxy — requires login. URL: /dashboard

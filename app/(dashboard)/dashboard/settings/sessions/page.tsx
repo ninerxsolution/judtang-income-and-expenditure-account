@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Monitor, Trash2, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/hooks/use-i18n";
 
 type SessionRow = {
   sessionId: string;
@@ -19,17 +20,19 @@ type ApiResponse = {
   currentSessionId: string | null;
 };
 
-function formatDate(iso: string) {
+function formatRelative(
+  iso: string,
+): { key: "justNow" | "minutesAgo" | "hoursAgo" | "daysAgo"; count?: number } {
   const d = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return { key: "justNow" };
+  if (diffMins < 60) return { key: "minutesAgo", count: diffMins };
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return { key: "hoursAgo", count: diffHours };
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return { key: "daysAgo", count: diffDays };
 }
 
 function deviceLabel(userAgent: string | null) {
@@ -42,6 +45,8 @@ function deviceLabel(userAgent: string | null) {
 }
 
 export default function SessionsPage() {
+  const { t } = useI18n();
+
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +67,7 @@ export default function SessionsPage() {
       const json: ApiResponse = await res.json();
       setData(json);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setError(e instanceof Error ? e.message : t("common.errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -123,7 +128,9 @@ export default function SessionsPage() {
             <Skeleton key={i} className="h-16 w-full rounded-lg" />
           ))}
         </div>
-        <p className="text-muted-foreground text-sm">Loading sessions…</p>
+        <p className="text-muted-foreground text-sm">
+          {t("settings.sessions.loading")}
+        </p>
       </div>
     );
   }
@@ -139,9 +146,11 @@ export default function SessionsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Active sessions</h1>
+      <h1 className="text-xl font-semibold">
+        {t("dashboard.pageTitle.sessions")}
+      </h1>
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-        You can revoke individual sessions or sign out everywhere.
+        {t("sessionsPage.subtitle")}
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -153,7 +162,7 @@ export default function SessionsPage() {
             className="inline-flex items-center gap-2 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50"
           >
             <LogOut className="h-4 w-4" />
-            Revoke all other sessions
+            {t("sessionsPage.actions.revokeOthers")}
           </button>
         )}
         <button
@@ -163,7 +172,7 @@ export default function SessionsPage() {
           className="inline-flex items-center gap-2 rounded-md border border-red-200 dark:border-red-800 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
         >
           <Trash2 className="h-4 w-4" />
-          Revoke all sessions
+          {t("sessionsPage.actions.revokeAll")}
         </button>
       </div>
 
@@ -180,12 +189,38 @@ export default function SessionsPage() {
                   {deviceLabel(s.userAgent)}
                   {s.isCurrent && (
                     <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-                      (this device)
+                      {t("settings.sessions.thisDevice")}
                     </span>
                   )}
                 </p>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Last active {formatDate(s.lastActiveAt)} · Created {formatDate(s.createdAt)}
+                  {t(
+                    "settings.sessions.lastActivePrefix",
+                    formatRelative(s.lastActiveAt).key === "justNow"
+                      ? undefined
+                      : {
+                          relative: t(
+                            `common.time.${formatRelative(s.lastActiveAt).key}`,
+                            formatRelative(s.lastActiveAt).count
+                              ? { count: formatRelative(s.lastActiveAt).count! }
+                              : undefined,
+                          ),
+                        },
+                  )}{" "}
+                  ·{" "}
+                  {t(
+                    "sessionsPage.createdPrefix",
+                    formatRelative(s.createdAt).key === "justNow"
+                      ? undefined
+                      : {
+                          relative: t(
+                            `common.time.${formatRelative(s.createdAt).key}`,
+                            formatRelative(s.createdAt).count
+                              ? { count: formatRelative(s.createdAt).count! }
+                              : undefined,
+                          ),
+                        },
+                  )}
                 </p>
               </div>
             </div>
@@ -196,14 +231,16 @@ export default function SessionsPage() {
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 px-2.5 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Revoke
+              {t("settings.sessions.revoke")}
             </button>
           </li>
         ))}
       </ul>
 
       {sessions.length === 0 && (
-        <p className="mt-4 text-zinc-500 dark:text-zinc-400">No sessions found.</p>
+        <p className="mt-4 text-zinc-500 dark:text-zinc-400">
+          {t("sessionsPage.empty")}
+        </p>
       )}
     </div>
   );

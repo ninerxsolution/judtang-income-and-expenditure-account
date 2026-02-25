@@ -5,7 +5,13 @@ import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/components/providers/i18n-provider";
-import { DEFAULT_LANGUAGE, LANGUAGE_LOCALES, isSupportedLanguage, type Language } from "@/i18n";
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGE_LOCALES,
+  isSupportedLanguage,
+  translate,
+  type Language,
+} from "@/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,15 +25,18 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  // For now metadata is static but kept as a function
-  // so it can be wired to i18n dictionaries later.
+  const cookieStore = await cookies();
+  const langCookie = cookieStore.get("lang")?.value;
+  const language: Language = isSupportedLanguage(langCookie)
+    ? langCookie
+    : DEFAULT_LANGUAGE;
+
   return {
     title: {
-      default: "Judtang",
-      template: "%s | Judtang",
+      default: translate(language, "common.appName"),
+      template: `%s | ${translate(language, "common.appName")}`,
     },
-    description:
-      "Judtang Income and Expenditure Account is a platform for tracking and managing your personal or organizational financial transactions efficiently.",
+    description: translate(language, "common.appDescription"),
   };
 }
 

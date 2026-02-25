@@ -215,7 +215,7 @@ export function AppSidebarLayout({
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {profile?.name ?? "Account"}
+                      {profile?.name ?? t("dashboard.sidebar.account")}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {profile?.email ?? "—"}
@@ -226,13 +226,13 @@ export function AppSidebarLayout({
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/me" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t("dashboard.sidebar.profile")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t("dashboard.sidebar.settings")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -241,7 +241,7 @@ export function AppSidebarLayout({
                   onClick={() => void handleLogout()}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>{t("auth.logout.button")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

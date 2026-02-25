@@ -11,6 +11,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 type CalendarSummaryItem = {
   date: string; // YYYY-MM-DD
@@ -66,9 +67,9 @@ function parseISODateOnly(value: string): Date | null {
   return date;
 }
 
-function getMonthLabel(year: number, monthIndex: number): string {
+function getMonthLabel(year: number, monthIndex: number, locale: string): string {
   const d = new Date(year, monthIndex, 1);
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
   });
@@ -132,18 +133,19 @@ function buildCalendarDays(
   };
 }
 
-function formatAmount(amount: number) {
+function formatAmount(amount: number, locale: string) {
   if (Number.isNaN(amount)) return "-";
-  return amount.toLocaleString(undefined, {
+  return amount.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 }
 
-const WEEKDAY_LABELS = ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"];
+const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 export default function TransactionsCalendarPage() {
   const router = useRouter();
+  const { t, locale } = useI18n();
 
   const today = useMemo(() => new Date(), []);
   const initialYear = today.getFullYear();
@@ -198,7 +200,7 @@ export default function TransactionsCalendarPage() {
 
     const controller = new AbortController();
     async function load() {
-      setSummaryLoading(true);
+            setSummaryLoading(true);
       setSummaryError(null);
       try {
         const params = new URLSearchParams();
@@ -210,9 +212,9 @@ export default function TransactionsCalendarPage() {
         );
         if (!res.ok) {
           if (res.status === 401) {
-            setSummaryError("You are not signed in.");
+            setSummaryError(t("common.errors.unauthenticated"));
           } else {
-            setSummaryError("Failed to load calendar data.");
+            setSummaryError(t("calendar.errors.loadCalendar"));
           }
           setSummary([]);
           return;
@@ -236,7 +238,7 @@ export default function TransactionsCalendarPage() {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setSummaryError("Failed to load calendar data.");
+        setSummaryError(t("calendar.errors.loadCalendar"));
         setSummary([]);
       } finally {
         setSummaryLoading(false);
@@ -265,9 +267,9 @@ export default function TransactionsCalendarPage() {
         );
         if (!res.ok) {
           if (res.status === 401) {
-            setMonthSummaryError("You are not signed in.");
+            setMonthSummaryError(t("common.errors.unauthenticated"));
           } else {
-            setMonthSummaryError("Failed to load month summary.");
+            setMonthSummaryError(t("calendar.errors.loadMonthSummary"));
           }
           setMonthSummary([]);
           return;
@@ -291,7 +293,7 @@ export default function TransactionsCalendarPage() {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setMonthSummaryError("Failed to load month summary.");
+        setMonthSummaryError(t("calendar.errors.loadMonthSummary"));
         setMonthSummary([]);
       } finally {
         setMonthSummaryLoading(false);
@@ -326,9 +328,9 @@ export default function TransactionsCalendarPage() {
         );
         if (!res.ok) {
           if (res.status === 401) {
-            setYearSummaryError("You are not signed in.");
+            setYearSummaryError(t("common.errors.unauthenticated"));
           } else {
-            setYearSummaryError("Failed to load year summary.");
+            setYearSummaryError(t("calendar.errors.loadYearSummary"));
           }
           setYearSummary([]);
           return;
@@ -352,7 +354,7 @@ export default function TransactionsCalendarPage() {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setYearSummaryError("Failed to load year summary.");
+        setYearSummaryError(t("calendar.errors.loadYearSummary"));
         setYearSummary([]);
       } finally {
         setYearSummaryLoading(false);
@@ -375,12 +377,12 @@ export default function TransactionsCalendarPage() {
       params.set("date", dateIso);
       params.set("limit", "200");
       const res = await fetch(`/api/transactions?${params.toString()}`);
-      if (!res.ok) {
-        if (res.status === 401) {
-          setDailyError("You are not signed in.");
-        } else {
-          setDailyError("Failed to load transactions for this day.");
-        }
+        if (!res.ok) {
+          if (res.status === 401) {
+            setDailyError(t("common.errors.unauthenticated"));
+          } else {
+            setDailyError(t("calendar.errors.loadDaily"));
+          }
         setDailyItems([]);
         return;
       }
@@ -392,7 +394,7 @@ export default function TransactionsCalendarPage() {
         setDailyItems([]);
       }
     } catch {
-      setDailyError("Failed to load transactions for this day.");
+      setDailyError(t("calendar.errors.loadDaily"));
       setDailyItems([]);
     } finally {
       setDailyLoading(false);
@@ -442,13 +444,13 @@ export default function TransactionsCalendarPage() {
     if (!selectedDate) return "";
     const parsed = parseISODateOnly(selectedDate);
     if (!parsed) return selectedDate;
-    return parsed.toLocaleDateString(undefined, {
+    return parsed.toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
       weekday: "short",
     });
-  }, [selectedDate]);
+  }, [selectedDate, locale]);
 
   const monthSummaryMap = useMemo(() => {
     const map = new Map<number, MonthSummaryItem>();
@@ -468,7 +470,7 @@ export default function TransactionsCalendarPage() {
 
   function getMonthShortLabel(index: number) {
     const d = new Date(2000, index, 1);
-    return d.toLocaleDateString(undefined, { month: "short" });
+    return d.toLocaleDateString(locale, { month: "short" });
   }
 
   return (
@@ -480,10 +482,10 @@ export default function TransactionsCalendarPage() {
           </div>
           <div>
             <h1 className="text-lg font-semibold sm:text-xl">
-              Transactions Calendar
+              {t("calendar.title")}
             </h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              ดูภาพรวมการบันทึกรายรับรายจ่ายแบบรายเดือน และกดย้อนวันเพื่อดูรายละเอียดหรือเพิ่มรายการใหม่
+              {t("calendar.subtitle")}
             </p>
           </div>
         </div>
@@ -498,7 +500,7 @@ export default function TransactionsCalendarPage() {
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
               } rounded-l-md`}
             >
-              Day
+              {t("calendar.view.day")}
             </button>
             <button
               type="button"
@@ -509,7 +511,7 @@ export default function TransactionsCalendarPage() {
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
               }`}
             >
-              Month
+              {t("calendar.view.month")}
             </button>
             <button
               type="button"
@@ -520,7 +522,7 @@ export default function TransactionsCalendarPage() {
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
               }`}
             >
-              Year
+              {t("calendar.view.year")}
             </button>
           </div>
           <button
@@ -528,7 +530,7 @@ export default function TransactionsCalendarPage() {
             onClick={goToToday}
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
-            Today
+            {t("calendar.today")}
           </button>
           <button
             type="button"
@@ -536,7 +538,7 @@ export default function TransactionsCalendarPage() {
             className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             <Plus className="h-3.5 w-3.5" />
-            New transaction
+            {t("calendar.newTransaction")}
           </button>
         </div>
       </div>
@@ -562,12 +564,12 @@ export default function TransactionsCalendarPage() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {getMonthLabel(year, monthIndex)}
+                  {getMonthLabel(year, monthIndex, locale)}
                 </div>
               </div>
               {summaryLoading && (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Loading calendar…
+                  {t("calendar.loading.calendar")}
                 </p>
               )}
               {summaryError && !summaryLoading && (
@@ -578,9 +580,9 @@ export default function TransactionsCalendarPage() {
             </div>
 
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
-              {WEEKDAY_LABELS.map((label) => (
-                <div key={label} className="py-1">
-                  {label}
+              {WEEKDAY_LABEL_KEYS.map((key) => (
+                <div key={key} className="py-1">
+                  {t(`calendar.weekdays.${key}`)}
                 </div>
               ))}
             </div>
@@ -636,9 +638,9 @@ export default function TransactionsCalendarPage() {
             <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                <span>มีบันทึกอย่างน้อย 1 รายการในวันนั้น</span>
+                <span>{t("calendar.legend.hasRecords")}</span>
               </div>
-              <span>คลิกวันที่เพื่อดูรายละเอียดหรือเพิ่มรายการใหม่</span>
+              <span>{t("calendar.legend.hintDayClick")}</span>
             </div>
           </>
         )}
@@ -677,7 +679,7 @@ export default function TransactionsCalendarPage() {
               </div>
               {monthSummaryLoading && (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Loading months…
+                  {t("calendar.loading.months")}
                 </p>
               )}
               {monthSummaryError && !monthSummaryLoading && (
@@ -719,12 +721,12 @@ export default function TransactionsCalendarPage() {
                       )}
                       {hasData && count > 1 && (
                         <span className="text-zinc-500 dark:text-zinc-400">
-                          {count} records
+                          {t("calendar.records", { count })}
                         </span>
                       )}
                       {!hasData && (
                         <span className="text-zinc-400 dark:text-zinc-500">
-                          ไม่มีบันทึก
+                          {t("calendar.noRecords")}
                         </span>
                       )}
                     </div>
@@ -734,7 +736,7 @@ export default function TransactionsCalendarPage() {
             </div>
 
             <div className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-              คลิกเดือนเพื่อดูวันที่ในมุมมอง Day
+              {t("calendar.legend.hintMonthClick")}
             </div>
           </>
         )}
@@ -763,7 +765,7 @@ export default function TransactionsCalendarPage() {
               </div>
               {yearSummaryLoading && (
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Loading years…
+                  {t("calendar.loading.years")}
                 </p>
               )}
               {yearSummaryError && !yearSummaryLoading && (
@@ -809,12 +811,12 @@ export default function TransactionsCalendarPage() {
                       )}
                       {hasData && count > 1 && (
                         <span className="text-zinc-500 dark:text-zinc-400">
-                          {count} records
+                          {t("calendar.records", { count })}
                         </span>
                       )}
                       {!hasData && (
                         <span className="text-zinc-400 dark:text-zinc-500">
-                          ไม่มีบันทึก
+                          {t("calendar.noRecords")}
                         </span>
                       )}
                     </div>
@@ -824,7 +826,7 @@ export default function TransactionsCalendarPage() {
             </div>
 
             <div className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-              คลิกปีเพื่อดู 12 เดือนของปีนั้นในมุมมอง Month
+              {t("calendar.legend.hintYearClick")}
             </div>
           </>
         )}
@@ -836,7 +838,7 @@ export default function TransactionsCalendarPage() {
             <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Transactions on
+                  {t("calendar.modal.title")}
                 </p>
                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                   {selectedDateLabel}
@@ -849,7 +851,7 @@ export default function TransactionsCalendarPage() {
                   className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add
+                  {t("calendar.modal.add")}
                 </button>
                 <button
                   type="button"
@@ -864,7 +866,7 @@ export default function TransactionsCalendarPage() {
             <div className="max-h-[60vh] overflow-y-auto px-4 py-3 text-sm">
               {dailyLoading && (
                 <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  Loading transactions…
+                  {t("calendar.loading.transactions")}
                 </p>
               )}
               {dailyError && !dailyLoading && (
@@ -876,7 +878,7 @@ export default function TransactionsCalendarPage() {
                 !dailyError &&
                 dailyItems.length === 0 && (
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    ยังไม่มีการบันทึกรายรับรายจ่ายในวันนี้
+                    {t("calendar.modal.empty")}
                   </p>
                 )}
 
@@ -920,18 +922,15 @@ export default function TransactionsCalendarPage() {
                               )}
                             </div>
                             <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                              {new Date(tx.occurredAt).toLocaleTimeString(
-                                undefined,
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                },
-                              )}
+                              {new Date(tx.occurredAt).toLocaleTimeString(locale, {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </p>
                           </div>
                         </div>
                         <div className="text-right text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                          {formatAmount(tx.amount)}
+                          {formatAmount(tx.amount, locale)}
                         </div>
                       </li>
                     );
