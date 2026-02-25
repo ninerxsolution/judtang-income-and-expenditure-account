@@ -11,35 +11,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DEFAULT_LANGUAGE, translate, type Language } from "@/i18n";
 
 export const metadata: Metadata = {
   title: "Home | Judtang",
 };
 
-export default function Home() {
+type PageProps = {
+  searchParams: Promise<{ lang?: Language }>;
+};
+
+export default async function Home({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const lang = (params.lang as Language | undefined) ?? DEFAULT_LANGUAGE;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle className="text-2xl">
-            Judtang Income and Expenditure Account
+            {translate(lang, "home.title")}
           </CardTitle>
           <CardDescription>
-            ระบบจัดการบัญชีรายรับ–รายจ่าย และฐานสำหรับทีมที่ต้องการระบบล็อกอินและบันทึกกิจกรรม
+            {translate(lang, "home.subtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground text-sm">
-            โปรเจกต์นี้ให้บริการ Authentication (ลงทะเบียน/เข้าสู่ระบบด้วยอีเมลหรือ Google)
-            และ Activity Log สำหรับตรวจสอบเหตุการณ์สำคัญ เช่น การล็อกอิน ล็อกเอาท์
-            และการเปลี่ยนโปรไฟล์ สร้างด้วย Next.js, NextAuth และ MySQL
+            {translate(lang, "home.body")}
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <Button asChild>
-              <Link href="/sign-in">Sign in</Link>
+              <Link href="/sign-in">{translate(lang, "home.signInCta")}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/dashboard">Dashboard (protected)</Link>
+              <Link href="/dashboard">
+                {translate(lang, "home.dashboardCta")}
+              </Link>
             </Button>
           </div>
         </CardContent>

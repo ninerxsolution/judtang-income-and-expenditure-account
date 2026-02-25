@@ -41,6 +41,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { useI18n } from "@/hooks/use-i18n";
 
 type HeaderProfile = {
   name: string | null;
@@ -113,15 +114,15 @@ function useHeaderProfile() {
 
 const navItems = [
   {
-    title: "Transactions",
+    key: "transactions",
     href: "/dashboard/transactions",
     icon: Wallet,
   },
   {
-    title: "Calendar",
+    key: "calendar",
     href: "/dashboard/calendar",
     icon: CalendarRange,
-  }
+  },
 ] as const;
 
 export function AppSidebarLayout({
@@ -131,10 +132,11 @@ export function AppSidebarLayout({
 }) {
   const pathname = usePathname();
   const { profile } = useHeaderProfile();
+  const { t } = useI18n();
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    toast.success("Signed out.");
+    toast.success(t("auth.logout.success"));
     await signOut({ callbackUrl: "/sign-in" });
   }
 
@@ -147,16 +149,22 @@ export function AppSidebarLayout({
               JT
             </div>
             <div className="flex flex-col leading-tight group-data-[collapsible=icon]:max-w-0 max-w-full overflow-hidden transition-all">
-              <span className="text-sm font-semibold">Judtang</span>
+              <span className="text-sm font-semibold">
+                {t("common.appName")}
+              </span>
               <span className="text-[11px] text-muted-foreground">
-                Dashboard
+                {t("dashboard.pageTitle.dashboard")}
               </span>
             </div>
           </Link>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              {t("dashboard.sidebar.navigation", {
+                // fallback handled in translate()
+              })}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => {
@@ -170,11 +178,11 @@ export function AppSidebarLayout({
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
-                        tooltip={item.title}
+                        tooltip={t(`dashboard.sidebar.${item.key}`)}
                       >
                         <Link href={item.href}>
                           <Icon />
-                          <span>{item.title}</span>
+                          <span>{t(`dashboard.sidebar.${item.key}`)}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

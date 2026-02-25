@@ -9,19 +9,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/hooks/use-i18n";
 
 export default function DashboardPage() {
+  const { t } = useI18n();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dashboard</CardTitle>
+        <CardTitle>{t("dashboard.pageTitle.dashboard")}</CardTitle>
         <CardDescription>
-          You are logged in. This area is protected.
+          {t("dashboard.home.subtitle")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground text-sm">
-          Use the navigation above to access User profile, Sessions, Transactions, Tools, Calendar, and Activity Log.
+          {t("dashboard.home.body")}
         </p>
       </CardContent>
     </Card>

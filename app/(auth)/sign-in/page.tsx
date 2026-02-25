@@ -9,15 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DEFAULT_LANGUAGE, translate, type Language } from "@/i18n";
 
 type PageProps = {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; error?: string; lang?: Language }>;
 };
 
-const ERROR_MESSAGES: Record<string, string> = {
-  CredentialsSignin: "Invalid email or password",
-  Default: "Something went wrong. Please try again.",
+const ERROR_MESSAGES: Record<string, keyof typeof errorKeys> = {
+  CredentialsSignin: "credentials",
+  Default: "default",
 };
+
+const errorKeys = {
+  credentials: "auth.signIn.invalidCredentials",
+  default: "auth.signIn.genericError",
+} as const;
 
 export const metadata: Metadata = {
   title: "Sign in | Judtang",
@@ -27,13 +33,18 @@ export default async function SignInPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const callbackUrl = params.callbackUrl ?? "/dashboard";
   const rawError = params.error ?? null;
-  const error = rawError ? (ERROR_MESSAGES[rawError] ?? ERROR_MESSAGES.Default) : null;
+  const lang = (params.lang as Language | undefined) ?? DEFAULT_LANGUAGE;
+
+  const errorKey = rawError ? ERROR_MESSAGES[rawError] ?? ERROR_MESSAGES.Default : null;
+  const error = errorKey ? translate(lang, errorKeys[errorKey]) : null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-8">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Sign in</CardTitle>
+          <CardTitle className="text-xl">
+            {translate(lang, "auth.signIn.title")}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <SignInForm callbackUrl={callbackUrl} error={error} />

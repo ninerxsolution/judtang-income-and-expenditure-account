@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FormField } from "./form-field";
+import { useI18n } from "@/hooks/use-i18n";
 
 type SignInFormProps = {
   callbackUrl?: string;
@@ -14,6 +15,8 @@ type SignInFormProps = {
 };
 
 export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: SignInFormProps) {
+  const { t } = useI18n();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(initialError ?? null);
@@ -31,7 +34,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
     });
     setPending(false);
     if (result?.error) {
-      const message = "Invalid email or password";
+      const message = t("auth.signIn.invalidCredentials");
       setError(message);
       toast.error(message);
       return;
@@ -47,7 +50,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
       <form onSubmit={handleCredentialsSubmit} className="space-y-4">
         <FormField
           id="signin-email"
-          label="Email"
+          label={t("auth.signIn.emailLabel")}
           type="email"
           required
           value={email}
@@ -56,7 +59,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
         />
         <FormField
           id="signin-password"
-          label="Password"
+          label={t("auth.signIn.passwordLabel")}
           type="password"
           required
           value={password}
@@ -67,12 +70,14 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
           <p className="text-destructive text-sm">{error ?? initialError}</p>
         )}
         <Button type="submit" disabled={pending} className="w-full">
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? t("auth.signIn.pending") : t("auth.signIn.submit")}
         </Button>
       </form>
       <div className="relative flex items-center gap-2">
         <Separator className="flex-1" />
-        <span className="text-muted-foreground text-xs">or</span>
+        <span className="text-muted-foreground text-xs">
+          {t("auth.signIn.or")}
+        </span>
         <Separator className="flex-1" />
       </div>
       <Button
@@ -81,12 +86,12 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
         className="w-full"
         onClick={handleGoogleClick}
       >
-        Sign in with Google
+          {t("auth.signIn.google")}
       </Button>
       <p className="text-center text-muted-foreground text-sm">
-        Don&apos;t have an account?{" "}
+          {t("auth.signIn.noAccount")}{" "}
         <Link href="/register" className="font-medium text-primary underline underline-offset-4">
-          Create account
+            {t("auth.signIn.registerCta")}
         </Link>
       </p>
     </div>
