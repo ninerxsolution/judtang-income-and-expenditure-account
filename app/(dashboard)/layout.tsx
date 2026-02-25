@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { SessionTouch } from "@/components/dashboard/session-touch";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -28,58 +29,51 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       <SessionTouch />
-      <header className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <nav className="flex items-center gap-1">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/user"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <User className="h-4 w-4" />
-              User
-            </Link>
-            <Link
-              href="/dashboard/sessions"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <Monitor className="h-4 w-4" />
-              Sessions
-            </Link>
-            <Link
-              href="/dashboard/transactions"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <Wallet className="h-4 w-4" />
-              Transactions
-            </Link>
-            <Link
-              href="/dashboard/tools"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <Wrench className="h-4 w-4" />
-              Tools
-            </Link>
-            <Link
-              href="/dashboard/calendar"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <CalendarRange className="h-4 w-4" />
-              Calendar
-            </Link>
-            <Link
-              href="/dashboard/activity-log"
-              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            >
-              <Bell className="h-4 w-4" />
-              Activity Log
-            </Link>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard" className="gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/user" className="gap-2">
+                <User className="h-4 w-4" />
+                User
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/sessions" className="gap-2">
+                <Monitor className="h-4 w-4" />
+                Sessions
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/transactions" className="gap-2">
+                <Wallet className="h-4 w-4" />
+                Transactions
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/tools" className="gap-2">
+                <Wrench className="h-4 w-4" />
+                Tools
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/calendar" className="gap-2">
+                <CalendarRange className="h-4 w-4" />
+                Calendar
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/activity-log" className="gap-2">
+                <Bell className="h-4 w-4" />
+                Activity Log
+              </Link>
+            </Button>
           </nav>
           <LogoutButton />
         </div>

@@ -696,12 +696,10 @@ export default function TransactionsCalendarPage() {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() =>
-                      setMonthYear(() => ({
-                        year,
-                        monthIndex: idx,
-                      })) || setViewMode("day")
-                    }
+                    onClick={() => {
+                      setMonthYear({ year, monthIndex: idx });
+                      setViewMode("day");
+                    }}
                     className={[
                       "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition",
                       "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",

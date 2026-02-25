@@ -9,6 +9,7 @@ import {
   Plus,
   CalendarRange,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Transaction = {
   id: string;
@@ -101,9 +102,12 @@ export default function TransactionsListPage() {
       </div>
 
       {loading && (
-        <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
-          Loading transactions…
-        </p>
+        <div className="mt-6 space-y-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-md" />
+          ))}
+          <p className="text-muted-foreground text-sm">Loading transactions…</p>
+        </div>
       )}
 
       {error && !loading && (
