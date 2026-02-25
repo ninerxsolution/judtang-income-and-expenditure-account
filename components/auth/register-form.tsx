@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MIN_PASSWORD_LENGTH } from "@/lib/validation";
 import { FormField } from "./form-field";
+import { useI18n } from "@/hooks/use-i18n";
 
 export function RegisterForm() {
   const router = useRouter();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,13 +23,13 @@ export function RegisterForm() {
     e.preventDefault();
     setError(null);
     if (password.length < MIN_PASSWORD_LENGTH) {
-      const msg = "Password must be at least 8 characters.";
+      const msg = t("auth.register.passwordTooShort", { count: MIN_PASSWORD_LENGTH });
       setError(msg);
       toast.error(msg);
       return;
     }
     if (password !== confirmPassword) {
-      const msg = "Passwords do not match.";
+      const msg = t("auth.register.passwordsMismatch");
       setError(msg);
       toast.error(msg);
       return;
@@ -41,17 +43,17 @@ export function RegisterForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg = data.error ?? "Registration failed";
+        const msg = data.error ?? t("auth.register.failed");
         setError(msg);
         toast.error(msg);
         setPending(false);
         return;
       }
-      toast.success("Account created. Please sign in.");
+      toast.success(t("auth.register.success"));
       router.push("/sign-in");
       return;
     } catch {
-      const msg = "Registration failed";
+      const msg = t("auth.register.failed");
       setError(msg);
       toast.error(msg);
     }
@@ -63,7 +65,7 @@ export function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField
           id="register-email"
-          label="Email"
+          label={t("auth.register.emailLabel")}
           type="email"
           required
           value={email}
@@ -72,7 +74,7 @@ export function RegisterForm() {
         />
         <FormField
           id="register-password"
-          label="Password"
+          label={t("auth.register.passwordLabel")}
           type="password"
           required
           value={password}
@@ -81,7 +83,7 @@ export function RegisterForm() {
         />
         <FormField
           id="register-confirm-password"
-          label="Confirm password"
+          label={t("auth.register.confirmPasswordLabel")}
           type="password"
           required
           value={confirmPassword}
@@ -90,7 +92,7 @@ export function RegisterForm() {
         />
         <FormField
           id="register-name"
-          label="Name (optional)"
+          label={t("auth.register.nameOptionalLabel")}
           type="text"
           value={name}
           onChange={setName}
@@ -100,13 +102,13 @@ export function RegisterForm() {
           <p className="text-destructive text-sm">{error}</p>
         )}
         <Button type="submit" disabled={pending} className="w-full">
-          {pending ? "Creating account…" : "Create account"}
+          {pending ? t("auth.register.pending") : t("auth.register.submit")}
         </Button>
       </form>
       <p className="text-center text-muted-foreground text-sm">
-        Already have an account?{" "}
+        {t("auth.register.haveAccount")}{" "}
         <Link href="/sign-in" className="font-medium text-primary underline underline-offset-4">
-          Sign in
+          {t("auth.register.signInCta")}
         </Link>
       </p>
     </div>

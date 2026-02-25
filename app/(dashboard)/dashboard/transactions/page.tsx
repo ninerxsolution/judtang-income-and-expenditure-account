@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { FormField } from "@/components/auth/form-field";
+import { useI18n } from "@/hooks/use-i18n";
 
 type TransactionType = "INCOME" | "EXPENSE";
 
@@ -18,6 +19,8 @@ function formatTodayAsInputDate(): string {
 
 export default function TransactionsPage() {
   const searchParams = useSearchParams();
+  const { t } = useI18n();
+
   const initialDateFromQuery = searchParams.get("date");
   const initialDate =
     initialDateFromQuery && /^\d{4}-\d{2}-\d{2}$/.test(initialDateFromQuery)
@@ -37,10 +40,10 @@ export default function TransactionsPage() {
     if (!amount) return null;
     const value = Number.parseFloat(amount);
     if (!Number.isFinite(value) || value <= 0) {
-      return "Amount must be a positive number";
+      return t("transactions.new.amountInvalid");
     }
     return null;
-  }, [amount]);
+  }, [amount, t]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,12 +51,12 @@ export default function TransactionsPage() {
     setSuccessMessage(null);
 
     if (!type) {
-      setError("Please select income or expense");
+      setError(t("transactions.new.typeRequired"));
       return;
     }
 
     if (!amount || amountError) {
-      setError(amountError ?? "Please enter an amount");
+      setError(amountError ?? t("transactions.new.amountRequired"));
       return;
     }
 
@@ -79,16 +82,20 @@ export default function TransactionsPage() {
       const data = (await res.json()) as { error?: string } | { id: string };
 
       if (!res.ok) {
-        setError("error" in data && data.error ? data.error : "Failed to save transaction");
+        setError(
+          "error" in data && data.error
+            ? data.error
+            : t("transactions.new.saveFailed"),
+        );
         return;
       }
 
-      setSuccessMessage("Transaction saved");
+      setSuccessMessage(t("transactions.new.saveSuccess"));
       setAmount("");
       setCategory("");
       setNote("");
     } catch {
-      setError("Failed to save transaction");
+      setError(t("transactions.new.saveFailed"));
     } finally {
       setPending(false);
     }
@@ -98,22 +105,26 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">New Transaction</h1>
+          <h1 className="text-xl font-semibold">
+            {t("dashboard.pageTitle.transactionsNew")}
+          </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Quickly record your income and expenses.
+            {t("transactions.new.subtitle")}
           </p>
         </div>
         <Link
           href="/dashboard/transactions/list"
           className="text-sm font-medium text-zinc-700 hover:underline dark:text-zinc-200"
         >
-          View all
+          {t("transactions.new.viewAll")}
         </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <span className="mb-1 block text-sm font-medium">Type</span>
+          <span className="mb-1 block text-sm font-medium">
+            {t("transactions.new.typeLabel")}
+          </span>
           <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
             <button
               type="button"
@@ -125,7 +136,7 @@ export default function TransactionsPage() {
               }`}
             >
               <ArrowDownCircle className="h-4 w-4" />
-              Income
+              {t("transactions.new.income")}
             </button>
             <button
               type="button"
@@ -137,14 +148,14 @@ export default function TransactionsPage() {
               }`}
             >
               <ArrowUpCircle className="h-4 w-4" />
-              Expense
+              {t("transactions.new.expense")}
             </button>
           </div>
         </div>
 
         <FormField
           id="transaction-amount"
-          label="Amount"
+          label={t("transactions.new.amountLabel")}
           type="number"
           required
           value={amount}
@@ -154,7 +165,7 @@ export default function TransactionsPage() {
 
         <FormField
           id="transaction-category"
-          label="Category (optional)"
+          label={t("transactions.new.categoryLabel")}
           type="text"
           value={category}
           onChange={setCategory}
@@ -162,7 +173,7 @@ export default function TransactionsPage() {
 
         <FormField
           id="transaction-date"
-          label="Date"
+          label={t("transactions.new.dateLabel")}
           type="date"
           required
           value={occurredAt}
@@ -174,7 +185,7 @@ export default function TransactionsPage() {
             htmlFor="transaction-note"
             className="mb-1 block text-sm font-medium"
           >
-            Note (optional)
+            {t("transactions.new.noteLabel")}
           </label>
           <textarea
             id="transaction-note"
@@ -199,7 +210,9 @@ export default function TransactionsPage() {
           disabled={pending}
           className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          {pending ? "Saving…" : "Save transaction"}
+          {pending
+            ? t("transactions.new.pending")
+            : t("transactions.new.submit")}
         </button>
       </form>
     </div>

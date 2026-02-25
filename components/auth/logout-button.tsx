@@ -4,11 +4,14 @@ import { signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/hooks/use-i18n";
 
 export function LogoutButton() {
+  const { t } = useI18n();
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    toast.success("Signed out.");
+    toast.success(t("auth.logout.success"));
     await signOut({ callbackUrl: "/sign-in" });
   }
 
@@ -21,7 +24,7 @@ export function LogoutButton() {
       className="gap-2"
     >
       <LogOut className="h-4 w-4" />
-      Log out
+      {t("auth.logout.button")}
     </Button>
   );
 }

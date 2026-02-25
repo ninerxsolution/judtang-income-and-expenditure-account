@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Download, Upload, Wrench } from "lucide-react";
+import { useI18n } from "@/hooks/use-i18n";
 
 type ImportErrorItem = {
   row: number;
@@ -27,6 +28,8 @@ function getFilenameFromHeaders(headers: Headers): string | null {
 }
 
 export function DataTools() {
+  const { t } = useI18n();
+
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -41,7 +44,7 @@ export function DataTools() {
     try {
       const res = await fetch("/api/transactions/export");
       if (!res.ok) {
-        let message = "Failed to export transactions";
+        let message = t("dataTools.export.failed");
         try {
           const data = (await res.json()) as { error?: string };
           if (data.error) {
@@ -64,7 +67,7 @@ export function DataTools() {
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      setExportError("Failed to export transactions");
+      setExportError(t("dataTools.export.failed"));
     } finally {
       setExporting(false);
     }
@@ -82,7 +85,7 @@ export function DataTools() {
     setImportResult(null);
 
     if (!file) {
-      setImportError("Please choose a CSV file first.");
+      setImportError(t("dataTools.import.noFile"));
       return;
     }
 
@@ -104,14 +107,14 @@ export function DataTools() {
         setImportError(
           "error" in data && data.error
             ? data.error
-            : "Failed to import transactions",
+            : t("dataTools.import.failed"),
         );
         return;
       }
 
       setImportResult(data as ImportResult);
     } catch {
-      setImportError("Failed to import transactions");
+      setImportError(t("dataTools.import.failed"));
     } finally {
       setImporting(false);
     }
@@ -124,21 +127,21 @@ export function DataTools() {
           <Wrench className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold">Data tools</h1>
+          <h1 className="text-xl font-semibold">
+            {t("dataTools.title")}
+          </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Export or import your income and expense transactions as CSV.
+            {t("dataTools.description")}
           </p>
         </div>
       </header>
 
       <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/40">
         <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-          Export transactions
+          {t("dataTools.export.title")}
         </h2>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Download a CSV file of all your transactions (filtered by your
-          account). If you have no data yet, the file will contain only the
-          header row and can be used as a template.
+          {t("dataTools.export.description")}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
@@ -148,7 +151,7 @@ export function DataTools() {
             className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             <Download className="h-4 w-4" />
-            {exporting ? "Exporting…" : "Download CSV"}
+            {exporting ? t("dataTools.export.pending") : t("dataTools.export.button")}
           </button>
           {exportError && (
             <p className="text-sm text-red-600 dark:text-red-400">
@@ -157,18 +160,16 @@ export function DataTools() {
           )}
         </div>
         <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Columns: id, type, amount, category, note, occurredAt, createdAt.
+          {t("dataTools.export.columns")}
         </p>
       </section>
 
       <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/40">
         <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
-          Import transactions from CSV
+          {t("dataTools.import.title")}
         </h2>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Choose a CSV file with the same columns as the export. Rows with an
-          empty id will create new transactions; rows with an existing id will
-          update the matching transaction that belongs to your account.
+          {t("dataTools.import.description")}
         </p>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -180,11 +181,11 @@ export function DataTools() {
               onChange={handleFileChange}
             />
             <Upload className="mr-2 h-4 w-4" />
-            {file ? "Change CSV file" : "Choose CSV file"}
+            {file ? t("dataTools.import.changeFile") : t("dataTools.import.chooseFile")}
           </label>
           {file && (
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Selected:{" "}
+              {t("dataTools.import.selected")}:{" "}
               <span className="font-medium text-zinc-800 dark:text-zinc-100">
                 {file.name}
               </span>
@@ -200,7 +201,7 @@ export function DataTools() {
             className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
           >
             <Upload className="h-4 w-4" />
-            {importing ? "Importing…" : "Import CSV"}
+            {importing ? t("dataTools.import.pending") : t("dataTools.import.button")}
           </button>
           {importError && (
             <p className="text-sm text-red-600 dark:text-red-400">
@@ -211,29 +212,37 @@ export function DataTools() {
 
         {importResult && (
           <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100">
-            <p className="font-medium">Import completed.</p>
+            <p className="font-medium">
+              {t("dataTools.import.completed")}
+            </p>
             <p className="mt-1">
-              Created {importResult.createdCount} transaction
-              {importResult.createdCount === 1 ? "" : "s"}, updated{" "}
-              {importResult.updatedCount} transaction
-              {importResult.updatedCount === 1 ? "" : "s"} (total{" "}
-              {importResult.totalRows} rows).
+              {t("dataTools.import.summary", {
+                created: importResult.createdCount,
+                updated: importResult.updatedCount,
+                total: importResult.totalRows,
+              })}
             </p>
             {importResult.errorCount > 0 && importResult.errors.length > 0 && (
               <div className="mt-2 space-y-1">
                 <p className="font-medium">
-                  {importResult.errorCount} error
-                  {importResult.errorCount === 1 ? "" : "s"} reported:
+                  {t("dataTools.import.errorSummary", {
+                    count: importResult.errorCount,
+                  })}
                 </p>
                 <ul className="list-disc pl-5">
                   {importResult.errors.slice(0, 5).map((err) => (
                     <li key={`${err.row}-${err.message}`}>
-                      Row {err.row}: {err.message}
+                      {t("dataTools.import.errorRow", {
+                        row: err.row,
+                        message: err.message,
+                      })}
                     </li>
                   ))}
                   {importResult.errors.length > 5 && (
                     <li>
-                      And {importResult.errors.length - 5} more…
+                      {t("dataTools.import.moreErrors", {
+                        count: importResult.errors.length - 5,
+                      })}
                     </li>
                   )}
                 </ul>
@@ -243,9 +252,7 @@ export function DataTools() {
         )}
 
         <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-          Files larger than about 2&nbsp;MB or more than 10,000 rows will be
-          rejected. All changes are applied in a single operation—if any row
-          fails validation, nothing is written.
+          {t("dataTools.import.note")}
         </p>
       </section>
     </div>

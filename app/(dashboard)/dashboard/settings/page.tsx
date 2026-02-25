@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Bell, Monitor, Trash2, LogOut } from "lucide-react";
+import { Bell, Monitor, Trash2, LogOut, Languages } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTools } from "@/components/dashboard/data-tools";
+import { useI18n } from "@/hooks/use-i18n";
 
 type SessionRow = {
   sessionId: string;
@@ -21,17 +22,17 @@ type SessionsResponse = {
   currentSessionId: string | null;
 };
 
-function formatDate(iso: string) {
+function formatRelative(iso: string): { key: "justNow" | "minutesAgo" | "hoursAgo" | "daysAgo"; count?: number } {
   const d = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return { key: "justNow" };
+  if (diffMins < 60) return { key: "minutesAgo", count: diffMins };
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return { key: "hoursAgo", count: diffHours };
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return { key: "daysAgo", count: diffDays };
 }
 
 function deviceLabel(userAgent: string | null) {
@@ -44,6 +45,8 @@ function deviceLabel(userAgent: string | null) {
 }
 
 export default function SettingsPage() {
+  const { t, language, setLanguage } = useI18n();
+
   const [sessionsData, setSessionsData] = useState<SessionsResponse | null>(null);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
@@ -97,11 +100,59 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold">Settings</h1>
+        <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Manage your activity log, data tools, and active sessions.
+          {t("settings.description")}
         </p>
       </header>
+
+      {/* Language selection */}
+      <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+            <Languages className="h-5 w-5" />
+          </div>
+          <div className="flex-1 space-y-3">
+            <div>
+              <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                {t("settings.language.titleWithNative")}
+              </h2>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                {t("settings.language.description")}
+              </p>
+            </div>
+            <div className="inline-flex rounded-md border border-zinc-300 bg-white p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-900">
+              <button
+                type="button"
+                onClick={() => setLanguage("th")}
+                className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${
+                  language === "th"
+                    ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                {t("settings.language.optionThai")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage("en")}
+                className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${
+                  language === "en"
+                    ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                {t("settings.language.optionEnglish")}
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {t("settings.language.helper")}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Activity Log link-out */}
       <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
@@ -112,17 +163,17 @@ export default function SettingsPage() {
           <div className="flex-1 space-y-2">
             <div>
               <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                Activity Log
+                {t("settings.activityLog.title")}
               </h2>
               <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                View a complete audit trail of important actions in your account.
+                {t("settings.activityLog.description")}
               </p>
             </div>
             <Link
               href="/dashboard/settings/activity-log"
               className="inline-flex items-center text-sm font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 underline-offset-4 hover:underline"
             >
-              Open Activity Log
+              {t("settings.activityLog.open")}
             </Link>
           </div>
         </div>
@@ -142,10 +193,10 @@ export default function SettingsPage() {
             </div>
             <div>
               <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-                Sessions
+                {t("settings.sessions.title")}
               </h2>
               <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                Quickly review and revoke active sessions on your account.
+                {t("settings.sessions.description")}
               </p>
             </div>
           </div>
@@ -158,16 +209,16 @@ export default function SettingsPage() {
               <Skeleton key={i} className="h-14 w-full rounded-md" />
             ))}
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Loading sessions…
+              {t("settings.sessions.loading")}
             </p>
           </div>
         ) : sessionsError ? (
           <p className="text-sm text-red-600 dark:text-red-400">
-            {sessionsError}
+            {t("settings.sessions.error")}
           </p>
         ) : sessions.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            No active sessions.
+            {t("settings.sessions.empty")}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -183,12 +234,24 @@ export default function SettingsPage() {
                       {deviceLabel(s.userAgent)}
                       {s.isCurrent && (
                         <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-                          (this device)
+                          {t("settings.sessions.thisDevice")}
                         </span>
                       )}
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Last active {formatDate(s.lastActiveAt)}
+                      {t(
+                        "settings.sessions.lastActivePrefix",
+                        formatRelative(s.lastActiveAt).key === "justNow"
+                          ? undefined
+                          : {
+                              relative: t(
+                                `common.time.${formatRelative(s.lastActiveAt).key}`,
+                                formatRelative(s.lastActiveAt).count
+                                  ? { count: formatRelative(s.lastActiveAt).count! }
+                                  : undefined,
+                              ),
+                            },
+                      )}
                     </p>
                   </div>
                 </div>
@@ -199,7 +262,7 @@ export default function SettingsPage() {
                   className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <Trash2 className="h-3 w-3" />
-                  Revoke
+                  {t("settings.sessions.revoke")}
                 </button>
               </li>
             ))}
@@ -209,14 +272,19 @@ export default function SettingsPage() {
         {otherSessions.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {otherSessions.length} session
-              {otherSessions.length === 1 ? "" : "s"} on other devices.
+              {otherSessions.length === 1
+                ? t("settings.sessions.otherDevicesSummarySingular", {
+                    count: otherSessions.length,
+                  })
+                : t("settings.sessions.otherDevicesSummaryPlural", {
+                    count: otherSessions.length,
+                  })}
             </p>
             <Link
               href="/dashboard/settings/sessions"
               className="text-xs font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
             >
-              Manage all sessions
+              {t("settings.sessions.manageAll")}
             </Link>
           </div>
         )}
