@@ -193,8 +193,8 @@ export function AppSidebarLayout({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <div className="text-xs text-muted-foreground">
-            version 0.0.0-beta.1
+          <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+            beta 0.0.0-967-080.1
           </div>
         </SidebarFooter>
         <SidebarRail />
@@ -205,9 +205,14 @@ export function AppSidebarLayout({
           <SidebarTrigger className="-ml-1" />
           <div className="ml-auto flex items-center gap-4">
             <ThemeToggle />
+            <div className="w-px h-8 bg-border mx-1" aria-hidden="true" />
+
             <DropdownMenu>
-              <DropdownMenuTrigger className="outline-none">
-                <div className="bg-primary/10 text-primary hover:bg-primary/20 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
+              <DropdownMenuTrigger className="outline-none flex gap-3 items-center cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full p-2 px-3 transition-all">
+                <div>
+                  {profile?.name ?? t("dashboard.sidebar.account")}
+                </div>
+                <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
                   {getInitials(profile?.name, profile?.email)}
                 </div>
               </DropdownMenuTrigger>
