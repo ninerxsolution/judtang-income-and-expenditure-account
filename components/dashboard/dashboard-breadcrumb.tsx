@@ -9,6 +9,7 @@ export function getSegmentLabel(segment: string): string {
   const map: Record<string, string> = {
     dashboard: "Dashboard",
     user: "User profile",
+    me: "User profile",
     sessions: "Sessions",
     transactions: "Transactions",
     tools: "Tools",

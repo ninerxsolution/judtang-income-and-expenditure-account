@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   User,
@@ -14,7 +15,6 @@ import {
   LogOut,
 } from "lucide-react";
 
-import { LogoutButton } from "@/components/auth/logout-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,37 +39,86 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+type HeaderProfile = {
+  name: string | null;
+  email: string | null;
+  image: string | null;
+};
+
+function getInitials(name: string | null | undefined, email: string | null | undefined) {
+  if (name && name.trim().length > 0) {
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0];
+    const second = parts[1]?.[0];
+    return (first ?? "").concat(second ?? "").toUpperCase() || "?";
+  }
+  if (email && email.length > 0) {
+    const beforeAt = email.split("@")[0] ?? "";
+    if (beforeAt.length >= 2) {
+      return beforeAt.slice(0, 2).toUpperCase();
+    }
+    if (beforeAt.length === 1) {
+      return beforeAt.toUpperCase();
+    }
+  }
+  return "?";
+}
+
+function useHeaderProfile() {
+  const [profile, setProfile] = useState<HeaderProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/users/me");
+        if (!res.ok) {
+          return;
+        }
+        const data = (await res.json()) as {
+          name?: string | null;
+          email?: string | null;
+          image?: string | null;
+        };
+        if (!cancelled) {
+          setProfile({
+            name: data.name ?? null,
+            email: data.email ?? null,
+            image: data.image ?? null,
+          });
+        }
+      } catch {
+        // ignore header profile errors
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { profile, loading };
+}
+
 const navItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Sessions",
-    href: "/dashboard/sessions",
-    icon: Monitor,
-  },
   {
     title: "Transactions",
     href: "/dashboard/transactions",
     icon: Wallet,
   },
   {
-    title: "Tools",
-    href: "/dashboard/tools",
-    icon: Wrench,
-  },
-  {
     title: "Calendar",
     href: "/dashboard/calendar",
     icon: CalendarRange,
-  },
-  {
-    title: "Activity Log",
-    href: "/dashboard/activity-log",
-    icon: Bell,
-  },
+  }
 ] as const;
 
 export function AppSidebarLayout({
@@ -78,6 +127,7 @@ export function AppSidebarLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { profile } = useHeaderProfile();
 
   return (
     <>
@@ -104,8 +154,7 @@ export function AppSidebarLayout({
                   const Icon = item.icon;
                   const isActive =
                     pathname === item.href ||
-                    (pathname?.startsWith(item.href) &&
-                      item.href !== "/dashboard");
+                    (pathname?.startsWith(item.href));
 
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -127,7 +176,9 @@ export function AppSidebarLayout({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <LogoutButton />
+          <div className="text-xs text-muted-foreground">
+            version 0.0.0-beta.1
+          </div>
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
@@ -139,19 +190,23 @@ export function AppSidebarLayout({
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
                 <div className="bg-primary/10 text-primary hover:bg-primary/20 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
-                  JT
+                  {getInitials(profile?.name, profile?.email)}
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Judtang</p>
-                    <p className="text-xs leading-none text-muted-foreground">admin@example.com</p>
+                    <p className="text-sm font-medium leading-none">
+                      {profile?.name ?? "Account"}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {profile?.email ?? "—"}
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/user" className="cursor-pointer">
+                  <Link href="/dashboard/me" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </Link>
