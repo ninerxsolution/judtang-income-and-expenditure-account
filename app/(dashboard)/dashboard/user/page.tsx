@@ -207,7 +207,7 @@ export default function UserPage() {
 
   if (loading && !profile) {
     return (
-      <div className="p-8 max-w-2xl space-y-10">
+      <div className="space-y-10">
         <Skeleton className="h-7 w-40" />
         <section className="space-y-4 rounded-lg border border-border bg-muted/30 p-6">
           <Skeleton className="h-4 w-16" />
@@ -232,9 +232,7 @@ export default function UserPage() {
 
   if (error) {
     return (
-      <div className="p-8">
-        <p className="text-red-600 dark:text-red-400">{error}</p>
-      </div>
+      <p className="text-red-600 dark:text-red-400">{error}</p>
     );
   }
 
@@ -244,7 +242,7 @@ export default function UserPage() {
   const otherSessions = sessions.filter((s) => !s.isCurrent);
 
   return (
-    <div className="p-8 max-w-2xl space-y-10">
+    <div className="space-y-10">
       <h1 className="text-xl font-semibold">User profile</h1>
 
       {/* Profile block */}

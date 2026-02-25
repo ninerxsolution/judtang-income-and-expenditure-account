@@ -140,7 +140,7 @@ export default function ActivityLogPage() {
   }, [filterEntityType, filterAction, filterDateFrom, filterDateTo]);
 
   return (
-    <div className="p-8 max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <Bell className="h-5 w-5" />

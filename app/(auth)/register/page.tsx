@@ -1,6 +1,7 @@
 /**
  * Register page — form to create an account (Credentials).
  */
+import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 import {
   Card,
@@ -8,6 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Register | Judtang",
+};
 
 export default function RegisterPage() {
   return (

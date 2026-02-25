@@ -472,7 +472,7 @@ export default function TransactionsCalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-6 sm:p-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">

@@ -1,6 +1,7 @@
 /**
  * Sign-in page — form (Credentials + Google) and link to register.
  */
+import type { Metadata } from "next";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import {
   Card,
@@ -16,6 +17,10 @@ type PageProps = {
 const ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Invalid email or password",
   Default: "Something went wrong. Please try again.",
+};
+
+export const metadata: Metadata = {
+  title: "Sign in | Judtang",
 };
 
 export default async function SignInPage({ searchParams }: PageProps) {

@@ -118,7 +118,7 @@ export default function DataToolsPage() {
   }
 
   return (
-    <div className="p-8 mx-auto max-w-3xl space-y-8">
+    <div className="space-y-8">
       <header className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
           <Wrench className="h-5 w-5" />

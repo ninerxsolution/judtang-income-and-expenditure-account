@@ -1,6 +1,7 @@
 /**
  * Home (public). Overview of the project and entry points.
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Home | Judtang",
+};
 
 export default function Home() {
   return (
