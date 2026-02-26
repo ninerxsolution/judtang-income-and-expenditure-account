@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { MIN_PASSWORD_LENGTH } from "@/lib/validation";
+import {
+  EMAIL_MAX_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  MAX_NAME_LENGTH,
+  MIN_PASSWORD_LENGTH,
+} from "@/lib/validation";
 import { FormField } from "./form-field";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -71,6 +76,7 @@ export function RegisterForm() {
           value={email}
           onChange={setEmail}
           autoComplete="email"
+          maxLength={EMAIL_MAX_LENGTH}
         />
         <FormField
           id="register-password"
@@ -80,6 +86,7 @@ export function RegisterForm() {
           value={password}
           onChange={setPassword}
           autoComplete="new-password"
+          maxLength={MAX_PASSWORD_LENGTH}
         />
         <FormField
           id="register-confirm-password"
@@ -89,6 +96,7 @@ export function RegisterForm() {
           value={confirmPassword}
           onChange={setConfirmPassword}
           autoComplete="new-password"
+          maxLength={MAX_PASSWORD_LENGTH}
         />
         <FormField
           id="register-name"
@@ -97,6 +105,7 @@ export function RegisterForm() {
           value={name}
           onChange={setName}
           autoComplete="name"
+          maxLength={MAX_NAME_LENGTH}
         />
         {error && (
           <p className="text-destructive text-sm">{error}</p>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -210,28 +211,20 @@ export default function ActivityLogPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-              {t("activityLog.filters.fromDate")}
-            </label>
-            <input
-              type="date"
-              className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1.5 text-sm"
-              value={filterDateFrom}
-              onChange={(e) => setFilterDateFrom(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-              {t("activityLog.filters.toDate")}
-            </label>
-            <input
-              type="date"
-              className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2 py-1.5 text-sm"
-              value={filterDateTo}
-              onChange={(e) => setFilterDateTo(e.target.value)}
-            />
-          </div>
+          <DatePicker
+            id="activity-log-from"
+            label={t("activityLog.filters.fromDate")}
+            value={filterDateFrom}
+            onChange={setFilterDateFrom}
+            className="min-w-[180px]"
+          />
+          <DatePicker
+            id="activity-log-to"
+            label={t("activityLog.filters.toDate")}
+            value={filterDateTo}
+            onChange={setFilterDateTo}
+            className="min-w-[180px]"
+          />
         </div>
       </section>
 

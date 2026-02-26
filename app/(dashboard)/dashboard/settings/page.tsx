@@ -4,9 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { Bell, Monitor, Trash2, LogOut, Languages } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTools } from "@/components/dashboard/data-tools";
 import { useI18n } from "@/hooks/use-i18n";
+import type { Language } from "@/i18n";
 
 type SessionRow = {
   sessionId: string;
@@ -47,6 +58,7 @@ function deviceLabel(userAgent: string | null) {
 export default function SettingsPage() {
   const { t, language, setLanguage } = useI18n();
 
+  const [pendingLanguage, setPendingLanguage] = useState<Language | null>(null);
   const [sessionsData, setSessionsData] = useState<SessionsResponse | null>(null);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
@@ -121,10 +133,12 @@ export default function SettingsPage() {
                 {t("settings.language.description")}
               </p>
             </div>
-            <div className="inline-flex rounded-md border border-zinc-300 bg-white p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="inline-flex gap-1 rounded-md border border-zinc-300 bg-white p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-900">
               <button
                 type="button"
-                onClick={() => setLanguage("th")}
+                onClick={() => {
+                  if (language !== "th") setPendingLanguage("th");
+                }}
                 className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${
                   language === "th"
                     ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
@@ -136,7 +150,9 @@ export default function SettingsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setLanguage("en")}
+                onClick={() => {
+                  if (language !== "en") setPendingLanguage("en");
+                }}
                 className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${
                   language === "en"
                     ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
@@ -147,6 +163,41 @@ export default function SettingsPage() {
                 {t("settings.language.optionEnglish")}
               </button>
             </div>
+            <AlertDialog
+              open={pendingLanguage !== null}
+              onOpenChange={(open) => !open && setPendingLanguage(null)}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {t("settings.language.confirmTitle")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("settings.language.confirmMessage", {
+                      language:
+                        pendingLanguage === "th"
+                          ? t("settings.language.optionThai")
+                          : t("settings.language.optionEnglish"),
+                    })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    {t("common.actions.cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (pendingLanguage) {
+                        setLanguage(pendingLanguage);
+                        setPendingLanguage(null);
+                      }
+                    }}
+                  >
+                    {t("settings.language.confirmButton")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {t("settings.language.helper")}
             </p>

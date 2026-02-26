@@ -44,23 +44,39 @@ export async function GET(request: Request) {
       },
       select: {
         occurredAt: true,
+        type: true,
       },
     });
 
-    const yearMap = new Map<number, number>();
+    const yearMap = new Map<
+      number,
+      { count: number; incomeCount: number; expenseCount: number }
+    >();
 
     for (const tx of items) {
       const y = tx.occurredAt.getFullYear();
-      const prev = yearMap.get(y) ?? 0;
-      yearMap.set(y, prev + 1);
+      const prev = yearMap.get(y) ?? {
+        count: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+      };
+      const isIncome = String(tx.type).toUpperCase() === "INCOME";
+      const isExpense = String(tx.type).toUpperCase() === "EXPENSE";
+      yearMap.set(y, {
+        count: prev.count + 1,
+        incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
+        expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+      });
     }
 
     const result = Array.from(yearMap.entries())
       .sort(([a], [b]) => a - b)
-      .map(([year, count]) => ({
+      .map(([year, { count, incomeCount, expenseCount }]) => ({
         year,
         hasTransactions: count > 0,
         count,
+        incomeCount,
+        expenseCount,
       }));
 
     return NextResponse.json(result);

@@ -106,6 +106,7 @@ export async function GET(request: Request) {
   const fromParam = searchParams.get("from") ?? undefined;
   const toParam = searchParams.get("to") ?? undefined;
   const dateParam = searchParams.get("date") ?? undefined;
+  const typeParam = searchParams.get("type") ?? undefined;
   const limitParam = searchParams.get("limit");
   const offsetParam = searchParams.get("offset");
 
@@ -143,10 +144,19 @@ export async function GET(request: Request) {
     }
   }
 
+  let typeFilter: "INCOME" | "EXPENSE" | undefined;
+  if (typeParam) {
+    const upper = typeParam.toUpperCase();
+    if (upper === TransactionType.INCOME || upper === TransactionType.EXPENSE) {
+      typeFilter = upper;
+    }
+  }
+
   try {
     const transactions = await listTransactionsByUser(userId, {
       from: fromDate,
       to: toDate,
+      type: typeFilter,
       limit,
       offset,
     });
@@ -154,7 +164,10 @@ export async function GET(request: Request) {
     const data = transactions.map((t) => ({
       id: t.id,
       type: t.type,
-      amount: t.amount,
+      amount:
+        typeof t.amount === "object" && t.amount != null && "toNumber" in t.amount
+          ? (t.amount as { toNumber: () => number }).toNumber()
+          : Number(t.amount),
       category: t.category,
       note: t.note,
       occurredAt: t.occurredAt.toISOString(),

@@ -15,8 +15,11 @@ import {
   Bell,
   Settings,
   LogOut,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +44,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { useFullscreen } from "@/components/dashboard/fullscreen-context";
 import { useI18n } from "@/hooks/use-i18n";
 
 type HeaderProfile = {
@@ -114,15 +118,16 @@ function useHeaderProfile() {
 
 const navItems = [
   {
-    key: "transactions",
-    href: "/dashboard/transactions",
-    icon: Wallet,
-  },
-  {
     key: "calendar",
     href: "/dashboard/calendar",
     icon: CalendarRange,
   },
+  {
+    key: "transactions",
+    href: "/dashboard/transactions",
+    icon: Wallet,
+  },
+  
 ] as const;
 
 export function AppSidebarLayout({
@@ -133,6 +138,7 @@ export function AppSidebarLayout({
   const pathname = usePathname();
   const { profile } = useHeaderProfile();
   const { t } = useI18n();
+  const { fullscreen, toggleFullscreen } = useFullscreen();
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -193,21 +199,39 @@ export function AppSidebarLayout({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <div className="text-xs text-muted-foreground">
-            version 0.0.0-beta.1
+          <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+            beta 0.0.0-967-080.1
           </div>
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
 
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="ml-auto flex items-center gap-4">
             <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden sm:block h-8 w-8 rounded-full"
+              aria-label={fullscreen ? t("dashboard.fullscreen.exit") : t("dashboard.fullscreen.enter")}
+              onClick={toggleFullscreen}
+            >
+              {fullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+            <div className="w-px h-8 bg-border mx-1" aria-hidden="true" />
+
             <DropdownMenu>
-              <DropdownMenuTrigger className="outline-none">
-                <div className="bg-primary/10 text-primary hover:bg-primary/20 flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
+              <DropdownMenuTrigger className="outline-none flex gap-3 items-center cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full p-2 px-3 transition-all">
+                <div>
+                  {profile?.name ?? t("dashboard.sidebar.account")}
+                </div>
+                <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
                   {getInitials(profile?.name, profile?.email)}
                 </div>
               </DropdownMenuTrigger>

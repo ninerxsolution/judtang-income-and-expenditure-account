@@ -7,11 +7,14 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ## 26/02/2026
 
-- docs/PRD.md — §18: Added 18.3.6 Export (GET /api/transactions/export), 18.3.7 Import (POST /api/transactions/import), and 18.4.4 Data Tools (/dashboard/tools) to match current implementation.
-- docs/core/activity-log.md — entityType extended with `transaction`; actions extended with TRANSACTION_CREATED, TRANSACTION_EXPORT, TRANSACTION_IMPORT; details format for export/import; UI path corrected to /dashboard/settings/activity-log (via Settings).
+- docs/PRD.md — §18.4: Transaction CRUD changed from full-page to modal/dialog. List merged into `/dashboard/transactions` (removed `/list` route). Create/Edit use TransactionFormDialog; Delete uses TransactionDeleteDialog. Calendar Add/Edit/Delete open modals in-page.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for transaction modal UX.
+- docs/PRD.md — §18: Added 18.3.8 Single Transaction (GET/PATCH/DELETE /api/transactions/[id]), 18.3.9 Summary (GET /api/transactions/summary); List API 18.3.2 extended with `type` query param; 18.4.1 New/Edit Transaction (edit mode with ?id=); 18.4.2 List filters (from, to, type), pagination, Edit/Delete per row; Calendar day modal Edit/Delete; Dashboard summary cards; Data Tools export filters (from, to, type). Implementation of missing income/expense features per plan.
+- docs/PRD.md — §18: (earlier) Added 18.3.6 Export, 18.3.7 Import, 18.4.4 Data Tools to match implementation.
+- docs/core/activity-log.md — entityType extended with `transaction`; actions extended with TRANSACTION_CREATED, TRANSACTION_UPDATED, TRANSACTION_DELETED, TRANSACTION_EXPORT, TRANSACTION_IMPORT; details format for export/import; UI path corrected to /dashboard/settings/activity-log (via Settings).
 - docs/INDEX.md — feature section updated to mention Income & Expense (PRD §18).
 - docs/structure/mvp-boundary.md — Note added that current implementation includes Income & Expense + Data Tools (PRD §18), not MVP must-have.
-- docs/PRD_CHANGE_LOG.md — Changelog entry for docs sync with current features.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for docs sync and §18 feature updates.
 
 ---
 

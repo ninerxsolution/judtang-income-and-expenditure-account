@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Download, Upload, Wrench } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useI18n } from "@/hooks/use-i18n";
 
 type ImportErrorItem = {
@@ -32,6 +33,9 @@ export function DataTools() {
 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportFrom, setExportFrom] = useState("");
+  const [exportTo, setExportTo] = useState("");
+  const [exportType, setExportType] = useState<"all" | "INCOME" | "EXPENSE">("all");
 
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -42,7 +46,13 @@ export function DataTools() {
     setExportError(null);
     setExporting(true);
     try {
-      const res = await fetch("/api/transactions/export");
+      const params = new URLSearchParams();
+      if (exportFrom) params.set("from", exportFrom);
+      if (exportTo) params.set("to", exportTo);
+      if (exportType !== "all") params.set("type", exportType);
+      const query = params.toString();
+      const url = query ? `/api/transactions/export?${query}` : "/api/transactions/export";
+      const res = await fetch(url);
       if (!res.ok) {
         let message = t("dataTools.export.failed");
         try {
@@ -58,14 +68,14 @@ export function DataTools() {
       }
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = blobUrl;
       a.download = getFilenameFromHeaders(res.headers) ?? "transactions.csv";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(blobUrl);
     } catch {
       setExportError(t("dataTools.export.failed"));
     } finally {
@@ -143,6 +153,37 @@ export function DataTools() {
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           {t("dataTools.export.description")}
         </p>
+        <div className="mt-4 flex flex-wrap items-end gap-4">
+          <DatePicker
+            id="export-from"
+            label={t("dataTools.export.fromDate")}
+            value={exportFrom}
+            onChange={setExportFrom}
+            className="min-w-[180px]"
+          />
+          <DatePicker
+            id="export-to"
+            label={t("dataTools.export.toDate")}
+            value={exportTo}
+            onChange={setExportTo}
+            className="min-w-[180px]"
+          />
+          <div>
+            <label htmlFor="export-type" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              {t("dataTools.export.type")}
+            </label>
+            <select
+              id="export-type"
+              value={exportType}
+              onChange={(e) => setExportType(e.target.value as "all" | "INCOME" | "EXPENSE")}
+              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="all">{t("dataTools.export.typeAll")}</option>
+              <option value="INCOME">{t("transactions.common.income")}</option>
+              <option value="EXPENSE">{t("transactions.common.expense")}</option>
+            </select>
+          </div>
+        </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
