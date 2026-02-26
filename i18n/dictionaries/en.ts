@@ -93,6 +93,13 @@ export const enDictionary = {
       subtitle: "You are logged in. This area is protected.",
       body: "Use the navigation above to access User profile, Sessions, Transactions, Tools, Calendar, and Activity Log.",
     },
+    summary: {
+      title: "This month",
+      income: "Income",
+      expense: "Expense",
+      balance: "Balance",
+      loading: "Loading…",
+    },
   },
   settings: {
     title: "Settings",
@@ -131,6 +138,10 @@ export const enDictionary = {
       title: "Export transactions",
       description:
         "Download a CSV file of all your transactions (filtered by your account). If you have no data yet, the file will contain only the header row and can be used as a template.",
+      fromDate: "From date",
+      toDate: "To date",
+      type: "Type",
+      typeAll: "All",
       button: "Download CSV",
       pending: "Exporting…",
       failed: "Failed to export transactions",
@@ -235,6 +246,14 @@ export const enDictionary = {
       pending: "Saving…",
       submit: "Save transaction",
     },
+    edit: {
+      title: "Edit transaction",
+      subtitle: "Update the transaction details below.",
+      loading: "Loading transaction…",
+      loadFailed: "Failed to load transaction.",
+      saveSuccess: "Transaction updated. Redirecting…",
+      submit: "Update transaction",
+    },
     list: {
       subtitle: "All recorded income and expenses for your account.",
       calendarView: "Calendar view",
@@ -242,6 +261,13 @@ export const enDictionary = {
       loading: "Loading transactions…",
       loadFailed: "Failed to load transactions",
       empty: "No transactions recorded yet.",
+      deleteConfirm: "Are you sure you want to delete this transaction?",
+      deleteFailed: "Failed to delete transaction.",
+      filters: "Filters",
+      applyFilters: "Apply",
+      pageInfo: "Showing {from}–{to}",
+      prev: "Previous",
+      next: "Next",
       columns: {
         date: "Date",
         type: "Type",

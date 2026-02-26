@@ -579,6 +579,7 @@ Query params:
 - `from?: string` — optional start date (parsed by `new Date(from)`)
 - `to?: string` — optional end date
 - `date?: string` — optional single date (`YYYY-MM-DD` or ISO)
+- `type?: string` — optional `"INCOME"` or `"EXPENSE"` to filter by transaction type
 
 Semantics:
 
@@ -586,6 +587,7 @@ Semantics:
   - `from`/`to` are ignored
   - Query is constrained to **startOfDay(date) .. endOfDay(date)** in server timezone
 - Otherwise, `from` and/or `to` (if valid) are used directly as range bounds
+- If `type` is `"INCOME"` or `"EXPENSE"`, only transactions of that type are returned
 - Results are ordered by `occurredAt desc, createdAt desc`
 
 Used by:
@@ -702,26 +704,49 @@ Behaviour:
 
 Used by the **Data Tools** page for importing transactions from CSV.
 
+#### 18.3.8 Single Transaction — `GET /api/transactions/[id]`, `PATCH /api/transactions/[id]`, `DELETE /api/transactions/[id]`
+
+**GET** — Returns the transaction as JSON if it belongs to the current user; otherwise `404`. Used by the edit form to load existing data.
+
+**PATCH** — Body same as create (`type`, `amount`, `category`, `note`, `occurredAt`). Validates and updates the transaction if it belongs to the current user. Records Activity Log `TRANSACTION_UPDATED`. Returns the updated transaction or `404`.
+
+**DELETE** — Deletes the transaction if it belongs to the current user. Records Activity Log `TRANSACTION_DELETED`. Returns `{ ok: true }` or `404`.
+
+#### 18.3.9 Summary — `GET /api/transactions/summary`
+
+Query params:
+
+- `from?: string` — optional start date
+- `to?: string` — optional end date
+
+Behaviour:
+
+- Requires authenticated user; otherwise `401`
+- If `from` and `to` are omitted or invalid, uses the **current month** (start and end of month in server timezone)
+- Aggregates transactions in the range by type and returns `{ income: number, expense: number }` (balance can be computed client-side as income − expense)
+
+Used by the **Dashboard** home page to show summary cards (income, expense, balance) for the current month.
+
 ---
 
 ### 18.4 UI & Calendar Behaviour
 
-#### 18.4.1 New Transaction — `/dashboard/transactions`
+#### 18.4.1 New / Edit Transaction — `/dashboard/transactions`
 
 Purpose:
 
-- Single-page form to quickly record a new income or expense.
+- Single-page form to create a new income or expense, or to edit an existing one.
 
 Key behaviours:
 
+- If the page is opened with `?id=<transactionId>` in the URL, the form operates in **edit mode**: it loads the transaction via `GET /api/transactions/[id]`, pre-fills the form, and on submit calls `PATCH /api/transactions/[id]`. After a successful update, a success message is shown and the user is redirected to the list (or may navigate back).
+- Without `id`, the form is **create mode**.
 - User selects **Type**: Income or Expense
 - User inputs `amount` (positive number, validated on client and server)
 - Optional `category`, `note`
-- `Date` picker defaults to **today**, but:
-  - If the page is opened with `?date=YYYY-MM-DD` in the URL, that value is used as the initial date (for backdated entry via the calendar)
-- On successful save:
-  - Form resets `amount`, `category`, and `note`
-  - A success message is shown
+- `Date` picker defaults to **today** in create mode, or the transaction’s `occurredAt` in edit mode; if the page is opened with `?date=YYYY-MM-DD` (and no `id`), that value is used as the initial date (for backdated entry via the calendar)
+- On successful create: form resets `amount`, `category`, and `note`; a success message is shown
+- On successful update: redirect to list after a short delay
 
 Navigation:
 
@@ -731,17 +756,16 @@ Navigation:
 
 Purpose:
 
-- Table view of recent transactions for the current user.
+- Table view of transactions for the current user with optional filters and pagination.
 
 Key behaviours:
 
-- Calls `GET /api/transactions?limit=100`
-- Shows:
-  - Date (`occurredAt`, formatted as `YYYY-MM-DD`)
-  - Type with icons (Income/Expense)
-  - Amount (two decimal places, with locale-aware formatting)
-  - Category
-  - Note (truncated if long)
+- **Filters**: Optional “From date”, “To date”, and “Type” (All / Income / Expense). An “Apply” (or “Search”) action builds query params and fetches with `offset=0`.
+- **Pagination**: Results are fetched with a fixed page size (e.g. 20). “Previous” and “Next” buttons adjust `offset` and refetch. “Next” is disabled when the returned count is less than the page size.
+- Calls `GET /api/transactions` with `limit`, `offset`, and optional `from`, `to`, `type`.
+- Table shows: Date (`occurredAt`), Type with icons (Income/Expense), Amount (locale-formatted), Category, Note (truncated if long).
+- **Edit**: Each row has an Edit action that links to `/dashboard/transactions?id=<id>`.
+- **Delete**: Each row has a Delete action; confirmation (e.g. native confirm or dialog) then `DELETE /api/transactions/[id]`; on success the list is refetched or the row removed from state.
 
 Navigation:
 
@@ -785,6 +809,7 @@ Core concepts:
 - Clicking any day:
   - Opens a **modal** showing transactions for that date (loaded via `GET /api/transactions?date=YYYY-MM-DD&limit=200`)
   - The modal includes an **Add** button which navigates to `/dashboard/transactions?date=YYYY-MM-DD` so the form is pre-filled to that date
+  - Each transaction in the modal has **Edit** (link to `/dashboard/transactions?id=<id>`) and **Delete** (confirmation then `DELETE /api/transactions/[id]`; on success the modal’s list is updated)
 
 ##### Month view
 
@@ -814,10 +839,14 @@ Core concepts:
     - Leaves `monthIndex` unchanged
     - Switches to **Month** view for that year
 
+##### Dashboard summary (home)
+
+- The dashboard home page (`/dashboard`) displays **summary cards** for the current month: total **Income**, total **Expense**, and **Balance** (income − expense). Data is loaded from `GET /api/transactions/summary` (defaults to current month when `from`/`to` are omitted).
+
 ##### Data Tools — `/dashboard/tools`
 
 - Single page for **Export** and **Import** of transactions as CSV.
-- **Export:** Button triggers `GET /api/transactions/export`; optional filters (from, to, type) can be supported; browser downloads the CSV file.
+- **Export:** Optional filters “From date”, “To date”, and “Type” (All / Income / Expense). Button triggers `GET /api/transactions/export?from=…&to=…&type=…` with the chosen values; browser downloads the CSV file.
 - **Import:** User selects a CSV file; on submit, `POST /api/transactions/import`; UI shows result summary (created/updated counts, and any row-level errors if validation failed).
 
 ---

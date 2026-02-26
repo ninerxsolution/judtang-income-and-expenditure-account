@@ -8,7 +8,12 @@ import {
   ArrowUpCircle,
   Plus,
   CalendarRange,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -40,18 +45,31 @@ function formatAmount(amount: number, locale: string) {
   });
 }
 
+const PAGE_SIZE = 20;
+
 export default function TransactionsListPage() {
   const { t, locale } = useI18n();
 
   const [items, setItems] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterFrom, setFilterFrom] = useState("");
+  const [filterTo, setFilterTo] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "INCOME" | "EXPENSE">("all");
+  const [offset, setOffset] = useState(0);
 
-  async function fetchTransactions() {
+  async function fetchTransactions(overrides?: { offset?: number }) {
     setLoading(true);
     setError(null);
+    const currentOffset = overrides?.offset ?? offset;
     try {
-      const res = await fetch("/api/transactions?limit=100");
+      const params = new URLSearchParams();
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(currentOffset));
+      if (filterFrom) params.set("from", filterFrom);
+      if (filterTo) params.set("to", filterTo);
+      if (filterType !== "all") params.set("type", filterType);
+      const res = await fetch(`/api/transactions?${params.toString()}`);
       if (!res.ok) {
         if (res.status === 401) {
           setError(t("common.errors.unauthenticated"));
@@ -71,10 +89,41 @@ export default function TransactionsListPage() {
     }
   }
 
+  function applyFilters() {
+    setOffset(0);
+    void fetchTransactions({ offset: 0 });
+  }
+
+  function goPrev() {
+    const nextOffset = Math.max(0, offset - PAGE_SIZE);
+    setOffset(nextOffset);
+    void fetchTransactions({ offset: nextOffset });
+  }
+
+  function goNext() {
+    const nextOffset = offset + PAGE_SIZE;
+    setOffset(nextOffset);
+    void fetchTransactions({ offset: nextOffset });
+  }
+
   useEffect(() => {
     void fetchTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function handleDelete(tx: Transaction) {
+    if (!confirm(t("transactions.list.deleteConfirm"))) return;
+    try {
+      const res = await fetch(`/api/transactions/${tx.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setItems((prev) => prev.filter((i) => i.id !== tx.id));
+      } else {
+        setError(t("transactions.list.deleteFailed"));
+      }
+    } catch {
+      setError(t("transactions.list.deleteFailed"));
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -106,6 +155,56 @@ export default function TransactionsListPage() {
         </div>
       </div>
 
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          {t("transactions.list.filters")}
+        </h2>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label htmlFor="list-from" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              {t("dataTools.export.fromDate")}
+            </label>
+            <input
+              id="list-from"
+              type="date"
+              value={filterFrom}
+              onChange={(e) => setFilterFrom(e.target.value)}
+              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+          <div>
+            <label htmlFor="list-to" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              {t("dataTools.export.toDate")}
+            </label>
+            <input
+              id="list-to"
+              type="date"
+              value={filterTo}
+              onChange={(e) => setFilterTo(e.target.value)}
+              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+          <div>
+            <label htmlFor="list-type" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              {t("dataTools.export.type")}
+            </label>
+            <select
+              id="list-type"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE")}
+              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="all">{t("dataTools.export.typeAll")}</option>
+              <option value="INCOME">{t("transactions.common.income")}</option>
+              <option value="EXPENSE">{t("transactions.common.expense")}</option>
+            </select>
+          </div>
+          <Button onClick={applyFilters} variant="secondary" size="sm">
+            {t("transactions.list.applyFilters")}
+          </Button>
+        </div>
+      </div>
+
       {loading && (
         <div className="mt-6 space-y-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -128,8 +227,9 @@ export default function TransactionsListPage() {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/60">
-          <table className="min-w-full text-sm">
+        <>
+          <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/60">
+            <table className="min-w-full text-sm">
             <thead className="bg-zinc-50 dark:bg-zinc-800/80">
               <tr>
                 <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
@@ -146,6 +246,9 @@ export default function TransactionsListPage() {
                 </th>
                 <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
                   {t("transactions.list.columns.note")}
+                </th>
+                <th className="w-0 px-2 py-2 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                  {t("common.actions.edit")} / {t("common.actions.delete")}
                 </th>
               </tr>
             </thead>
@@ -191,12 +294,61 @@ export default function TransactionsListPage() {
                           : tx.note
                         : "—"}
                     </td>
+                    <td className="px-2 py-2 align-top text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/dashboard/transactions?id=${tx.id}`} aria-label={t("common.actions.edit")}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(tx)}
+                          aria-label={t("common.actions.delete")}
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {t("transactions.list.pageInfo", {
+                from: offset + 1,
+                to: offset + items.length,
+              })}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goPrev}
+                disabled={offset === 0}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {t("transactions.list.prev")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goNext}
+                disabled={items.length < PAGE_SIZE}
+                className="gap-1"
+              >
+                {t("transactions.list.next")}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

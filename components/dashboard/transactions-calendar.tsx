@@ -8,9 +8,13 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  Pencil,
   Plus,
+  Trash2,
   X,
 } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/hooks/use-i18n";
 
 type CalendarSummaryItem = {
@@ -438,6 +442,18 @@ export function TransactionsCalendar() {
     const params = new URLSearchParams();
     params.set("date", dateIso);
     router.push(`/dashboard/transactions?${params.toString()}`);
+  }
+
+  async function handleDeleteInModal(tx: DailyTransaction) {
+    if (!selectedDate || !confirm(t("transactions.list.deleteConfirm"))) return;
+    try {
+      const res = await fetch(`/api/transactions/${tx.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setDailyItems((prev) => prev.filter((i) => i.id !== tx.id));
+      }
+    } catch {
+      // ignore
+    }
   }
 
   const selectedDateLabel = useMemo(() => {
@@ -891,10 +907,10 @@ export function TransactionsCalendar() {
                         key={tx.id}
                         className="flex items-start justify-between gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-900"
                       >
-                        <div className="flex items-start gap-2">
+                        <div className="flex min-w-0 flex-1 items-start gap-2">
                           <span
                             className={[
-                              "inline-flex h-6 w-6 items-center justify-center rounded-full",
+                              "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
                               isIncome
                                 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                                 : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
@@ -908,7 +924,7 @@ export function TransactionsCalendar() {
                               <ArrowUpCircle className="h-3.5 w-3.5" />
                             )}
                           </span>
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1">
                               {tx.category && (
                                 <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
@@ -929,8 +945,24 @@ export function TransactionsCalendar() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                          {formatAmount(tx.amount, locale)}
+                        <div className="flex shrink-0 items-center gap-0.5 text-right">
+                          <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                            {formatAmount(tx.amount, locale)}
+                          </span>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                            <Link href={`/dashboard/transactions?id=${tx.id}`} aria-label={t("common.actions.edit")}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                            onClick={() => handleDeleteInModal(tx)}
+                            aria-label={t("common.actions.delete")}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </li>
                     );
