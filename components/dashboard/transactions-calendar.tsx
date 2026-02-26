@@ -820,8 +820,14 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-              {t("calendar.legend.hintMonthClick")}
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                <span>{t("calendar.legend.income")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                <span>{t("calendar.legend.expense")}</span>
+              </div>
+              <span>{t("calendar.legend.hintMonthClick")}</span>
             </div>
           </>
         )}
@@ -916,8 +922,14 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-              {t("calendar.legend.hintYearClick")}
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                <span>{t("calendar.legend.income")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                <span>{t("calendar.legend.expense")}</span>
+              </div>
+              <span>{t("calendar.legend.hintYearClick")}</span>
             </div>
           </>
         )}
