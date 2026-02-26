@@ -65,9 +65,9 @@ export default function DashboardPage() {
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card className="gap-1">
+            <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <ArrowDownCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <ArrowDownCircle className="min-w-4 min-h-4 w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <CardTitle className="text-sm font-medium">
                   {t("dashboard.summary.income")}
                 </CardTitle>
@@ -78,9 +78,9 @@ export default function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="gap-1">
+            <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <ArrowUpCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <ArrowUpCircle className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
                 <CardTitle className="text-sm font-medium">
                   {t("dashboard.summary.expense")}
                 </CardTitle>
@@ -91,9 +91,9 @@ export default function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="gap-1">
+            <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Wallet className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                <Wallet className="min-w-4 min-h-4 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 <CardTitle className="text-sm font-medium">
                   {t("dashboard.summary.balance")}
                 </CardTitle>

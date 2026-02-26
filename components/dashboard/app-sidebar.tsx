@@ -214,7 +214,7 @@ export function AppSidebarLayout({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full"
+              className="hidden sm:block h-8 w-8 rounded-full"
               aria-label={fullscreen ? t("dashboard.fullscreen.exit") : t("dashboard.fullscreen.enter")}
               onClick={toggleFullscreen}
             >

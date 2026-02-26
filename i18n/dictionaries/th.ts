@@ -219,6 +219,8 @@ export const thDictionary = {
     },
     legend: {
       hasRecords: "มีบันทึกอย่างน้อย 1 รายการในวันนั้น",
+      income: "รายรับ",
+      expense: "รายจ่าย",
       hintDayClick: "คลิกวันที่เพื่อดูรายละเอียดหรือเพิ่มรายการใหม่",
       hintMonthClick: "คลิกเดือนเพื่อดูวันที่ในมุมมอง Day",
       hintYearClick: "คลิกปีเพื่อดู 12 เดือนของปีนั้นในมุมมอง Month",

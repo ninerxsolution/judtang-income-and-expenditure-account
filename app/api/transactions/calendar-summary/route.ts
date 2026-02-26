@@ -62,23 +62,41 @@ export async function GET(request: Request) {
       },
       select: {
         occurredAt: true,
+        type: true,
       },
     });
 
-    const summaryMap = new Map<string, number>();
+    const summaryMap = new Map<
+      string,
+      { count: number; incomeCount: number; expenseCount: number }
+    >();
 
     for (const tx of transactions) {
       const dateIso = tx.occurredAt.toISOString().slice(0, 10);
-      const prev = summaryMap.get(dateIso) ?? 0;
-      summaryMap.set(dateIso, prev + 1);
+      const prev = summaryMap.get(dateIso) ?? {
+        count: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+      };
+      const isIncome =
+        String(tx.type).toUpperCase() === "INCOME";
+      const isExpense =
+        String(tx.type).toUpperCase() === "EXPENSE";
+      summaryMap.set(dateIso, {
+        count: prev.count + 1,
+        incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
+        expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+      });
     }
 
     const result = Array.from(summaryMap.entries())
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .map(([date, count]) => ({
+      .map(([date, { count, incomeCount, expenseCount }]) => ({
         date,
         hasTransactions: count > 0,
         count,
+        incomeCount,
+        expenseCount,
       }));
 
     return NextResponse.json(result);

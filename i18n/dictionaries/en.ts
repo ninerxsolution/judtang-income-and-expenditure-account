@@ -219,6 +219,8 @@ export const enDictionary = {
     },
     legend: {
       hasRecords: "At least one transaction on that day",
+      income: "Income",
+      expense: "Expense",
       hintDayClick: "Click a day to review or add a transaction.",
       hintMonthClick: "Click a month to drill down into Day view.",
       hintYearClick: "Click a year to see its 12 months in Month view.",

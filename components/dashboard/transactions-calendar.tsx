@@ -26,6 +26,8 @@ type CalendarSummaryItem = {
   date: string; // YYYY-MM-DD
   hasTransactions: boolean;
   count: number;
+  incomeCount?: number;
+  expenseCount?: number;
 };
 
 type DailyTransaction = {
@@ -44,6 +46,8 @@ type CalendarDay = {
   isToday: boolean;
   hasTransactions: boolean;
   count: number;
+  incomeCount: number;
+  expenseCount: number;
 };
 
 type ViewMode = "day" | "month" | "year";
@@ -130,6 +134,8 @@ function buildCalendarDays(
       isToday: iso === todayIso,
       hasTransactions: !!s?.hasTransactions,
       count: s?.count ?? 0,
+      incomeCount: s?.incomeCount ?? 0,
+      expenseCount: s?.expenseCount ?? 0,
     });
 
     cursor.setDate(cursor.getDate() + 1);
@@ -251,6 +257,16 @@ export function TransactionsCalendar() {
               count:
                 typeof item.count === "number" && Number.isFinite(item.count)
                   ? item.count
+                  : 0,
+              incomeCount:
+                typeof item.incomeCount === "number" &&
+                Number.isFinite(item.incomeCount)
+                  ? item.incomeCount
+                  : 0,
+              expenseCount:
+                typeof item.expenseCount === "number" &&
+                Number.isFinite(item.expenseCount)
+                  ? item.expenseCount
                   : 0,
             })),
           );
@@ -574,7 +590,7 @@ export function TransactionsCalendar() {
         </button>
       </div>
 
-      <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+      <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-2 sm:p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
         {/* Header & content depend on view mode */}
         {viewMode === "day" && (
           <>
@@ -635,29 +651,34 @@ export function TransactionsCalendar() {
                         ? "text-zinc-400 dark:text-zinc-500"
                         : "text-zinc-800 dark:text-zinc-100",
                       day.isToday
-                        ? "ring-1 ring-zinc-900 ring-offset-1 ring-offset-white dark:ring-zinc-100 dark:ring-offset-zinc-900"
+                        ? "border-zinc-900 border-offset-1 border-offset-white dark:border-zinc-100 dark:border-offset-zinc-900"
                         : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
-                    <div className="flex items-center justify-between gap-1">
+                    <div className="flex flex-wrap items-center justify-between gap-1">
                       <span className="text-[11px] font-semibold">
                         {day.date.getDate()}
                       </span>
                       {day.isToday && (
-                        <span className="rounded-full bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        <span className="rounded-full hidden sm:block bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900 ">
                           Today
                         </span>
                       )}
                     </div>
-                    <div className="mt-2 flex items-center gap-1">
+                    <div className="mt-auto flex items-center justify-between gap-1 pt-1">
+                      <div className="flex items-center gap-0.5">
+                        {day.incomeCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        )}
+                        {day.expenseCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                        )}
+                      </div>
                       {hasData && (
-                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                      )}
-                      {hasData && day.count > 1 && (
                         <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                          {day.count} records
+                          {day.count}
                         </span>
                       )}
                     </div>
@@ -666,10 +687,12 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                <span>{t("calendar.legend.hasRecords")}</span>
+                <span>{t("calendar.legend.income")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                <span>{t("calendar.legend.expense")}</span>
               </div>
               <span>{t("calendar.legend.hintDayClick")}</span>
             </div>
@@ -742,7 +765,7 @@ export function TransactionsCalendar() {
                         ? "text-zinc-900 dark:text-zinc-50"
                         : "text-zinc-500 dark:text-zinc-400",
                       isCurrentMonth
-                        ? "ring-1 ring-zinc-900 ring-offset-1 ring-offset-white dark:ring-zinc-100 dark:ring-offset-zinc-900"
+                        ? "border-zinc-900 dark:border-zinc-100"
                         : "",
                     ]
                       .filter(Boolean)
@@ -838,7 +861,7 @@ export function TransactionsCalendar() {
                         ? "text-zinc-900 dark:text-zinc-50"
                         : "text-zinc-500 dark:text-zinc-400",
                       isCurrentYear
-                        ? "ring-1 ring-zinc-900 ring-offset-1 ring-offset-white dark:ring-zinc-100 dark:ring-offset-zinc-900"
+                        ? "border-zinc-900 dark:border-zinc-100"
                         : "",
                     ]
                       .filter(Boolean)
