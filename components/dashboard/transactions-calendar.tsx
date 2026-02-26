@@ -51,7 +51,7 @@ type CalendarDay = {
   expenseCount: number;
 };
 
-type ViewMode = "day" | "month" | "year";
+type ViewMode = "day" | "week" | "month" | "year";
 
 type MonthSummaryItem = {
   monthIndex: number;
@@ -91,6 +91,26 @@ function getMonthLabel(year: number, monthIndex: number, locale: string): string
     year: "numeric",
     month: "long",
   });
+}
+
+function getWeekRangeLabel(
+  weekStartIso: string,
+  locale: string,
+): string {
+  const start = parseISODateOnly(weekStartIso);
+  if (!start) return weekStartIso;
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  const startStr = start.toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+  });
+  const endStr = end.toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `${startStr} – ${endStr}`;
 }
 
 function buildCalendarDays(
@@ -153,6 +173,62 @@ function buildCalendarDays(
   };
 }
 
+function getMondayOfWeek(d: Date): string {
+  const day = d.getDay();
+  const toMonday = (day + 6) % 7;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - toMonday);
+  return formatDateInput(monday);
+}
+
+function addDays(iso: string, delta: number): string {
+  const parsed = parseISODateOnly(iso);
+  if (!parsed) return iso;
+  parsed.setDate(parsed.getDate() + delta);
+  return formatDateInput(parsed);
+}
+
+function buildWeekDays(
+  weekStartIso: string,
+  summary: CalendarSummaryItem[],
+): { days: CalendarDay[]; from: string; to: string } {
+  const start = parseISODateOnly(weekStartIso);
+  if (!start) {
+    return { days: [], from: weekStartIso, to: weekStartIso };
+  }
+
+  const todayIso = formatDateInput(new Date());
+  const summaryMap = new Map<string, CalendarSummaryItem>();
+  for (const item of summary) {
+    summaryMap.set(item.date, item);
+  }
+
+  const days: CalendarDay[] = [];
+  const cursor = new Date(start);
+
+  for (let i = 0; i < 7; i++) {
+    const iso = formatDateInput(cursor);
+    const s = summaryMap.get(iso);
+    days.push({
+      date: new Date(cursor),
+      iso,
+      inCurrentMonth: true,
+      isToday: iso === todayIso,
+      hasTransactions: !!s?.hasTransactions,
+      count: s?.count ?? 0,
+      incomeCount: s?.incomeCount ?? 0,
+      expenseCount: s?.expenseCount ?? 0,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return {
+    days,
+    from: weekStartIso,
+    to: formatDateInput(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)),
+  };
+}
+
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 function formatYearForDisplay(year: number, locale: string): string {
@@ -181,6 +257,9 @@ export function TransactionsCalendar() {
     monthIndex: today.getMonth(), // 0-11
   }));
   const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [weekStartIso, setWeekStartIso] = useState<string>(() =>
+    getMondayOfWeek(today),
+  );
 
   const [summary, setSummary] = useState<CalendarSummaryItem[]>([]);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -217,23 +296,39 @@ export function TransactionsCalendar() {
     }
   }, [year, monthIndex, summary]);
 
+  const { days: weekDays, from: weekFrom, to: weekTo } = useMemo(() => {
+    try {
+      return buildWeekDays(weekStartIso, summary);
+    } catch {
+      return {
+        days: [],
+        from: weekStartIso,
+        to: addDays(weekStartIso, 6),
+      };
+    }
+  }, [weekStartIso, summary]);
+
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [dailyItems, setDailyItems] = useState<DailyTransaction[]>([]);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [dailyError, setDailyError] = useState<string | null>(null);
 
-  // Load summary when month changes.
+  // Load summary when month (day view) or week (week view) changes.
   useEffect(() => {
-    if (!calendarReady || viewMode !== "day") return;
+    if (viewMode !== "day" && viewMode !== "week") return;
+    if (viewMode === "day" && !calendarReady) return;
 
     const controller = new AbortController();
+    const rangeFrom = viewMode === "week" ? weekFrom : from;
+    const rangeTo = viewMode === "week" ? weekTo : to;
+
     async function load() {
       setSummaryLoading(true);
       setSummaryError(null);
       try {
         const params = new URLSearchParams();
-        params.set("from", from);
-        params.set("to", to);
+        params.set("from", rangeFrom);
+        params.set("to", rangeTo);
         const res = await fetch(
           `/api/transactions/calendar-summary?${params.toString()}`,
           { signal: controller.signal },
@@ -286,7 +381,7 @@ export function TransactionsCalendar() {
     void load();
 
     return () => controller.abort();
-  }, [from, to, calendarReady, viewMode, t, refreshKey]);
+  }, [from, to, weekFrom, weekTo, calendarReady, viewMode, t, refreshKey]);
 
   // Month summary (per year) for Month view.
   useEffect(() => {
@@ -471,6 +566,10 @@ export function TransactionsCalendar() {
       year: now.getFullYear(),
       monthIndex: now.getMonth(),
     });
+    setWeekStartIso(getMondayOfWeek(now));
+    if (viewMode === "week") {
+      return;
+    }
     setViewMode("day");
   }
 
@@ -490,6 +589,14 @@ export function TransactionsCalendar() {
       }
       return { year: currentYear, monthIndex: currentMonth + 1 };
     });
+  }
+
+  function goPrevWeek() {
+    setWeekStartIso((iso) => addDays(iso, -7));
+  }
+
+  function goNextWeek() {
+    setWeekStartIso((iso) => addDays(iso, 7));
   }
 
   function handleAddForDay(dateIso: string) {
@@ -568,6 +675,17 @@ export function TransactionsCalendar() {
               } rounded-l-md font-medium`}
             >
               {t("calendar.view.day")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("week")}
+              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium ${
+                viewMode === "week"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              }`}
+            >
+              {t("calendar.view.week")}
             </button>
             <button
               type="button"
@@ -686,8 +804,8 @@ export function TransactionsCalendar() {
                         {day.date.getDate()}
                       </span>
                       {day.isToday && (
-                        <span className="rounded-full hidden sm:block bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900 ">
-                          Today
+                        <span className="rounded-full hidden sm:block bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                          {t("calendar.today")}
                         </span>
                       )}
                     </div>
@@ -703,6 +821,108 @@ export function TransactionsCalendar() {
                       {hasData && (
                         <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
                           {day.count}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                <span>{t("calendar.legend.income")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                <span>{t("calendar.legend.expense")}</span>
+              </div>
+              <span>{t("calendar.legend.hintDayClick")}</span>
+            </div>
+          </>
+        )}
+
+        {viewMode === "week" && (
+          <>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={goPrevWeek}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNextWeek}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  {getWeekRangeLabel(weekStartIso, locale)}
+                </div>
+              </div>
+              {summaryLoading && (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {t("calendar.loading.calendar")}
+                </p>
+              )}
+              {summaryError && !summaryLoading && (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {summaryError}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-1 flex flex-col gap-1.5 text-xs">
+              {weekDays.map((day, idx) => {
+                const hasData = day.hasTransactions;
+                const weekdayKey = WEEKDAY_LABEL_KEYS[idx];
+                return (
+                  <button
+                    key={day.iso}
+                    type="button"
+                    onClick={() => openDay(day.iso)}
+                    className={[
+                      "flex w-full flex-row items-center gap-3 rounded-md border px-3 py-2.5 text-left transition",
+                      "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
+                      "text-zinc-800 dark:text-zinc-100",
+                      day.isToday
+                        ? "border-zinc-900 border-offset-1 border-offset-white dark:border-zinc-100 dark:border-offset-zinc-900"
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <div className="flex min-w-14 flex-col sm:min-w-16">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                        {t(`calendar.weekdays.${weekdayKey}`)}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums">
+                        {day.date.toLocaleDateString(locale, {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                      <div className="flex items-center gap-1">
+                        {day.incomeCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        )}
+                        {day.expenseCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                        )}
+                      </div>
+                      {hasData && (
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {day.count}
+                        </span>
+                      )}
+                      {day.isToday && (
+                        <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                          {t("calendar.today")}
                         </span>
                       )}
                     </div>

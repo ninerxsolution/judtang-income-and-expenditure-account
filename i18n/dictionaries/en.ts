@@ -191,6 +191,7 @@ export const enDictionary = {
       "See monthly and yearly patterns of your income and expenses, and click any day to review or add entries.",
     view: {
       day: "Day",
+      week: "Week",
       month: "Month",
       year: "Year",
     },
