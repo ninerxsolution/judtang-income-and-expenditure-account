@@ -427,7 +427,7 @@ export default function UserPage() {
         )}
         {sessions.length > 5 && (
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            <Link href="/dashboard/sessions" className="underline">
+            <Link href="/dashboard/settings/sessions" className="underline">
               View all {sessions.length} sessions
             </Link>
           </p>

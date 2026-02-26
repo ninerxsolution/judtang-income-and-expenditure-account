@@ -7,12 +7,18 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useI18n } from "@/hooks/use-i18n";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -510,7 +516,7 @@ export function TransactionsCalendar() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
             <CalendarRange className="h-5 w-5" />
@@ -524,7 +530,7 @@ export function TransactionsCalendar() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
             <button
               type="button"
@@ -880,10 +886,13 @@ export function TransactionsCalendar() {
         )}
       </div>
 
-      {selectedDate && (
-        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-          <div className="max-h-full w-full max-w-md overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+      <Dialog open={!!selectedDate} onOpenChange={(open) => !open && closeDay()}>
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-md overflow-hidden rounded-xl p-0 gap-0 transition-[min-height] duration-200 ease-out sm:max-w-md"
+        >
+          <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700 transition-all duration-200 ease-out">
+            <DialogTitle asChild>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   {t("calendar.modal.title")}
@@ -892,30 +901,39 @@ export function TransactionsCalendar() {
                   {selectedDateLabel}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddForDay(selectedDate)}
-                  className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                >
-                  <Plus className="h-4 w-4" />
-                  {t("calendar.modal.add")}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeDay}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => selectedDate && handleAddForDay(selectedDate)}
+                className="inline-flex gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                <Plus className="h-4 w-4" />
+                {t("calendar.modal.add")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                onClick={closeDay}
+                aria-label={t("common.actions.close")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
 
-            <div className="max-h-[60vh] overflow-y-auto px-4 py-3 text-sm">
+          <div
+            className="min-h-[120px] max-h-[70vh] overflow-y-auto px-4 py-3 text-sm transition-all duration-200 ease-out"
+          >
               {dailyLoading && (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  {t("calendar.loading.transactions")}
-                </p>
+                <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
+                  <Loader2 className="h-8 w-8 animate-spin text-zinc-400 dark:text-zinc-500" />
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    {t("calendar.loading.transactions")}
+                  </p>
+                </div>
               )}
               {dailyError && !dailyLoading && (
                 <p className="text-xs text-red-600 dark:text-red-400">
@@ -925,13 +943,15 @@ export function TransactionsCalendar() {
               {!dailyLoading &&
                 !dailyError &&
                 dailyItems.length === 0 && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {t("calendar.modal.empty")}
-                  </p>
+                  <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {t("calendar.modal.empty")}
+                    </p>
+                  </div>
                 )}
 
               {!dailyLoading && !dailyError && dailyItems.length > 0 && (
-                <ul className="space-y-2">
+                <ul className="animate-in fade-in-0 space-y-2 duration-200">
                   {dailyItems.map((tx) => {
                     const isIncome = tx.type === "INCOME";
                     return (
@@ -1004,10 +1024,9 @@ export function TransactionsCalendar() {
                   })}
                 </ul>
               )}
-            </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <TransactionFormDialog
         open={formOpen}

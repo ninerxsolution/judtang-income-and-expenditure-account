@@ -100,6 +100,11 @@ export const enDictionary = {
       balance: "Balance",
       loading: "Loading…",
     },
+    recentTransactions: "Recent transactions",
+    fullscreen: {
+      enter: "Enter fullscreen",
+      exit: "Exit fullscreen",
+    },
   },
   settings: {
     title: "Settings",
@@ -111,6 +116,9 @@ export const enDictionary = {
       optionEnglish: "English",
       optionThai: "ภาษาไทย",
       helper: "Your choice will apply across the whole dashboard.",
+      confirmTitle: "Change language?",
+      confirmMessage: "The interface will switch to {language}. Continue?",
+      confirmButton: "Change",
     },
     activityLog: {
       title: "Activity Log",

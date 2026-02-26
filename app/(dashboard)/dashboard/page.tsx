@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
+import { TransactionsList } from "@/components/dashboard/transactions-list";
 import {
   Card,
   CardContent,
@@ -51,8 +52,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       
-
-      <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <TransactionsCalendar />
+       <div className="space-y-6">
+       <div>
         <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
           {t("dashboard.summary.title")}
         </h2>
@@ -62,7 +65,7 @@ export default function DashboardPage() {
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card>
+            <Card className="gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <ArrowDownCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 <CardTitle className="text-sm font-medium">
@@ -75,7 +78,7 @@ export default function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <ArrowUpCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                 <CardTitle className="text-sm font-medium">
@@ -88,7 +91,7 @@ export default function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <Wallet className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                 <CardTitle className="text-sm font-medium">
@@ -110,8 +113,9 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-
-      <TransactionsCalendar />
+       <TransactionsList />
+       </div>
+      </div>
     </div>
   );
 }

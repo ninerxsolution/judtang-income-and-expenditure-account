@@ -100,6 +100,11 @@ export const thDictionary = {
       balance: "ยอดคงเหลือ",
       loading: "กำลังโหลด…",
     },
+    recentTransactions: "รายการล่าสุด",
+    fullscreen: {
+      enter: "เปิดโหมดเต็มจอ",
+      exit: "ปิดโหมดเต็มจอ",
+    },
   },
   settings: {
     title: "การตั้งค่า",
@@ -111,6 +116,9 @@ export const thDictionary = {
       optionEnglish: "English",
       optionThai: "ภาษาไทย",
       helper: "การตั้งค่านี้จะมีผลกับทั้งแดชบอร์ด",
+      confirmTitle: "เปลี่ยนภาษา?",
+      confirmMessage: "ส่วนติดต่อจะเปลี่ยนเป็น {language} ต้องการดำเนินการต่อ?",
+      confirmButton: "เปลี่ยน",
     },
     activityLog: {
       title: "ประวัติกิจกรรม",

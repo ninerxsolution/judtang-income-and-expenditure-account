@@ -5,9 +5,11 @@
 import type { Metadata } from "next";
 import { SessionTouch } from "@/components/dashboard/session-touch";
 import { AppSidebarLayout } from "@/components/dashboard/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { DashboardPageTitle } from "@/components/dashboard/dashboard-page-title";
+import { FullscreenProvider } from "@/components/dashboard/fullscreen-context";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
   title: "Dashboard | Judtang",
@@ -21,15 +23,17 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       <SessionTouch />
-      <SidebarProvider>
-        <AppSidebarLayout>
-          <DashboardBreadcrumb className="px-4 py-4" />
-          <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
-            <DashboardPageTitle />
-            {children}
-          </div>
-        </AppSidebarLayout>
-      </SidebarProvider>
+      <FullscreenProvider>
+        <SidebarProvider>
+          <AppSidebarLayout>
+            <DashboardBreadcrumb className="px-4 py-4" />
+            <DashboardContent>
+              <DashboardPageTitle />
+              {children}
+            </DashboardContent>
+          </AppSidebarLayout>
+        </SidebarProvider>
+      </FullscreenProvider>
     </div>
   );
 }
