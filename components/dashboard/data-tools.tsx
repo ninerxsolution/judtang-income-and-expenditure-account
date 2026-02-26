@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Download, Upload, Wrench } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useI18n } from "@/hooks/use-i18n";
 
 type ImportErrorItem = {
@@ -153,30 +154,20 @@ export function DataTools() {
           {t("dataTools.export.description")}
         </p>
         <div className="mt-4 flex flex-wrap items-end gap-4">
-          <div>
-            <label htmlFor="export-from" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              {t("dataTools.export.fromDate")}
-            </label>
-            <input
-              id="export-from"
-              type="date"
-              value={exportFrom}
-              onChange={(e) => setExportFrom(e.target.value)}
-              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
-          <div>
-            <label htmlFor="export-to" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              {t("dataTools.export.toDate")}
-            </label>
-            <input
-              id="export-to"
-              type="date"
-              value={exportTo}
-              onChange={(e) => setExportTo(e.target.value)}
-              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
+          <DatePicker
+            id="export-from"
+            label={t("dataTools.export.fromDate")}
+            value={exportFrom}
+            onChange={setExportFrom}
+            className="min-w-[180px]"
+          />
+          <DatePicker
+            id="export-to"
+            label={t("dataTools.export.toDate")}
+            value={exportTo}
+            onChange={setExportTo}
+            className="min-w-[180px]"
+          />
           <div>
             <label htmlFor="export-type" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
               {t("dataTools.export.type")}

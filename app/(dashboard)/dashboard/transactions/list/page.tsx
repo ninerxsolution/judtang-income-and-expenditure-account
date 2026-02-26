@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -160,30 +161,20 @@ export default function TransactionsListPage() {
           {t("transactions.list.filters")}
         </h2>
         <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label htmlFor="list-from" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              {t("dataTools.export.fromDate")}
-            </label>
-            <input
-              id="list-from"
-              type="date"
-              value={filterFrom}
-              onChange={(e) => setFilterFrom(e.target.value)}
-              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
-          <div>
-            <label htmlFor="list-to" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-              {t("dataTools.export.toDate")}
-            </label>
-            <input
-              id="list-to"
-              type="date"
-              value={filterTo}
-              onChange={(e) => setFilterTo(e.target.value)}
-              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
+          <DatePicker
+            id="list-from"
+            label={t("dataTools.export.fromDate")}
+            value={filterFrom}
+            onChange={setFilterFrom}
+            className="min-w-[180px]"
+          />
+          <DatePicker
+            id="list-to"
+            label={t("dataTools.export.toDate")}
+            value={filterTo}
+            onChange={setFilterTo}
+            className="min-w-[180px]"
+          />
           <div>
             <label htmlFor="list-type" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
               {t("dataTools.export.type")}

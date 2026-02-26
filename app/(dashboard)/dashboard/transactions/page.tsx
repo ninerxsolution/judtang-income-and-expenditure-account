@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -109,6 +110,11 @@ export default function TransactionsPage() {
 
     if (!amount || amountError) {
       setError(amountError ?? t("transactions.new.amountRequired"));
+      return;
+    }
+
+    if (!occurredAt) {
+      setError(t("transactions.new.dateRequired"));
       return;
     }
 
@@ -252,13 +258,12 @@ export default function TransactionsPage() {
           onChange={setCategory}
         />
 
-        <FormField
+        <DatePicker
           id="transaction-date"
           label={t("transactions.new.dateLabel")}
-          type="date"
-          required
           value={occurredAt}
           onChange={setOccurredAt}
+          required
         />
 
         <div>

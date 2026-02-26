@@ -50,19 +50,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("dashboard.pageTitle.dashboard")}</CardTitle>
-          <CardDescription>
-            {t("dashboard.home.subtitle")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">
-            {t("dashboard.home.body")}
-          </p>
-        </CardContent>
-      </Card>
+      
 
       <div>
         <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">

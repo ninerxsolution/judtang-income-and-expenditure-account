@@ -241,6 +241,7 @@ export const thDictionary = {
       amountInvalid: "จำนวนเงินต้องเป็นตัวเลขบวก",
       typeRequired: "กรุณาเลือกรายรับหรือรายจ่าย",
       amountRequired: "กรุณาระบุจำนวนเงิน",
+      dateRequired: "กรุณาเลือกวันที่",
       saveFailed: "ไม่สามารถบันทึกรายการได้",
       saveSuccess: "บันทึกรายการเรียบร้อย",
       pending: "กำลังบันทึก…",

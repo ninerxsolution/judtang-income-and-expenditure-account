@@ -241,6 +241,7 @@ export const enDictionary = {
       amountInvalid: "Amount must be a positive number",
       typeRequired: "Please select income or expense",
       amountRequired: "Please enter an amount",
+      dateRequired: "Please select a date",
       saveFailed: "Failed to save transaction",
       saveSuccess: "Transaction saved",
       pending: "Saving…",
