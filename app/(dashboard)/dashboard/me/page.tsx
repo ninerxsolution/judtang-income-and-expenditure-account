@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { User, Monitor, Trash2, LogOut } from "lucide-react";
+import { User, Monitor, Trash2, LogOut, CheckCircle2, Mail } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormField } from "@/components/auth/form-field";
 import {
@@ -11,11 +11,14 @@ import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from "@/lib/validation";
+import { useI18n } from "@/hooks/use-i18n";
+import { toast } from "sonner";
 
 type Profile = {
   id: string;
   name: string | null;
   email: string | null;
+  emailVerified: boolean;
   image: string | null;
   lastActiveAt: string | null;
   hasPassword: boolean;
@@ -77,6 +80,10 @@ export default function UserPage() {
 
   const [revoking, setRevoking] = useState<string | null>(null);
 
+  const [resendPending, setResendPending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const { t } = useI18n();
+
   async function fetchProfile() {
     const res = await fetch("/api/users/me");
     if (!res.ok) {
@@ -122,6 +129,29 @@ export default function UserPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
   }, []);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => setResendCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  async function handleResendVerification() {
+    if (profile?.emailVerified || resendPending || resendCooldown > 0) return;
+    setResendPending(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? t("common.errors.generic"));
+        return;
+      }
+      toast.success(t("profile.resendVerificationSuccess"));
+      setResendCooldown(60);
+    } finally {
+      setResendPending(false);
+    }
+  }
 
   async function handleUpdateName(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -271,7 +301,34 @@ export default function UserPage() {
             <p className="font-medium text-zinc-900 dark:text-zinc-100">
               {profile.name || "—"}
             </p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">{profile.email ?? "—"}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">{profile.email ?? "—"}</p>
+              {profile.email && (
+                profile.emailVerified ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {t("profile.emailVerified")}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-xs text-amber-600 dark:text-amber-500">
+                      {t("profile.emailNotVerified")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={resendPending || resendCooldown > 0}
+                      className="inline-flex items-center gap-1 rounded border border-zinc-300 dark:border-zinc-600 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50"
+                    >
+                      <Mail className="h-3 w-3" />
+                      {resendCooldown > 0
+                        ? t("profile.resendCooldown", { count: resendCooldown })
+                        : t("profile.resendVerification")}
+                    </button>
+                  </span>
+                )
+              )}
+            </div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {profile.hasPassword ? "Signed in with email & password" : "Signed in with Google"}
             </p>
