@@ -147,6 +147,13 @@ function formatAmount(amount: number, locale: string) {
 
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
+function formatYearForDisplay(year: number, locale: string): string {
+  if (locale === "th-TH" || locale === "th") {
+    return String(year + 543);
+  }
+  return String(year);
+}
+
 export function TransactionsCalendar() {
   const { t, locale } = useI18n();
 
@@ -706,7 +713,7 @@ export function TransactionsCalendar() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {year}
+                  {formatYearForDisplay(year, locale)}
                 </div>
               </div>
               {monthSummaryLoading && (
@@ -726,6 +733,8 @@ export function TransactionsCalendar() {
                 const info = monthSummaryMap.get(idx);
                 const hasData = !!info?.hasTransactions;
                 const count = info?.count ?? 0;
+                const isCurrentMonth =
+                  idx === today.getMonth() && year === today.getFullYear();
                 return (
                   <button
                     key={idx}
@@ -740,6 +749,9 @@ export function TransactionsCalendar() {
                       hasData
                         ? "text-zinc-900 dark:text-zinc-50"
                         : "text-zinc-500 dark:text-zinc-400",
+                      isCurrentMonth
+                        ? "ring-1 ring-zinc-900 ring-offset-1 ring-offset-white dark:ring-zinc-100 dark:ring-offset-zinc-900"
+                        : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
@@ -792,7 +804,7 @@ export function TransactionsCalendar() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {yearRangeStart}–{yearRangeEnd}
+                  {formatYearForDisplay(yearRangeStart, locale)}–{formatYearForDisplay(yearRangeEnd, locale)}
                 </div>
               </div>
               {yearSummaryLoading && (
@@ -815,6 +827,7 @@ export function TransactionsCalendar() {
                 const info = yearSummaryMap.get(y);
                 const hasData = !!info?.hasTransactions;
                 const count = info?.count ?? 0;
+                const isCurrentYear = y === today.getFullYear();
                 return (
                   <button
                     key={y}
@@ -832,11 +845,14 @@ export function TransactionsCalendar() {
                       hasData
                         ? "text-zinc-900 dark:text-zinc-50"
                         : "text-zinc-500 dark:text-zinc-400",
+                      isCurrentYear
+                        ? "ring-1 ring-zinc-900 ring-offset-1 ring-offset-white dark:ring-zinc-100 dark:ring-offset-zinc-900"
+                        : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
-                    <span className="text-sm font-medium">{y}</span>
+                    <span className="text-sm font-medium">{formatYearForDisplay(y, locale)}</span>
                     <div className="mt-2 flex items-center gap-1 text-[11px]">
                       {hasData && (
                         <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
