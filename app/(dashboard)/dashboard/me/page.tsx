@@ -6,7 +6,11 @@ import Link from "next/link";
 import { User, Monitor, Trash2, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormField } from "@/components/auth/form-field";
-import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "@/lib/validation";
+import {
+  MAX_NAME_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+} from "@/lib/validation";
 
 type Profile = {
   id: string;
@@ -289,6 +293,7 @@ export default function UserPage() {
             label="Display name"
             value={nameValue}
             onChange={setNameValue}
+            maxLength={MAX_NAME_LENGTH}
           />
           <button
             type="submit"
@@ -321,6 +326,7 @@ export default function UserPage() {
               value={currentPassword}
               onChange={setCurrentPassword}
               autoComplete="current-password"
+              maxLength={MAX_PASSWORD_LENGTH}
             />
             <FormField
               id="new-password"
@@ -329,6 +335,7 @@ export default function UserPage() {
               value={newPassword}
               onChange={setNewPassword}
               autoComplete="new-password"
+              maxLength={MAX_PASSWORD_LENGTH}
             />
             <FormField
               id="confirm-password"
@@ -337,6 +344,7 @@ export default function UserPage() {
               value={confirmPassword}
               onChange={setConfirmPassword}
               autoComplete="new-password"
+              maxLength={MAX_PASSWORD_LENGTH}
             />
             <button
               type="submit"

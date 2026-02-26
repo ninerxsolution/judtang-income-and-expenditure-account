@@ -12,9 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
+import { MAX_CATEGORY_LENGTH, MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 
 type TransactionType = "INCOME" | "EXPENSE";
+
+function sanitizeAmountInput(value: string): string {
+  const noComma = value.replace(/,/g, "");
+  const digitsAndDot = noComma.replace(/[^\d.]/g, "");
+  const parts = digitsAndDot.split(".");
+  const intPart = parts[0] ?? "";
+  const decPart = parts.length > 1 ? parts.slice(1).join("").slice(0, 2) : "";
+  return parts.length > 1 ? `${intPart}.${decPart}` : intPart;
+}
 
 function formatTodayAsInputDate(): string {
   const now = new Date();
@@ -118,7 +128,7 @@ export function TransactionFormDialog({
         ) => {
           if (cancelled || !data) return;
           setType(data.type === "INCOME" ? "INCOME" : "EXPENSE");
-          setAmount(String(data.amount));
+          setAmount(sanitizeAmountInput(String(data.amount)));
           setCategory(data.category ?? "");
           setNote(data.note ?? "");
           setOccurredAt(formatDateToInput(data.occurredAt));
@@ -271,11 +281,12 @@ export function TransactionFormDialog({
           <FormField
             id="transaction-modal-amount"
             label={t("transactions.new.amountLabel")}
-            type="number"
+            type="text"
             required
             value={amount}
-            onChange={setAmount}
+            onChange={(v) => setAmount(sanitizeAmountInput(v))}
             error={amountError}
+            inputMode="decimal"
           />
 
           <FormField
@@ -284,6 +295,7 @@ export function TransactionFormDialog({
             type="text"
             value={category}
             onChange={setCategory}
+            maxLength={MAX_CATEGORY_LENGTH}
           />
 
           <DatePicker
@@ -306,6 +318,7 @@ export function TransactionFormDialog({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
+              maxLength={MAX_NOTE_LENGTH}
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
             />
           </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { EMAIL_MAX_LENGTH, MAX_PASSWORD_LENGTH } from "@/lib/validation";
 import { FormField } from "./form-field";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -56,6 +57,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
           value={email}
           onChange={setEmail}
           autoComplete="email"
+          maxLength={EMAIL_MAX_LENGTH}
         />
         <FormField
           id="signin-password"
@@ -65,6 +67,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
           value={password}
           onChange={setPassword}
           autoComplete="current-password"
+          maxLength={MAX_PASSWORD_LENGTH}
         />
         {(error ?? initialError) && (
           <p className="text-destructive text-sm">{error ?? initialError}</p>

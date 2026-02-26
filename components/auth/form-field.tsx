@@ -15,6 +15,8 @@ type FormFieldProps = {
   onChange: (value: string) => void;
   error?: string | null;
   autoComplete?: string;
+  maxLength?: number;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
 };
 
 export function FormField({
@@ -26,6 +28,8 @@ export function FormField({
   onChange,
   error,
   autoComplete,
+  maxLength,
+  inputMode,
 }: FormFieldProps) {
   return (
     <div className="space-y-2">
@@ -37,6 +41,8 @@ export function FormField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
+        maxLength={maxLength}
+        inputMode={inputMode}
         aria-invalid={!!error}
         className={cn(error && "border-destructive")}
       />
