@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 26/02/2026 (password reset)
+
+- docs/core/authentication-authorization.md — Added Forgot password and reset password: flow, SMTP config, token storage, security; /api/auth/forgot-password (POST), /api/auth/reset-password (POST); pages /forgot-password, /reset-password.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for password reset feature.
+
+---
+
 ## 26/02/2026
 
 - docs/PRD.md — §18.4: Transaction CRUD changed from full-page to modal/dialog. List merged into `/dashboard/transactions` (removed `/list` route). Create/Edit use TransactionFormDialog; Delete uses TransactionDeleteDialog. Calendar Add/Edit/Delete open modals in-page.

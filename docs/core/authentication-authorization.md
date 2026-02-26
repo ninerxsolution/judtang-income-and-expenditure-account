@@ -1,6 +1,6 @@
 # Authentication & Authorization
 
-**Updated:** 14/02/2026
+**Updated:** 26/02/2026
 
 **Source:** PRD §8
 
@@ -59,6 +59,26 @@
 ## /api/users/me/password
 
 - **PATCH** — Change password; body `{ currentPassword, newPassword }`. Only for users with a password (Credentials). Returns 400 for OAuth-only users. New password validated for length (min 8, max 72). Validates current password with bcrypt before updating.
+
+## Forgot password and reset password
+
+- **Flow:** User requests reset at `/forgot-password`; system sends email with link to `/reset-password?token=xxx`; user sets new password; token is single-use and expires in 1 hour.
+- **Email:** Sent via SMTP (e.g. Gmail). Config: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`. Uses Nodemailer (`lib/email.ts`).
+- **Token storage:** `VerificationToken` (identifier = email, token, expires). Existing tokens for the same email are deleted before creating a new one.
+- **Security:** Always returns `{ ok: true }` from forgot-password to prevent email enumeration; OAuth-only users do not receive an email but get the same response.
+
+### /api/auth/forgot-password
+
+- **POST** — Request password reset; body `{ email: string }`. Validates email format/length. If user exists with password: creates token, sends email, logs `USER_PASSWORD_RESET_REQUESTED`. Always returns `{ ok: true }` on valid input.
+
+### /api/auth/reset-password
+
+- **POST** — Reset password; body `{ token: string, newPassword: string }`. Validates token (exists, not expired), validates new password. Updates `User.password`, deletes `VerificationToken`, logs `USER_PASSWORD_CHANGED` with `details.source: "password_reset"`. Returns `{ ok: true }` on success; 400 with generic error on invalid/expired token.
+
+### Pages
+
+- **/forgot-password** — Form to enter email; link to sign-in. Sign-in page includes "Forgot password?" link.
+- **/reset-password** — Form to enter new password (requires `?token=xxx`). If token missing, shows error and links to request new link or sign-in.
 
 ## User profile page
 

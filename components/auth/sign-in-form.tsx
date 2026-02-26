@@ -59,16 +59,26 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
           autoComplete="email"
           maxLength={EMAIL_MAX_LENGTH}
         />
-        <FormField
-          id="signin-password"
-          label={t("auth.signIn.passwordLabel")}
-          type="password"
-          required
-          value={password}
-          onChange={setPassword}
-          autoComplete="current-password"
-          maxLength={MAX_PASSWORD_LENGTH}
-        />
+        <div className="space-y-2">
+          <FormField
+            id="signin-password"
+            label={t("auth.signIn.passwordLabel")}
+            type="password"
+            required
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+            maxLength={MAX_PASSWORD_LENGTH}
+          />
+          <p className="text-right text-sm">
+            <Link
+              href="/forgot-password"
+              className="text-muted-foreground hover:text-primary text-xs underline underline-offset-4"
+            >
+              {t("auth.signIn.forgotPassword")}
+            </Link>
+          </p>
+        </div>
         {(error ?? initialError) && (
           <p className="text-destructive text-sm">{error ?? initialError}</p>
         )}
