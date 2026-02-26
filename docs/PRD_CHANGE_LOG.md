@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 26/02/2026 (email verification)
+
+- docs/core/authentication-authorization.md — Added Email verification: soft policy, flow, token storage; GET /api/auth/verify-email, POST /api/auth/resend-verification; /verify-email page; profile page shows verification status and resend button; /api/users/me returns emailVerified; register sends verification email; Google OAuth sets emailVerified.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for email verification feature.
+
+---
+
 ## 26/02/2026 (password reset)
 
 - docs/core/authentication-authorization.md — Added Forgot password and reset password: flow, SMTP config, token storage, security; /api/auth/forgot-password (POST), /api/auth/reset-password (POST); pages /forgot-password, /reset-password.

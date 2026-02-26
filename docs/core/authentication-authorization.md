@@ -53,7 +53,7 @@
 
 ## /api/users/me
 
-- **GET** — Current user profile: id, name, email, image, lastActiveAt, hasPassword. Requires authenticated session (401 otherwise).
+- **GET** — Current user profile: id, name, email, emailVerified, emailVerifiedAt, image, lastActiveAt, hasPassword. Requires authenticated session (401 otherwise).
 - **PATCH** — Update display name; body `{ name: string }` (optional). Name is trimmed; empty string is stored as null.
 
 ## /api/users/me/password
@@ -80,10 +80,28 @@
 - **/forgot-password** — Form to enter email; link to sign-in. Sign-in page includes "Forgot password?" link.
 - **/reset-password** — Form to enter new password (requires `?token=xxx`). If token missing, shows error and links to request new link or sign-in.
 
+## Email verification
+
+- **Policy:** Soft verification — user can sign in before verifying. Verification status and resend button shown on profile page.
+- **Flow:** On register, verification email is sent. User clicks link in email to open `/verify-email?token=xxx`. Token is validated, `User.emailVerified` is set, token is deleted. Google OAuth users get `emailVerified` set automatically on sign-in.
+- **Token storage:** `VerificationToken` with `identifier = "email_verify:" + email` to avoid collision with password reset tokens. Token expires in 24 hours.
+
+### /api/auth/verify-email
+
+- **GET** — Verify email; query `?token=xxx`. Finds token with `identifier` starting `email_verify:`, not expired. Updates `User.emailVerified`, deletes token, logs `USER_EMAIL_VERIFIED`. Returns `{ ok: true }` or 400 with generic error.
+
+### /api/auth/resend-verification
+
+- **POST** — Resend verification email. Requires authenticated session. Returns 400 if email already verified. Deletes existing token, creates new one, sends email. Client-side 60s cooldown on profile page.
+
+### Pages
+
+- **/verify-email** — Handles token from email link; shows success or error and links to profile/sign-in.
+
 ## User profile page
 
-- **Route:** `/dashboard/user` (protected).
-- **Content:** Profile block (avatar, name, email, sign-in method, last active), settings (change display name, change password for Credentials users; message for OAuth), and active sessions block (list with revoke, link to full list at `/dashboard/sessions`).
+- **Route:** `/dashboard/me` (protected).
+- **Content:** Profile block (avatar, name, email with verification status and resend button if unverified, sign-in method, last active), settings (change display name, change password for Credentials users; message for OAuth), and active sessions block (list with revoke, link to full list at `/dashboard/settings/sessions`).
 - Dashboard layout includes nav links to Dashboard, User, and Sessions.
 
 ## Route Protection

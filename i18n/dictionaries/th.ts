@@ -84,6 +84,15 @@ export const thDictionary = {
       passwordTooLong: "รหัสผ่านต้องไม่เกิน 72 ตัวอักษร",
       backToSignIn: "กลับไปเข้าสู่ระบบ",
     },
+    verifyEmail: {
+      title: "ยืนยันอีเมล",
+      verifying: "กำลังยืนยันอีเมล…",
+      success: "ยืนยันอีเมลเรียบร้อยแล้ว",
+      invalidOrExpired: "ลิงก์นี้ไม่ถูกต้องหรือหมดอายุ",
+      goToProfile: "ไปที่โปรไฟล์",
+      goToProfileToResend: "ไปที่โปรไฟล์เพื่อส่งใหม่อีกครั้ง",
+      backToSignIn: "กลับไปเข้าสู่ระบบ",
+    },
     logout: {
       button: "ออกจากระบบ",
       success: "ออกจากระบบเรียบร้อย",
@@ -129,6 +138,13 @@ export const thDictionary = {
       enter: "เปิดโหมดเต็มจอ",
       exit: "ปิดโหมดเต็มจอ",
     },
+  },
+  profile: {
+    emailVerified: "ยืนยันแล้ว",
+    emailNotVerified: "ยังไม่ยืนยัน",
+    resendVerification: "ส่งอีเมลยืนยันอีกครั้ง",
+    resendVerificationSuccess: "ส่งอีเมลยืนยันแล้ว",
+    resendCooldown: "ส่งอีกครั้งใน {count} วินาที",
   },
   settings: {
     title: "การตั้งค่า",

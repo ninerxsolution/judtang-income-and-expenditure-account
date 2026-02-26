@@ -2,8 +2,10 @@
  * POST /api/auth/register — create a user (Credentials).
  * Body: { email: string, password: string, name?: string }
  * Email is normalized (trim, lowercase); validated for format and length. Password validated for min/max length.
+ * Sends verification email; user can sign in before verifying (soft verification).
  */
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import {
@@ -13,6 +15,9 @@ import {
   validatePasswordLength,
 } from "@/lib/validation";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import { sendEmailVerification } from "@/lib/email";
+
+const VERIFY_TOKEN_EXPIRY_HOURS = 24;
 
 export async function POST(request: Request) {
   try {
@@ -75,6 +80,22 @@ export async function POST(request: Request) {
       entityType: "user",
       entityId: user.id,
     });
+
+    const token = randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + VERIFY_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+    const identifier = `email_verify:${normalizedEmail}`;
+
+    await prisma.verificationToken.deleteMany({
+      where: { identifier },
+    });
+    await prisma.verificationToken.create({
+      data: { identifier, token, expires },
+    });
+
+    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+    await sendEmailVerification(normalizedEmail, verifyUrl);
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });

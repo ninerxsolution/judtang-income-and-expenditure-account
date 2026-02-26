@@ -1,5 +1,5 @@
 /**
- * Email sending via SMTP (e.g. Gmail). Used for password reset.
+ * Email sending via SMTP (e.g. Gmail). Used for password reset and email verification.
  */
 import nodemailer from "nodemailer";
 
@@ -34,6 +34,28 @@ export async function sendPasswordResetEmail(
       <p>Click the link below to reset your password:</p>
       <p><a href="${resetUrl}">${resetUrl}</a></p>
       <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
+    `.trim(),
+  });
+}
+
+/**
+ * Sends an email verification link.
+ * @throws If SMTP send fails
+ */
+export async function sendEmailVerification(
+  to: string,
+  verifyUrl: string
+): Promise<void> {
+  const from = process.env.SMTP_USER ?? "noreply@example.com";
+  await transporter.sendMail({
+    from,
+    to,
+    subject: "Verify your email address",
+    html: `
+      <p>Thank you for signing up.</p>
+      <p>Please verify your email address by clicking the link below:</p>
+      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+      <p>This link expires in 24 hours. If you did not create an account, you can ignore this email.</p>
     `.trim(),
   });
 }

@@ -84,6 +84,15 @@ export const enDictionary = {
       passwordTooLong: "Password must be at most 72 characters.",
       backToSignIn: "Back to sign in",
     },
+    verifyEmail: {
+      title: "Verify email",
+      verifying: "Verifying your email…",
+      success: "Your email has been verified.",
+      invalidOrExpired: "This link is invalid or has expired.",
+      goToProfile: "Go to profile",
+      goToProfileToResend: "Go to profile to resend",
+      backToSignIn: "Back to sign in",
+    },
     logout: {
       button: "Log out",
       success: "Signed out.",
@@ -129,6 +138,13 @@ export const enDictionary = {
       enter: "Enter fullscreen",
       exit: "Exit fullscreen",
     },
+  },
+  profile: {
+    emailVerified: "Verified",
+    emailNotVerified: "Not verified",
+    resendVerification: "Resend verification email",
+    resendVerificationSuccess: "Verification email sent.",
+    resendCooldown: "Resend in {count}s",
   },
   settings: {
     title: "Settings",

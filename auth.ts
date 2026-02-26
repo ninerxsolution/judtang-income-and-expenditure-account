@@ -58,7 +58,13 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn() {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user?.id) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() },
+        });
+      }
       return true;
     },
     async jwt({ token, user }) {
