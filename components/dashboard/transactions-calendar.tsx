@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
-  CalendarRange,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -516,22 +515,9 @@ export function TransactionsCalendar() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
-            <CalendarRange className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold sm:text-xl">
-              {t("calendar.title")}
-            </h1>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              {t("calendar.subtitle")}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+        <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
             <button
               type="button"
               onClick={() => setViewMode("day")}
@@ -565,15 +551,16 @@ export function TransactionsCalendar() {
             >
               {t("calendar.view.year")}
             </button>
-          </div>
-          <button
+        </div>
+        <button
             type="button"
             onClick={goToToday}
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            {t("calendar.today")}
-          </button>
-          <button
+        >
+          {t("calendar.today")}
+        </button>
+        </div>
+        <button
             type="button"
             onClick={() => {
               setFormEditId(null);
@@ -581,11 +568,10 @@ export function TransactionsCalendar() {
               setFormOpen(true);
             }}
             className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-          >
-            <Plus className="h-4 w-4" />
-            {t("calendar.newTransaction")}
-          </button>
-        </div>
+        >
+          <Plus className="h-4 w-4" />
+          {t("calendar.newTransaction")}
+        </button>
       </div>
 
       <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">

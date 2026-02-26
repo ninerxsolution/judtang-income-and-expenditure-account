@@ -165,10 +165,10 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold">
+          {/* <h1 className="flex items-center gap-2 text-xl font-semibold">
             <List className="h-5 w-5" />
             {t("dashboard.pageTitle.transactionsList")}
-          </h1>
+          </h1> */}
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {t("transactions.list.subtitle")}
           </p>
