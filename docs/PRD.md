@@ -592,7 +592,7 @@ Semantics:
 
 Used by:
 
-- `/dashboard/transactions/list` — list of recent transactions (e.g. `?limit=100`)
+- `/dashboard/transactions` — list of recent transactions (e.g. `?limit=100`)
 - Calendar **day modal** — daily transactions via `?date=YYYY-MM-DD&limit=200`
 
 #### 18.3.3 Calendar Daily Summary — `GET /api/transactions/calendar-summary`
@@ -731,11 +731,11 @@ Used by the **Dashboard** home page to show summary cards (income, expense, bala
 
 ### 18.4 UI & Calendar Behaviour
 
-#### 18.4.1 New / Edit Transaction — `/dashboard/transactions`
+#### 18.4.1 Transactions List — `/dashboard/transactions`
 
 Purpose:
 
-- Single-page form to create a new income or expense, or to edit an existing one.
+- Table view of transactions with optional filters, pagination, and modal-based Create/Edit/Delete.
 
 Key behaviours:
 
@@ -765,7 +765,7 @@ Key behaviours:
 - Calls `GET /api/transactions` with `limit`, `offset`, and optional `from`, `to`, `type`.
 - Table shows: Date (`occurredAt`), Type with icons (Income/Expense), Amount (locale-formatted), Category, Note (truncated if long).
 - **Edit**: Each row has an Edit action that links to `/dashboard/transactions?id=<id>`.
-- **Delete**: Each row has a Delete action; confirmation (e.g. native confirm or dialog) then `DELETE /api/transactions/[id]`; on success the list is refetched or the row removed from state.
+- **Delete**: Each row has a Delete action; confirmation dialog then `DELETE /api/transactions/[id]`; on success the list is refetched or the row removed from state.
 
 Navigation:
 
@@ -793,7 +793,7 @@ Core concepts:
   - Resets `year` and `monthIndex` to the current date
   - Switches back to **Day** view
 - **New transaction** button:
-  - Navigates to `/dashboard/transactions` (without fixing the date)
+  - Opens the create-transaction modal in-page
 
 ##### Day view
 
@@ -808,8 +808,8 @@ Core concepts:
   - Today is highlighted with a pill and ring
 - Clicking any day:
   - Opens a **modal** showing transactions for that date (loaded via `GET /api/transactions?date=YYYY-MM-DD&limit=200`)
-  - The modal includes an **Add** button which navigates to `/dashboard/transactions?date=YYYY-MM-DD` so the form is pre-filled to that date
-  - Each transaction in the modal has **Edit** (link to `/dashboard/transactions?id=<id>`) and **Delete** (confirmation then `DELETE /api/transactions/[id]`; on success the modal’s list is updated)
+  - The modal includes an **Add** button which opens the create-transaction modal in-page with the date pre-filled to that day
+  - Each transaction in the modal has **Edit** (opens edit modal in-page) and **Delete** (confirmation then `DELETE /api/transactions/[id]`; on success the modal’s list is updated)
 
 ##### Month view
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -13,9 +12,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/hooks/use-i18n";
+import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
+import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 
 type CalendarSummaryItem = {
   date: string; // YYYY-MM-DD
@@ -148,8 +148,15 @@ function formatAmount(amount: number, locale: string) {
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 export function TransactionsCalendar() {
-  const router = useRouter();
   const { t, locale } = useI18n();
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [formEditId, setFormEditId] = useState<string | null>(null);
+  const [formInitialDate, setFormInitialDate] = useState<string | null>(null);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTransaction, setDeleteTransaction] =
+    useState<DailyTransaction | null>(null);
 
   const today = useMemo(() => new Date(), []);
   const initialYear = today.getFullYear();
@@ -439,20 +446,25 @@ export function TransactionsCalendar() {
   }
 
   function handleAddForDay(dateIso: string) {
-    const params = new URLSearchParams();
-    params.set("date", dateIso);
-    router.push(`/dashboard/transactions?${params.toString()}`);
+    setFormEditId(null);
+    setFormInitialDate(dateIso);
+    setFormOpen(true);
   }
 
-  async function handleDeleteInModal(tx: DailyTransaction) {
-    if (!selectedDate || !confirm(t("transactions.list.deleteConfirm"))) return;
-    try {
-      const res = await fetch(`/api/transactions/${tx.id}`, { method: "DELETE" });
-      if (res.ok) {
-        setDailyItems((prev) => prev.filter((i) => i.id !== tx.id));
-      }
-    } catch {
-      // ignore
+  function handleEditInModal(tx: DailyTransaction) {
+    setFormEditId(tx.id);
+    setFormInitialDate(null);
+    setFormOpen(true);
+  }
+
+  function handleDeleteInModal(tx: DailyTransaction) {
+    setDeleteTransaction(tx);
+    setDeleteOpen(true);
+  }
+
+  function refreshDailyItems() {
+    if (selectedDate) {
+      void openDay(selectedDate);
     }
   }
 
@@ -506,22 +518,22 @@ export function TransactionsCalendar() {
           </div>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="inline-flex rounded-md border border-zinc-300 bg-white text-xs dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
             <button
               type="button"
               onClick={() => setViewMode("day")}
-              className={`px-3 py-1.5 ${
+              className={`px-3 py-2 ${
                 viewMode === "day"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              } rounded-l-md`}
+              } rounded-l-md font-medium`}
             >
               {t("calendar.view.day")}
             </button>
             <button
               type="button"
               onClick={() => setViewMode("month")}
-              className={`border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 ${
+              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium ${
                 viewMode === "month"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -532,7 +544,7 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("year")}
-              className={`border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 rounded-r-md ${
+              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 rounded-r-md font-medium ${
                 viewMode === "year"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -544,16 +556,20 @@ export function TransactionsCalendar() {
           <button
             type="button"
             onClick={goToToday}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
             {t("calendar.today")}
           </button>
           <button
             type="button"
-            onClick={() => router.push("/dashboard/transactions")}
-            className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            onClick={() => {
+              setFormEditId(null);
+              setFormInitialDate(null);
+              setFormOpen(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             {t("calendar.newTransaction")}
           </button>
         </div>
@@ -864,15 +880,15 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={() => handleAddForDay(selectedDate)}
-                  className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-4 w-4" />
                   {t("calendar.modal.add")}
                 </button>
                 <button
                   type="button"
                   onClick={closeDay}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -949,19 +965,22 @@ export function TransactionsCalendar() {
                           <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
                             {formatAmount(tx.amount, locale)}
                           </span>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                            <Link href={`/dashboard/transactions?id=${tx.id}`} aria-label={t("common.actions.edit")}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Link>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditInModal(tx)}
+                            aria-label={t("common.actions.edit")}
+                          >
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                             onClick={() => handleDeleteInModal(tx)}
                             aria-label={t("common.actions.delete")}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </li>
@@ -973,6 +992,21 @@ export function TransactionsCalendar() {
           </div>
         </div>
       )}
+
+      <TransactionFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        editId={formEditId}
+        initialDate={formInitialDate}
+        onSuccess={refreshDailyItems}
+      />
+
+      <TransactionDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        transaction={deleteTransaction}
+        onConfirm={refreshDailyItems}
+      />
     </div>
   );
 }

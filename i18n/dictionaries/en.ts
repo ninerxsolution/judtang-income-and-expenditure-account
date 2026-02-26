@@ -255,6 +255,12 @@ export const enDictionary = {
       saveSuccess: "Transaction updated. Redirecting…",
       submit: "Update transaction",
     },
+    delete: {
+      title: "Delete transaction",
+      message: "This will permanently delete:",
+      confirm: "Delete",
+      pending: "Deleting…",
+    },
     list: {
       subtitle: "All recorded income and expenses for your account.",
       calendarView: "Calendar view",

@@ -255,6 +255,12 @@ export const thDictionary = {
       saveSuccess: "อัปเดตรายการเรียบร้อย กำลังเปลี่ยนหน้า…",
       submit: "อัปเดตรายการ",
     },
+    delete: {
+      title: "ลบรายการ",
+      message: "การดำเนินการนี้จะลบทันที:",
+      confirm: "ลบ",
+      pending: "กำลังลบ…",
+    },
     list: {
       subtitle: "รายการรายรับรายจ่ายทั้งหมดในบัญชีของคุณ",
       calendarView: "มุมมองปฏิทิน",
