@@ -62,7 +62,7 @@ export default function DashboardPage() {
             <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <ArrowDownCircle className="min-w-4 min-h-4 w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-nowrap">
                   {t("dashboard.summary.income")}
                 </CardTitle>
               </CardHeader>
@@ -75,7 +75,7 @@ export default function DashboardPage() {
             <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <ArrowUpCircle className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-nowrap">
                   {t("dashboard.summary.expense")}
                 </CardTitle>
               </CardHeader>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
                 <Wallet className="min-w-4 min-h-4 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-nowrap">
                   {t("dashboard.summary.balance")}
                 </CardTitle>
               </CardHeader>
