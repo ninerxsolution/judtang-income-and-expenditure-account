@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 
 type Transaction = {
@@ -28,14 +29,6 @@ type TransactionDeleteDialogProps = {
   transaction?: Transaction | null;
   onConfirm?: () => void;
 };
-
-function formatAmount(amount: number, locale: string): string {
-  if (Number.isNaN(amount)) return "-";
-  return amount.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 export function TransactionDeleteDialog({
   open,
@@ -85,7 +78,7 @@ export function TransactionDeleteDialog({
                   {isIncome
                     ? t("transactions.common.income")
                     : t("transactions.common.expense")}{" "}
-                  {formatAmount(transaction.amount, locale)}
+                  {formatAmount(transaction.amount)}
                   {transaction.category && ` · ${transaction.category}`}
                 </span>
               </>

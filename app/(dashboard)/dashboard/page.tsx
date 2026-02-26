@@ -15,16 +15,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 
 type Summary = { income: number; expense: number } | null;
-
-function formatMoney(value: number, locale: string): string {
-  return value.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 export default function DashboardPage() {
   const { t, locale } = useI18n();
@@ -74,7 +68,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-                  {summary ? formatMoney(summary.income, locale) : "0.00"}
+                  {summary ? formatAmount(summary.income) : "0.00"}
                 </p>
               </CardContent>
             </Card>
@@ -87,7 +81,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
-                  {summary ? formatMoney(summary.expense, locale) : "0.00"}
+                  {summary ? formatAmount(summary.expense) : "0.00"}
                 </p>
               </CardContent>
             </Card>
@@ -106,7 +100,7 @@ export default function DashboardPage() {
                       : "text-red-700 dark:text-red-300"
                   }`}
                 >
-                  {summary ? formatMoney(balance, locale) : "0.00"}
+                  {summary ? formatAmount(balance) : "0.00"}
                 </p>
               </CardContent>
             </Card>

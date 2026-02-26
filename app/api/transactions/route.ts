@@ -164,7 +164,10 @@ export async function GET(request: Request) {
     const data = transactions.map((t) => ({
       id: t.id,
       type: t.type,
-      amount: t.amount,
+      amount:
+        typeof t.amount === "object" && t.amount != null && "toNumber" in t.amount
+          ? (t.amount as { toNumber: () => number }).toNumber()
+          : Number(t.amount),
       category: t.category,
       note: t.note,
       occurredAt: t.occurredAt.toISOString(),

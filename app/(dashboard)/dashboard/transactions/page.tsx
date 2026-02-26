@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -38,14 +39,6 @@ function formatDate(iso: string, locale: string) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  });
-}
-
-function formatAmount(amount: number, locale: string) {
-  if (Number.isNaN(amount)) return "-";
-  return amount.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
   });
 }
 
@@ -301,7 +294,7 @@ export default function TransactionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-2 align-top text-right tabular-nums text-zinc-900 dark:text-zinc-50">
-                        {formatAmount(tx.amount, locale)}
+                        {formatAmount(tx.amount)}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
                         {tx.category ?? "—"}

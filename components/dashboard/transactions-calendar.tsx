@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -152,14 +153,6 @@ function buildCalendarDays(
   };
 }
 
-function formatAmount(amount: number, locale: string) {
-  if (Number.isNaN(amount)) return "-";
-  return amount.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 function formatYearForDisplay(year: number, locale: string): string {
@@ -205,6 +198,8 @@ export function TransactionsCalendar() {
   const [yearSummaryError, setYearSummaryError] = useState<string | null>(
     null,
   );
+
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [{ days, from, to }, calendarReady] = useMemo(() => {
     try {
@@ -291,7 +286,7 @@ export function TransactionsCalendar() {
     void load();
 
     return () => controller.abort();
-  }, [from, to, calendarReady, viewMode, t]);
+  }, [from, to, calendarReady, viewMode, t, refreshKey]);
 
   // Month summary (per year) for Month view.
   useEffect(() => {
@@ -356,7 +351,7 @@ export function TransactionsCalendar() {
     void load();
 
     return () => controller.abort();
-  }, [viewMode, year, t]);
+  }, [viewMode, year, t, refreshKey]);
 
   // Year summary (multi-year) for Year view.
   const yearRangeEnd = useMemo(
@@ -427,7 +422,7 @@ export function TransactionsCalendar() {
     void load();
 
     return () => controller.abort();
-  }, [viewMode, yearRangeStart, yearRangeEnd, t]);
+  }, [viewMode, yearRangeStart, yearRangeEnd, t, refreshKey]);
 
   async function openDay(dateIso: string) {
     setSelectedDate(dateIso);
@@ -518,6 +513,11 @@ export function TransactionsCalendar() {
     if (selectedDate) {
       void openDay(selectedDate);
     }
+  }
+
+  function refreshCalendar() {
+    setRefreshKey((k) => k + 1);
+    refreshDailyItems();
   }
 
   const selectedDateLabel = useMemo(() => {
@@ -1036,7 +1036,7 @@ export function TransactionsCalendar() {
                         </div>
                         <div className="flex shrink-0 items-center gap-0.5 text-right">
                           <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                            {formatAmount(tx.amount, locale)}
+                            {formatAmount(tx.amount)}
                           </span>
                           <Button
                             variant="ghost"
@@ -1070,14 +1070,14 @@ export function TransactionsCalendar() {
         onOpenChange={setFormOpen}
         editId={formEditId}
         initialDate={formInitialDate}
-        onSuccess={refreshDailyItems}
+        onSuccess={refreshCalendar}
       />
 
       <TransactionDeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         transaction={deleteTransaction}
-        onConfirm={refreshDailyItems}
+        onConfirm={refreshCalendar}
       />
     </div>
   );

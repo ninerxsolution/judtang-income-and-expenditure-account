@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { List, ArrowDownCircle, ArrowUpCircle, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 
 type Transaction = {
@@ -24,14 +25,6 @@ function formatDate(iso: string, locale: string) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  });
-}
-
-function formatAmount(amount: number, locale: string) {
-  if (Number.isNaN(amount)) return "-";
-  return amount.toLocaleString(locale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
   });
 }
 
@@ -155,7 +148,7 @@ export function TransactionsList() {
                   }`}
                 >
                   {isIncome ? "+" : "-"}
-                  {formatAmount(tx.amount, locale)}
+                  {formatAmount(tx.amount)}
                 </span>
               </li>
             );
