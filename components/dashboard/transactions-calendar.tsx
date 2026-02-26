@@ -668,7 +668,7 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("day")}
-              className={`px-3 py-2 ${
+              className={`px-3 py-2 transition-colors duration-150 ease-out ${
                 viewMode === "day"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -679,7 +679,7 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("week")}
-              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium ${
+              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium transition-colors duration-150 ease-out ${
                 viewMode === "week"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -690,7 +690,7 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("month")}
-              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium ${
+              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium transition-colors duration-150 ease-out ${
                 viewMode === "month"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -701,7 +701,7 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("year")}
-              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 rounded-r-md font-medium ${
+              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 rounded-r-md font-medium transition-colors duration-150 ease-out ${
                 viewMode === "year"
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -713,7 +713,7 @@ export function TransactionsCalendar() {
         <button
             type="button"
             onClick={goToToday}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
         >
           {t("calendar.today")}
         </button>
@@ -725,7 +725,7 @@ export function TransactionsCalendar() {
               setFormInitialDate(null);
               setFormOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
           <Plus className="h-4 w-4" />
           {t("calendar.newTransaction")}
@@ -741,14 +741,14 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={goPrevMonth}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={goNextMonth}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -787,7 +787,7 @@ export function TransactionsCalendar() {
                     type="button"
                     onClick={() => openDay(day.iso)}
                     className={[
-                      "flex h-16 flex-col rounded-md border px-1.5 py-1 text-left transition",
+                      "flex h-16 flex-col rounded-md border px-1.5 py-1 text-left transition-colors duration-150 ease-out",
                       "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
                       isMuted
                         ? "text-zinc-400 dark:text-zinc-500"
@@ -848,14 +848,14 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={goPrevWeek}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={goNextWeek}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -885,7 +885,7 @@ export function TransactionsCalendar() {
                     type="button"
                     onClick={() => openDay(day.iso)}
                     className={[
-                      "flex w-full flex-row items-center gap-3 rounded-md border px-3 py-2.5 text-left transition",
+                      "flex w-full flex-row items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors duration-150 ease-out",
                       "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
                       "text-zinc-800 dark:text-zinc-100",
                       day.isToday
@@ -955,7 +955,7 @@ export function TransactionsCalendar() {
                       monthIndex,
                     }))
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -967,7 +967,7 @@ export function TransactionsCalendar() {
                       monthIndex,
                     }))
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -1005,7 +1005,7 @@ export function TransactionsCalendar() {
                       setViewMode("day");
                     }}
                     className={[
-                      "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition",
+                      "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
                       "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
                       hasData
                         ? "text-zinc-900 dark:text-zinc-50"
@@ -1059,14 +1059,14 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={() => setYearRangeStart((y) => y - 12)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setYearRangeStart((y) => y + 12)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -1109,7 +1109,7 @@ export function TransactionsCalendar() {
                       setViewMode("month");
                     }}
                     className={[
-                      "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition",
+                      "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
                       "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
                       hasData
                         ? "text-zinc-900 dark:text-zinc-50"
@@ -1175,7 +1175,7 @@ export function TransactionsCalendar() {
               <Button
                 type="button"
                 onClick={() => selectedDate && handleAddForDay(selectedDate)}
-                className="inline-flex gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="inline-flex gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
                 <Plus className="h-4 w-4" />
                 {t("calendar.modal.add")}
