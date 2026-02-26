@@ -240,11 +240,11 @@ export function TransactionFormDialog({
             <span className="mb-1 block text-sm font-medium">
               {t("transactions.new.typeLabel")}
             </span>
-            <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="inline-flex rounded-md border overflow-hidden border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
               <button
                 type="button"
                 onClick={() => setType("INCOME")}
-                className={`inline-flex items-center gap-1 px-3 py-1.5 ${
+                className={`inline-flex items-center gap-1 px-3 py-1.5 transition-all ${
                   type === "INCOME"
                     ? "bg-emerald-500 text-white"
                     : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -256,7 +256,7 @@ export function TransactionFormDialog({
               <button
                 type="button"
                 onClick={() => setType("EXPENSE")}
-                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 ${
+                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
                   type === "EXPENSE"
                     ? "bg-red-500 text-white"
                     : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
