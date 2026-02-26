@@ -6,6 +6,7 @@
  */
 import { useEffect, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
+import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import {
@@ -45,7 +46,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <TransactionsCalendar />
        <div className="space-y-6">

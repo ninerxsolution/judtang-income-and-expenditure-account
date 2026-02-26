@@ -271,7 +271,7 @@ export function AppSidebarLayout({
             </DropdownMenu>
           </div>
         </header>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1 overflow-x-hidden">
           {children}
         </div>
       </SidebarInset>

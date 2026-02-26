@@ -14,7 +14,7 @@ export function DashboardContent({ children, className }: DashboardContentProps)
   return (
     <div
       className={cn(
-        "mx-auto px-4 py-4 space-y-4",
+        "mx-auto min-w-0 px-4 py-4 space-y-4",
         fullscreen ? "max-w-full" : "max-w-7xl",
         className
       )}

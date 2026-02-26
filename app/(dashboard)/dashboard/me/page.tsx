@@ -3,8 +3,26 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { User, Monitor, Trash2, LogOut, CheckCircle2, Mail } from "lucide-react";
+import {
+  User,
+  Monitor,
+  Trash2,
+  LogOut,
+  CheckCircle2,
+  Mail,
+  Pencil,
+  KeyRound,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FormField } from "@/components/auth/form-field";
 import {
   MAX_NAME_LENGTH,
@@ -13,6 +31,7 @@ import {
 } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 import { toast } from "sonner";
+import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 
 type Profile = {
   id: string;
@@ -69,14 +88,14 @@ export default function UserPage() {
   // Name form
   const [nameValue, setNameValue] = useState("");
   const [namePending, setNamePending] = useState(false);
-  const [nameMessage, setNameMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordPending, setPasswordPending] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   const [revoking, setRevoking] = useState<string | null>(null);
 
@@ -155,7 +174,6 @@ export default function UserPage() {
 
   async function handleUpdateName(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setNameMessage(null);
     setNamePending(true);
     try {
       const res = await fetch("/api/users/me", {
@@ -165,11 +183,12 @@ export default function UserPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setNameMessage({ type: "error", text: data.error ?? "Failed to update name" });
+        toast.error(data.error ?? "Failed to update name");
         return;
       }
-      setNameMessage({ type: "ok", text: "Name updated." });
+      toast.success(t("profile.nameUpdated"));
       setProfile((p) => (p ? { ...p, name: nameValue.trim() || null } : null));
+      setNameDialogOpen(false);
     } finally {
       setNamePending(false);
     }
@@ -177,17 +196,16 @@ export default function UserPage() {
 
   async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setPasswordMessage(null);
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      setPasswordMessage({ type: "error", text: `New password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
+      toast.error(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
     if (newPassword.length > MAX_PASSWORD_LENGTH) {
-      setPasswordMessage({ type: "error", text: `Password must be at most ${MAX_PASSWORD_LENGTH} characters.` });
+      toast.error(`Password must be at most ${MAX_PASSWORD_LENGTH} characters.`);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: "error", text: "New password and confirmation do not match." });
+      toast.error("New password and confirmation do not match.");
       return;
     }
     setPasswordPending(true);
@@ -199,13 +217,14 @@ export default function UserPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setPasswordMessage({ type: "error", text: data.error ?? "Failed to change password" });
+        toast.error(data.error ?? "Failed to change password");
         return;
       }
-      setPasswordMessage({ type: "ok", text: "Password changed." });
+      toast.success(t("profile.passwordUpdated"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordDialogOpen(false);
     } finally {
       setPasswordPending(false);
     }
@@ -277,7 +296,6 @@ export default function UserPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-xl font-semibold">User profile</h1>
 
       {/* Profile block */}
       <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
@@ -341,44 +359,120 @@ export default function UserPage() {
         </div>
       </section>
 
-      {/* Settings: change name */}
+      <div className="min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <ActivityHeatmap />
+      </div>
+
+      {/* Settings: name + password as buttons with dialogs */}
       <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
-        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-4">Settings</h2>
-        <form onSubmit={handleUpdateName} className="space-y-4">
-          <FormField
-            id="profile-name"
-            label="Display name"
-            value={nameValue}
-            onChange={setNameValue}
-            maxLength={MAX_NAME_LENGTH}
-          />
-          <button
-            type="submit"
-            disabled={namePending}
-            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50"
-          >
-            {namePending ? "Saving…" : "Save name"}
-          </button>
-          {nameMessage && (
-            <p
-              className={
-                nameMessage.type === "ok"
-                  ? "text-sm text-green-600 dark:text-green-400"
-                  : "text-sm text-red-600 dark:text-red-400"
-              }
+        <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-4">
+          {t("settings.title")}
+        </h2>
+        <div className="space-y-4">
+          {/* Display name */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 p-4">
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {t("profile.displayName")}
+              </p>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                {profile.name || "—"}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setNameValue(profile.name ?? "");
+                setNameDialogOpen(true);
+              }}
             >
-              {nameMessage.text}
+              <Pencil className="h-4 w-4" />
+              {t("profile.editName")}
+            </Button>
+          </div>
+
+          {/* Change password (only if has password) */}
+          {profile.hasPassword ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 p-4">
+              <div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {t("profile.changePassword")}
+                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  ••••••••
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setPasswordDialogOpen(true);
+                }}
+              >
+                <KeyRound className="h-4 w-4" />
+                {t("profile.changePassword")}
+              </Button>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 p-4 text-sm text-zinc-500 dark:text-zinc-400">
+              {t("profile.noPasswordHint")}
             </p>
           )}
-        </form>
+        </div>
+      </section>
 
-        {/* Change password (only if has password) */}
-        {profile.hasPassword ? (
-          <form onSubmit={handleChangePassword} className="mt-8 space-y-4">
-            <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Change password</h3>
+      {/* Edit name dialog */}
+      <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("profile.editNameDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("profile.editNameDialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateName} className="space-y-4">
+            <FormField
+              id="profile-name"
+              label={t("profile.displayName")}
+              value={nameValue}
+              onChange={setNameValue}
+              maxLength={MAX_NAME_LENGTH}
+            />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setNameDialogOpen(false)}
+              >
+                {t("common.actions.cancel")}
+              </Button>
+              <Button type="submit" disabled={namePending}>
+                {namePending ? t("profile.savingName") : t("profile.saveName")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change password dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("profile.changePasswordDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("profile.changePasswordDialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4">
             <FormField
               id="current-password"
-              label="Current password"
+              label={t("profile.currentPassword")}
               type="password"
               value={currentPassword}
               onChange={setCurrentPassword}
@@ -387,7 +481,7 @@ export default function UserPage() {
             />
             <FormField
               id="new-password"
-              label="New password"
+              label={t("profile.newPassword")}
               type="password"
               value={newPassword}
               onChange={setNewPassword}
@@ -396,38 +490,30 @@ export default function UserPage() {
             />
             <FormField
               id="confirm-password"
-              label="Confirm new password"
+              label={t("profile.confirmPassword")}
               type="password"
               value={confirmPassword}
               onChange={setConfirmPassword}
               autoComplete="new-password"
               maxLength={MAX_PASSWORD_LENGTH}
             />
-            <button
-              type="submit"
-              disabled={passwordPending}
-              className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50"
-            >
-              {passwordPending ? "Updating…" : "Change password"}
-            </button>
-            {passwordMessage && (
-              <p
-                className={
-                  passwordMessage.type === "ok"
-                    ? "text-sm text-green-600 dark:text-green-400"
-                    : "text-sm text-red-600 dark:text-red-400"
-                }
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPasswordDialogOpen(false)}
               >
-                {passwordMessage.text}
-              </p>
-            )}
+                {t("common.actions.cancel")}
+              </Button>
+              <Button type="submit" disabled={passwordPending}>
+                {passwordPending
+                  ? t("profile.updatingPassword")
+                  : t("profile.updatePassword")}
+              </Button>
+            </DialogFooter>
           </form>
-        ) : (
-          <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
-            Signed in with Google — no password to change.
-          </p>
-        )}
-      </section>
+        </DialogContent>
+      </Dialog>
 
       {/* Sessions block */}
       <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
