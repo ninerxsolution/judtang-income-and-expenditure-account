@@ -38,23 +38,39 @@ export async function GET(request: Request) {
       },
       select: {
         occurredAt: true,
+        type: true,
       },
     });
 
-    const monthMap = new Map<number, number>();
+    const monthMap = new Map<
+      number,
+      { count: number; incomeCount: number; expenseCount: number }
+    >();
 
     for (const tx of items) {
       const m = tx.occurredAt.getMonth(); // 0-11
-      const prev = monthMap.get(m) ?? 0;
-      monthMap.set(m, prev + 1);
+      const prev = monthMap.get(m) ?? {
+        count: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+      };
+      const isIncome = String(tx.type).toUpperCase() === "INCOME";
+      const isExpense = String(tx.type).toUpperCase() === "EXPENSE";
+      monthMap.set(m, {
+        count: prev.count + 1,
+        incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
+        expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+      });
     }
 
     const result = Array.from(monthMap.entries())
       .sort(([a], [b]) => a - b)
-      .map(([monthIndex, count]) => ({
+      .map(([monthIndex, { count, incomeCount, expenseCount }]) => ({
         monthIndex,
         hasTransactions: count > 0,
         count,
+        incomeCount,
+        expenseCount,
       }));
 
     return NextResponse.json(result);

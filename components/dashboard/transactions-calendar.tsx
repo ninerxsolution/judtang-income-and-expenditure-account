@@ -56,12 +56,16 @@ type MonthSummaryItem = {
   monthIndex: number;
   hasTransactions: boolean;
   count: number;
+  incomeCount?: number;
+  expenseCount?: number;
 };
 
 type YearSummaryItem = {
   year: number;
   hasTransactions: boolean;
   count: number;
+  incomeCount?: number;
+  expenseCount?: number;
 };
 
 function formatDateInput(d: Date): string {
@@ -323,6 +327,16 @@ export function TransactionsCalendar() {
                 typeof item.count === "number" && Number.isFinite(item.count)
                   ? item.count
                   : 0,
+              incomeCount:
+                typeof item.incomeCount === "number" &&
+                Number.isFinite(item.incomeCount)
+                  ? item.incomeCount
+                  : 0,
+              expenseCount:
+                typeof item.expenseCount === "number" &&
+                Number.isFinite(item.expenseCount)
+                  ? item.expenseCount
+                  : 0,
             })),
           );
         } else {
@@ -383,6 +397,16 @@ export function TransactionsCalendar() {
               count:
                 typeof item.count === "number" && Number.isFinite(item.count)
                   ? item.count
+                  : 0,
+              incomeCount:
+                typeof item.incomeCount === "number" &&
+                Number.isFinite(item.incomeCount)
+                  ? item.incomeCount
+                  : 0,
+              expenseCount:
+                typeof item.expenseCount === "number" &&
+                Number.isFinite(item.expenseCount)
+                  ? item.expenseCount
                   : 0,
             })),
           );
@@ -748,6 +772,8 @@ export function TransactionsCalendar() {
                 const info = monthSummaryMap.get(idx);
                 const hasData = !!info?.hasTransactions;
                 const count = info?.count ?? 0;
+                const incomeCount = info?.incomeCount ?? 0;
+                const expenseCount = info?.expenseCount ?? 0;
                 const isCurrentMonth =
                   idx === today.getMonth() && year === today.getFullYear();
                 return (
@@ -774,18 +800,18 @@ export function TransactionsCalendar() {
                     <span className="text-sm font-medium">
                       {getMonthShortLabel(idx)}
                     </span>
-                    <div className="mt-2 flex items-center gap-1 text-[11px]">
+                    <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
+                      <div className="flex items-center gap-0.5">
+                        {incomeCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        )}
+                        {expenseCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                        )}
+                      </div>
                       {hasData && (
-                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                      )}
-                      {hasData && count > 1 && (
                         <span className="text-zinc-500 dark:text-zinc-400">
-                          {t("calendar.records", { count })}
-                        </span>
-                      )}
-                      {!hasData && (
-                        <span className="text-zinc-400 dark:text-zinc-500">
-                          {t("calendar.noRecords")}
+                          {count}
                         </span>
                       )}
                     </div>
@@ -842,6 +868,8 @@ export function TransactionsCalendar() {
                 const info = yearSummaryMap.get(y);
                 const hasData = !!info?.hasTransactions;
                 const count = info?.count ?? 0;
+                const incomeCount = info?.incomeCount ?? 0;
+                const expenseCount = info?.expenseCount ?? 0;
                 const isCurrentYear = y === today.getFullYear();
                 return (
                   <button
@@ -868,18 +896,18 @@ export function TransactionsCalendar() {
                       .join(" ")}
                   >
                     <span className="text-sm font-medium">{formatYearForDisplay(y, locale)}</span>
-                    <div className="mt-2 flex items-center gap-1 text-[11px]">
+                    <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
+                      <div className="flex items-center gap-0.5">
+                        {incomeCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                        )}
+                        {expenseCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                        )}
+                      </div>
                       {hasData && (
-                        <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                      )}
-                      {hasData && count > 1 && (
                         <span className="text-zinc-500 dark:text-zinc-400">
-                          {t("calendar.records", { count })}
-                        </span>
-                      )}
-                      {!hasData && (
-                        <span className="text-zinc-400 dark:text-zinc-500">
-                          {t("calendar.noRecords")}
+                          {count}
                         </span>
                       )}
                     </div>
