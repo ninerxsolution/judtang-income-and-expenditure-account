@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     type?: string;
     amount?: number;
     financialAccountId?: string;
+    transferAccountId?: string | null;
     categoryId?: string | null;
     category?: string | null;
     note?: string | null;
@@ -116,6 +117,50 @@ export async function POST(request: Request) {
     );
   }
 
+  if (type === TransactionType.TRANSFER) {
+    const transferAccountId = body.transferAccountId != null ? String(body.transferAccountId).trim() : "";
+    if (!transferAccountId) {
+      return NextResponse.json(
+        { error: "transferAccountId is required for TRANSFER" },
+        { status: 400 },
+      );
+    }
+    if (transferAccountId === financialAccountId) {
+      return NextResponse.json(
+        { error: "transferAccountId must be different from financialAccountId" },
+        { status: 400 },
+      );
+    }
+    const toAccount = await prisma.financialAccount.findFirst({
+      where: { id: transferAccountId, userId },
+      select: { type: true, bankName: true, accountNumber: true },
+    });
+    if (!toAccount) {
+      return NextResponse.json({ error: "Transfer destination account not found" }, { status: 404 });
+    }
+    if (toAccount.type === "CREDIT_CARD") {
+      return NextResponse.json(
+        { error: "Cannot transfer to or from a credit card account" },
+        { status: 400 },
+      );
+    }
+    if (accountForTx.type === "CREDIT_CARD") {
+      return NextResponse.json(
+        { error: "Cannot transfer to or from a credit card account" },
+        { status: 400 },
+      );
+    }
+    if (isAccountIncomplete(toAccount)) {
+      return NextResponse.json(
+        {
+          error:
+            "Transfer destination account is incomplete. Please add bank and account number before using.",
+        },
+        { status: 400 },
+      );
+    }
+  }
+
   if (type === TransactionType.PAYMENT && financialAccountId) {
     if (accountForTx.type === "CREDIT_CARD") {
       try {
@@ -161,6 +206,10 @@ export async function POST(request: Request) {
       type: type as TransactionType,
       amount: amountNumber,
       financialAccountId,
+      transferAccountId:
+        type === TransactionType.TRANSFER && body.transferAccountId
+          ? body.transferAccountId
+          : undefined,
       categoryId: body.categoryId ?? undefined,
       category: body.category ?? undefined,
       note: body.note ?? undefined,
@@ -169,12 +218,22 @@ export async function POST(request: Request) {
       postedDate,
     });
 
+    let transferAccount: { id: string; name: string } | null = null;
+    if (transaction.transferAccountId) {
+      const toAcc = await prisma.financialAccount.findUnique({
+        where: { id: transaction.transferAccountId },
+        select: { id: true, name: true },
+      });
+      if (toAcc) transferAccount = toAcc;
+    }
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
       status: transaction.status,
       amount: transaction.amount,
       financialAccountId: transaction.financialAccountId,
+      transferAccountId: transaction.transferAccountId ?? null,
+      transferAccount,
       categoryId: transaction.categoryId,
       category: transaction.category,
       note: transaction.note,
@@ -183,8 +242,9 @@ export async function POST(request: Request) {
       createdAt: transaction.createdAt.toISOString(),
     });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : "Failed to create transaction";
     return NextResponse.json(
-      { error: "Failed to create transaction" },
+      { error: msg },
       { status: 500 },
     );
   }
@@ -262,6 +322,7 @@ export async function GET(request: Request) {
     const data = transactions.map((t) => {
       const tx = t as typeof t & {
         financialAccount?: { id: string; name: string } | null;
+        transferAccount?: { id: string; name: string } | null;
         categoryRef?: { id: string; name: string } | null;
       };
       return {
@@ -274,6 +335,8 @@ export async function GET(request: Request) {
             : Number(tx.amount),
         financialAccountId: tx.financialAccountId,
         financialAccount: tx.financialAccount,
+        transferAccountId: tx.transferAccountId ?? null,
+        transferAccount: tx.transferAccount ?? null,
         categoryId: tx.categoryId,
         categoryRef: tx.categoryRef,
         category: tx.category,

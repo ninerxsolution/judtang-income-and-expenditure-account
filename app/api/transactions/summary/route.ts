@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { getTransactionsSummary } from "@/lib/transactions";
+import { getTotalBalance } from "@/lib/balance";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -59,8 +60,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const summary = await getTransactionsSummary(userId, options);
-    return NextResponse.json(summary);
+    const [summary, totalBalance] = await Promise.all([
+      getTransactionsSummary(userId, options),
+      getTotalBalance(userId),
+    ]);
+    return NextResponse.json({ ...summary, totalBalance });
   } catch {
     return NextResponse.json(
       { error: "Failed to load summary" },

@@ -38,12 +38,17 @@ export async function GET(
         ? (transaction.amount as { toNumber: () => number }).toNumber()
         : Number(transaction.amount);
 
+    const txWithInclude = transaction as typeof transaction & {
+      transferAccount?: { id: string; name: string } | null;
+    };
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
       status: transaction.status,
       amount,
       financialAccountId: transaction.financialAccountId,
+      transferAccountId: transaction.transferAccountId ?? null,
+      transferAccount: txWithInclude.transferAccount ?? null,
       categoryId: transaction.categoryId,
       category: transaction.category,
       note: transaction.note,
@@ -80,6 +85,7 @@ export async function PATCH(
     type?: string;
     amount?: number;
     financialAccountId?: string;
+    transferAccountId?: string | null;
     categoryId?: string | null;
     category?: string | null;
     note?: string | null;
@@ -157,11 +163,19 @@ export async function PATCH(
     }
   }
 
+  const transferAccountId =
+    body.transferAccountId !== undefined
+      ? body.transferAccountId != null && String(body.transferAccountId).trim() !== ""
+        ? String(body.transferAccountId).trim()
+        : null
+      : undefined;
+
   try {
     const transaction = await updateTransaction(userId, id, {
       type: type as TransactionType | undefined,
       amount: amountNumber,
       financialAccountId,
+      transferAccountId,
       categoryId: body.categoryId,
       category: body.category,
       note: body.note,
@@ -175,12 +189,17 @@ export async function PATCH(
         ? (transaction.amount as { toNumber: () => number }).toNumber()
         : Number(transaction.amount);
 
+    const txWithInclude = transaction as typeof transaction & {
+      transferAccount?: { id: string; name: string } | null;
+    };
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
       status: transaction.status,
       amount,
       financialAccountId: transaction.financialAccountId,
+      transferAccountId: transaction.transferAccountId ?? null,
+      transferAccount: txWithInclude.transferAccount ?? null,
       categoryId: transaction.categoryId,
       category: transaction.category,
       note: transaction.note,

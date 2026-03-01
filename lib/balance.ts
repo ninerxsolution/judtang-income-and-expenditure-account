@@ -3,8 +3,8 @@ import { TransactionType } from "@prisma/client";
 import { getCurrentOutstanding } from "@/lib/credit-card";
 
 /**
- * Balance = initialBalance + sum(INCOME) - sum(EXPENSE)
- * TRANSFER in v1 = two transactions (INCOME + EXPENSE), so no separate handling.
+ * Balance = initialBalance + sum(INCOME) - sum(EXPENSE) + sum(TRANSFER in) - sum(TRANSFER out)
+ * TRANSFER: financialAccountId = source (-amount), transferAccountId = destination (+amount).
  * For CREDIT_CARD: returns -currentOutstanding (liability as negative from user perspective).
  */
 export async function getAccountBalance(accountId: string): Promise<number> {
@@ -22,7 +22,7 @@ export async function getAccountBalance(accountId: string): Promise<number> {
     return -outstanding;
   }
 
-  const [incomeSum, expenseSum] = await Promise.all([
+  const [incomeSum, expenseSum, transferOutSum, transferInSum] = await Promise.all([
     prisma.transaction.aggregate({
       where: { financialAccountId: accountId, type: TransactionType.INCOME },
       _sum: { amount: true },
@@ -31,11 +31,37 @@ export async function getAccountBalance(accountId: string): Promise<number> {
       where: { financialAccountId: accountId, type: TransactionType.EXPENSE },
       _sum: { amount: true },
     }),
+    prisma.transaction.aggregate({
+      where: { financialAccountId: accountId, type: TransactionType.TRANSFER },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { transferAccountId: accountId, type: TransactionType.TRANSFER },
+      _sum: { amount: true },
+    }),
   ]);
 
   const income = Number(incomeSum._sum.amount ?? 0);
   const expense = Number(expenseSum._sum.amount ?? 0);
+  const transferOut = Number(transferOutSum._sum.amount ?? 0);
+  const transferIn = Number(transferInSum._sum.amount ?? 0);
   const initial = Number(account.initialBalance);
 
-  return initial + income - expense;
+  return initial + income - expense - transferOut + transferIn;
+}
+
+/**
+ * Total net balance = sum of all active account balances for the user.
+ * Asset accounts (BANK, WALLET, CASH, OTHER) contribute positively;
+ * CREDIT_CARD contributes negatively (liability).
+ */
+export async function getTotalBalance(userId: string): Promise<number> {
+  const accounts = await prisma.financialAccount.findMany({
+    where: { userId, isActive: true },
+    select: { id: true },
+  });
+  const balances = await Promise.all(
+    accounts.map((a) => getAccountBalance(a.id))
+  );
+  return balances.reduce((sum, b) => sum + b, 0);
 }

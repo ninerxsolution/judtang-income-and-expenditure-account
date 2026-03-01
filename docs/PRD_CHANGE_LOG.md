@@ -5,6 +5,25 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 01/03/2026 (TRANSFER Between Accounts)
+
+- prisma/schema.prisma — Added `transferAccountId` and `transferAccount` relation to Transaction.
+- prisma/migrations/ — Added migration for transferAccountId.
+- lib/balance.ts — getAccountBalance now includes TRANSFER (out -amount, in +amount).
+- lib/transactions.ts — createTransaction, updateTransaction, listTransactionsByUser support transferAccountId; list uses OR for account filter.
+- app/api/transactions/route.ts — POST validates and accepts transferAccountId for TRANSFER.
+- app/api/transactions/[id]/route.ts — GET/PATCH return transferAccountId, transferAccount.
+- app/api/transactions/export/route.ts — Filter by account includes transferAccountId (OR).
+- app/api/transactions/import/route.ts — CSV import supports TRANSFER and transferAccountId.
+- lib/transactions-csv.ts — Added transferAccountId to optional columns and serialization.
+- components/dashboard/transaction-form-dialog.tsx — Added TRANSFER type, from/to account dropdowns.
+- app/(dashboard)/dashboard/transactions/page.tsx — TRANSFER filter, badge, display.
+- i18n — Added transfer, fromAccount, toAccount, transferTo, validation keys.
+- docs/feature/transfers.md — New feature doc for TRANSFER.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 01/03/2026 (Financial Accounts: Hide/Show Default, Delete)
 
 - prisma/schema.prisma — Added `isHidden` to FinancialAccount.

@@ -7,6 +7,7 @@ import {
   List,
   ArrowDownCircle,
   ArrowUpCircle,
+  ArrowLeftRight,
   Plus,
   CalendarRange,
   Pencil,
@@ -25,9 +26,10 @@ import { TransactionDeleteDialog } from "@/components/dashboard/transaction-dele
 
 type Transaction = {
   id: string;
-  type: "INCOME" | "EXPENSE" | string;
+  type: "INCOME" | "EXPENSE" | "TRANSFER" | string;
   amount: number;
   financialAccount?: { id: string; name: string } | null;
+  transferAccount?: { id: string; name: string } | null;
   categoryRef?: { id: string; name: string } | null;
   category: string | null;
   note: string | null;
@@ -57,7 +59,7 @@ export default function TransactionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "INCOME" | "EXPENSE">("all");
+  const [filterType, setFilterType] = useState<"all" | "INCOME" | "EXPENSE" | "TRANSFER">("all");
   const [filterAccountId, setFilterAccountId] = useState("");
   const [offset, setOffset] = useState(0);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
@@ -223,12 +225,13 @@ export default function TransactionsPage() {
             <select
               id="list-type"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE")}
+              onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
               className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
             >
               <option value="all">{t("dataTools.export.typeAll")}</option>
               <option value="INCOME">{t("transactions.common.income")}</option>
               <option value="EXPENSE">{t("transactions.common.expense")}</option>
+              <option value="TRANSFER">{t("transactions.common.transfer")}</option>
             </select>
           </div>
           <div>
@@ -308,6 +311,12 @@ export default function TransactionsPage() {
               <tbody>
                 {items.map((tx) => {
                   const isIncome = tx.type === "INCOME";
+                  const isTransfer = tx.type === "TRANSFER";
+                  const accountDisplay = isTransfer && tx.transferAccount
+                    ? t("transactions.list.transferTo", {
+                        account: tx.transferAccount.name,
+                      })
+                    : tx.financialAccount?.name ?? "—";
                   return (
                     <tr
                       key={tx.id}
@@ -317,24 +326,36 @@ export default function TransactionsPage() {
                         {formatDate(tx.occurredAt, locale)}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
-                        {tx.financialAccount?.name ?? "—"}
+                        {isTransfer ? (
+                          <>
+                            {tx.financialAccount?.name ?? "—"} {accountDisplay}
+                          </>
+                        ) : (
+                          accountDisplay
+                        )}
                       </td>
                       <td className="px-4 py-2 align-top">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                             isIncome
                               ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                              : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                              : isTransfer
+                                ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                           }`}
                         >
                           {isIncome ? (
                             <ArrowDownCircle className="h-3.5 w-3.5" />
+                          ) : isTransfer ? (
+                            <ArrowLeftRight className="h-3.5 w-3.5" />
                           ) : (
                             <ArrowUpCircle className="h-3.5 w-3.5" />
                           )}
                           {isIncome
                             ? t("transactions.common.income")
-                            : t("transactions.common.expense")}
+                            : isTransfer
+                              ? t("transactions.common.transfer")
+                              : t("transactions.common.expense")}
                         </span>
                       </td>
                       <td className="px-4 py-2 align-top text-right tabular-nums text-zinc-900 dark:text-zinc-50">

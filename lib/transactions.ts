@@ -25,6 +25,7 @@ export type CreateTransactionParams = {
   type: TransactionType;
   amount: number;
   financialAccountId: string;
+  transferAccountId?: string | null;
   categoryId?: string | null;
   category?: string;
   note?: string | null;
@@ -47,6 +48,7 @@ export type UpdateTransactionParams = {
   type?: TransactionType;
   amount?: number;
   financialAccountId?: string;
+  transferAccountId?: string | null;
   categoryId?: string | null;
   category?: string | null;
   note?: string | null;
@@ -83,6 +85,16 @@ export async function createTransaction(params: CreateTransactionParams) {
     throw new Error("financialAccountId is required");
   }
 
+  if (type === TransactionType.TRANSFER) {
+    const toId = params.transferAccountId != null ? String(params.transferAccountId).trim() : "";
+    if (!toId) {
+      throw new Error("transferAccountId is required for TRANSFER");
+    }
+    if (toId === params.financialAccountId) {
+      throw new Error("transferAccountId must be different from financialAccountId");
+    }
+  }
+
   const category =
     params.category != null && String(params.category).trim() !== ""
       ? String(params.category).trim()
@@ -113,6 +125,10 @@ export async function createTransaction(params: CreateTransactionParams) {
       status,
       amount: amountNumber,
       financialAccountId: params.financialAccountId,
+      transferAccountId:
+        type === TransactionType.TRANSFER && params.transferAccountId
+          ? params.transferAccountId
+          : undefined,
       categoryId,
       category,
       note,
@@ -130,26 +146,37 @@ export async function createTransaction(params: CreateTransactionParams) {
     if (account?.type === "CREDIT_CARD") {
       void recomputeOutstanding(params.financialAccountId);
     }
+    const transferAccount =
+      type === TransactionType.TRANSFER && params.transferAccountId
+        ? await prisma.financialAccount.findUnique({
+            where: { id: params.transferAccountId },
+            select: { name: true },
+          })
+        : null;
     const categoryRow = params.categoryId
       ? await prisma.category.findUnique({
           where: { id: params.categoryId },
           select: { name: true },
         })
       : null;
+    const details: Record<string, unknown> = {
+      type: transaction.type,
+      amount: transaction.amount,
+      category: transaction.category,
+      categoryName: categoryRow?.name ?? transaction.category ?? undefined,
+      occurredAt: transaction.occurredAt,
+      accountName: account?.name,
+      financialAccountId: params.financialAccountId,
+    };
+    if (type === TransactionType.TRANSFER && transferAccount?.name) {
+      details.toAccountName = transferAccount.name;
+    }
     void createActivityLog({
       userId,
       action: ActivityLogAction.TRANSACTION_CREATED,
       entityType: "transaction",
       entityId: transaction.id,
-      details: {
-        type: transaction.type,
-        amount: transaction.amount,
-        category: transaction.category,
-        categoryName: categoryRow?.name ?? transaction.category ?? undefined,
-        occurredAt: transaction.occurredAt,
-        accountName: account?.name,
-        financialAccountId: params.financialAccountId,
-      },
+      details,
     });
   } else {
     void createActivityLog({
@@ -183,6 +210,7 @@ export async function listTransactionsByUser(
     userId: string;
     type?: PrismaTransactionType;
     financialAccountId?: string;
+    OR?: Array<{ financialAccountId?: string; transferAccountId?: string }>;
     occurredAt?: { gte?: Date; lte?: Date };
   } = { userId };
 
@@ -199,7 +227,10 @@ export async function listTransactionsByUser(
   }
 
   if (financialAccountId) {
-    where.financialAccountId = financialAccountId;
+    where.OR = [
+      { financialAccountId },
+      { transferAccountId: financialAccountId },
+    ];
   }
 
   if (from || to) {
@@ -229,6 +260,7 @@ export async function listTransactionsByUser(
     skip: safeOffset,
     include: {
       financialAccount: { select: { id: true, name: true } },
+      transferAccount: { select: { id: true, name: true } },
       categoryRef: { select: { id: true, name: true } },
     },
   });
@@ -238,6 +270,11 @@ export async function getTransactionById(userId: string, id: string) {
   if (!userId || !id) return null;
   return prisma.transaction.findFirst({
     where: { id, userId },
+    include: {
+      financialAccount: { select: { id: true, name: true } },
+      transferAccount: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true } },
+    },
   });
 }
 
@@ -291,6 +328,20 @@ export async function updateTransaction(
       : existing.categoryId;
   const financialAccountId =
     params.financialAccountId ?? existing.financialAccountId;
+  const transferAccountId =
+    params.transferAccountId !== undefined
+      ? params.transferAccountId != null && String(params.transferAccountId).trim() !== ""
+        ? String(params.transferAccountId).trim()
+        : null
+      : existing.transferAccountId;
+  if (type === TransactionType.TRANSFER) {
+    if (!transferAccountId) {
+      throw new Error("transferAccountId is required for TRANSFER");
+    }
+    if (transferAccountId === financialAccountId) {
+      throw new Error("transferAccountId must be different from financialAccountId");
+    }
+  }
   const occurredAt =
     params.occurredAt instanceof Date && !Number.isNaN(params.occurredAt.getTime())
       ? params.occurredAt
@@ -307,6 +358,11 @@ export async function updateTransaction(
   if (financialAccountId) {
     updateData.financialAccountId = financialAccountId;
   }
+  if (type === TransactionType.TRANSFER) {
+    updateData.transferAccountId = transferAccountId;
+  } else {
+    updateData.transferAccountId = null;
+  }
   if (params.status !== undefined) {
     updateData.status = params.status as PrismaTransactionStatus;
   }
@@ -317,6 +373,11 @@ export async function updateTransaction(
   const transaction = await prisma.transaction.update({
     where: { id },
     data: updateData,
+    include: {
+      financialAccount: { select: { id: true, name: true } },
+      transferAccount: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true } },
+    },
   });
 
   const account = transaction.financialAccountId
@@ -391,22 +452,45 @@ export async function updateTransaction(
       to: newAccountName ?? "—",
     });
   }
+  const existingTransferAccountName = existing.transferAccountId
+    ? (existing as { transferAccount?: { name: string } }).transferAccount?.name
+    : undefined;
+  const newTransferAccountName = transaction.transferAccountId
+    ? (
+        await prisma.financialAccount.findUnique({
+          where: { id: transaction.transferAccountId },
+          select: { name: true },
+        })
+      )?.name
+    : undefined;
+  if ((existingTransferAccountName ?? "") !== (newTransferAccountName ?? "")) {
+    changes.push({
+      field: "toAccount",
+      from: existingTransferAccountName ?? "—",
+      to: newTransferAccountName ?? "—",
+    });
+  }
+
+  const activityDetails: Record<string, unknown> = {
+    type: transaction.type,
+    amount: transaction.amount,
+    category: transaction.category,
+    categoryName: newCategoryName,
+    occurredAt: transaction.occurredAt,
+    accountName: newAccountName,
+    financialAccountId: transaction.financialAccountId,
+    changes: changes.length > 0 ? changes : undefined,
+  };
+  if (transaction.type === "TRANSFER" && newTransferAccountName) {
+    activityDetails.toAccountName = newTransferAccountName;
+  }
 
   void createActivityLog({
     userId,
     action: ActivityLogAction.TRANSACTION_UPDATED,
     entityType: "transaction",
     entityId: transaction.id,
-    details: {
-      type: transaction.type,
-      amount: transaction.amount,
-      category: transaction.category,
-      categoryName: newCategoryName,
-      occurredAt: transaction.occurredAt,
-      accountName: newAccountName,
-      financialAccountId: transaction.financialAccountId,
-      changes: changes.length > 0 ? changes : undefined,
-    },
+    details: activityDetails,
   });
 
   return transaction;

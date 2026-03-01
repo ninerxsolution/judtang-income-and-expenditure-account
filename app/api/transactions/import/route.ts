@@ -42,6 +42,7 @@ type ValidTransactionRow = {
   type: (typeof TransactionType)[keyof typeof TransactionType];
   amount: number;
   financialAccountId: string | null;
+  transferAccountId: string | null;
   categoryId: string | null;
   category: string | null;
   note: string | null;
@@ -92,6 +93,7 @@ function validateParsedRows(rows: ParsedTransactionCsvRow[]): {
     const noteRaw = (values.note ?? "").trim();
     const occurredAtRaw = (values.occurredAt ?? "").trim();
     const financialAccountIdRaw = (values.financialAccountId ?? "").trim();
+    const transferAccountIdRaw = (values.transferAccountId ?? "").trim();
     const categoryIdRaw = (values.categoryId ?? "").trim();
 
     if (!typeRaw) {
@@ -140,7 +142,26 @@ function validateParsedRows(rows: ParsedTransactionCsvRow[]): {
     const note = noteRaw.length > 0 ? noteRaw : null;
     const financialAccountId =
       financialAccountIdRaw.length > 0 ? financialAccountIdRaw : null;
+    const transferAccountId =
+      transferAccountIdRaw.length > 0 ? transferAccountIdRaw : null;
     const categoryId = categoryIdRaw.length > 0 ? categoryIdRaw : null;
+
+    if (typeRaw === TransactionType.TRANSFER) {
+      if (!transferAccountId) {
+        errors.push({
+          row: rowNumber,
+          message: "transferAccountId is required for TRANSFER",
+        });
+        continue;
+      }
+      if (financialAccountId && transferAccountId === financialAccountId) {
+        errors.push({
+          row: rowNumber,
+          message: "transferAccountId must be different from financialAccountId",
+        });
+        continue;
+      }
+    }
 
     valid.push({
       rowNumber,
@@ -148,6 +169,7 @@ function validateParsedRows(rows: ParsedTransactionCsvRow[]): {
       type: typeRaw,
       amount: amountNumber,
       financialAccountId,
+      transferAccountId: typeRaw === TransactionType.TRANSFER ? transferAccountId : null,
       categoryId,
       category,
       note,
@@ -311,6 +333,10 @@ export async function POST(request: Request) {
             type: row.type as PrismaTransactionType,
             amount: row.amount,
             financialAccountId,
+            transferAccountId:
+              row.type === TransactionType.TRANSFER && row.transferAccountId
+                ? row.transferAccountId
+                : undefined,
             categoryId,
             category: row.category,
             note: row.note,
@@ -333,6 +359,7 @@ export async function POST(request: Request) {
           type: PrismaTransactionType;
           amount: number;
           financialAccountId: string;
+          transferAccountId?: string | null;
           categoryId?: string | null;
           category: string | null;
           note: string | null;
@@ -347,6 +374,11 @@ export async function POST(request: Request) {
         };
         if (categoryId !== undefined) {
           updateData.categoryId = categoryId;
+        }
+        if (row.type === TransactionType.TRANSFER) {
+          updateData.transferAccountId = row.transferAccountId;
+        } else {
+          updateData.transferAccountId = null;
         }
         await tx.transaction.update({
           where: {
