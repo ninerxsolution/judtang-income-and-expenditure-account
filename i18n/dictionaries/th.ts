@@ -253,6 +253,11 @@ export const thDictionary = {
     updatingPassword: "กำลังอัปเดต…",
     passwordUpdated: "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว",
     noPasswordHint: "เข้าสู่ระบบด้วย Google — ไม่มีรหัสผ่านที่ต้องเปลี่ยน",
+    linkedAccounts: "บัญชีที่เชื่อมต่อ",
+    googleLinked: "Google — เชื่อมต่อแล้ว",
+    googleNotLinked: "Google — ยังไม่ได้เชื่อมต่อ",
+    googleOnly: "เข้าสู่ระบบด้วย Google เท่านั้น",
+    linkGoogle: "เชื่อมต่อบัญชี Google",
   },
   settings: {
     title: "การตั้งค่า",

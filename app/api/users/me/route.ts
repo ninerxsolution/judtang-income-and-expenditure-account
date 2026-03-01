@@ -28,12 +28,15 @@ export async function GET() {
       image: true,
       lastActiveAt: true,
       password: true,
+      accounts: { select: { provider: true } },
     },
   });
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
+  const linkedAccounts = user.accounts.map((a) => a.provider);
 
   return NextResponse.json({
     id: user.id,
@@ -44,6 +47,7 @@ export async function GET() {
     image: user.image ?? null,
     lastActiveAt: user.lastActiveAt?.toISOString() ?? null,
     hasPassword: !!user.password,
+    linkedAccounts,
   });
 }
 

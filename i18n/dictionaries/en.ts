@@ -253,6 +253,11 @@ export const enDictionary = {
     updatingPassword: "Updating…",
     passwordUpdated: "Password changed.",
     noPasswordHint: "Signed in with Google — no password to change.",
+    linkedAccounts: "Linked accounts",
+    googleLinked: "Google — connected",
+    googleNotLinked: "Google — not linked",
+    googleOnly: "Signed in with Google only",
+    linkGoogle: "Link Google account",
   },
   settings: {
     title: "Settings",

@@ -55,13 +55,14 @@ export const authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user?.id) {
+      if (account?.provider === "google" && user?.email) {
         await prisma.user.update({
-          where: { id: user.id },
+          where: { email: user.email },
           data: { emailVerified: new Date() },
         });
       }

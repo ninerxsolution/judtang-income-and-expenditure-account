@@ -12,7 +12,9 @@ import {
   Mail,
   Pencil,
   KeyRound,
+  Link2,
 } from "lucide-react";
+import { signIn } from "next-auth/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +43,7 @@ type Profile = {
   image: string | null;
   lastActiveAt: string | null;
   hasPassword: boolean;
+  linkedAccounts: string[];
 };
 
 type SessionRow = {
@@ -424,6 +427,33 @@ export default function UserPage() {
               {t("profile.noPasswordHint")}
             </p>
           )}
+
+          {/* Linked accounts: Link Google for password users */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 p-4">
+            <div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {t("profile.linkedAccounts")}
+              </p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                {(profile.linkedAccounts ?? []).includes("google")
+                  ? t("profile.googleLinked")
+                  : profile.hasPassword
+                    ? t("profile.googleNotLinked")
+                    : t("profile.googleOnly")}
+              </p>
+            </div>
+            {profile.hasPassword && !(profile.linkedAccounts ?? []).includes("google") && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => signIn("google", { callbackUrl: "/dashboard/me" })}
+              >
+                <Link2 className="h-4 w-4" />
+                {t("profile.linkGoogle")}
+              </Button>
+            )}
+          </div>
         </div>
       </section>
 
