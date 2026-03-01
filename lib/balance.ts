@@ -49,3 +49,19 @@ export async function getAccountBalance(accountId: string): Promise<number> {
 
   return initial + income - expense - transferOut + transferIn;
 }
+
+/**
+ * Total net balance = sum of all active account balances for the user.
+ * Asset accounts (BANK, WALLET, CASH, OTHER) contribute positively;
+ * CREDIT_CARD contributes negatively (liability).
+ */
+export async function getTotalBalance(userId: string): Promise<number> {
+  const accounts = await prisma.financialAccount.findMany({
+    where: { userId, isActive: true },
+    select: { id: true },
+  });
+  const balances = await Promise.all(
+    accounts.map((a) => getAccountBalance(a.id))
+  );
+  return balances.reduce((sum, b) => sum + b, 0);
+}

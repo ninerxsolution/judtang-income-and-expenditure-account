@@ -19,7 +19,7 @@ import {
 import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 
-type Summary = { income: number; expense: number } | null;
+type Summary = { income: number; expense: number; totalBalance?: number } | null;
 
 export default function DashboardPage() {
   const { t, locale } = useI18n();
@@ -42,7 +42,8 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const balance = summary ? summary.income - summary.expense : 0;
+  const balance =
+    summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
 
   return (
     <div className="space-y-6">

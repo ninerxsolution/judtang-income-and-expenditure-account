@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:check": "prisma db execute --file prisma/check.sql --schema prisma/schema.prisma",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:seed:reset": "tsx prisma/seed.ts --reset"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

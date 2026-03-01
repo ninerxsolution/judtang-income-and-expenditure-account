@@ -62,9 +62,15 @@ export async function GET(request: Request) {
             )
           : null;
 
+        const recentlyChecked =
+          acc.lastCheckedAt != null &&
+          (daysSinceLastChecked ?? 999) < DAYS_INACTIVE_WARNING;
         const needsAttention =
-          (daysSinceLastTransaction != null && daysSinceLastTransaction >= DAYS_INACTIVE_WARNING) ||
-          (daysSinceLastChecked != null && daysSinceLastChecked >= DAYS_LAST_CHECKED_WARNING);
+          (daysSinceLastTransaction != null &&
+            daysSinceLastTransaction >= DAYS_INACTIVE_WARNING &&
+            !recentlyChecked) ||
+          (daysSinceLastChecked != null &&
+            daysSinceLastChecked >= DAYS_LAST_CHECKED_WARNING);
 
         const isIncomplete = isAccountIncomplete(acc);
 

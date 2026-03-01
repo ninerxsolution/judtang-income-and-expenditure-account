@@ -79,7 +79,7 @@ function getInitials(name: string | null | undefined, email: string | null | und
   return "?";
 }
 
-type Summary = { income: number; expense: number } | null;
+type Summary = { income: number; expense: number; totalBalance?: number } | null;
 
 function useHeaderProfile() {
   const [profile, setProfile] = useState<HeaderProfile | null>(null);
@@ -149,7 +149,8 @@ function useHeaderSummary() {
     };
   }, []);
 
-  const balance = summary ? summary.income - summary.expense : null;
+  const balance =
+    summary?.totalBalance ?? (summary ? summary.income - summary.expense : null);
   return { balance };
 }
 
