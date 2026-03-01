@@ -68,7 +68,8 @@ export async function GET(request: Request) {
     },
   });
 
-  const data = logs.map((log) => {
+  type LogItem = (typeof logs)[number];
+  const data = logs.map((log: LogItem) => {
     const user = log.user;
     const userDisplayName =
       user == null
