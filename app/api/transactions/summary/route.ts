@@ -26,36 +26,40 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const allParam = searchParams.get("all");
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
   const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
-  let from: Date;
-  let to: Date;
+  const options: {
+    from?: Date;
+    to?: Date;
+    financialAccountId?: string;
+  } = {
+    financialAccountId: financialAccountIdParam,
+  };
 
-  if (fromParam && toParam) {
+  const isAllTime = allParam === "1" || allParam === "true";
+
+  if (isAllTime) {
+    // All-time: no date filter (options.from and options.to stay undefined)
+  } else if (fromParam && toParam) {
     const fromDate = new Date(fromParam);
     const toDate = new Date(toParam);
-    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
-      const now = new Date();
-      from = startOfMonth(now.getFullYear(), now.getMonth());
-      to = endOfMonth(now.getFullYear(), now.getMonth());
-    } else {
-      from = fromDate;
-      to = toDate;
+    if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
+      options.from = fromDate;
+      options.to = toDate;
     }
-  } else {
+  }
+
+  if (!isAllTime && (options.from == null || options.to == null)) {
     const now = new Date();
-    from = startOfMonth(now.getFullYear(), now.getMonth());
-    to = endOfMonth(now.getFullYear(), now.getMonth());
+    options.from = startOfMonth(now.getFullYear(), now.getMonth());
+    options.to = endOfMonth(now.getFullYear(), now.getMonth());
   }
 
   try {
-    const summary = await getTransactionsSummary(userId, {
-      from,
-      to,
-      financialAccountId: financialAccountIdParam,
-    });
+    const summary = await getTransactionsSummary(userId, options);
     return NextResponse.json(summary);
   } catch {
     return NextResponse.json(

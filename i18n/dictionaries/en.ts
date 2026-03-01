@@ -113,6 +113,7 @@ export const enDictionary = {
       activityLog: "Activity log",
       profile: "Profile",
       account: "Account",
+      theme: "Theme",
     },
     pageTitle: {
       dashboard: "Dashboard",
@@ -149,6 +150,9 @@ export const enDictionary = {
     fullscreen: {
       enter: "Enter fullscreen",
       exit: "Exit fullscreen",
+    },
+    header: {
+      netBalance: "Net balance",
     },
   },
   accounts: {

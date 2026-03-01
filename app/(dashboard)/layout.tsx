@@ -12,7 +12,7 @@ import { FullscreenProvider } from "@/components/dashboard/fullscreen-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
-  title: "Dashboard | Judtang",
+  title: "Dashboard",
 };
 
 export default function DashboardLayout({
@@ -24,7 +24,7 @@ export default function DashboardLayout({
     <div className="min-h-screen">
       <SessionTouch />
       <FullscreenProvider>
-        <SidebarProvider>
+        <SidebarProvider className="h-svh overflow-hidden">
           <AppSidebarLayout>
             <DashboardBreadcrumb className="px-4 py-4" />
             <DashboardContent>

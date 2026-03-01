@@ -466,8 +466,8 @@ export async function deleteTransaction(
 }
 
 export type SummaryOptions = {
-  from: Date;
-  to: Date;
+  from?: Date;
+  to?: Date;
   financialAccountId?: string;
 };
 
@@ -481,15 +481,14 @@ export async function getTransactionsSummary(
   const { from, to, financialAccountId } = options;
   const where: {
     userId: string;
-    occurredAt: { gte: Date; lte: Date };
+    occurredAt?: { gte: Date; lte: Date };
     financialAccountId?: string;
   } = {
     userId,
-    occurredAt: {
-      gte: from,
-      lte: to,
-    },
   };
+  if (from != null && to != null) {
+    where.occurredAt = { gte: from, lte: to };
+  }
   if (financialAccountId) {
     where.financialAccountId = financialAccountId;
   }

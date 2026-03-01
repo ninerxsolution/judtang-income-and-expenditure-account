@@ -113,6 +113,7 @@ export const thDictionary = {
       activityLog: "ประวัติกิจกรรม",
       profile: "โปรไฟล์",
       account: "บัญชี",
+      theme: "ธีม",
     },
     pageTitle: {
       dashboard: "แดชบอร์ด",
@@ -149,6 +150,9 @@ export const thDictionary = {
     fullscreen: {
       enter: "เปิดโหมดเต็มจอ",
       exit: "ปิดโหมดเต็มจอ",
+    },
+    header: {
+      netBalance: "ยอดสุทธิ",
     },
   },
   accounts: {
