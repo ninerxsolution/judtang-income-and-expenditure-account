@@ -295,6 +295,12 @@ export const thDictionary = {
     title: "การตั้งค่า",
     description: "จัดการประวัติกิจกรรม เครื่องมือข้อมูล และเซสชันที่ใช้งานอยู่",
     contents: "สารบัญ",
+    information: {
+      title: "ข้อมูลโปรเจกต์",
+      description: "รายละเอียดและเวอร์ชันของแอปพลิเคชัน",
+      appName: "ชื่อแอป",
+      version: "เวอร์ชัน",
+    },
     language: {
       title: "ภาษา",
       titleWithNative: "ภาษา / Language",

@@ -295,6 +295,12 @@ export const enDictionary = {
     title: "Settings",
     description: "Manage your activity log, data tools, and active sessions.",
     contents: "Contents",
+    information: {
+      title: "Project information",
+      description: "Application details and version",
+      appName: "App name",
+      version: "Version",
+    },
     language: {
       title: "Language",
       titleWithNative: "Language / ภาษา",
