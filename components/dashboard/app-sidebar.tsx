@@ -45,6 +45,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { useFullscreen } from "@/components/dashboard/fullscreen-context";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -212,7 +213,7 @@ export function AppSidebarLayout({
       </Sidebar>
 
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 z-10">
           <SidebarTrigger className="-ml-1" />
           <div className="ml-auto flex items-center gap-4">
             <ThemeToggle />
@@ -276,9 +277,10 @@ export function AppSidebarLayout({
             </DropdownMenu>
           </div>
         </header>
-        <div className="min-w-0 flex-1 overflow-x-hidden">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-16 md:pb-0">
           {children}
         </div>
+        <MobileBottomNav />
       </SidebarInset>
     </>
   );

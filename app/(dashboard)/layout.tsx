@@ -24,7 +24,7 @@ export default function DashboardLayout({
     <div className="min-h-screen">
       <SessionTouch />
       <FullscreenProvider>
-        <SidebarProvider>
+        <SidebarProvider className="h-svh overflow-hidden">
           <AppSidebarLayout>
             <DashboardBreadcrumb className="px-4 py-4" />
             <DashboardContent>
