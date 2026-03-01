@@ -150,6 +150,9 @@ export const thDictionary = {
       enter: "เปิดโหมดเต็มจอ",
       exit: "ปิดโหมดเต็มจอ",
     },
+    header: {
+      netBalance: "ยอดสุทธิ",
+    },
   },
   accounts: {
     subtitle: "จัดการบัญชีการเงิน ธนาคาร กระเป๋าเงิน และเงินสด",

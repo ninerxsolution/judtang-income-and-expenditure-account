@@ -48,6 +48,8 @@ import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { useFullscreen } from "@/components/dashboard/fullscreen-context";
 import { useI18n } from "@/hooks/use-i18n";
+import { formatAmount } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type HeaderProfile = {
   name: string | null;
@@ -73,6 +75,8 @@ function getInitials(name: string | null | undefined, email: string | null | und
   }
   return "?";
 }
+
+type Summary = { income: number; expense: number } | null;
 
 function useHeaderProfile() {
   const [profile, setProfile] = useState<HeaderProfile | null>(null);
@@ -118,6 +122,34 @@ function useHeaderProfile() {
   return { profile, loading };
 }
 
+function useHeaderSummary() {
+  const [summary, setSummary] = useState<Summary>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/transactions/summary?all=1");
+        if (!res.ok) return;
+        const data = (await res.json()) as Summary;
+        if (!cancelled && data) setSummary(data);
+      } catch {
+        // ignore
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const balance = summary ? summary.income - summary.expense : null;
+  return { balance };
+}
+
 const navItems = [
   {
     key: "accounts",
@@ -143,6 +175,7 @@ export function AppSidebarLayout({
 }) {
   const pathname = usePathname();
   const { profile } = useHeaderProfile();
+  const { balance } = useHeaderSummary();
   const { t } = useI18n();
   const { fullscreen, toggleFullscreen } = useFullscreen();
 
@@ -215,6 +248,21 @@ export function AppSidebarLayout({
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 z-10">
           <SidebarTrigger className="-ml-1" />
+          <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
+            <span className="text-xs text-muted-foreground shrink-0">
+              {t("dashboard.header.netBalance")}:
+            </span>
+            <span
+              className={cn(
+                "text-sm font-semibold tabular-nums",
+                balance !== null && balance < 0
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-foreground"
+              )}
+            >
+              {balance !== null ? formatAmount(balance) : "—"}
+            </span>
+          </div>
           <div className="ml-auto flex items-center gap-4">
             <ThemeToggle />
             <Button

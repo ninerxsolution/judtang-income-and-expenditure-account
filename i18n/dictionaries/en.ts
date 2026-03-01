@@ -150,6 +150,9 @@ export const enDictionary = {
       enter: "Enter fullscreen",
       exit: "Exit fullscreen",
     },
+    header: {
+      netBalance: "Net balance",
+    },
   },
   accounts: {
     subtitle: "Manage your bank accounts, wallets, and cash.",
