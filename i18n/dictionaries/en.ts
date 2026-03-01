@@ -113,6 +113,7 @@ export const enDictionary = {
       activityLog: "Activity log",
       profile: "Profile",
       account: "Account",
+      theme: "Theme",
     },
     pageTitle: {
       dashboard: "Dashboard",

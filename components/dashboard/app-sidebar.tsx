@@ -18,7 +18,10 @@ import {
   LogOut,
   Maximize2,
   Minimize2,
+  Moon,
+  Sun,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -178,6 +181,8 @@ export function AppSidebarLayout({
   const { balance } = useHeaderSummary();
   const { t } = useI18n();
   const { fullscreen, toggleFullscreen } = useFullscreen();
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  const isDark = (resolvedTheme ?? theme) === "dark";
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -249,12 +254,9 @@ export function AppSidebarLayout({
         <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 z-10">
           <SidebarTrigger className="-ml-1" />
           <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
-            <span className="text-xs text-muted-foreground shrink-0">
-              {t("dashboard.header.netBalance")}:
-            </span>
             <span
               className={cn(
-                "text-sm font-semibold tabular-nums",
+                "text-sm font-semibold tabular-nums bg-gray-100 dark:bg-gray-800 text-primary rounded-full px-3 py-1",
                 balance !== null && balance < 0
                   ? "text-red-700 dark:text-red-300"
                   : "text-foreground"
@@ -263,8 +265,8 @@ export function AppSidebarLayout({
               {balance !== null ? formatAmount(balance) : "—"}
             </span>
           </div>
-          <div className="ml-auto flex items-center gap-4">
-            <ThemeToggle />
+          <div className="ml-auto flex items-center gap-1 sm:gap-4">
+            <ThemeToggle className="hidden sm:flex"/>
             <Button
               variant="ghost"
               size="icon"
@@ -312,6 +314,21 @@ export function AppSidebarLayout({
                     <Settings className="mr-2 h-4 w-4" />
                     <span>{t("dashboard.sidebar.settings")}</span>
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="block sm:hidden"/>
+                <DropdownMenuItem
+                  className="cursor-pointer flex sm:hidden"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setTheme(isDark ? "light" : "dark");
+                  }}
+                >
+                  {isDark ? (
+                    <Sun className="mr-2 h-4 w-4" />
+                  ) : (
+                    <Moon className="mr-2 h-4 w-4" />
+                  )}
+                  <span>{t("dashboard.sidebar.theme")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

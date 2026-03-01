@@ -50,16 +50,15 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 px-4 py-2 text-xs transition-colors",
-                "min-w-0 flex-1",
+                "flex items-center justify-center flex-1 py-2 transition-colors",
                 isActive
-                  ? "text-primary font-medium"
+                  ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
               aria-current={isActive ? "page" : undefined}
+              aria-label={t(`dashboard.sidebar.${item.key}`)}
             >
-              <Icon className="h-5 w-5 shrink-0" aria-hidden />
-              <span className="truncate">{t(`dashboard.sidebar.${item.key}`)}</span>
+              <Icon className="h-6 w-6 shrink-0" aria-hidden />
             </Link>
           );
         })}

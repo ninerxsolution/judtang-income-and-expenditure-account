@@ -5,8 +5,9 @@ import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -19,7 +20,7 @@ export function ThemeToggle() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 rounded-full"
+        className={cn("h-8 w-8 rounded-full", className)}
         aria-label="Toggle theme"
       >
         <Sun className="h-4 w-4" />
@@ -38,7 +39,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="h-8 w-8 rounded-full"
+      className={cn("h-8 w-8 rounded-full", className)}
       aria-label="Toggle theme"
       onClick={toggleTheme}
     >

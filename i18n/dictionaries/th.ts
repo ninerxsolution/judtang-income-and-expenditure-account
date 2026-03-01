@@ -113,6 +113,7 @@ export const thDictionary = {
       activityLog: "ประวัติกิจกรรม",
       profile: "โปรไฟล์",
       account: "บัญชี",
+      theme: "ธีม",
     },
     pageTitle: {
       dashboard: "แดชบอร์ด",
