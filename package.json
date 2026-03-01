@@ -5,7 +5,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
@@ -13,7 +13,7 @@
     "playground": "tsx scripts/sandbox.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:check": "prisma db execute --file prisma/check.sql --schema prisma/schema.prisma",
+    "db:check": "prisma db execute --file prisma/check.sql",
     "db:seed": "prisma db seed",
     "db:seed:reset": "tsx prisma/seed.ts --reset"
   },

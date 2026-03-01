@@ -1,12 +1,12 @@
 /*
   Warnings:
 
-  - You are about to alter the column `type` on the `transaction` table. The data in that column could be lost. The data in that column will be cast from `VarChar(191)` to `Enum(EnumId(1))`.
-  - You are about to alter the column `amount` on the `transaction` table. The data in that column could be lost. The data in that column will be cast from `Decimal(10,2)` to `Decimal(15,2)`.
+  - You are about to alter the column `type` on the `Transaction` table. The data in that column could be lost. The data in that column will be cast from `VarChar(191)` to `Enum(EnumId(1))`.
+  - You are about to alter the column `amount` on the `Transaction` table. The data in that column could be lost. The data in that column will be cast from `Decimal(10,2)` to `Decimal(15,2)`.
 
 */
 -- AlterTable
-ALTER TABLE `transaction` ADD COLUMN `categoryId` VARCHAR(191) NULL,
+ALTER TABLE `Transaction` ADD COLUMN `categoryId` VARCHAR(191) NULL,
     ADD COLUMN `financialAccountId` VARCHAR(191) NULL,
     ADD COLUMN `postedDate` DATETIME(3) NULL,
     ADD COLUMN `statementId` VARCHAR(191) NULL,
