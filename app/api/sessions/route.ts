@@ -47,7 +47,8 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const sessions = rows.map((r) => ({
+  type RowItem = (typeof rows)[number];
+  const sessions = rows.map((r: RowItem) => ({
     sessionId: r.sessionId,
     userAgent: r.userAgent ?? null,
     ipAddress: r.ipAddress ?? null,

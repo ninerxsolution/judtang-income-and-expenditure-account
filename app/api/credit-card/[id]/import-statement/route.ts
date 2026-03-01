@@ -101,6 +101,7 @@ export async function POST(
     select: { id: true, amount: true, occurredAt: true, note: true },
   });
 
+  type TxItem = (typeof existingTransactions)[number];
   const matched: { row: ImportRow; transactionId: string }[] = [];
   const missing: ImportRow[] = [];
   const duplicates: ImportRow[] = [];
@@ -120,7 +121,7 @@ export async function POST(
     dateEnd.setDate(dateEnd.getDate() + 3);
 
     const candidates = existingTransactions.filter(
-      (tx) =>
+      (tx: TxItem) =>
         !usedTxIds.has(tx.id) &&
         Number(tx.amount) === row.amount &&
         tx.occurredAt >= dateStart &&
@@ -137,13 +138,13 @@ export async function POST(
     }
   }
 
-  const unmatchedExisting = existingTransactions.filter((tx) => !usedTxIds.has(tx.id));
+  const unmatchedExisting = existingTransactions.filter((tx: TxItem) => !usedTxIds.has(tx.id));
 
   return NextResponse.json({
     matched,
     missing,
     duplicates,
-    unmatched: unmatchedExisting.map((tx) => ({
+    unmatched: unmatchedExisting.map((tx: TxItem) => ({
       id: tx.id,
       amount: Number(tx.amount),
       occurredAt: tx.occurredAt.toISOString().slice(0, 10),

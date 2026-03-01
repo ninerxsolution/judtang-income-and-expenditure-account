@@ -313,7 +313,8 @@ export async function GET(request: Request) {
       offset,
     });
 
-    const data = transactions.map((t) => {
+    type TxItem = (typeof transactions)[number];
+    const data = transactions.map((t: TxItem) => {
       const tx = t as typeof t & {
         financialAccount?: { id: string; name: string } | null;
         transferAccount?: { id: string; name: string } | null;
