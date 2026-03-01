@@ -111,6 +111,7 @@ export async function PATCH(
     initialBalance?: number;
     lastCheckedAt?: string;
     isDefault?: boolean;
+    isHidden?: boolean;
     creditLimit?: number;
     statementClosingDay?: number;
     dueDay?: number;
@@ -132,6 +133,7 @@ export async function PATCH(
     initialBalance?: number;
     lastCheckedAt?: Date;
     isDefault?: boolean;
+    isHidden?: boolean;
     creditLimit?: number;
     statementClosingDay?: number;
     dueDay?: number;
@@ -164,6 +166,9 @@ export async function PATCH(
         data: { isDefault: false },
       });
     }
+  }
+  if (typeof body.isHidden === "boolean") {
+    data.isHidden = body.isHidden;
   }
   if (account.type === "CREDIT_CARD") {
     if (typeof body.creditLimit === "number" && Number.isFinite(body.creditLimit) && body.creditLimit >= 0) {
@@ -227,6 +232,13 @@ export async function PATCH(
         field: "isDefault",
         from: String(account.isDefault),
         to: String(updated.isDefault),
+      });
+    }
+    if (data.isHidden !== undefined && account.isHidden !== updated.isHidden) {
+      changes.push({
+        field: "isHidden",
+        from: String(account.isHidden),
+        to: String(updated.isHidden),
       });
     }
     if (data.bankName !== undefined && (account.bankName ?? "") !== (updated.bankName ?? "")) {
@@ -307,6 +319,7 @@ export async function PATCH(
       initialBalance: Number(updated.initialBalance),
       isActive: updated.isActive,
       isDefault: updated.isDefault,
+      isHidden: updated.isHidden,
       creditLimit: updated.creditLimit != null ? Number(updated.creditLimit) : null,
       statementClosingDay: updated.statementClosingDay,
       dueDay: updated.dueDay,
@@ -320,6 +333,72 @@ export async function PATCH(
   } catch {
     return NextResponse.json(
       { error: "Failed to update financial account" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = (await getServerSession(authOptions)) as SessionWithId | null;
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const account = await prisma.financialAccount.findFirst({
+    where: { id, userId },
+  });
+
+  if (!account) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (account.isDefault) {
+    return NextResponse.json(
+      { error: "Cannot delete the default account" },
+      { status: 400 }
+    );
+  }
+
+  const txCount = await prisma.transaction.count({
+    where: { financialAccountId: id },
+  });
+
+  try {
+    if (txCount > 0) {
+      await prisma.financialAccount.update({
+        where: { id },
+        data: { isActive: false },
+      });
+      void createActivityLog({
+        userId,
+        action: ActivityLogAction.FINANCIAL_ACCOUNT_DISABLED,
+        entityType: "financialAccount",
+        entityId: id,
+        details: { name: account.name, type: account.type },
+      });
+    } else {
+      await prisma.financialAccount.delete({
+        where: { id },
+      });
+      void createActivityLog({
+        userId,
+        action: ActivityLogAction.FINANCIAL_ACCOUNT_DELETED,
+        entityType: "financialAccount",
+        entityId: id,
+        details: { name: account.name, type: account.type },
+      });
+    }
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to delete account" },
       { status: 500 }
     );
   }

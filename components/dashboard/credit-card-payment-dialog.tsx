@@ -79,13 +79,15 @@ export function CreditCardPaymentDialog({
           bankName?: string | null;
           accountNumberMasked?: string;
           isIncomplete?: boolean;
+          isHidden?: boolean;
         }[]) => {
           const nonCreditCard = Array.isArray(data)
             ? data.filter(
                 (a) =>
                   a.type !== "CREDIT_CARD" &&
                   a.id !== accountId &&
-                  !a.isIncomplete
+                  !a.isIncomplete &&
+                  a.isHidden !== true
               )
             : [];
           setAccounts(

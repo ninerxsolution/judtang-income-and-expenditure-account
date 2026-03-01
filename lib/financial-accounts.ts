@@ -59,19 +59,23 @@ const DEFAULT_ACCOUNT_NAME = "บัญชีหลัก";
 
 /**
  * Ensures the user has at least one FinancialAccount (default).
- * Creates one if none exist. Returns the default or first account.
+ * Creates one if none exist. Returns the default or first visible account.
+ * When default is hidden, prefers first visible account; falls back to hidden default to avoid creating duplicates.
  */
 export async function ensureUserHasDefaultFinancialAccount(
   userId: string
 ): Promise<FinancialAccount> {
-  const existing = await prisma.financialAccount.findFirst({
+  const visible = await prisma.financialAccount.findFirst({
+    where: { userId, isActive: true, isHidden: false },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+  });
+  if (visible) return visible;
+
+  const anyAccount = await prisma.financialAccount.findFirst({
     where: { userId, isActive: true },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
   });
-
-  if (existing) {
-    return existing;
-  }
+  if (anyAccount) return anyAccount;
 
   return prisma.financialAccount.create({
     data: {
@@ -88,6 +92,11 @@ export async function ensureUserHasDefaultFinancialAccount(
 export async function getDefaultFinancialAccount(
   userId: string
 ): Promise<FinancialAccount | null> {
+  const visible = await prisma.financialAccount.findFirst({
+    where: { userId, isActive: true, isHidden: false },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+  });
+  if (visible) return visible;
   return prisma.financialAccount.findFirst({
     where: { userId, isActive: true },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],

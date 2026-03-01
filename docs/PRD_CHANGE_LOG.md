@@ -5,6 +5,23 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 01/03/2026 (Financial Accounts: Hide/Show Default, Delete)
+
+- prisma/schema.prisma — Added `isHidden` to FinancialAccount.
+- prisma/migrations/ — Added migration for isHidden.
+- lib/financial-accounts.ts — ensureUserHasDefaultFinancialAccount and getDefaultFinancialAccount filter by isHidden.
+- app/api/financial-accounts/route.ts — GET returns isHidden, transactionCount; filters isActive.
+- app/api/financial-accounts/[id]/route.ts — PATCH supports isHidden; added DELETE (soft/hard delete).
+- lib/activity-log.ts — Added FINANCIAL_ACCOUNT_DELETED.
+- app/(dashboard)/dashboard/accounts/page.tsx — Hide/show default UI, delete menu + AlertDialog.
+- components/dashboard/transaction-form-dialog.tsx — Filter isHidden from account dropdown.
+- i18n — Added labels for hide/show default, delete, activity log FINANCIAL_ACCOUNT_DELETED.
+- docs/feature/financial-accounts.md — Added isHidden, DELETE endpoint, §6 Hide/Show Default, §7 Delete.
+- docs/core/activity-log.md — Added FINANCIAL_ACCOUNT_DELETED.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 01/03/2026 (Activity Log: Financial Account)
 
 - lib/activity-log.ts — Added FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED.

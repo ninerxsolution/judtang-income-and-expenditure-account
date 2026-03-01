@@ -15,7 +15,7 @@ type SessionWithId = { user: { id?: string }; sessionId?: string };
 const DAYS_INACTIVE_WARNING = 7;
 const DAYS_LAST_CHECKED_WARNING = 30;
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
   const userId = session?.user?.id;
 
@@ -23,23 +23,31 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const includeInactive = searchParams.get("inactive") === "true";
+  const isActiveFilter = includeInactive ? false : true;
+
   try {
-    await ensureUserHasDefaultFinancialAccount(userId);
+    if (!includeInactive) {
+      await ensureUserHasDefaultFinancialAccount(userId);
+    }
 
     const accounts = await prisma.financialAccount.findMany({
-      where: { userId },
+      where: { userId, isActive: isActiveFilter },
       orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
     });
 
     const result = await Promise.all(
       accounts.map(async (acc) => {
-        const balance = await getAccountBalance(acc.id);
-
-        const lastTx = await prisma.transaction.findFirst({
-          where: { financialAccountId: acc.id },
-          orderBy: { occurredAt: "desc" },
-          select: { occurredAt: true },
-        });
+        const [balance, txCount, lastTx] = await Promise.all([
+          getAccountBalance(acc.id),
+          prisma.transaction.count({ where: { financialAccountId: acc.id } }),
+          prisma.transaction.findFirst({
+            where: { financialAccountId: acc.id },
+            orderBy: { occurredAt: "desc" },
+            select: { occurredAt: true },
+          }),
+        ]);
         const lastTransactionDate = lastTx?.occurredAt ?? null;
 
         const now = new Date();
@@ -67,6 +75,7 @@ export async function GET() {
           initialBalance: Number(acc.initialBalance),
           isActive: acc.isActive,
           isDefault: acc.isDefault,
+          isHidden: acc.isHidden,
           lastCheckedAt: acc.lastCheckedAt?.toISOString() ?? null,
           createdAt: acc.createdAt.toISOString(),
           balance,
@@ -75,6 +84,7 @@ export async function GET() {
           daysSinceLastChecked,
           needsAttention,
           isIncomplete,
+          transactionCount: txCount,
           bankName: acc.bankName ?? null,
           accountNumberMasked: maskAccountNumber(acc.accountNumber),
         };

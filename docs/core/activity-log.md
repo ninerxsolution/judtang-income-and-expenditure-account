@@ -35,7 +35,7 @@ Records critical system events for auditing and tracking purposes.
 - **Session:** SESSION_REVOKED
 - **Transaction:** TRANSACTION_CREATED, TRANSACTION_UPDATED, TRANSACTION_DELETED, TRANSACTION_EXPORT, TRANSACTION_IMPORT
 - **Credit card:** CREDIT_CARD_PAYMENT
-- **Financial account:** FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED
+- **Financial account:** FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED, FINANCIAL_ACCOUNT_DELETED
 
 Events are emitted from the relevant API routes and from the auth flow (register, sign-in, sign-out) via `lib/activity-log.ts` (`createActivityLog`). Logout is recorded when the client calls POST /api/auth/logout before signOut(). Failed log writes do not fail the main request.
 

@@ -45,6 +45,8 @@ const ACTION_OPTIONS = [
   { value: "FINANCIAL_ACCOUNT_CREATED", labelKey: "FINANCIAL_ACCOUNT_CREATED" },
   { value: "FINANCIAL_ACCOUNT_UPDATED", labelKey: "FINANCIAL_ACCOUNT_UPDATED" },
   { value: "FINANCIAL_ACCOUNT_DISABLED", labelKey: "FINANCIAL_ACCOUNT_DISABLED" },
+  { value: "FINANCIAL_ACCOUNT_DELETED", labelKey: "FINANCIAL_ACCOUNT_DELETED" },
+  { value: "FINANCIAL_ACCOUNT_RESTORED", labelKey: "FINANCIAL_ACCOUNT_RESTORED" },
 ] as const;
 
 function formatDateTime(iso: string, locale: string) {
@@ -232,7 +234,7 @@ function formatDetails(
         } else if (c.field === "lastCheckedAt") {
           fromVal = formatDetailDate(c.from, locale) || fromVal;
           toVal = formatDetailDate(c.to, locale) || toVal;
-        } else if (c.field === "isDefault") {
+        } else if (c.field === "isDefault" || c.field === "isHidden") {
           fromVal = c.from === "true" ? t("activityLog.details.yes") : t("activityLog.details.no");
           toVal = c.to === "true" ? t("activityLog.details.yes") : t("activityLog.details.no");
         }
@@ -255,6 +257,24 @@ function formatDetails(
     const type = details.type as string | undefined;
     const typeLabel = type ? t(`accounts.type.${type}`) : "";
     if (name) detailLines.push(t("activityLog.details.financialAccountDisabled", { name }));
+    if (typeLabel) detailLines.push(t("activityLog.details.financialAccountType", { type: typeLabel }));
+    return detailLines;
+  }
+
+  if (action === "FINANCIAL_ACCOUNT_DELETED") {
+    const name = details.name as string | undefined;
+    const type = details.type as string | undefined;
+    const typeLabel = type ? t(`accounts.type.${type}`) : "";
+    if (name) detailLines.push(t("activityLog.details.financialAccountDeleted", { name }));
+    if (typeLabel) detailLines.push(t("activityLog.details.financialAccountType", { type: typeLabel }));
+    return detailLines;
+  }
+
+  if (action === "FINANCIAL_ACCOUNT_RESTORED") {
+    const name = details.name as string | undefined;
+    const type = details.type as string | undefined;
+    const typeLabel = type ? t(`accounts.type.${type}`) : "";
+    if (name) detailLines.push(t("activityLog.details.restored", { name }));
     if (typeLabel) detailLines.push(t("activityLog.details.financialAccountType", { type: typeLabel }));
     return detailLines;
   }

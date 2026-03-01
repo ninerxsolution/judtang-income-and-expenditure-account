@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Landmark,
   Plus,
@@ -17,6 +18,8 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
+  Trash2,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +35,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   formatAmount,
@@ -41,6 +56,12 @@ import {
 import { getBankDisplayName } from "@/lib/thai-banks";
 import { getCardTypeDisplayName } from "@/lib/card-types";
 import { useI18n } from "@/hooks/use-i18n";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { toast } from "sonner";
@@ -52,7 +73,9 @@ type FinancialAccount = {
   initialBalance: number;
   isActive: boolean;
   isDefault: boolean;
+  isHidden?: boolean;
   lastCheckedAt: string | null;
+  transactionCount?: number;
   balance: number;
   lastTransactionDate: string | null;
   daysSinceLastTransaction: number | null;
@@ -109,6 +132,13 @@ export default function AccountsPage() {
   const [revealedAccountIds, setRevealedAccountIds] = useState<Set<string>>(new Set());
   const [fullAccountNumbers, setFullAccountNumbers] = useState<Record<string, string>>({});
   const [expandedCreditCardIds, setExpandedCreditCardIds] = useState<Set<string>>(new Set());
+  const [deleteAccount, setDeleteAccount] = useState<FinancialAccount | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
+  const [deleteExpectedValue, setDeleteExpectedValue] = useState("");
+  const [deleteConfirmType, setDeleteConfirmType] = useState<"accountNumber" | "randomCode" | null>(null);
+  const [copiedAccountId, setCopiedAccountId] = useState<string | null>(null);
+  const [hoveredAccountId, setHoveredAccountId] = useState<string | null>(null);
 
   async function fetchAccounts() {
     setLoading(true);
@@ -234,6 +264,105 @@ export default function AccountsPage() {
     setPaymentDialogOpen(true);
   }
 
+  async function handleToggleHideDefault(acc: FinancialAccount) {
+    if (!acc.isDefault) return;
+    try {
+      const res = await fetch(`/api/financial-accounts/${acc.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHidden: !acc.isHidden }),
+      });
+      if (res.ok) {
+        void fetchAccounts();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        toast.error(data.error ?? t("accounts.loadFailed"));
+      }
+    } catch {
+      toast.error(t("accounts.loadFailed"));
+    }
+  }
+
+  function generateRandomConfirmationCode(): string {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  function openDeleteDialog(acc: FinancialAccount) {
+    if (acc.isDefault) {
+      toast.error(t("accounts.cannotDeleteDefault"));
+      return;
+    }
+    setDeleteAccount(acc);
+    setDeleteConfirmValue("");
+    setDeleteExpectedValue("");
+    if (acc.accountNumberMasked && acc.accountNumberMasked.trim()) {
+      setDeleteConfirmType("accountNumber");
+      void fetch(`/api/financial-accounts/${acc.id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { accountNumber?: string | null } | null) => {
+          const digits = data?.accountNumber
+            ? String(data.accountNumber).replace(/\D/g, "")
+            : "";
+          setDeleteExpectedValue(digits);
+        })
+        .catch(() => setDeleteExpectedValue(""));
+    } else {
+      setDeleteConfirmType("randomCode");
+      setDeleteExpectedValue(generateRandomConfirmationCode());
+    }
+  }
+
+  const deleteConfirmMatches =
+    deleteExpectedValue &&
+    (deleteConfirmType === "accountNumber"
+      ? deleteConfirmValue.replace(/\D/g, "") === deleteExpectedValue
+      : deleteConfirmValue.toUpperCase() === deleteExpectedValue);
+
+  async function handleDeleteConfirm() {
+    if (!deleteAccount || deletePending) return;
+    setDeletePending(true);
+    try {
+      const res = await fetch(`/api/financial-accounts/${deleteAccount.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success(t("accounts.deleteSuccess"));
+        setDeleteAccount(null);
+        void fetchAccounts();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        toast.error(data.error ?? t("accounts.loadFailed"));
+      }
+    } catch {
+      toast.error(t("accounts.loadFailed"));
+    } finally {
+      setDeletePending(false);
+    }
+  }
+
+  async function handleShowDefault(hiddenDefaultId: string) {
+    try {
+      const res = await fetch(`/api/financial-accounts/${hiddenDefaultId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHidden: false }),
+      });
+      if (res.ok) {
+        void fetchAccounts();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        toast.error(data.error ?? t("accounts.loadFailed"));
+      }
+    } catch {
+      toast.error(t("accounts.loadFailed"));
+    }
+  }
+
   function toggleCreditCardDetails(accId: string) {
     setExpandedCreditCardIds((prev) => {
       const next = new Set(prev);
@@ -270,22 +399,42 @@ export default function AccountsPage() {
     }
   }
 
+  async function handleCopyAccountNumber(acc: FinancialAccount) {
+    const raw = fullAccountNumbers[acc.id];
+    if (!raw) return;
+    const toCopy = String(raw).replace(/\D/g, "");
+    try {
+      await navigator.clipboard.writeText(toCopy);
+      setCopiedAccountId(acc.id);
+      setTimeout(() => {
+        setCopiedAccountId(null);
+        setHoveredAccountId((prev) => (prev === acc.id ? null : prev));
+      }, 1500);
+    } catch {
+      toast.error(t("common.errors.generic"));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <Landmark className="h-5 w-5" />
-            {t("dashboard.pageTitle.accounts")}
-          </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {t("accounts.subtitle")}
           </p>
         </div>
-        <Button onClick={openCreateModal} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t("accounts.newAccount")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/accounts/trash" className="gap-2">
+              <Trash2 className="h-4 w-4" />
+              {t("accounts.viewTrash")}
+            </Link>
+          </Button>
+          <Button onClick={openCreateModal} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t("accounts.newAccount")}
+          </Button>
+        </div>
       </div>
 
       {loading && (
@@ -317,8 +466,13 @@ export default function AccountsPage() {
       {!loading && !error && accounts.length > 0 && (
         <div className="space-y-8">
           {(() => {
-            const regularAccounts = accounts.filter((a) => a.type !== "CREDIT_CARD");
-            const creditCards = accounts.filter((a) => a.type === "CREDIT_CARD");
+            const hiddenDefault = accounts.find((a) => a.isDefault && a.isHidden);
+            const regularAccounts = accounts.filter(
+              (a) => a.type !== "CREDIT_CARD" && !a.isHidden
+            );
+            const creditCards = accounts.filter(
+              (a) => a.type === "CREDIT_CARD" && !a.isHidden
+            );
             const renderCard = (acc: FinancialAccount) => {
               const TypeIcon = ACCOUNT_TYPE_ICONS[acc.type] ?? PiggyBank;
               return (
@@ -350,16 +504,72 @@ export default function AccountsPage() {
                     {(acc.bankName || acc.accountNumberMasked) && (
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {[
-                            getBankDisplayName(acc.bankName ?? undefined, locale?.startsWith("th") ? "th" : "en") ?? acc.bankName,
-                            revealedAccountIds.has(acc.id) && fullAccountNumbers[acc.id]
-                              ? acc.type === "CREDIT_CARD"
-                                ? formatCardNumber(fullAccountNumbers[acc.id])
-                                : formatBankAccountNumber(fullAccountNumbers[acc.id])
-                              : acc.accountNumberMasked,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
+                          {(() => {
+                            const bankLabel =
+                              getBankDisplayName(
+                                acc.bankName ?? undefined,
+                                locale?.startsWith("th") ? "th" : "en"
+                              ) ?? acc.bankName;
+                            const isRevealed =
+                              revealedAccountIds.has(acc.id) && fullAccountNumbers[acc.id];
+                            const numberDisplay = isRevealed ? (
+                              <TooltipProvider key={acc.id} delayDuration={0}>
+                                <Tooltip
+                                  open={
+                                    hoveredAccountId === acc.id ||
+                                    copiedAccountId === acc.id
+                                  }
+                                  onOpenChange={(open) => {
+                                    if (!open) {
+                                      setHoveredAccountId(null);
+                                      setCopiedAccountId(null);
+                                    }
+                                  }}
+                                >
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      role="button"
+                                      tabIndex={0}
+                                      className="cursor-pointer hover:underline"
+                                      onClick={() => handleCopyAccountNumber(acc)}
+                                      onMouseEnter={() =>
+                                        setHoveredAccountId(acc.id)
+                                      }
+                                      onMouseLeave={() =>
+                                        setHoveredAccountId(null)
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          handleCopyAccountNumber(acc);
+                                        }
+                                      }}
+                                    >
+                                      {acc.type === "CREDIT_CARD"
+                                        ? formatCardNumber(fullAccountNumbers[acc.id])
+                                        : formatBankAccountNumber(
+                                            fullAccountNumbers[acc.id]
+                                          )}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" sideOffset={4}>
+                                    {copiedAccountId === acc.id
+                                      ? t("common.actions.copied")
+                                      : t("accounts.clickToCopy")}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              acc.accountNumberMasked
+                            );
+                            return (
+                              <>
+                                {bankLabel}
+                                {bankLabel && numberDisplay && " · "}
+                                {numberDisplay}
+                              </>
+                            );
+                          })()}
                         </p>
                         {acc.accountNumberMasked && (
                           <Button
@@ -394,6 +604,23 @@ export default function AccountsPage() {
                         <Pencil className="mr-2 h-4 w-4" />
                         {t("common.actions.edit")}
                       </DropdownMenuItem>
+                      {acc.isDefault && (
+                        <DropdownMenuItem
+                          onClick={() => handleToggleHideDefault(acc)}
+                        >
+                          {acc.isHidden ? (
+                            <>
+                              <Eye className="mr-2 h-4 w-4" />
+                              {t("accounts.showDefaultAccount")}
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="mr-2 h-4 w-4" />
+                              {t("accounts.hideDefaultAccount")}
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      )}
                       {acc.type === "CREDIT_CARD" && (
                         <>
                           <DropdownMenuItem
@@ -413,8 +640,18 @@ export default function AccountsPage() {
                         </>
                       )}
                       <DropdownMenuItem onClick={() => handleCheck(acc)}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
                         {t("accounts.markChecked")}
                       </DropdownMenuItem>
+                      {!acc.isDefault && (
+                        <DropdownMenuItem
+                          onClick={() => openDeleteDialog(acc)}
+                          className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          {t("accounts.delete")}
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
@@ -552,15 +789,36 @@ export default function AccountsPage() {
             };
             return (
               <>
-                {regularAccounts.length > 0 && (
+                {(regularAccounts.length > 0 || hiddenDefault) && (
                   <section>
-                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                      <Landmark className="h-5 w-5 text-zinc-500" />
-                      {t("accounts.sectionAccounts")}
-                    </h2>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {regularAccounts.map((acc) => renderCard(acc))}
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                      <h2 className="flex items-center gap-2 text-lg font-semibold">
+                        <Landmark className="h-5 w-5 text-zinc-500" />
+                        {t("accounts.sectionAccounts")}
+                      </h2>
+                      {hiddenDefault && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleShowDefault(hiddenDefault.id)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              {t("accounts.showDefaultAccount")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
+                    {regularAccounts.length > 0 && (
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {regularAccounts.map((acc) => renderCard(acc))}
+                      </div>
+                    )}
                   </section>
                 )}
                 {creditCards.length > 0 && (
@@ -599,6 +857,112 @@ export default function AccountsPage() {
           onSuccess={fetchAccounts}
         />
       )}
+
+      <AlertDialog
+        open={deleteAccount !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteAccount(null);
+            setDeleteConfirmValue("");
+            setDeleteExpectedValue("");
+            setDeleteConfirmType(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("accounts.deleteConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteAccount &&
+              (deleteAccount.transactionCount ?? 0) > 0
+                ? t("accounts.deleteConfirmHasTransactions")
+                : t("accounts.deleteConfirmNoTransactions")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteAccount && deleteConfirmType && (() => {
+            const isThai = locale?.startsWith("th");
+            const accountNumberHint = deleteAccount.accountNumberMasked
+              ? isThai
+                ? ` (ลงท้าย ${deleteAccount.accountNumberMasked})`
+                : ` (ending in ${deleteAccount.accountNumberMasked})`
+              : "";
+            const rawLabel =
+              deleteConfirmType === "accountNumber"
+                ? t("accounts.deleteConfirmAccountNumber") + accountNumberHint
+                : t("accounts.deleteConfirmRandomCodeLabel");
+            const rawPlaceholder =
+              deleteConfirmType === "accountNumber"
+                ? t("accounts.deleteConfirmAccountNumberPlaceholder")
+                : t("accounts.deleteConfirmRandomCodePlaceholder");
+            const deleteConfirmLabel = rawLabel.startsWith("accounts.")
+              ? deleteConfirmType === "accountNumber"
+                ? (isThai
+                    ? "กรอกหมายเลขบัญชี/บัตรให้ครบเพื่อยืนยันการลบ"
+                    : "Enter the full account/card number to confirm deletion") +
+                  accountNumberHint
+                : isThai
+                  ? "กรอกรหัสด้านล่างเพื่อยืนยันการลบ"
+                  : "Enter the code below to confirm deletion"
+              : rawLabel;
+            const deleteConfirmPlaceholder = rawPlaceholder.startsWith("accounts.")
+              ? deleteConfirmType === "accountNumber"
+                ? isThai
+                  ? "กรอกหมายเลขบัญชี/บัตร"
+                  : "Enter account/card number"
+                : isThai
+                  ? "กรอกรหัส"
+                  : "Enter code"
+              : rawPlaceholder;
+            const displayCode =
+              deleteConfirmType === "accountNumber" && deleteExpectedValue
+                ? deleteAccount.type === "CREDIT_CARD"
+                  ? formatCardNumber(deleteExpectedValue)
+                  : formatBankAccountNumber(deleteExpectedValue)
+                : deleteConfirmType === "randomCode" && deleteExpectedValue
+                  ? deleteExpectedValue
+                  : null;
+            return (
+            <div className="space-y-2">
+              <Label htmlFor="delete-confirm-input">
+                {deleteConfirmLabel}
+              </Label>
+              {displayCode && (
+                <p className="select-none rounded-md bg-zinc-100 px-3 py-2 font-mono text-sm dark:bg-zinc-800">
+                  {displayCode}
+                </p>
+              )}
+              <Input
+                id="delete-confirm-input"
+                type="text"
+                placeholder={deleteConfirmPlaceholder}
+                value={deleteConfirmValue}
+                onChange={(e) => setDeleteConfirmValue(e.target.value)}
+                disabled={deletePending}
+                autoComplete="off"
+                className="font-mono"
+              />
+            </div>
+            );
+          })()}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePending}>
+              {t("common.actions.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteConfirm();
+              }}
+              disabled={deletePending || !deleteConfirmMatches}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deletePending ? t("accounts.deletePending") : t("accounts.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

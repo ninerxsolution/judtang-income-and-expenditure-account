@@ -175,8 +175,14 @@ export function TransactionFormDialog({
       if (cancelled) return;
       const accs = Array.isArray(accData)
         ? accData.filter(
-            (a: { isActive?: boolean; isIncomplete?: boolean }) =>
-              a.isActive !== false && !a.isIncomplete
+            (a: {
+              isActive?: boolean;
+              isIncomplete?: boolean;
+              isHidden?: boolean;
+            }) =>
+              a.isActive !== false &&
+              !a.isIncomplete &&
+              (a.isHidden !== true)
           )
         : [];
       setAccounts(
@@ -199,7 +205,10 @@ export function TransactionFormDialog({
       );
       if (!editId && accs.length > 0) {
         const defaultAcc =
-          accs.find((a: { isDefault?: boolean }) => a.isDefault) ?? accs[0];
+          accs.find(
+            (a: { isDefault?: boolean; isHidden?: boolean }) =>
+              a.isDefault && a.isHidden !== true
+          ) ?? accs[0];
         setFinancialAccountId(defaultAcc.id);
       }
     });
