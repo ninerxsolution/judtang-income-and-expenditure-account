@@ -596,3 +596,135 @@ export async function getTransactionsSummary(
   return { income, expense };
 }
 
+export type SummaryByMonthOptions = {
+  year: number;
+  timezone?: string;
+  financialAccountId?: string;
+};
+
+export type SummaryByMonthItem = {
+  monthIndex: number;
+  income: number;
+  expense: number;
+};
+
+export async function getSummaryByMonth(
+  userId: string,
+  options: SummaryByMonthOptions,
+): Promise<SummaryByMonthItem[]> {
+  if (!userId) throw new Error("userId is required");
+  const { year, timezone = "Asia/Bangkok", financialAccountId } = options;
+  const { getDateRangeInTimezone, toDateStringInTimezone } = await import("@/lib/date-range");
+
+  const fromRange = getDateRangeInTimezone(`${year}-01-01`, timezone);
+  const toRange = getDateRangeInTimezone(`${year}-12-31`, timezone);
+  if (!fromRange || !toRange) throw new Error("Invalid year");
+
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      userId,
+      occurredAt: { gte: fromRange.from, lte: toRange.to },
+      type: {
+        in: [
+          PrismaTransactionType.INCOME,
+          PrismaTransactionType.EXPENSE,
+          PrismaTransactionType.INTEREST,
+        ],
+      },
+      ...(financialAccountId ? { financialAccountId } : {}),
+    },
+    select: { occurredAt: true, type: true, amount: true },
+  });
+
+  const monthMap = new Map<
+    number,
+    { income: number; expense: number }
+  >();
+  for (let m = 0; m < 12; m++) {
+    monthMap.set(m, { income: 0, expense: 0 });
+  }
+
+  for (const tx of transactions) {
+    const dateStr = toDateStringInTimezone(tx.occurredAt, timezone);
+    const monthPart = dateStr.split("-")[1];
+    const m = monthPart ? parseInt(monthPart, 10) - 1 : 0;
+    const prev = monthMap.get(m) ?? { income: 0, expense: 0 };
+    const typeUpper = String(tx.type).toUpperCase();
+    const amt = Number(tx.amount) || 0;
+    if (typeUpper === "INCOME") {
+      monthMap.set(m, { ...prev, income: prev.income + amt });
+    } else if (typeUpper === "EXPENSE" || typeUpper === "INTEREST") {
+      monthMap.set(m, { ...prev, expense: prev.expense + amt });
+    }
+  }
+
+  return Array.from(monthMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([monthIndex, { income, expense }]) => ({
+      monthIndex,
+      income,
+      expense,
+    }));
+}
+
+export type SummaryByCategoryOptions = {
+  from: Date;
+  to: Date;
+  financialAccountId?: string;
+};
+
+export type SummaryByCategoryItem = {
+  categoryId: string | null;
+  categoryName: string;
+  amount: number;
+};
+
+export async function getSummaryByCategory(
+  userId: string,
+  options: SummaryByCategoryOptions,
+): Promise<SummaryByCategoryItem[]> {
+  if (!userId) throw new Error("userId is required");
+  const { from, to, financialAccountId } = options;
+
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      userId,
+      occurredAt: { gte: from, lte: to },
+      type: {
+        in: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST],
+      },
+      ...(financialAccountId ? { financialAccountId } : {}),
+    },
+    select: {
+      amount: true,
+      categoryId: true,
+      category: true,
+      categoryRef: { select: { name: true } },
+    },
+  });
+
+  const map = new Map<string, { categoryId: string | null; categoryName: string; amount: number }>();
+  for (const tx of transactions) {
+    const name =
+      tx.categoryRef?.name ??
+      (tx.category && tx.category.trim() ? tx.category.trim() : null) ??
+      "—";
+    const key = tx.categoryId ?? `str:${name}`;
+    const prev = map.get(key);
+    const amt = Number(tx.amount) || 0;
+    if (prev) {
+      map.set(key, { ...prev, amount: prev.amount + amt });
+    } else {
+      map.set(key, {
+        categoryId: tx.categoryId,
+        categoryName: name,
+        amount: amt,
+      });
+    }
+  }
+
+  return Array.from(map.values())
+    .filter((x) => x.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
+}
+

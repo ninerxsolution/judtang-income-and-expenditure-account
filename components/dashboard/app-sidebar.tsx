@@ -20,6 +20,7 @@ import {
   Minimize2,
   Moon,
   Sun,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -170,6 +171,11 @@ const navItems = [
     href: "/dashboard/transactions",
     icon: Wallet,
   },
+  {
+    key: "summary",
+    href: "/dashboard/summary",
+    icon: BarChart3,
+  }
 ] as const;
 
 export function AppSidebarLayout({

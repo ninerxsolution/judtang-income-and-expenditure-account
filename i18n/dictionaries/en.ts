@@ -103,6 +103,7 @@ export const enDictionary = {
     sidebar: {
       navigation: "Navigation",
       dashboard: "Dashboard",
+      summary: "Summary",
       accounts: "Accounts",
       calendar: "Calendar",
       transactions: "Transactions",
@@ -117,6 +118,7 @@ export const enDictionary = {
     },
     pageTitle: {
       dashboard: "Dashboard",
+      summary: "Summary",
       accounts: "Accounts",
       calendar: "Calendar",
       transactionsNew: "New transaction",
@@ -153,6 +155,33 @@ export const enDictionary = {
     },
     header: {
       netBalance: "Net balance",
+    },
+  },
+  summary: {
+    period: {
+      thisMonth: "This month",
+      thisYear: "This year",
+    },
+    months: {
+      0: "Jan",
+      1: "Feb",
+      2: "Mar",
+      3: "Apr",
+      4: "May",
+      5: "Jun",
+      6: "Jul",
+      7: "Aug",
+      8: "Sep",
+      9: "Oct",
+      10: "Nov",
+      11: "Dec",
+    },
+    allAccounts: "All accounts",
+    expenseRatio: "Expense / Income",
+    chart: {
+      incomeVsExpense: "Income vs Expense (monthly)",
+      expenseByCategory: "Expense by category",
+      noData: "No data",
     },
   },
   accounts: {

@@ -103,6 +103,7 @@ export const thDictionary = {
     sidebar: {
       navigation: "เมนูนำทาง",
       dashboard: "แดชบอร์ด",
+      summary: "สรุป",
       accounts: "บัญชี",
       calendar: "ปฏิทิน",
       transactions: "รายการบันทึก",
@@ -117,6 +118,7 @@ export const thDictionary = {
     },
     pageTitle: {
       dashboard: "แดชบอร์ด",
+      summary: "สรุป",
       accounts: "บัญชี",
       calendar: "ปฏิทิน",
       transactionsNew: "บันทึกรายรับรายจ่าย",
@@ -153,6 +155,33 @@ export const thDictionary = {
     },
     header: {
       netBalance: "ยอดสุทธิ",
+    },
+  },
+  summary: {
+    period: {
+      thisMonth: "เดือนนี้",
+      thisYear: "ปีนี้",
+    },
+    months: {
+      0: "ม.ค.",
+      1: "ก.พ.",
+      2: "มี.ค.",
+      3: "เม.ย.",
+      4: "พ.ค.",
+      5: "มิ.ย.",
+      6: "ก.ค.",
+      7: "ส.ค.",
+      8: "ก.ย.",
+      9: "ต.ค.",
+      10: "พ.ย.",
+      11: "ธ.ค.",
+    },
+    allAccounts: "ทุกบัญชี",
+    expenseRatio: "อัตรารายจ่าย/รายรับ",
+    chart: {
+      incomeVsExpense: "รายรับ vs รายจ่าย (รายเดือน)",
+      expenseByCategory: "รายจ่ายตามหมวดหมู่",
+      noData: "ไม่มีข้อมูล",
     },
   },
   accounts: {
