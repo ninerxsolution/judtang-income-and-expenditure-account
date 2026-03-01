@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { TransactionType } from "@/lib/transactions";
+import type { TransactionType as PrismaTransactionType } from "@prisma/client";
 import { serializeTransactionsToCsv } from "@/lib/transactions-csv";
 import { createActivityLog } from "@/lib/activity-log";
 
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
   const fromParam = searchParams.get("from") ?? undefined;
   const toParam = searchParams.get("to") ?? undefined;
   const typeParam = searchParams.get("type") ?? undefined;
+  const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
   let fromDate: Date | undefined;
   let toDate: Date | undefined;
@@ -41,9 +43,13 @@ export async function GET(request: Request) {
   let typeFilter: string | undefined;
   if (typeParam) {
     const upper = typeParam.toUpperCase();
-    if (upper !== TransactionType.INCOME && upper !== TransactionType.EXPENSE) {
+    if (
+      upper !== TransactionType.INCOME &&
+      upper !== TransactionType.EXPENSE &&
+      upper !== TransactionType.TRANSFER
+    ) {
       return NextResponse.json(
-        { error: "type must be INCOME or EXPENSE" },
+        { error: "type must be INCOME, EXPENSE, or TRANSFER" },
         { status: 400 },
       );
     }
@@ -62,7 +68,8 @@ export async function GET(request: Request) {
               },
             }
           : {}),
-        ...(typeFilter ? { type: typeFilter } : {}),
+        ...(typeFilter ? { type: typeFilter as PrismaTransactionType } : {}),
+        ...(financialAccountIdParam ? { financialAccountId: financialAccountIdParam } : {}),
       },
       orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
     });
@@ -80,10 +87,11 @@ export async function GET(request: Request) {
       entityType: "transaction",
       details: {
         rowCount: transactions.length,
-        hasFilter: Boolean(fromDate || toDate || typeFilter),
+        hasFilter: Boolean(fromDate || toDate || typeFilter || financialAccountIdParam),
         from: fromDate?.toISOString() ?? null,
         to: toDate?.toISOString() ?? null,
         type: typeFilter ?? null,
+        financialAccountId: financialAccountIdParam ?? null,
       },
     });
 

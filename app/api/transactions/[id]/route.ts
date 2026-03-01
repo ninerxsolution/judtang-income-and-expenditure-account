@@ -7,6 +7,7 @@ import {
   deleteTransaction,
   TransactionType,
 } from "@/lib/transactions";
+import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -40,10 +41,14 @@ export async function GET(
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
+      status: transaction.status,
       amount,
+      financialAccountId: transaction.financialAccountId,
+      categoryId: transaction.categoryId,
       category: transaction.category,
       note: transaction.note,
       occurredAt: transaction.occurredAt.toISOString(),
+      postedDate: transaction.postedDate?.toISOString() ?? null,
       createdAt: transaction.createdAt.toISOString(),
       updatedAt: transaction.updatedAt.toISOString(),
     });
@@ -74,9 +79,13 @@ export async function PATCH(
   let body: {
     type?: string;
     amount?: number;
+    financialAccountId?: string;
+    categoryId?: string | null;
     category?: string | null;
     note?: string | null;
     occurredAt?: string;
+    status?: string;
+    postedDate?: string | null;
   };
 
   try {
@@ -86,10 +95,17 @@ export async function PATCH(
   }
 
   const rawType = typeof body.type === "string" ? body.type.toUpperCase() : "";
-  const type =
-    rawType === TransactionType.INCOME || rawType === TransactionType.EXPENSE
-      ? rawType
-      : undefined;
+  const validTypes = [
+    TransactionType.INCOME,
+    TransactionType.EXPENSE,
+    TransactionType.TRANSFER,
+    TransactionType.PAYMENT,
+    TransactionType.INTEREST,
+    TransactionType.ADJUSTMENT,
+  ];
+  const type = validTypes.includes(rawType as (typeof validTypes)[number])
+    ? rawType
+    : undefined;
 
   const amountNumber =
     body.amount != null
@@ -113,13 +129,45 @@ export async function PATCH(
     }
   }
 
+  const status =
+    body.status === "PENDING"
+      ? ("PENDING" as const)
+      : body.status === "POSTED"
+        ? ("POSTED" as const)
+        : body.status === "VOID"
+          ? ("VOID" as const)
+          : undefined;
+
+  let postedDate: Date | null | undefined;
+  if (body.postedDate !== undefined) {
+    postedDate = body.postedDate == null ? null : new Date(body.postedDate);
+    if (postedDate instanceof Date && Number.isNaN(postedDate.getTime())) {
+      postedDate = null;
+    }
+  } else {
+    postedDate = undefined;
+  }
+
+  let financialAccountId = body.financialAccountId;
+  if (financialAccountId === undefined) {
+    const existing = await getTransactionById(userId, id);
+    if (existing?.financialAccountId == null) {
+      const defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
+      financialAccountId = defaultAccount.id;
+    }
+  }
+
   try {
     const transaction = await updateTransaction(userId, id, {
       type: type as TransactionType | undefined,
       amount: amountNumber,
+      financialAccountId,
+      categoryId: body.categoryId,
       category: body.category,
       note: body.note,
       occurredAt,
+      status,
+      postedDate,
     });
 
     const amount =
@@ -130,10 +178,14 @@ export async function PATCH(
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
+      status: transaction.status,
       amount,
+      financialAccountId: transaction.financialAccountId,
+      categoryId: transaction.categoryId,
       category: transaction.category,
       note: transaction.note,
       occurredAt: transaction.occurredAt.toISOString(),
+      postedDate: transaction.postedDate?.toISOString() ?? null,
       createdAt: transaction.createdAt.toISOString(),
       updatedAt: transaction.updatedAt.toISOString(),
     });

@@ -5,6 +5,36 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 01/03/2026 (Docs and Tests Update)
+
+- docs/feature/financial-accounts.md — Added: Financial Accounts feature doc (model, AccountType, isAccountIncomplete, bank/account number, account sections UI, incomplete behavior).
+- docs/feature/credit-card-engine.md — Updated: §3.1 bankName, accountNumber, cardType; interestRate in use; §4.4 fromAccountId and EXPENSE on from-account; §5 payment body; §6 validation (incomplete, from-account).
+- docs/INDEX.md — Updated: feature section to link financial-accounts.md.
+- docs/structure/testing-strategy.md — Updated: Financial & Credit Card focus area; lib/__tests__/financial-accounts.test.ts, lib/credit-card/__tests__/payment.test.ts; API integration tests deferred.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for docs update.
+
+---
+
+## 01/03/2026 (Credit Card: Interest Rate & Card Type)
+
+- docs/PRD_CHANGE_LOG.md — Changelog entry: Credit card accounts now support interestRate (%) and cardType (credit, debit, visa, master, jcb, amex, unionpay, truemoney, other).
+
+---
+
+## 01/03/2026 (Financial Account Enhancement)
+
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Financial Account Enhancement: bankName (Thai banks dropdown), accountNumber (bank/card number), masked display on accounts page and credit card payment dialog.
+
+---
+
+## 01/03/2026 (Credit Card Engine)
+
+- docs/feature/credit-card-engine.md — Added: Credit Card Engine feature doc (data model, core logic, APIs, validation).
+- docs/INDEX.md — Updated: feature section to link credit-card-engine.md.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Credit Card Engine.
+
+---
+
 ## 26/02/2026 (email verification)
 
 - docs/core/authentication-authorization.md — Added Email verification: soft policy, flow, token storage; GET /api/auth/verify-email, POST /api/auth/resend-verification; /verify-email page; profile page shows verification status and resend button; /api/users/me returns emailVerified; register sends verification email; Google OAuth sets emailVerified.

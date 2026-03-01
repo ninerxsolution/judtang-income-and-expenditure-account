@@ -37,6 +37,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
+  const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
   const fromParsed = parseDateOnly(fromParam);
   const toParsed = parseDateOnly(toParam);
@@ -59,6 +60,7 @@ export async function GET(request: Request) {
           gte: from,
           lte: to,
         },
+        ...(financialAccountIdParam ? { financialAccountId: financialAccountIdParam } : {}),
       },
       select: {
         occurredAt: true,

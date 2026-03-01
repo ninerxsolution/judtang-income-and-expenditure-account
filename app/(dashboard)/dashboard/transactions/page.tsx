@@ -26,6 +26,8 @@ type Transaction = {
   id: string;
   type: "INCOME" | "EXPENSE" | string;
   amount: number;
+  financialAccount?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -54,7 +56,9 @@ export default function TransactionsPage() {
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
   const [filterType, setFilterType] = useState<"all" | "INCOME" | "EXPENSE">("all");
+  const [filterAccountId, setFilterAccountId] = useState("");
   const [offset, setOffset] = useState(0);
+  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -74,6 +78,7 @@ export default function TransactionsPage() {
       if (filterFrom) params.set("from", filterFrom);
       if (filterTo) params.set("to", filterTo);
       if (filterType !== "all") params.set("type", filterType);
+      if (filterAccountId) params.set("financialAccountId", filterAccountId);
       const res = await fetch(`/api/transactions?${params.toString()}`);
       if (!res.ok) {
         if (res.status === 401) {
@@ -114,6 +119,19 @@ export default function TransactionsPage() {
   useEffect(() => {
     void fetchTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/financial-accounts")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: { id: string; name: string; isActive?: boolean }[]) => {
+        setAccounts(
+          (Array.isArray(data) ? data : [])
+            .filter((a) => a.isActive !== false)
+            .map((a) => ({ id: a.id, name: a.name }))
+        );
+      })
+      .catch(() => setAccounts([]));
   }, []);
 
   useEffect(() => {
@@ -211,6 +229,24 @@ export default function TransactionsPage() {
               <option value="EXPENSE">{t("transactions.common.expense")}</option>
             </select>
           </div>
+          <div>
+            <label htmlFor="list-account" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              {t("transactions.new.accountLabel")}
+            </label>
+            <select
+              id="list-account"
+              value={filterAccountId}
+              onChange={(e) => setFilterAccountId(e.target.value)}
+              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 min-w-[160px]"
+            >
+              <option value="">{t("dataTools.export.typeAll")}</option>
+              {accounts.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button onClick={applyFilters} variant="secondary" size="sm">
             {t("transactions.list.applyFilters")}
           </Button>
@@ -248,6 +284,9 @@ export default function TransactionsPage() {
                     {t("transactions.list.columns.date")}
                   </th>
                   <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                    {t("transactions.list.columns.account")}
+                  </th>
+                  <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
                     {t("transactions.list.columns.type")}
                   </th>
                   <th className="px-4 py-2 text-right font-medium text-zinc-500 dark:text-zinc-400">
@@ -275,6 +314,9 @@ export default function TransactionsPage() {
                       <td className="px-4 py-2 align-top text-zinc-800 dark:text-zinc-100">
                         {formatDate(tx.occurredAt, locale)}
                       </td>
+                      <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
+                        {tx.financialAccount?.name ?? "—"}
+                      </td>
                       <td className="px-4 py-2 align-top">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -297,7 +339,7 @@ export default function TransactionsPage() {
                         {formatAmount(tx.amount)}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
-                        {tx.category ?? "—"}
+                        {tx.categoryRef?.name ?? tx.category ?? "—"}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-600 dark:text-zinc-300">
                         {tx.note

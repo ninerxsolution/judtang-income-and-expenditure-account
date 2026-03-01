@@ -9,6 +9,31 @@ datasource db {
   provider = "mysql"
 }
 
+// --- Enums for Financial features ---
+
+enum AccountType {
+  BANK
+  CREDIT_CARD
+  WALLET
+  CASH
+  OTHER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  PAYMENT
+  INTEREST
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  POSTED
+  VOID
+}
+
 // --- Auth.js required models ---
 
 model Account {
@@ -40,11 +65,13 @@ model User {
   password      String?   @db.Text
   // Active users: last activity timestamp
   lastActiveAt  DateTime?
-  accounts       Account[]
+  accounts           Account[]
   // JWT session tracking (for list/revoke)
-  userSessions   UserSession[]
-  activityLogs   ActivityLog[]
-  transactions   Transaction[]
+  userSessions       UserSession[]
+  activityLogs       ActivityLog[]
+  transactions       Transaction[]
+  financialAccounts  FinancialAccount[]
+  categories         Category[]
 }
 
 // Tracks active JWT sessions per user (sessionId in JWT cookie).
@@ -88,20 +115,102 @@ model ActivityLog {
   @@index([createdAt])
 }
 
+// --- Financial Accounts (Book Bank) ---
+
+model FinancialAccount {
+  id             String   @id @default(cuid())
+  name           String
+  type           AccountType
+  initialBalance Decimal   @db.Decimal(15, 2)
+  isActive       Boolean   @default(true)
+  isDefault      Boolean   @default(false)
+  lastCheckedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  creditCardStatements CreditCardStatement[]
+
+  // Credit card specific (nullable for non-CREDIT_CARD accounts)
+  creditLimit           Decimal?  @db.Decimal(15, 2)
+  statementClosingDay   Int?
+  dueDay                Int?
+  currentOutstanding    Decimal?  @db.Decimal(15, 2)
+  availableCredit       Decimal?  @db.Decimal(15, 2)
+  interestRate          Decimal?  @db.Decimal(8, 4)
+  interestCalculatedUntil DateTime?
+  cardType              String?
+
+  // Bank/account identification (optional)
+  bankName      String?
+  accountNumber String?
+
+  @@index([userId])
+}
+
+// --- Categories (master list) ---
+
+model Category {
+  id          String        @id @default(cuid())
+  name        String
+  createdAt   DateTime      @default(now())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
 // --- Income & Expense Transactions ---
 
 model Transaction {
-  id         String   @id @default(cuid())
-  userId     String
-  type       String
-  amount     Decimal  @db.Decimal(10, 2)
-  category   String?
-  note       String?  @db.Text
-  occurredAt DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                   String            @id @default(cuid())
+  userId               String
+  type                 TransactionType
+  status               TransactionStatus @default(POSTED)
+  amount               Decimal           @db.Decimal(15, 2)
+  category             String?
+  note                 String?           @db.Text
+  occurredAt           DateTime
+  postedDate           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  financialAccountId   String?
+  categoryId           String?
+  statementId          String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  financialAccount FinancialAccount?   @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  categoryRef      Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  statement        CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+
   @@index([userId, occurredAt])
+  @@index([financialAccountId])
+  @@index([statementId])
+}
+
+// --- Credit Card Statement ---
+
+model CreditCardStatement {
+  id               String   @id @default(cuid())
+  accountId        String
+  periodStart      DateTime
+  periodEnd        DateTime
+  closingDate      DateTime
+  dueDate          DateTime
+  statementBalance Decimal  @db.Decimal(15, 2)
+  minimumPayment   Decimal  @db.Decimal(15, 2)
+  paidAmount       Decimal  @default(0) @db.Decimal(15, 2)
+  isClosed         Boolean  @default(false)
+  isPaid           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  account      FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([accountId])
+  @@index([accountId, closingDate])
 }

@@ -17,6 +17,7 @@ type FormFieldProps = {
   autoComplete?: string;
   maxLength?: number;
   inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
+  placeholder?: string;
 };
 
 export function FormField({
@@ -30,6 +31,7 @@ export function FormField({
   autoComplete,
   maxLength,
   inputMode,
+  placeholder,
 }: FormFieldProps) {
   return (
     <div className="space-y-2">
@@ -43,6 +45,7 @@ export function FormField({
         autoComplete={autoComplete}
         maxLength={maxLength}
         inputMode={inputMode}
+        placeholder={placeholder}
         aria-invalid={!!error}
         className={cn(error && "border-destructive")}
       />

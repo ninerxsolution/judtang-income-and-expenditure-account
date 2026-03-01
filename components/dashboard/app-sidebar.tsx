@@ -10,6 +10,7 @@ import {
   User,
   Monitor,
   Wallet,
+  Landmark,
   Wrench,
   CalendarRange,
   Bell,
@@ -118,6 +119,11 @@ function useHeaderProfile() {
 
 const navItems = [
   {
+    key: "accounts",
+    href: "/dashboard/accounts",
+    icon: Landmark,
+  },
+  {
     key: "calendar",
     href: "/dashboard/calendar",
     icon: CalendarRange,
@@ -127,7 +133,6 @@ const navItems = [
     href: "/dashboard/transactions",
     icon: Wallet,
   },
-  
 ] as const;
 
 export function AppSidebarLayout({

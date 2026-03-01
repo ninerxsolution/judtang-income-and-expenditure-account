@@ -11,6 +11,8 @@ type Transaction = {
   id: string;
   type: "INCOME" | "EXPENSE" | string;
   amount: number;
+  financialAccount?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -133,9 +135,14 @@ export function TransactionsList() {
                     <span className="text-zinc-500 dark:text-zinc-400">
                       {formatDate(tx.occurredAt, locale)}
                     </span>
-                    {tx.category && (
+                    {(tx.categoryRef?.name ?? tx.category) && (
                       <span className="ml-2 text-zinc-700 dark:text-zinc-200">
-                        · {tx.category}
+                        · {tx.categoryRef?.name ?? tx.category}
+                      </span>
+                    )}
+                    {tx.financialAccount && (
+                      <span className="ml-2 text-zinc-500 dark:text-zinc-400 text-xs">
+                        ({tx.financialAccount.name})
                       </span>
                     )}
                   </div>

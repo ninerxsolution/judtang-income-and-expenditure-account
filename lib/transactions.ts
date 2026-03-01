@@ -1,26 +1,44 @@
+import { TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog } from "@/lib/activity-log";
+import { recomputeOutstanding } from "@/lib/credit-card";
 
 export const TransactionType = {
   INCOME: "INCOME",
   EXPENSE: "EXPENSE",
+  TRANSFER: "TRANSFER",
+  PAYMENT: "PAYMENT",
+  INTEREST: "INTEREST",
+  ADJUSTMENT: "ADJUSTMENT",
 } as const;
 
 export type TransactionType = (typeof TransactionType)[keyof typeof TransactionType];
+
+export const TransactionStatus = {
+  PENDING: "PENDING",
+  POSTED: "POSTED",
+  VOID: "VOID",
+} as const;
 
 export type CreateTransactionParams = {
   userId: string;
   type: TransactionType;
   amount: number;
+  financialAccountId: string;
+  categoryId?: string | null;
   category?: string;
-  note?: string;
+  note?: string | null;
   occurredAt: Date;
+  status?: "PENDING" | "POSTED";
+  postedDate?: Date;
+  statementId?: string | null;
 };
 
 export type ListTransactionsOptions = {
   from?: Date;
   to?: Date;
   type?: TransactionType;
+  financialAccountId?: string;
   limit?: number;
   offset?: number;
 };
@@ -28,9 +46,13 @@ export type ListTransactionsOptions = {
 export type UpdateTransactionParams = {
   type?: TransactionType;
   amount?: number;
+  financialAccountId?: string;
+  categoryId?: string | null;
   category?: string | null;
   note?: string | null;
   occurredAt?: Date;
+  status?: "PENDING" | "POSTED" | "VOID";
+  postedDate?: Date | null;
 };
 
 export async function createTransaction(params: CreateTransactionParams) {
@@ -40,13 +62,25 @@ export async function createTransaction(params: CreateTransactionParams) {
   }
 
   const type = params.type;
-  if (type !== TransactionType.INCOME && type !== TransactionType.EXPENSE) {
+  const validTypes = [
+    TransactionType.INCOME,
+    TransactionType.EXPENSE,
+    TransactionType.TRANSFER,
+    TransactionType.PAYMENT,
+    TransactionType.INTEREST,
+    TransactionType.ADJUSTMENT,
+  ];
+  if (!validTypes.includes(type)) {
     throw new Error("Invalid transaction type");
   }
 
   const amountNumber = Number(params.amount);
   if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
     throw new Error("Amount must be a positive number");
+  }
+
+  if (!params.financialAccountId) {
+    throw new Error("financialAccountId is required");
   }
 
   const category =
@@ -57,22 +91,46 @@ export async function createTransaction(params: CreateTransactionParams) {
     params.note != null && String(params.note).trim() !== ""
       ? String(params.note).trim()
       : null;
+  const categoryId =
+    params.categoryId != null && String(params.categoryId).trim() !== ""
+      ? String(params.categoryId).trim()
+      : null;
 
   const occurredAt = params.occurredAt;
   if (!(occurredAt instanceof Date) || Number.isNaN(occurredAt.getTime())) {
     throw new Error("occurredAt must be a valid Date");
   }
 
+  const status = params.status === "PENDING" ? PrismaTransactionStatus.PENDING : PrismaTransactionStatus.POSTED;
+  const postedDate = status === PrismaTransactionStatus.POSTED
+    ? (params.postedDate ?? occurredAt)
+    : null;
+
   const transaction = await prisma.transaction.create({
     data: {
       userId,
-      type,
+      type: type as PrismaTransactionType,
+      status,
       amount: amountNumber,
+      financialAccountId: params.financialAccountId,
+      categoryId,
       category,
       note,
       occurredAt,
+      postedDate,
+      statementId: params.statementId ?? undefined,
     },
   });
+
+  if (params.financialAccountId) {
+    const account = await prisma.financialAccount.findUnique({
+      where: { id: params.financialAccountId },
+      select: { type: true },
+    });
+    if (account?.type === "CREDIT_CARD") {
+      void recomputeOutstanding(params.financialAccountId);
+    }
+  }
 
   void createActivityLog({
     userId,
@@ -98,16 +156,29 @@ export async function listTransactionsByUser(
     throw new Error("userId is required");
   }
 
-  const { from, to, type, limit = 50, offset = 0 } = options;
+  const { from, to, type, financialAccountId, limit = 50, offset = 0 } = options;
 
   const where: {
     userId: string;
-    type?: string;
+    type?: PrismaTransactionType;
+    financialAccountId?: string;
     occurredAt?: { gte?: Date; lte?: Date };
   } = { userId };
 
-  if (type === TransactionType.INCOME || type === TransactionType.EXPENSE) {
-    where.type = type;
+  const filterTypes = [
+    TransactionType.INCOME,
+    TransactionType.EXPENSE,
+    TransactionType.TRANSFER,
+    TransactionType.PAYMENT,
+    TransactionType.INTEREST,
+    TransactionType.ADJUSTMENT,
+  ];
+  if (type && filterTypes.includes(type)) {
+    where.type = type as PrismaTransactionType;
+  }
+
+  if (financialAccountId) {
+    where.financialAccountId = financialAccountId;
   }
 
   if (from || to) {
@@ -135,6 +206,10 @@ export async function listTransactionsByUser(
     orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
     take: safeLimit,
     skip: safeOffset,
+    include: {
+      financialAccount: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true } },
+    },
   });
 }
 
@@ -155,8 +230,16 @@ export async function updateTransaction(
     throw new Error("Transaction not found");
   }
 
+  const validUpdateTypes = [
+    TransactionType.INCOME,
+    TransactionType.EXPENSE,
+    TransactionType.TRANSFER,
+    TransactionType.PAYMENT,
+    TransactionType.INTEREST,
+    TransactionType.ADJUSTMENT,
+  ];
   const type =
-    params.type === TransactionType.INCOME || params.type === TransactionType.EXPENSE
+    params.type && validUpdateTypes.includes(params.type)
       ? params.type
       : existing.type;
   const existingAmount = existing.amount;
@@ -179,21 +262,51 @@ export async function updateTransaction(
           ? String(params.note).trim()
           : null)
       : existing.note;
+  const categoryId =
+    params.categoryId !== undefined
+      ? (params.categoryId != null && String(params.categoryId).trim() !== ""
+          ? String(params.categoryId).trim()
+          : null)
+      : existing.categoryId;
+  const financialAccountId =
+    params.financialAccountId ?? existing.financialAccountId;
   const occurredAt =
     params.occurredAt instanceof Date && !Number.isNaN(params.occurredAt.getTime())
       ? params.occurredAt
       : existing.occurredAt;
 
+  const updateData: Parameters<typeof prisma.transaction.update>[0]["data"] = {
+    type: type as PrismaTransactionType,
+    amount: amountNumber,
+    category,
+    note,
+    occurredAt,
+    categoryId,
+  };
+  if (financialAccountId) {
+    updateData.financialAccountId = financialAccountId;
+  }
+  if (params.status !== undefined) {
+    updateData.status = params.status as PrismaTransactionStatus;
+  }
+  if (params.postedDate !== undefined) {
+    updateData.postedDate = params.postedDate;
+  }
+
   const transaction = await prisma.transaction.update({
     where: { id },
-    data: {
-      type,
-      amount: amountNumber,
-      category,
-      note,
-      occurredAt,
-    },
+    data: updateData,
   });
+
+  if (transaction.financialAccountId) {
+    const account = await prisma.financialAccount.findUnique({
+      where: { id: transaction.financialAccountId },
+      select: { type: true },
+    });
+    if (account?.type === "CREDIT_CARD") {
+      void recomputeOutstanding(transaction.financialAccountId);
+    }
+  }
 
   void createActivityLog({
     userId,
@@ -218,9 +331,21 @@ export async function deleteTransaction(
   const existing = await getTransactionById(userId, id);
   if (!existing) return false;
 
+  const financialAccountId = existing.financialAccountId;
+
   await prisma.transaction.delete({
     where: { id },
   });
+
+  if (financialAccountId) {
+    const account = await prisma.financialAccount.findUnique({
+      where: { id: financialAccountId },
+      select: { type: true },
+    });
+    if (account?.type === "CREDIT_CARD") {
+      void recomputeOutstanding(financialAccountId);
+    }
+  }
 
   void createActivityLog({
     userId,
@@ -240,6 +365,7 @@ export async function deleteTransaction(
 export type SummaryOptions = {
   from: Date;
   to: Date;
+  financialAccountId?: string;
 };
 
 export async function getTransactionsSummary(
@@ -249,22 +375,32 @@ export async function getTransactionsSummary(
   if (!userId) {
     throw new Error("userId is required");
   }
-  const { from, to } = options;
-  const where = {
+  const { from, to, financialAccountId } = options;
+  const where: {
+    userId: string;
+    occurredAt: { gte: Date; lte: Date };
+    financialAccountId?: string;
+  } = {
     userId,
     occurredAt: {
       gte: from,
       lte: to,
     },
   };
+  if (financialAccountId) {
+    where.financialAccountId = financialAccountId;
+  }
 
   const [incomeRows, expenseRows] = await Promise.all([
     prisma.transaction.aggregate({
-      where: { ...where, type: TransactionType.INCOME },
+      where: { ...where, type: PrismaTransactionType.INCOME },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
-      where: { ...where, type: TransactionType.EXPENSE },
+      where: {
+        ...where,
+        type: { in: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST] },
+      },
       _sum: { amount: true },
     }),
   ]);

@@ -1,6 +1,6 @@
 import type { Transaction } from "@prisma/client";
 
-const TRANSACTION_CSV_COLUMNS = [
+const REQUIRED_CSV_COLUMNS = [
   "id",
   "type",
   "amount",
@@ -10,11 +10,18 @@ const TRANSACTION_CSV_COLUMNS = [
   "createdAt",
 ] as const;
 
-export type TransactionCsvColumn = (typeof TRANSACTION_CSV_COLUMNS)[number];
+const OPTIONAL_CSV_COLUMNS = ["financialAccountId", "categoryId"] as const;
+
+const ALL_CSV_COLUMNS = [
+  ...REQUIRED_CSV_COLUMNS,
+  ...OPTIONAL_CSV_COLUMNS,
+] as const;
+
+export type TransactionCsvColumn = (typeof ALL_CSV_COLUMNS)[number];
 
 export type ParsedTransactionCsvRow = {
   rowNumber: number;
-  values: Record<TransactionCsvColumn, string>;
+  values: Record<string, string>;
 };
 
 function stripBom(input: string): string {
@@ -51,19 +58,23 @@ function escapeCsvField(raw: string): string {
 }
 
 export function serializeTransactionsToCsv(transactions: Transaction[]): string {
-  const header = TRANSACTION_CSV_COLUMNS.join(",");
+  const header = ALL_CSV_COLUMNS.join(",");
 
   const lines = transactions.map((t) => {
-    const columns: string[] = [
-      escapeCsvField(t.id),
-      escapeCsvField(t.type ?? ""),
-      escapeCsvField(formatAmountForCsv(t.amount)),
-      escapeCsvField(t.category ?? ""),
-      escapeCsvField(t.note ?? ""),
-      escapeCsvField(formatDateForCsv(t.occurredAt)),
-      escapeCsvField(formatDateForCsv(t.createdAt)),
-    ];
-
+    const colMap: Record<string, string> = {
+      id: t.id,
+      type: t.type ?? "",
+      amount: formatAmountForCsv(t.amount),
+      category: t.category ?? "",
+      note: t.note ?? "",
+      occurredAt: formatDateForCsv(t.occurredAt),
+      createdAt: formatDateForCsv(t.createdAt),
+      financialAccountId: t.financialAccountId ?? "",
+      categoryId: t.categoryId ?? "",
+    };
+    const columns = ALL_CSV_COLUMNS.map((col) =>
+      escapeCsvField(colMap[col] ?? ""),
+    );
     return columns.join(",");
   });
 
@@ -138,7 +149,7 @@ export function parseTransactionsCsv(text: string): ParsedTransactionCsvRow[] {
     }
   });
 
-  const missingColumns = TRANSACTION_CSV_COLUMNS.filter(
+  const missingColumns = REQUIRED_CSV_COLUMNS.filter(
     (name) => !columnIndex.has(name),
   );
 
@@ -157,9 +168,9 @@ export function parseTransactionsCsv(text: string): ParsedTransactionCsvRow[] {
       continue;
     }
 
-    const values = {} as Record<TransactionCsvColumn, string>;
+    const values: Record<string, string> = {};
 
-    for (const col of TRANSACTION_CSV_COLUMNS) {
+    for (const col of ALL_CSV_COLUMNS) {
       const idx = columnIndex.get(col);
       const value =
         idx != null && idx < rawRow.length ? String(rawRow[idx] ?? "") : "";

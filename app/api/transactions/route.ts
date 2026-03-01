@@ -6,11 +6,26 @@ import {
   TransactionType,
   listTransactionsByUser,
 } from "@/lib/transactions";
+import {
+  ensureUserHasDefaultFinancialAccount,
+  isAccountIncomplete,
+} from "@/lib/financial-accounts";
+import { recordPayment } from "@/lib/credit-card";
+import { prisma } from "@/lib/prisma";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+
+const VALID_TYPES = [
+  TransactionType.INCOME,
+  TransactionType.EXPENSE,
+  TransactionType.TRANSFER,
+  TransactionType.PAYMENT,
+  TransactionType.INTEREST,
+  TransactionType.ADJUSTMENT,
+] as const;
 
 export async function POST(request: Request) {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
@@ -23,9 +38,14 @@ export async function POST(request: Request) {
   let body: {
     type?: string;
     amount?: number;
+    financialAccountId?: string;
+    categoryId?: string | null;
     category?: string | null;
     note?: string | null;
     occurredAt?: string;
+    status?: string;
+    postedDate?: string;
+    fromAccountId?: string;
   };
 
   try {
@@ -35,10 +55,9 @@ export async function POST(request: Request) {
   }
 
   const rawType = typeof body.type === "string" ? body.type.toUpperCase() : "";
-  const type =
-    rawType === TransactionType.INCOME || rawType === TransactionType.EXPENSE
-      ? rawType
-      : undefined;
+  const type = VALID_TYPES.includes(rawType as (typeof VALID_TYPES)[number])
+    ? rawType
+    : undefined;
 
   const amountNumber =
     typeof body.amount === "number"
@@ -47,7 +66,7 @@ export async function POST(request: Request) {
 
   if (!type) {
     return NextResponse.json(
-      { error: "type must be INCOME or EXPENSE" },
+      { error: "type must be INCOME, EXPENSE, TRANSFER, PAYMENT, INTEREST, or ADJUSTMENT" },
       { status: 400 },
     );
   }
@@ -67,23 +86,100 @@ export async function POST(request: Request) {
     }
   }
 
+  let financialAccountId = body.financialAccountId;
+  if (!financialAccountId) {
+    const defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
+    financialAccountId = defaultAccount.id;
+  }
+
+  const accountForTx = await prisma.financialAccount.findFirst({
+    where: { id: financialAccountId, userId },
+    select: {
+      type: true,
+      bankName: true,
+      accountNumber: true,
+      creditLimit: true,
+      interestRate: true,
+      cardType: true,
+    },
+  });
+  if (!accountForTx) {
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
+  }
+  if (isAccountIncomplete(accountForTx)) {
+    return NextResponse.json(
+      {
+        error:
+          "Account is incomplete. Please add bank and account number before using.",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (type === TransactionType.PAYMENT && financialAccountId) {
+    if (accountForTx.type === "CREDIT_CARD") {
+      try {
+        const transaction = await recordPayment({
+          userId,
+          accountId: financialAccountId,
+          amount: amountNumber,
+          occurredAt,
+          fromAccountId: body.fromAccountId,
+          note: body.note ?? undefined,
+        });
+        return NextResponse.json({
+          id: transaction.id,
+          type: transaction.type,
+          amount: transaction.amount,
+          financialAccountId: transaction.financialAccountId,
+          categoryId: transaction.categoryId,
+          category: transaction.category,
+          note: transaction.note,
+          occurredAt: transaction.occurredAt.toISOString(),
+          createdAt: transaction.createdAt.toISOString(),
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to record payment";
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+    }
+  }
+
+  const status =
+    body.status === "PENDING" ? ("PENDING" as const) : ("POSTED" as const);
+  let postedDate: Date | undefined;
+  if (body.postedDate) {
+    const d = new Date(body.postedDate);
+    if (!Number.isNaN(d.getTime())) {
+      postedDate = d;
+    }
+  }
+
   try {
     const transaction = await createTransaction({
       userId,
-      type,
+      type: type as TransactionType,
       amount: amountNumber,
+      financialAccountId,
+      categoryId: body.categoryId ?? undefined,
       category: body.category ?? undefined,
       note: body.note ?? undefined,
       occurredAt,
+      status,
+      postedDate,
     });
 
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
+      status: transaction.status,
       amount: transaction.amount,
+      financialAccountId: transaction.financialAccountId,
+      categoryId: transaction.categoryId,
       category: transaction.category,
       note: transaction.note,
       occurredAt: transaction.occurredAt.toISOString(),
+      postedDate: transaction.postedDate?.toISOString() ?? null,
       createdAt: transaction.createdAt.toISOString(),
     });
   } catch (error) {
@@ -107,6 +203,7 @@ export async function GET(request: Request) {
   const toParam = searchParams.get("to") ?? undefined;
   const dateParam = searchParams.get("date") ?? undefined;
   const typeParam = searchParams.get("type") ?? undefined;
+  const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
   const limitParam = searchParams.get("limit");
   const offsetParam = searchParams.get("offset");
 
@@ -144,11 +241,11 @@ export async function GET(request: Request) {
     }
   }
 
-  let typeFilter: "INCOME" | "EXPENSE" | undefined;
+  let typeFilter: (typeof VALID_TYPES)[number] | undefined;
   if (typeParam) {
     const upper = typeParam.toUpperCase();
-    if (upper === TransactionType.INCOME || upper === TransactionType.EXPENSE) {
-      typeFilter = upper;
+    if (VALID_TYPES.includes(upper as (typeof VALID_TYPES)[number])) {
+      typeFilter = upper as (typeof VALID_TYPES)[number];
     }
   }
 
@@ -157,22 +254,35 @@ export async function GET(request: Request) {
       from: fromDate,
       to: toDate,
       type: typeFilter,
+      financialAccountId: financialAccountIdParam,
       limit,
       offset,
     });
 
-    const data = transactions.map((t) => ({
-      id: t.id,
-      type: t.type,
-      amount:
-        typeof t.amount === "object" && t.amount != null && "toNumber" in t.amount
-          ? (t.amount as { toNumber: () => number }).toNumber()
-          : Number(t.amount),
-      category: t.category,
-      note: t.note,
-      occurredAt: t.occurredAt.toISOString(),
-      createdAt: t.createdAt.toISOString(),
-    }));
+    const data = transactions.map((t) => {
+      const tx = t as typeof t & {
+        financialAccount?: { id: string; name: string } | null;
+        categoryRef?: { id: string; name: string } | null;
+      };
+      return {
+        id: tx.id,
+        type: tx.type,
+        status: tx.status,
+        amount:
+          typeof tx.amount === "object" && tx.amount != null && "toNumber" in tx.amount
+            ? (tx.amount as { toNumber: () => number }).toNumber()
+            : Number(tx.amount),
+        financialAccountId: tx.financialAccountId,
+        financialAccount: tx.financialAccount,
+        categoryId: tx.categoryId,
+        categoryRef: tx.categoryRef,
+        category: tx.category,
+        note: tx.note,
+        occurredAt: tx.occurredAt.toISOString(),
+        postedDate: tx.postedDate?.toISOString() ?? null,
+        createdAt: tx.createdAt.toISOString(),
+      };
+    });
 
     return NextResponse.json(data);
   } catch {

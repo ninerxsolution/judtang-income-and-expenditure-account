@@ -3,11 +3,31 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { TransactionType } from "@/lib/transactions";
+import type { TransactionType as PrismaTransactionType } from "@prisma/client";
 import {
   parseTransactionsCsv,
   type ParsedTransactionCsvRow,
 } from "@/lib/transactions-csv";
 import { createActivityLog } from "@/lib/activity-log";
+import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
+
+async function findOrCreateCategoryByName(
+  tx: Pick<typeof prisma, "category">,
+  userId: string,
+  name: string
+): Promise<string | null> {
+  if (!name.trim()) return null;
+  const trimmed = name.trim();
+  let cat = await tx.category.findUnique({
+    where: { userId_name: { userId, name: trimmed } },
+  });
+  if (!cat) {
+    cat = await tx.category.create({
+      data: { userId, name: trimmed },
+    });
+  }
+  return cat.id;
+}
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -21,6 +41,8 @@ type ValidTransactionRow = {
   id: string | null;
   type: (typeof TransactionType)[keyof typeof TransactionType];
   amount: number;
+  financialAccountId: string | null;
+  categoryId: string | null;
   category: string | null;
   note: string | null;
   occurredAt: Date;
@@ -63,21 +85,27 @@ function validateParsedRows(rows: ParsedTransactionCsvRow[]): {
 
   for (const row of rows) {
     const { rowNumber, values } = row;
-    const idRaw = values.id.trim();
-    const typeRaw = values.type.trim().toUpperCase();
-    const amountRaw = values.amount.trim();
-    const categoryRaw = values.category.trim();
-    const noteRaw = values.note.trim();
-    const occurredAtRaw = values.occurredAt.trim();
+    const idRaw = values.id?.trim() ?? "";
+    const typeRaw = (values.type ?? "").trim().toUpperCase();
+    const amountRaw = (values.amount ?? "").trim();
+    const categoryRaw = (values.category ?? "").trim();
+    const noteRaw = (values.note ?? "").trim();
+    const occurredAtRaw = (values.occurredAt ?? "").trim();
+    const financialAccountIdRaw = (values.financialAccountId ?? "").trim();
+    const categoryIdRaw = (values.categoryId ?? "").trim();
 
     if (!typeRaw) {
       errors.push({ row: rowNumber, message: "type is required" });
       continue;
     }
-    if (typeRaw !== TransactionType.INCOME && typeRaw !== TransactionType.EXPENSE) {
+    if (
+      typeRaw !== TransactionType.INCOME &&
+      typeRaw !== TransactionType.EXPENSE &&
+      typeRaw !== TransactionType.TRANSFER
+    ) {
       errors.push({
         row: rowNumber,
-        message: "type must be INCOME or EXPENSE",
+        message: "type must be INCOME, EXPENSE, or TRANSFER",
       });
       continue;
     }
@@ -108,16 +136,19 @@ function validateParsedRows(rows: ParsedTransactionCsvRow[]): {
       continue;
     }
 
-    const category =
-      categoryRaw.length > 0 ? categoryRaw : null;
-    const note =
-      noteRaw.length > 0 ? noteRaw : null;
+    const category = categoryRaw.length > 0 ? categoryRaw : null;
+    const note = noteRaw.length > 0 ? noteRaw : null;
+    const financialAccountId =
+      financialAccountIdRaw.length > 0 ? financialAccountIdRaw : null;
+    const categoryId = categoryIdRaw.length > 0 ? categoryIdRaw : null;
 
     valid.push({
       rowNumber,
       id: idRaw || null,
       type: typeRaw,
       amount: amountNumber,
+      financialAccountId,
+      categoryId,
       category,
       note,
       occurredAt,
@@ -256,17 +287,31 @@ export async function POST(request: Request) {
     }
   }
 
+  const defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
+
   try {
     const result = await prisma.$transaction(async (tx) => {
       let createdCount = 0;
       let updatedCount = 0;
 
       for (const row of toCreate) {
+        const financialAccountId =
+          row.financialAccountId ?? defaultAccount.id;
+        let categoryId = row.categoryId;
+        if (!categoryId && row.category) {
+          categoryId = await findOrCreateCategoryByName(
+            tx,
+            userId,
+            row.category
+          );
+        }
         await tx.transaction.create({
           data: {
             userId,
-            type: row.type,
+            type: row.type as PrismaTransactionType,
             amount: row.amount,
+            financialAccountId,
+            categoryId,
             category: row.category,
             note: row.note,
             occurredAt: row.occurredAt,
@@ -276,18 +321,39 @@ export async function POST(request: Request) {
       }
 
       for (const row of toUpdate) {
+        let categoryId = row.categoryId;
+        if (!categoryId && row.category) {
+          categoryId = await findOrCreateCategoryByName(
+            tx,
+            userId,
+            row.category
+          );
+        }
+        const updateData: {
+          type: PrismaTransactionType;
+          amount: number;
+          financialAccountId: string;
+          categoryId?: string | null;
+          category: string | null;
+          note: string | null;
+          occurredAt: Date;
+        } = {
+          type: row.type as PrismaTransactionType,
+          amount: row.amount,
+          financialAccountId: row.financialAccountId ?? defaultAccount.id,
+          category: row.category,
+          note: row.note,
+          occurredAt: row.occurredAt,
+        };
+        if (categoryId !== undefined) {
+          updateData.categoryId = categoryId;
+        }
         await tx.transaction.update({
           where: {
             id: row.id as string,
             userId,
           },
-          data: {
-            type: row.type,
-            amount: row.amount,
-            category: row.category,
-            note: row.note,
-            occurredAt: row.occurredAt,
-          },
+          data: updateData,
         });
         updatedCount += 1;
       }

@@ -38,4 +38,4 @@ Cross-cutting system capabilities.
 
 ## feature/
 
-User-facing domain features. This solution keeps **Authentication** and **Activity Log** as core scope; **Income & Expense** (transactions, calendar, import/export, Data Tools) are implemented and documented in [PRD.md](./PRD.md) §18. No separate feature docs under feature/ for the current scope — see [PRD.md](./PRD.md) §7–§8 and [core/](./core/) for Auth and Activity Log.
+User-facing domain features. This solution keeps **Authentication** and **Activity Log** as core scope; **Income & Expense** (transactions, calendar, import/export, Data Tools) are implemented and documented in [PRD.md](./PRD.md) §18. **Financial Accounts** (บัญชี, บัตรเครดิต, incomplete validation) are documented in [feature/financial-accounts.md](./feature/financial-accounts.md). **Credit Card Engine** is documented in [feature/credit-card-engine.md](./feature/credit-card-engine.md). See [PRD.md](./PRD.md) §7–§8 and [core/](./core/) for Auth and Activity Log.

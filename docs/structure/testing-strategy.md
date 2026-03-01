@@ -1,6 +1,6 @@
 # Testing Strategy (Initial)
 
-**Updated:** 14/02/2026
+**Updated:** 01/03/2026
 
 **Source:** PRD §10
 
@@ -8,7 +8,7 @@
 
 ## Scope
 
-- Focus on Authentication and Core Domain logic
+- Focus on Authentication, Core Domain logic, and Financial & Credit Card
 - UI testing is out of scope in the initial phase
 
 ## Tools
@@ -23,6 +23,14 @@
 - User creation and account merging
 - Activity log emission
 - Error-path logging
+- **Financial & Credit Card** — `isAccountIncomplete`, `recordPayment`, payment validation and allocation
+
+## Financial & Credit Card unit tests
+
+- **lib/__tests__/financial-accounts.test.ts** — `isAccountIncomplete` for CASH/OTHER, BANK/WALLET, CREDIT_CARD; Prisma Decimal handling.
+- **lib/credit-card/__tests__/payment.test.ts** — `recordPayment` validation (amount, account type, userId, incomplete credit card, outstanding, from-account); PAYMENT + EXPENSE creation; statement allocation.
+
+**Note:** API integration tests (POST /api/financial-accounts, POST /api/credit-card/[id]/payment, POST /api/transactions) are deferred until test DB setup is defined.
 
 ## Authentication unit tests
 

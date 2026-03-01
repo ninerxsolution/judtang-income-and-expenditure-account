@@ -28,6 +28,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
+  const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
   let from: Date;
   let to: Date;
@@ -50,7 +51,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const summary = await getTransactionsSummary(userId, { from, to });
+    const summary = await getTransactionsSummary(userId, {
+      from,
+      to,
+      financialAccountId: financialAccountIdParam,
+    });
     return NextResponse.json(summary);
   } catch {
     return NextResponse.json(

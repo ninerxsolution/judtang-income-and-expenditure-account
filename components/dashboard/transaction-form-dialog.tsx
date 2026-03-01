@@ -67,6 +67,8 @@ export function TransactionFormDialog({
 
   const [type, setType] = useState<TransactionType>("EXPENSE");
   const [amount, setAmount] = useState("");
+  const [financialAccountId, setFinancialAccountId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [category, setCategory] = useState("");
   const [occurredAt, setOccurredAt] = useState(resolvedInitialDate);
   const [note, setNote] = useState("");
@@ -75,6 +77,12 @@ export function TransactionFormDialog({
   const [loadState, setLoadState] = useState<
     "idle" | "loading" | "done" | "error"
   >(editId ? "loading" : "idle");
+
+  const [accounts, setAccounts] = useState<
+    { id: string; name: string; isDefault: boolean; type: string }[]
+  >([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
 
   const amountError = useMemo(() => {
     if (!amount) return null;
@@ -95,6 +103,8 @@ export function TransactionFormDialog({
     if (!editId) {
       setType("EXPENSE");
       setAmount("");
+      setFinancialAccountId("");
+      setCategoryId("");
       setCategory("");
       setNote("");
       setLoadState("idle");
@@ -120,6 +130,8 @@ export function TransactionFormDialog({
             | {
                 type: string;
                 amount: number;
+                financialAccountId: string | null;
+                categoryId: string | null;
                 category: string | null;
                 note: string | null;
                 occurredAt: string;
@@ -129,9 +141,14 @@ export function TransactionFormDialog({
           if (cancelled || !data) return;
           setType(data.type === "INCOME" ? "INCOME" : "EXPENSE");
           setAmount(sanitizeAmountInput(String(data.amount)));
+          setFinancialAccountId(data.financialAccountId ?? "");
+          setCategoryId(data.categoryId ?? "");
           setCategory(data.category ?? "");
           setNote(data.note ?? "");
           setOccurredAt(formatDateToInput(data.occurredAt));
+          setStatus(
+            (data as { status?: string }).status === "PENDING" ? "PENDING" : "POSTED"
+          );
           setLoadState("done");
         },
       )
@@ -145,6 +162,49 @@ export function TransactionFormDialog({
       cancelled = true;
     };
   }, [open, editId, initialDate, t]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    Promise.all([
+      fetch("/api/financial-accounts").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/categories").then((r) => (r.ok ? r.json() : [])),
+    ]).then(([accData, catData]) => {
+      if (cancelled) return;
+      const accs = Array.isArray(accData)
+        ? accData.filter(
+            (a: { isActive?: boolean; isIncomplete?: boolean }) =>
+              a.isActive !== false && !a.isIncomplete
+          )
+        : [];
+      setAccounts(
+        accs.map(
+          (a: { id: string; name: string; isDefault?: boolean; type?: string }) => ({
+            id: a.id,
+            name: a.name,
+            isDefault: a.isDefault ?? false,
+            type: a.type ?? "CASH",
+          })
+        )
+      );
+      setCategories(
+        Array.isArray(catData)
+          ? catData.map((c: { id: string; name: string }) => ({
+              id: c.id,
+              name: c.name,
+            }))
+          : []
+      );
+      if (!editId && accs.length > 0) {
+        const defaultAcc =
+          accs.find((a: { isDefault?: boolean }) => a.isDefault) ?? accs[0];
+        setFinancialAccountId(defaultAcc.id);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, editId]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -166,13 +226,21 @@ export function TransactionFormDialog({
     }
 
     const value = Number.parseFloat(amount);
-    const body = {
+    const selectedAccount = accounts.find((a) => a.id === financialAccountId);
+    const isCreditCard = selectedAccount?.type === "CREDIT_CARD";
+
+    const body: Record<string, unknown> = {
       type,
       amount: value,
+      financialAccountId: financialAccountId || undefined,
+      categoryId: categoryId.trim() || undefined,
       category: category.trim() || undefined,
       note: note.trim() || undefined,
       occurredAt: occurredAt || undefined,
     };
+    if (isCreditCard && type === "EXPENSE") {
+      body.status = status;
+    }
 
     setPending(true);
     try {
@@ -207,6 +275,7 @@ export function TransactionFormDialog({
           return;
         }
         setAmount("");
+        setCategoryId("");
         setCategory("");
         setNote("");
         onOpenChange(false);
@@ -278,6 +347,60 @@ export function TransactionFormDialog({
             </div>
           </div>
 
+          <div>
+            <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
+              {t("transactions.new.accountLabel")}
+            </label>
+            <select
+              id="transaction-modal-account"
+              value={financialAccountId}
+              onChange={(e) => setFinancialAccountId(e.target.value)}
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              {accounts.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {(() => {
+            const sel = accounts.find((a) => a.id === financialAccountId);
+            const showStatus = sel?.type === "CREDIT_CARD" && type === "EXPENSE";
+            return showStatus ? (
+              <div>
+                <span className="mb-1 block text-sm font-medium">
+                  {t("transactions.new.statusLabel")}
+                </span>
+                <div className="inline-flex rounded-md border overflow-hidden border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setStatus("PENDING")}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 transition-all ${
+                      status === "PENDING"
+                        ? "bg-amber-500 text-white"
+                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    {t("transactions.new.statusPending")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatus("POSTED")}
+                    className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                      status === "POSTED"
+                        ? "bg-emerald-500 text-white"
+                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    {t("transactions.new.statusPosted")}
+                  </button>
+                </div>
+              </div>
+            ) : null;
+          })()}
+
           <FormField
             id="transaction-modal-amount"
             label={t("transactions.new.amountLabel")}
@@ -289,14 +412,24 @@ export function TransactionFormDialog({
             inputMode="decimal"
           />
 
-          <FormField
-            id="transaction-modal-category"
-            label={t("transactions.new.categoryLabel")}
-            type="text"
-            value={category}
-            onChange={setCategory}
-            maxLength={MAX_CATEGORY_LENGTH}
-          />
+          <div>
+            <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
+              {t("transactions.new.categoryLabel")}
+            </label>
+            <select
+              id="transaction-modal-category"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="">—</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <DatePicker
             id="transaction-modal-date"
