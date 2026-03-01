@@ -11,6 +11,7 @@ import {
   recomputeOutstanding,
   getCurrentOutstanding,
 } from "../lib/credit-card";
+import { ensureUserHasDefaultFinancialAccount } from "../lib/financial-accounts";
 
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
@@ -118,6 +119,32 @@ async function main() {
   }
 
   const userId = user.id;
+
+  // --- Ensure default account exists first (CASH, cannot be deleted) ---
+  let defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
+  if (!defaultAccount.isDefault) {
+    const existingDefault = await prisma.financialAccount.findFirst({
+      where: { userId, isDefault: true, isActive: true },
+    });
+    if (!existingDefault) {
+      defaultAccount = await prisma.financialAccount.create({
+        data: {
+          userId,
+          name: "บัญชีหลัก",
+          type: "CASH",
+          initialBalance: 0,
+          isActive: true,
+          isDefault: true,
+        },
+      });
+      console.log("Created default account:", defaultAccount.name);
+    } else {
+      defaultAccount = existingDefault;
+    }
+  }
+  if (defaultAccount.isDefault) {
+    console.log("Default account ready:", defaultAccount.name);
+  }
 
   // --- Phase 1: Bank Account(s) ---
   let bankAccount = await prisma.financialAccount.findFirst({

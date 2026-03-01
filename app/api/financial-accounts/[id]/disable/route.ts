@@ -30,6 +30,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Account is already disabled" }, { status: 400 });
   }
 
+  if (account.isDefault) {
+    return NextResponse.json(
+      { error: "Cannot disable the default account" },
+      { status: 400 }
+    );
+  }
+
   try {
     await prisma.financialAccount.update({
       where: { id },
