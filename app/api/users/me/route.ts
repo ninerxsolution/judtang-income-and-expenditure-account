@@ -36,7 +36,8 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const linkedAccounts = user.accounts.map((a) => a.provider);
+  type AccountItem = (typeof user.accounts)[number];
+  const linkedAccounts = user.accounts.map((a: AccountItem) => a.provider);
 
   return NextResponse.json({
     id: user.id,

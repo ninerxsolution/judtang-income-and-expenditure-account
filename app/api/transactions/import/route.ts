@@ -270,11 +270,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const toCreate = valid.filter((row) => !row.id);
-  const toUpdate = valid.filter((row) => row.id);
+  type ValidRow = ValidTransactionRow;
+  const toCreate = valid.filter((row: ValidRow) => !row.id);
+  const toUpdate = valid.filter((row: ValidRow) => row.id);
 
   const updateIds = Array.from(
-    new Set(toUpdate.map((row) => row.id as string)),
+    new Set(toUpdate.map((row: ValidRow) => row.id as string)),
   );
 
   if (updateIds.length > 0) {
@@ -285,11 +286,12 @@ export async function POST(request: Request) {
       },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((t) => t.id));
+    type ExistingItem = (typeof existing)[number];
+    const existingIds = new Set(existing.map((t: ExistingItem) => t.id));
 
     const missingIds = updateIds.filter((id) => !existingIds.has(id));
     if (missingIds.length > 0) {
-      const missingRows = toUpdate.filter((row) =>
+      const missingRows = toUpdate.filter((row: ValidRow) =>
         missingIds.includes(row.id as string),
       );
       const idList = Array.from(new Set(missingIds)).join(", ");
@@ -298,7 +300,7 @@ export async function POST(request: Request) {
           error:
             "Some rows reference transactions that do not exist or do not belong to you",
           errorCount: missingRows.length,
-          errors: missingRows.map((row) => ({
+          errors: missingRows.map((row: ValidRow) => ({
             row: row.rowNumber,
             message: `Transaction id ${row.id} does not exist for this user`,
           })),
