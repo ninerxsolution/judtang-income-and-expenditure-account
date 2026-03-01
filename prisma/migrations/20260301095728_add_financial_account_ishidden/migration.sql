@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `financialaccount` ADD COLUMN `isHidden` BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE `FinancialAccount` ADD COLUMN `isHidden` BOOLEAN NOT NULL DEFAULT false;
