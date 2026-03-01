@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { TransactionType, TransactionStatus } from "@prisma/client";
-import { createActivityLog } from "@/lib/activity-log";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { isAccountIncomplete } from "@/lib/financial-accounts";
 import { getCurrentOutstanding, recomputeOutstanding } from "./outstanding";
 
@@ -60,10 +60,11 @@ export async function recordPayment(params: RecordPaymentParams) {
   }
 
   const fromAccountIdTrimmed = fromAccountId?.trim();
+  let fromAccountName: string | undefined;
   if (fromAccountIdTrimmed) {
     const fromAccount = await prisma.financialAccount.findUnique({
       where: { id: fromAccountIdTrimmed },
-      select: { userId: true, type: true, bankName: true, accountNumber: true },
+      select: { userId: true, type: true, bankName: true, accountNumber: true, name: true },
     });
     if (!fromAccount || fromAccount.userId !== userId) {
       throw new Error("From account not found");
@@ -76,6 +77,7 @@ export async function recordPayment(params: RecordPaymentParams) {
         "From account is incomplete. Please add bank and account number before using."
       );
     }
+    fromAccountName = fromAccount.name;
   }
 
   const unpaidStatements = await prisma.creditCardStatement.findMany({
@@ -149,14 +151,16 @@ export async function recordPayment(params: RecordPaymentParams) {
 
   void createActivityLog({
     userId,
-    action: "CREDIT_CARD_PAYMENT",
+    action: ActivityLogAction.CREDIT_CARD_PAYMENT,
     entityType: "transaction",
     entityId: transaction.id,
     details: {
       accountId,
+      accountName: account.name,
       amount,
       occurredAt,
       fromAccountId: fromAccountIdTrimmed ?? undefined,
+      fromAccountName,
     },
   });
 

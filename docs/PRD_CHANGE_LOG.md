@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 01/03/2026 (Activity Log Detail Enhancement)
+
+- docs/core/activity-log.md — Updated: details format for transaction create/update/delete, credit card payment, export, import; added CREDIT_CARD_PAYMENT, USER_EMAIL_VERIFIED, USER_PASSWORD_RESET_REQUESTED to actions; UI description for transaction/credit-card detail display.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Activity Log detail enhancement.
+
+---
+
 ## 01/03/2026 (Category Settings)
 
 - docs/feature/categories.md — Added: Transaction Categories feature doc (default/custom, isDefault, CRUD in settings, ensureUserHasDefaultCategories).

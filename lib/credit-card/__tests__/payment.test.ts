@@ -26,6 +26,9 @@ jest.mock("../outstanding", () => ({
 
 jest.mock("@/lib/activity-log", () => ({
   createActivityLog: jest.fn(),
+  ActivityLogAction: {
+    CREDIT_CARD_PAYMENT: "CREDIT_CARD_PAYMENT",
+  },
 }));
 
 import { getCurrentOutstanding, recomputeOutstanding } from "../outstanding";

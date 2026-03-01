@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { TransactionType } from "@/lib/transactions";
 import type { TransactionType as PrismaTransactionType } from "@prisma/client";
 import { serializeTransactionsToCsv } from "@/lib/transactions-csv";
-import { createActivityLog } from "@/lib/activity-log";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -81,9 +81,18 @@ export async function GET(request: Request) {
     const dd = String(now.getDate()).padStart(2, "0");
     const filename = `transactions-${yyyy}${mm}${dd}.csv`;
 
+    let accountName: string | undefined;
+    if (financialAccountIdParam) {
+      const account = await prisma.financialAccount.findUnique({
+        where: { id: financialAccountIdParam },
+        select: { name: true },
+      });
+      accountName = account?.name;
+    }
+
     void createActivityLog({
       userId,
-      action: "TRANSACTION_EXPORT",
+      action: ActivityLogAction.TRANSACTION_EXPORT,
       entityType: "transaction",
       details: {
         rowCount: transactions.length,
@@ -92,6 +101,7 @@ export async function GET(request: Request) {
         to: toDate?.toISOString() ?? null,
         type: typeFilter ?? null,
         financialAccountId: financialAccountIdParam ?? null,
+        accountName,
       },
     });
 

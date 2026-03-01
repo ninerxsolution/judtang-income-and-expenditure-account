@@ -1,6 +1,6 @@
 import { TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { createActivityLog } from "@/lib/activity-log";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { recomputeOutstanding } from "@/lib/credit-card";
 
 export const TransactionType = {
@@ -125,25 +125,46 @@ export async function createTransaction(params: CreateTransactionParams) {
   if (params.financialAccountId) {
     const account = await prisma.financialAccount.findUnique({
       where: { id: params.financialAccountId },
-      select: { type: true },
+      select: { type: true, name: true },
     });
     if (account?.type === "CREDIT_CARD") {
       void recomputeOutstanding(params.financialAccountId);
     }
+    const categoryRow = params.categoryId
+      ? await prisma.category.findUnique({
+          where: { id: params.categoryId },
+          select: { name: true },
+        })
+      : null;
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.TRANSACTION_CREATED,
+      entityType: "transaction",
+      entityId: transaction.id,
+      details: {
+        type: transaction.type,
+        amount: transaction.amount,
+        category: transaction.category,
+        categoryName: categoryRow?.name ?? transaction.category ?? undefined,
+        occurredAt: transaction.occurredAt,
+        accountName: account?.name,
+        financialAccountId: params.financialAccountId,
+      },
+    });
+  } else {
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.TRANSACTION_CREATED,
+      entityType: "transaction",
+      entityId: transaction.id,
+      details: {
+        type: transaction.type,
+        amount: transaction.amount,
+        category: transaction.category,
+        occurredAt: transaction.occurredAt,
+      },
+    });
   }
-
-  void createActivityLog({
-    userId,
-    action: "TRANSACTION_CREATED",
-    entityType: "transaction",
-    entityId: transaction.id,
-    details: {
-      type: transaction.type,
-      amount: transaction.amount,
-      category: transaction.category,
-      occurredAt: transaction.occurredAt,
-    },
-  });
 
   return transaction;
 }
@@ -301,25 +322,46 @@ export async function updateTransaction(
   if (transaction.financialAccountId) {
     const account = await prisma.financialAccount.findUnique({
       where: { id: transaction.financialAccountId },
-      select: { type: true },
+      select: { type: true, name: true },
     });
     if (account?.type === "CREDIT_CARD") {
       void recomputeOutstanding(transaction.financialAccountId);
     }
+    const categoryRow = transaction.categoryId
+      ? await prisma.category.findUnique({
+          where: { id: transaction.categoryId },
+          select: { name: true },
+        })
+      : null;
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.TRANSACTION_UPDATED,
+      entityType: "transaction",
+      entityId: transaction.id,
+      details: {
+        type: transaction.type,
+        amount: transaction.amount,
+        category: transaction.category,
+        categoryName: categoryRow?.name ?? transaction.category ?? undefined,
+        occurredAt: transaction.occurredAt,
+        accountName: account?.name,
+        financialAccountId: transaction.financialAccountId,
+      },
+    });
+  } else {
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.TRANSACTION_UPDATED,
+      entityType: "transaction",
+      entityId: transaction.id,
+      details: {
+        type: transaction.type,
+        amount: transaction.amount,
+        category: transaction.category,
+        occurredAt: transaction.occurredAt,
+      },
+    });
   }
-
-  void createActivityLog({
-    userId,
-    action: "TRANSACTION_UPDATED",
-    entityType: "transaction",
-    entityId: transaction.id,
-    details: {
-      type: transaction.type,
-      amount: transaction.amount,
-      category: transaction.category,
-      occurredAt: transaction.occurredAt,
-    },
-  });
 
   return transaction;
 }
@@ -333,29 +375,44 @@ export async function deleteTransaction(
 
   const financialAccountId = existing.financialAccountId;
 
-  await prisma.transaction.delete({
-    where: { id },
-  });
-
+  let accountName: string | undefined;
+  let categoryName: string | undefined;
   if (financialAccountId) {
     const account = await prisma.financialAccount.findUnique({
       where: { id: financialAccountId },
-      select: { type: true },
+      select: { type: true, name: true },
     });
     if (account?.type === "CREDIT_CARD") {
       void recomputeOutstanding(financialAccountId);
     }
+    accountName = account?.name;
   }
+  if (existing.categoryId) {
+    const categoryRow = await prisma.category.findUnique({
+      where: { id: existing.categoryId },
+      select: { name: true },
+    });
+    categoryName = categoryRow?.name ?? existing.category ?? undefined;
+  } else if (existing.category) {
+    categoryName = existing.category;
+  }
+
+  await prisma.transaction.delete({
+    where: { id },
+  });
 
   void createActivityLog({
     userId,
-    action: "TRANSACTION_DELETED",
+    action: ActivityLogAction.TRANSACTION_DELETED,
     entityType: "transaction",
     entityId: id,
     details: {
       type: existing.type,
       amount: existing.amount,
       occurredAt: existing.occurredAt,
+      accountName,
+      categoryName,
+      note: existing.note ?? undefined,
     },
   });
 
