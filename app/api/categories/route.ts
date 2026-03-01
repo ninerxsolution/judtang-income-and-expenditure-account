@@ -20,8 +20,9 @@ export async function GET() {
   try {
     await ensureUserHasDefaultCategories(userId);
     const categories = await listCategoriesByUser(userId);
+    type CategoryItem = (typeof categories)[number];
     return NextResponse.json(
-      categories.map((c) => ({
+      categories.map((c: CategoryItem) => ({
         id: c.id,
         name: c.name,
         createdAt: c.createdAt.toISOString(),
