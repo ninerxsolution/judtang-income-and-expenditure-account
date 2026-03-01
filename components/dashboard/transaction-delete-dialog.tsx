@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatAmount } from "@/lib/format";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 
 type Transaction = {
@@ -36,7 +37,8 @@ export function TransactionDeleteDialog({
   transaction,
   onConfirm,
 }: TransactionDeleteDialogProps) {
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
+  const localeKey = language === "th" ? "th" : "en";
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +81,7 @@ export function TransactionDeleteDialog({
                     ? t("transactions.common.income")
                     : t("transactions.common.expense")}{" "}
                   {formatAmount(transaction.amount)}
-                  {transaction.category && ` · ${transaction.category}`}
+                  {transaction.category && ` · ${getCategoryDisplayName(transaction.category, localeKey)}`}
                 </span>
               </>
             ) : (

@@ -12,6 +12,7 @@ import {
   getCurrentOutstanding,
 } from "../lib/credit-card";
 import { ensureUserHasDefaultFinancialAccount } from "../lib/financial-accounts";
+import { DEFAULT_CATEGORY_NAMES } from "../lib/categories";
 
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
@@ -36,16 +37,6 @@ const EXPENSE_RANGES = {
   other: { min: 50, max: 500 },
 } as const;
 
-const CATEGORY_NAMES = [
-  "เงินเดือน",
-  "อาหาร",
-  "ค่าขนส่ง",
-  "ค่าที่พัก",
-  "ค่าน้ำค่าไฟ",
-  "ค่าอินเทอร์เน็ต",
-  "ช้อปปิ้ง",
-  "ค่าอื่นๆ",
-] as const;
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
@@ -204,7 +195,7 @@ async function main() {
 
   // --- Phase 1: Categories ---
   const categoryMap: Record<string, { id: string; name: string }> = {};
-  for (const name of CATEGORY_NAMES) {
+  for (const name of DEFAULT_CATEGORY_NAMES) {
     const cat = await findOrCreateCategory(userId, name);
     categoryMap[name] = cat;
   }

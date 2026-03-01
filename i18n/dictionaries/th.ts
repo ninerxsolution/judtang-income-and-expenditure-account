@@ -262,6 +262,7 @@ export const thDictionary = {
   settings: {
     title: "การตั้งค่า",
     description: "จัดการประวัติกิจกรรม เครื่องมือข้อมูล และเซสชันที่ใช้งานอยู่",
+    contents: "สารบัญ",
     language: {
       title: "ภาษา",
       titleWithNative: "ภาษา / Language",
@@ -290,6 +291,26 @@ export const thDictionary = {
       otherDevicesSummaryPlural: "{count} เซสชันบนอุปกรณ์อื่น",
       manageAll: "จัดการเซสชันทั้งหมด",
       revoke: "ยกเลิก",
+    },
+    categories: {
+      title: "หมวดหมู่",
+      description:
+        "จัดการหมวดหมู่สำหรับรายการ รายการค่าเริ่มต้นไม่สามารถแก้ไขหรือลบได้",
+      defaultLabel: "ค่าเริ่มต้น",
+      customLabel: "ที่สร้างเอง",
+      addPlaceholder: "ชื่อหมวดหมู่",
+      addButton: "เพิ่ม",
+      deletePending: "กำลังลบ…",
+      addTitle: "เพิ่มหมวดหมู่",
+      editTitle: "แก้ไขหมวดหมู่",
+      edit: "แก้ไข",
+      delete: "ลบ",
+      deleteConfirmTitle: "ลบหมวดหมู่?",
+      deleteConfirmMessage:
+        "รายการที่ใช้หมวดหมู่นี้จะถูกเคลียร์หมวดหมู่ออก",
+      loading: "กำลังโหลดหมวดหมู่…",
+      error: "ไม่สามารถโหลดหมวดหมู่ได้",
+      empty: "ไม่มีหมวดหมู่ที่สร้างเอง",
     },
   },
   dataTools: {
@@ -401,6 +422,8 @@ export const thDictionary = {
       expense: "รายจ่าย",
       amountLabel: "จำนวนเงิน",
       categoryLabel: "หมวดหมู่ (ไม่บังคับ)",
+      categorySearchPlaceholder: "ค้นหาหมวดหมู่…",
+      categoryNoResults: "ไม่พบหมวดหมู่",
       dateLabel: "วันที่",
       noteLabel: "หมายเหตุ (ไม่บังคับ)",
       amountInvalid: "จำนวนเงินต้องเป็นตัวเลขบวก",

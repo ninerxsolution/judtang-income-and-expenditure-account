@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { listCategoriesByUser, createCategory } from "@/lib/categories";
+import {
+  listCategoriesByUser,
+  createCategory,
+  ensureUserHasDefaultCategories,
+} from "@/lib/categories";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -14,12 +18,14 @@ export async function GET() {
   }
 
   try {
+    await ensureUserHasDefaultCategories(userId);
     const categories = await listCategoriesByUser(userId);
     return NextResponse.json(
       categories.map((c) => ({
         id: c.id,
         name: c.name,
         createdAt: c.createdAt.toISOString(),
+        isDefault: c.isDefault,
       }))
     );
   } catch {
@@ -59,6 +65,7 @@ export async function POST(request: Request) {
       id: category.id,
       name: category.name,
       createdAt: category.createdAt.toISOString(),
+      isDefault: category.isDefault,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to create category";

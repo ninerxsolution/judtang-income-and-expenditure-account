@@ -5,6 +5,7 @@ import Link from "next/link";
 import { List, ArrowDownCircle, ArrowUpCircle, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 
 type Transaction = {
@@ -31,7 +32,8 @@ function formatDate(iso: string, locale: string) {
 }
 
 export function TransactionsList() {
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
+  const localeKey = language === "th" ? "th" : "en";
   const [items, setItems] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function TransactionsList() {
                     </span>
                     {(tx.categoryRef?.name ?? tx.category) && (
                       <span className="ml-2 text-zinc-700 dark:text-zinc-200">
-                        · {tx.categoryRef?.name ?? tx.category}
+                        · {getCategoryDisplayName(tx.categoryRef?.name ?? tx.category ?? "", localeKey)}
                       </span>
                     )}
                     {tx.financialAccount && (

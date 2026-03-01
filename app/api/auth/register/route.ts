@@ -16,6 +16,7 @@ import {
 } from "@/lib/validation";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
+import { ensureUserHasDefaultCategories } from "@/lib/categories";
 import { sendEmailVerification } from "@/lib/email";
 
 const VERIFY_TOKEN_EXPIRY_HOURS = 24;
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
     });
 
     await ensureUserHasDefaultFinancialAccount(user.id);
+    await ensureUserHasDefaultCategories(user.id);
 
     const token = randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + VERIFY_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);

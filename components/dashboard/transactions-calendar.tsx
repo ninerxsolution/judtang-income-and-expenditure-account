@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatAmount } from "@/lib/format";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -239,7 +240,8 @@ function formatYearForDisplay(year: number, locale: string): string {
 }
 
 export function TransactionsCalendar() {
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
+  const localeKey = language === "th" ? "th" : "en";
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -1249,7 +1251,7 @@ export function TransactionsCalendar() {
                             <div className="flex flex-wrap items-center gap-1">
                               {tx.category && (
                                 <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
-                                  {tx.category}
+                                  {getCategoryDisplayName(tx.category, localeKey)}
                                 </span>
                               )}
                               {tx.note && (

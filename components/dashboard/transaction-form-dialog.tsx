@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
-import { MAX_CATEGORY_LENGTH, MAX_NOTE_LENGTH } from "@/lib/validation";
+import { CategoryCombobox } from "@/components/dashboard/category-combobox";
+import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 
 type TransactionType = "INCOME" | "EXPENSE";
@@ -58,7 +59,8 @@ export function TransactionFormDialog({
   initialDate,
   onSuccess,
 }: TransactionFormDialogProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const localeKey = language === "th" ? "th" : "en";
 
   const resolvedInitialDate =
     initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
@@ -416,19 +418,17 @@ export function TransactionFormDialog({
             <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
               {t("transactions.new.categoryLabel")}
             </label>
-            <select
+            <CategoryCombobox
               id="transaction-modal-category"
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={setCategoryId}
+              categories={categories}
+              localeKey={localeKey}
+              placeholder={t("transactions.new.categorySearchPlaceholder")}
+              noResultsText={t("transactions.new.categoryNoResults")}
+              noneLabel="—"
               className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            >
-              <option value="">—</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <DatePicker

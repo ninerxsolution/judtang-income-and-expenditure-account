@@ -1,5 +1,36 @@
 import { prisma } from "@/lib/prisma";
 
+export const DEFAULT_CATEGORY_NAMES = [
+  "เงินเดือน",
+  "อาหาร",
+  "ค่าขนส่ง",
+  "ค่าที่พัก",
+  "ค่าน้ำค่าไฟ",
+  "ค่าอินเทอร์เน็ต",
+  "ช้อปปิ้ง",
+  "ค่าอื่นๆ",
+] as const;
+
+export async function ensureUserHasDefaultCategories(userId: string): Promise<void> {
+  for (const name of DEFAULT_CATEGORY_NAMES) {
+    const existing = await prisma.category.findUnique({
+      where: { userId_name: { userId, name } },
+    });
+    if (existing) {
+      if (!existing.isDefault) {
+        await prisma.category.update({
+          where: { id: existing.id },
+          data: { isDefault: true },
+        });
+      }
+    } else {
+      await prisma.category.create({
+        data: { userId, name, isDefault: true },
+      });
+    }
+  }
+}
+
 export async function listCategoriesByUser(userId: string) {
   return prisma.category.findMany({
     where: { userId },
@@ -28,7 +59,7 @@ export async function createCategory(userId: string, name: string) {
   }
 
   return prisma.category.create({
-    data: { userId, name: trimmed },
+    data: { userId, name: trimmed, isDefault: false },
   });
 }
 
@@ -41,6 +72,9 @@ export async function updateCategory(userId: string, id: string, name: string) {
   const existing = await getCategoryById(userId, id);
   if (!existing) {
     throw new Error("Category not found");
+  }
+  if (existing.isDefault) {
+    throw new Error("Default categories cannot be edited");
   }
 
   const duplicate = await prisma.category.findFirst({
@@ -65,6 +99,9 @@ export async function deleteCategory(userId: string, id: string) {
   const existing = await getCategoryById(userId, id);
   if (!existing) {
     return false;
+  }
+  if (existing.isDefault) {
+    throw new Error("Default categories cannot be deleted");
   }
 
   await prisma.transaction.updateMany({

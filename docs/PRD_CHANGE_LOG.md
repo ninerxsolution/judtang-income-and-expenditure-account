@@ -5,6 +5,14 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 01/03/2026 (Category Settings)
+
+- docs/feature/categories.md — Added: Transaction Categories feature doc (default/custom, isDefault, CRUD in settings, ensureUserHasDefaultCategories).
+- docs/INDEX.md — Updated: feature section to link categories.md.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Category Settings.
+
+---
+
 ## 01/03/2026 (Docs and Tests Update)
 
 - docs/feature/financial-accounts.md — Added: Financial Accounts feature doc (model, AccountType, isAccountIncomplete, bank/account number, account sections UI, incomplete behavior).

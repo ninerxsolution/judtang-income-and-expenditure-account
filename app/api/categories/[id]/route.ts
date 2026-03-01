@@ -43,6 +43,7 @@ export async function PATCH(
       id: category.id,
       name: category.name,
       createdAt: category.createdAt.toISOString(),
+      isDefault: category.isDefault,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to update category";
@@ -69,10 +70,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to delete category" },
-      { status: 500 }
-    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to delete category";
+    const status =
+      msg === "Default categories cannot be deleted" ? 400 : 500;
+    return NextResponse.json({ error: msg }, { status });
   }
 }

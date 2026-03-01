@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTools } from "@/components/dashboard/data-tools";
+import { CategorySettings } from "@/components/dashboard/category-settings";
 import { useI18n } from "@/hooks/use-i18n";
 import type { Language } from "@/i18n";
 
@@ -109,17 +110,56 @@ export default function SettingsPage() {
   const sessions = sessionsData?.sessions ?? [];
   const otherSessions = sessions.filter((s) => !s.isCurrent);
 
-  return (
-    <div className="space-y-8">
-      <header className="space-y-1">
-        <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {t("settings.description")}
-        </p>
-      </header>
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  }
 
-      {/* Language selection */}
-      <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
+  const tocItems = [
+    { id: "language", label: t("settings.language.titleWithNative") },
+    { id: "activity-log", label: t("settings.activityLog.title") },
+    { id: "categories", label: t("settings.categories.title") },
+    { id: "data-tools", label: t("dataTools.title") },
+    { id: "sessions", label: t("settings.sessions.title") },
+  ];
+
+  return (
+    <div className="flex gap-8">
+      {/* Table of contents - left sidebar */}
+      <nav
+        aria-label={t("settings.contents")}
+        className="hidden w-44 shrink-0 lg:block"
+      >
+        <div className="space-y-1">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            {t("settings.contents")}
+          </p>
+          {tocItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => scrollToSection(item.id)}
+              className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Main content */}
+      <div className="min-w-0 flex-1 space-y-8">
+        <header className="space-y-1">
+          <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            {t("settings.description")}
+          </p>
+        </header>
+
+        {/* Language selection */}
+        <section
+          id="language"
+          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+        >
         <div className="flex items-start gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
             <Languages className="h-5 w-5" />
@@ -205,8 +245,11 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Activity Log link-out */}
-      <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
+        {/* Activity Log link-out */}
+        <section
+          id="activity-log"
+          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+        >
         <div className="flex items-start gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
             <Bell className="h-5 w-5" />
@@ -230,13 +273,24 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Tools inline section (full tools UI embedded) */}
-      <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/30">
+        {/* Category settings */}
+        <div id="categories" className="scroll-mt-6">
+          <CategorySettings />
+        </div>
+
+        {/* Tools inline section (full tools UI embedded) */}
+        <section
+          id="data-tools"
+          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/30"
+        >
         <DataTools />
       </section>
 
-      {/* Sessions inline section */}
-      <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
+        {/* Sessions inline section */}
+        <section
+          id="sessions"
+          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+        >
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
@@ -339,7 +393,8 @@ export default function SettingsPage() {
             </Link>
           </div>
         )}
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

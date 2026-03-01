@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -48,7 +49,8 @@ const PAGE_SIZE = 20;
 
 export default function TransactionsPage() {
   const searchParams = useSearchParams();
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
+  const localeKey = language === "th" ? "th" : "en";
 
   const [items, setItems] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -339,7 +341,10 @@ export default function TransactionsPage() {
                         {formatAmount(tx.amount)}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
-                        {tx.categoryRef?.name ?? tx.category ?? "—"}
+                        {getCategoryDisplayName(
+                          tx.categoryRef?.name ?? tx.category ?? "",
+                          localeKey
+                        ) || "—"}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-600 dark:text-zinc-300">
                         {tx.note

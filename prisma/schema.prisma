@@ -154,6 +154,7 @@ model FinancialAccount {
 model Category {
   id          String        @id @default(cuid())
   name        String
+  isDefault   Boolean       @default(false)
   createdAt   DateTime      @default(now())
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -262,6 +262,7 @@ export const enDictionary = {
   settings: {
     title: "Settings",
     description: "Manage your activity log, data tools, and active sessions.",
+    contents: "Contents",
     language: {
       title: "Language",
       titleWithNative: "Language / ภาษา",
@@ -290,6 +291,26 @@ export const enDictionary = {
       otherDevicesSummaryPlural: "{count} sessions on other devices.",
       manageAll: "Manage all sessions",
       revoke: "Revoke",
+    },
+    categories: {
+      title: "Categories",
+      description:
+        "Manage transaction categories. Default categories cannot be edited or deleted.",
+      defaultLabel: "Default",
+      customLabel: "Custom",
+      addPlaceholder: "Category name",
+      addButton: "Add",
+      deletePending: "Deleting…",
+      addTitle: "Add category",
+      editTitle: "Edit category",
+      edit: "Edit",
+      delete: "Delete",
+      deleteConfirmTitle: "Delete category?",
+      deleteConfirmMessage:
+        "Transactions using this category will have their category cleared.",
+      loading: "Loading categories…",
+      error: "Failed to load categories",
+      empty: "No custom categories.",
     },
   },
   dataTools: {
@@ -401,6 +422,8 @@ export const enDictionary = {
       expense: "Expense",
       amountLabel: "Amount",
       categoryLabel: "Category (optional)",
+      categorySearchPlaceholder: "Search category…",
+      categoryNoResults: "No category found",
       dateLabel: "Date",
       noteLabel: "Note (optional)",
       amountInvalid: "Amount must be a positive number",
