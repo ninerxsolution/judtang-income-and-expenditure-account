@@ -49,6 +49,9 @@ export function DataTools() {
       const params = new URLSearchParams();
       if (exportFrom) params.set("from", exportFrom);
       if (exportTo) params.set("to", exportTo);
+      if (exportFrom || exportTo) {
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+      }
       if (exportType !== "all") params.set("type", exportType);
       const query = params.toString();
       const url = query ? `/api/transactions/export?${query}` : "/api/transactions/export";

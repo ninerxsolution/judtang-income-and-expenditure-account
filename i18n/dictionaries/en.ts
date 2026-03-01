@@ -434,6 +434,7 @@ export const enDictionary = {
       hasRecords: "At least one transaction on that day",
       income: "Income",
       expense: "Expense",
+      transfer: "Transfer",
       hintDayClick: "Click a day to review or add a transaction.",
       hintMonthClick: "Click a month to drill down into Day view.",
       hintYearClick: "Click a year to see its 12 months in Month view.",
@@ -511,7 +512,7 @@ export const enDictionary = {
       prev: "Previous",
       next: "Next",
       columns: {
-        date: "Date",
+        date: "Date & time",
         account: "Account",
         type: "Type",
         amount: "Amount",

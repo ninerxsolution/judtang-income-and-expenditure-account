@@ -97,6 +97,7 @@ export function ActivityHeatmap() {
       setError(null);
       try {
         const params = new URLSearchParams({ from, to });
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/calendar-summary?${params.toString()}`,
           { signal: controller.signal },

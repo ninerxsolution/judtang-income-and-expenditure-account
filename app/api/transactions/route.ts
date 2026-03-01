@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { getDateRangeInTimezone } from "@/lib/date-range";
 import {
   createTransaction,
   TransactionType,
@@ -262,6 +263,7 @@ export async function GET(request: Request) {
   const fromParam = searchParams.get("from") ?? undefined;
   const toParam = searchParams.get("to") ?? undefined;
   const dateParam = searchParams.get("date") ?? undefined;
+  const timezoneParam = searchParams.get("timezone") ?? "Asia/Bangkok";
   const typeParam = searchParams.get("type") ?? undefined;
   const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
   const limitParam = searchParams.get("limit");
@@ -277,27 +279,19 @@ export async function GET(request: Request) {
   let toDate: Date | undefined;
 
   if (dateParam) {
-    const d = new Date(dateParam);
-    if (!Number.isNaN(d.getTime())) {
-      const start = new Date(d);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(d);
-      end.setHours(23, 59, 59, 999);
-      fromDate = start;
-      toDate = end;
+    const range = getDateRangeInTimezone(dateParam, timezoneParam);
+    if (range) {
+      fromDate = range.from;
+      toDate = range.to;
     }
   } else {
     if (fromParam) {
-      const d = new Date(fromParam);
-      if (!Number.isNaN(d.getTime())) {
-        fromDate = d;
-      }
+      const range = getDateRangeInTimezone(fromParam, timezoneParam);
+      if (range) fromDate = range.from;
     }
     if (toParam) {
-      const d = new Date(toParam);
-      if (!Number.isNaN(d.getTime())) {
-        toDate = d;
-      }
+      const range = getDateRangeInTimezone(toParam, timezoneParam);
+      if (range) toDate = range.to;
     }
   }
 

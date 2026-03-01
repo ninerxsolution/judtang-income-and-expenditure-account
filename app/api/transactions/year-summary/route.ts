@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  getDateRangeInTimezone,
+  toDateStringInTimezone,
+} from "@/lib/date-range";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -16,6 +20,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fromYearParam = searchParams.get("fromYear");
   const toYearParam = searchParams.get("toYear");
+  const timezoneParam = searchParams.get("timezone") ?? "Asia/Bangkok";
 
   const fromYear = fromYearParam ? Number.parseInt(fromYearParam, 10) : NaN;
   const toYear = toYearParam ? Number.parseInt(toYearParam, 10) : NaN;
@@ -30,8 +35,23 @@ export async function GET(request: Request) {
   const startYear = Math.min(fromYear, toYear);
   const endYear = Math.max(fromYear, toYear);
 
-  const from = new Date(startYear, 0, 1, 0, 0, 0, 0);
-  const to = new Date(endYear, 11, 31, 23, 59, 59, 999);
+  const fromRange = getDateRangeInTimezone(
+    `${startYear}-01-01`,
+    timezoneParam,
+  );
+  const toRange = getDateRangeInTimezone(
+    `${endYear}-12-31`,
+    timezoneParam,
+  );
+  if (!fromRange || !toRange) {
+    return NextResponse.json(
+      { error: "Invalid year parameters" },
+      { status: 400 },
+    );
+  }
+
+  const from = fromRange.from;
+  const to = toRange.to;
 
   try {
     const items = await prisma.transaction.findMany({
@@ -50,33 +70,40 @@ export async function GET(request: Request) {
 
     const yearMap = new Map<
       number,
-      { count: number; incomeCount: number; expenseCount: number }
+      { count: number; incomeCount: number; expenseCount: number; transferCount: number }
     >();
 
     for (const tx of items) {
-      const y = tx.occurredAt.getFullYear();
+      const dateStr = toDateStringInTimezone(tx.occurredAt, timezoneParam);
+      const yearPart = dateStr.split("-")[0];
+      const y = yearPart ? parseInt(yearPart, 10) : tx.occurredAt.getFullYear();
       const prev = yearMap.get(y) ?? {
         count: 0,
         incomeCount: 0,
         expenseCount: 0,
+        transferCount: 0,
       };
-      const isIncome = String(tx.type).toUpperCase() === "INCOME";
-      const isExpense = String(tx.type).toUpperCase() === "EXPENSE";
+      const typeUpper = String(tx.type).toUpperCase();
+      const isIncome = typeUpper === "INCOME";
+      const isExpense = typeUpper === "EXPENSE";
+      const isTransfer = typeUpper === "TRANSFER";
       yearMap.set(y, {
         count: prev.count + 1,
         incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
         expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+        transferCount: prev.transferCount + (isTransfer ? 1 : 0),
       });
     }
 
     const result = Array.from(yearMap.entries())
       .sort(([a], [b]) => a - b)
-      .map(([year, { count, incomeCount, expenseCount }]) => ({
+      .map(([year, { count, incomeCount, expenseCount, transferCount }]) => ({
         year,
         hasTransactions: count > 0,
         count,
         incomeCount,
         expenseCount,
+        transferCount,
       }));
 
     return NextResponse.json(result);

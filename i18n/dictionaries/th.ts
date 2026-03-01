@@ -434,6 +434,7 @@ export const thDictionary = {
       hasRecords: "มีบันทึกอย่างน้อย 1 รายการในวันนั้น",
       income: "รายรับ",
       expense: "รายจ่าย",
+      transfer: "โอน",
       hintDayClick: "คลิกวันที่เพื่อดูรายละเอียดหรือเพิ่มรายการใหม่",
       hintMonthClick: "คลิกเดือนเพื่อดูวันที่ในมุมมอง Day",
       hintYearClick: "คลิกปีเพื่อดู 12 เดือนของปีนั้นในมุมมอง Month",
@@ -511,7 +512,7 @@ export const thDictionary = {
       prev: "ก่อนหน้า",
       next: "ถัดไป",
       columns: {
-        date: "วันที่",
+        date: "วันที่・เวลา",
         account: "บัญชี",
         type: "ประเภท",
         amount: "จำนวนเงิน",

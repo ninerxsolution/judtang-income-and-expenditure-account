@@ -2,29 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  getDateRangeInTimezone,
+  toDateStringInTimezone,
+} from "@/lib/date-range";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
-
-function parseDateOnly(value: string | null): Date | null {
-  if (!value) return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const d = new Date(trimmed);
-  if (Number.isNaN(d.getTime())) return null;
-  return d;
-}
-
-function startOfDay(d: Date): Date {
-  const copy = new Date(d);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
-}
-
-function endOfDay(d: Date): Date {
-  const copy = new Date(d);
-  copy.setHours(23, 59, 59, 999);
-  return copy;
-}
 
 export async function GET(request: Request) {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
@@ -37,20 +20,21 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
+  const timezoneParam = searchParams.get("timezone") ?? "Asia/Bangkok";
   const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
-  const fromParsed = parseDateOnly(fromParam);
-  const toParsed = parseDateOnly(toParam);
+  const fromRange = fromParam ? getDateRangeInTimezone(fromParam, timezoneParam) : null;
+  const toRange = toParam ? getDateRangeInTimezone(toParam, timezoneParam) : null;
 
-  if (!fromParsed || !toParsed) {
+  if (!fromRange || !toRange) {
     return NextResponse.json(
       { error: "from and to query parameters are required (YYYY-MM-DD)" },
       { status: 400 },
     );
   }
 
-  const from = startOfDay(fromParsed);
-  const to = endOfDay(toParsed);
+  const from = fromRange.from;
+  const to = toRange.to;
 
   try {
     const transactions = await prisma.transaction.findMany({
@@ -70,35 +54,38 @@ export async function GET(request: Request) {
 
     const summaryMap = new Map<
       string,
-      { count: number; incomeCount: number; expenseCount: number }
+      { count: number; incomeCount: number; expenseCount: number; transferCount: number }
     >();
 
     for (const tx of transactions) {
-      const dateIso = tx.occurredAt.toISOString().slice(0, 10);
+      const dateIso = toDateStringInTimezone(tx.occurredAt, timezoneParam);
       const prev = summaryMap.get(dateIso) ?? {
         count: 0,
         incomeCount: 0,
         expenseCount: 0,
+        transferCount: 0,
       };
-      const isIncome =
-        String(tx.type).toUpperCase() === "INCOME";
-      const isExpense =
-        String(tx.type).toUpperCase() === "EXPENSE";
+      const typeUpper = String(tx.type).toUpperCase();
+      const isIncome = typeUpper === "INCOME";
+      const isExpense = typeUpper === "EXPENSE";
+      const isTransfer = typeUpper === "TRANSFER";
       summaryMap.set(dateIso, {
         count: prev.count + 1,
         incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
         expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+        transferCount: prev.transferCount + (isTransfer ? 1 : 0),
       });
     }
 
     const result = Array.from(summaryMap.entries())
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .map(([date, { count, incomeCount, expenseCount }]) => ({
+      .map(([date, { count, incomeCount, expenseCount, transferCount }]) => ({
         date,
         hasTransactions: count > 0,
         count,
         incomeCount,
         expenseCount,
+        transferCount,
       }));
 
     return NextResponse.json(result);
