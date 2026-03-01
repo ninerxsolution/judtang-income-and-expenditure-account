@@ -111,6 +111,7 @@ function formatDetails(
     const amount = formatAmount(details.amount);
     const categoryName = (details.categoryName ?? details.category) as string | undefined;
     const accountName = details.accountName as string | undefined;
+    const toAccountName = details.toAccountName as string | undefined;
     const occurredAt = formatDetailDate(details.occurredAt, locale);
 
     if (action === "TRANSACTION_DELETED") {
@@ -154,6 +155,8 @@ function formatDetails(
         if (categoryName) detailLines.push(t("activityLog.details.transactionCategory", { category: categoryName }));
         if (occurredAt) detailLines.push(t("activityLog.details.transactionDate", { date: occurredAt }));
         if (accountName) detailLines.push(t("activityLog.details.transactionAccount", { account: accountName }));
+        if (type === "TRANSFER" && toAccountName)
+          detailLines.push(t("activityLog.details.transactionToAccount", { account: toAccountName }));
       }
     } else {
       if (typeLabel) detailLines.push(t("activityLog.details.transactionType", { type: typeLabel }));
@@ -161,6 +164,8 @@ function formatDetails(
       if (categoryName) detailLines.push(t("activityLog.details.transactionCategory", { category: categoryName }));
       if (occurredAt) detailLines.push(t("activityLog.details.transactionDate", { date: occurredAt }));
       if (accountName) detailLines.push(t("activityLog.details.transactionAccount", { account: accountName }));
+      if (type === "TRANSFER" && toAccountName)
+        detailLines.push(t("activityLog.details.transactionToAccount", { account: toAccountName }));
     }
     if (detailLines.length > 0) return detailLines;
   }

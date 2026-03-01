@@ -69,7 +69,14 @@ export async function GET(request: Request) {
             }
           : {}),
         ...(typeFilter ? { type: typeFilter as PrismaTransactionType } : {}),
-        ...(financialAccountIdParam ? { financialAccountId: financialAccountIdParam } : {}),
+        ...(financialAccountIdParam
+          ? {
+              OR: [
+                { financialAccountId: financialAccountIdParam },
+                { transferAccountId: financialAccountIdParam },
+              ],
+            }
+          : {}),
       },
       orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
     });

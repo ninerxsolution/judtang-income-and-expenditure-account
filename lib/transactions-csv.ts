@@ -10,7 +10,7 @@ const REQUIRED_CSV_COLUMNS = [
   "createdAt",
 ] as const;
 
-const OPTIONAL_CSV_COLUMNS = ["financialAccountId", "categoryId"] as const;
+const OPTIONAL_CSV_COLUMNS = ["financialAccountId", "transferAccountId", "categoryId"] as const;
 
 const ALL_CSV_COLUMNS = [
   ...REQUIRED_CSV_COLUMNS,
@@ -70,6 +70,7 @@ export function serializeTransactionsToCsv(transactions: Transaction[]): string 
       occurredAt: formatDateForCsv(t.occurredAt),
       createdAt: formatDateForCsv(t.createdAt),
       financialAccountId: t.financialAccountId ?? "",
+      transferAccountId: t.transferAccountId ?? "",
       categoryId: t.categoryId ?? "",
     };
     const columns = ALL_CSV_COLUMNS.map((col) =>

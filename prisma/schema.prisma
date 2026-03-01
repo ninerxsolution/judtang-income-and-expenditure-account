@@ -131,6 +131,7 @@ model FinancialAccount {
   userId         String
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions   Transaction[]
+  transfersTo    Transaction[] @relation("TransferTo")
   creditCardStatements CreditCardStatement[]
 
   // Credit card specific (nullable for non-CREDIT_CARD accounts)
@@ -180,17 +181,20 @@ model Transaction {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
   financialAccountId   String?
+  transferAccountId   String?
   categoryId           String?
   statementId          String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   financialAccount FinancialAccount?   @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  transferAccount  FinancialAccount?    @relation("TransferTo", fields: [transferAccountId], references: [id], onDelete: SetNull)
   categoryRef      Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   statement        CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
 
   @@index([userId, occurredAt])
   @@index([financialAccountId])
+  @@index([transferAccountId])
   @@index([statementId])
 }
 

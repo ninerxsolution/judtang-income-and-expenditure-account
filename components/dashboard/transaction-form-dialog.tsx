@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import { CategoryCombobox } from "@/components/dashboard/category-combobox";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 
-type TransactionType = "INCOME" | "EXPENSE";
+type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
 function sanitizeAmountInput(value: string): string {
   const noComma = value.replace(/,/g, "");
@@ -70,6 +70,7 @@ export function TransactionFormDialog({
   const [type, setType] = useState<TransactionType>("EXPENSE");
   const [amount, setAmount] = useState("");
   const [financialAccountId, setFinancialAccountId] = useState("");
+  const [transferAccountId, setTransferAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [category, setCategory] = useState("");
   const [occurredAt, setOccurredAt] = useState(resolvedInitialDate);
@@ -95,6 +96,27 @@ export function TransactionFormDialog({
     return null;
   }, [amount, t]);
 
+  const transferableAccounts = useMemo(
+    () => accounts.filter((a) => a.type !== "CREDIT_CARD"),
+    [accounts],
+  );
+
+  useEffect(() => {
+    if (type === "TRANSFER" && transferableAccounts.length > 0) {
+      const fromId = financialAccountId;
+      const firstOther = transferableAccounts.find((a) => a.id !== fromId);
+      setTransferAccountId((prev) => {
+        if (!prev || prev === fromId) return firstOther?.id ?? "";
+        const stillValid = transferableAccounts.some(
+          (a) => a.id === prev && a.id !== fromId,
+        );
+        return stillValid ? prev : firstOther?.id ?? "";
+      });
+    } else if (type !== "TRANSFER") {
+      setTransferAccountId("");
+    }
+  }, [type, financialAccountId, transferableAccounts]);
+
   useEffect(() => {
     if (!open) return;
     setOccurredAt(
@@ -106,6 +128,7 @@ export function TransactionFormDialog({
       setType("EXPENSE");
       setAmount("");
       setFinancialAccountId("");
+      setTransferAccountId("");
       setCategoryId("");
       setCategory("");
       setNote("");
@@ -133,6 +156,7 @@ export function TransactionFormDialog({
                 type: string;
                 amount: number;
                 financialAccountId: string | null;
+                transferAccountId?: string | null;
                 categoryId: string | null;
                 category: string | null;
                 note: string | null;
@@ -141,9 +165,16 @@ export function TransactionFormDialog({
             | undefined,
         ) => {
           if (cancelled || !data) return;
-          setType(data.type === "INCOME" ? "INCOME" : "EXPENSE");
+          const txType =
+            data.type === "INCOME"
+              ? "INCOME"
+              : data.type === "TRANSFER"
+                ? "TRANSFER"
+                : "EXPENSE";
+          setType(txType);
           setAmount(sanitizeAmountInput(String(data.amount)));
           setFinancialAccountId(data.financialAccountId ?? "");
+          setTransferAccountId(data.transferAccountId ?? "");
           setCategoryId(data.categoryId ?? "");
           setCategory(data.category ?? "");
           setNote(data.note ?? "");
@@ -210,6 +241,11 @@ export function TransactionFormDialog({
               a.isDefault && a.isHidden !== true
           ) ?? accs[0];
         setFinancialAccountId(defaultAcc.id);
+        const transferable = accs.filter((a: { type?: string }) => a.type !== "CREDIT_CARD");
+        const secondTransferable = transferable.find(
+          (a: { id: string }) => a.id !== defaultAcc.id
+        );
+        if (secondTransferable) setTransferAccountId(secondTransferable.id);
       }
     });
     return () => {
@@ -236,6 +272,17 @@ export function TransactionFormDialog({
       return;
     }
 
+    if (type === "TRANSFER") {
+      if (!transferAccountId) {
+        setError(t("transactions.new.transferToAccountRequired"));
+        return;
+      }
+      if (transferAccountId === financialAccountId) {
+        setError(t("transactions.new.transferAccountsSame"));
+        return;
+      }
+    }
+
     const value = Number.parseFloat(amount);
     const selectedAccount = accounts.find((a) => a.id === financialAccountId);
     const isCreditCard = selectedAccount?.type === "CREDIT_CARD";
@@ -244,11 +291,14 @@ export function TransactionFormDialog({
       type,
       amount: value,
       financialAccountId: financialAccountId || undefined,
-      categoryId: categoryId.trim() || undefined,
-      category: category.trim() || undefined,
+      categoryId: type !== "TRANSFER" ? (categoryId.trim() || undefined) : undefined,
+      category: type !== "TRANSFER" ? (category.trim() || undefined) : undefined,
       note: note.trim() || undefined,
       occurredAt: occurredAt || undefined,
     };
+    if (type === "TRANSFER") {
+      body.transferAccountId = transferAccountId || undefined;
+    }
     if (isCreditCard && type === "EXPENSE") {
       body.status = status;
     }
@@ -288,6 +338,7 @@ export function TransactionFormDialog({
         setAmount("");
         setCategoryId("");
         setCategory("");
+        setTransferAccountId("");
         setNote("");
         onOpenChange(false);
         onSuccess?.();
@@ -355,26 +406,82 @@ export function TransactionFormDialog({
                 <ArrowUpCircle className="h-4 w-4" />
                 {t("transactions.new.expense")}
               </button>
+              <button
+                type="button"
+                onClick={() => setType("TRANSFER")}
+                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                  type === "TRANSFER"
+                    ? "bg-blue-500 text-white"
+                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <ArrowLeftRight className="h-4 w-4" />
+                {t("transactions.new.transfer")}
+              </button>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
-              {t("transactions.new.accountLabel")}
-            </label>
-            <select
-              id="transaction-modal-account"
-              value={financialAccountId}
-              onChange={(e) => setFinancialAccountId(e.target.value)}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            >
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                </option>
-              ))}
-            </select>
-          </div>
+          {type === "TRANSFER" ? (
+            <>
+              <div>
+                <label htmlFor="transaction-modal-from-account" className="mb-1 block text-sm font-medium">
+                  {t("transactions.new.fromAccount")}
+                </label>
+                <select
+                  id="transaction-modal-from-account"
+                  value={financialAccountId}
+                  onChange={(e) => setFinancialAccountId(e.target.value)}
+                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                >
+                  {accounts
+                    .filter((acc) => acc.type !== "CREDIT_CARD")
+                    .map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="transaction-modal-to-account" className="mb-1 block text-sm font-medium">
+                  {t("transactions.new.toAccount")}
+                </label>
+                <select
+                  id="transaction-modal-to-account"
+                  value={transferAccountId}
+                  onChange={(e) => setTransferAccountId(e.target.value)}
+                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                >
+                  <option value="">—</option>
+                  {accounts
+                    .filter((acc) => acc.type !== "CREDIT_CARD" && acc.id !== financialAccountId)
+                    .map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </>
+          ) : (
+            <div>
+              <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
+                {t("transactions.new.accountLabel")}
+              </label>
+              <select
+                id="transaction-modal-account"
+                value={financialAccountId}
+                onChange={(e) => setFinancialAccountId(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              >
+                {accounts.map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {(() => {
             const sel = accounts.find((a) => a.id === financialAccountId);
@@ -423,22 +530,24 @@ export function TransactionFormDialog({
             inputMode="decimal"
           />
 
-          <div>
-            <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
-              {t("transactions.new.categoryLabel")}
-            </label>
-            <CategoryCombobox
-              id="transaction-modal-category"
-              value={categoryId}
-              onChange={setCategoryId}
-              categories={categories}
-              localeKey={localeKey}
-              placeholder={t("transactions.new.categorySearchPlaceholder")}
-              noResultsText={t("transactions.new.categoryNoResults")}
-              noneLabel="—"
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
+          {type !== "TRANSFER" && (
+            <div>
+              <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
+                {t("transactions.new.categoryLabel")}
+              </label>
+              <CategoryCombobox
+                id="transaction-modal-category"
+                value={categoryId}
+                onChange={setCategoryId}
+                categories={categories}
+                localeKey={localeKey}
+                placeholder={t("transactions.new.categorySearchPlaceholder")}
+                noResultsText={t("transactions.new.categoryNoResults")}
+                noneLabel="—"
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+          )}
 
           <DatePicker
             id="transaction-modal-date"
