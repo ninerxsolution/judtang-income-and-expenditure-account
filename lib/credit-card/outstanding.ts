@@ -30,7 +30,8 @@ export async function getCurrentOutstanding(accountId: string): Promise<number> 
 
   const expenseInterest = Number(expenseInterestSum._sum.amount ?? 0);
   const credits = Number(paymentAdjustmentIncomeSum._sum.amount ?? 0);
-  return Math.max(0, expenseInterest - credits);
+  const raw = expenseInterest - credits;
+  return Math.max(0, Math.round(raw * 100) / 100);
 }
 
 /**
@@ -45,7 +46,8 @@ export async function getPendingAmount(accountId: string): Promise<number> {
     },
     _sum: { amount: true },
   });
-  return Number(result._sum.amount ?? 0);
+  const raw = Number(result._sum.amount ?? 0);
+  return Math.round(raw * 100) / 100;
 }
 
 /**
@@ -65,8 +67,8 @@ export async function getAvailableCredit(accountId: string): Promise<number | nu
   const creditLimit = Number(account.creditLimit);
   const outstanding = await getCurrentOutstanding(accountId);
   const pending = await getPendingAmount(accountId);
-
-  return Math.max(0, creditLimit - outstanding - pending);
+  const raw = creditLimit - outstanding - pending;
+  return Math.max(0, Math.round(raw * 100) / 100);
 }
 
 /**

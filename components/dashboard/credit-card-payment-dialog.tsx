@@ -23,6 +23,11 @@ function sanitizeAmountInput(value: string): string {
   return parts.length > 1 ? `${intPart}.${decPart}` : intPart;
 }
 
+/** Round to 2 decimal places to avoid floating point display issues (e.g. 0.5100000000093132 → "0.51") */
+function roundAmountForDisplay(n: number): string {
+  return Number.isFinite(n) ? n.toFixed(2) : "";
+}
+
 function formatTodayAsInputDate(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -105,7 +110,7 @@ export function CreditCardPaymentDialog({
     if (maxAmount != null && sanitized) {
       const parsed = Number.parseFloat(sanitized);
       if (Number.isFinite(parsed) && parsed > maxAmount) {
-        setAmount(String(maxAmount));
+        setAmount(roundAmountForDisplay(maxAmount));
         return;
       }
     }
@@ -114,7 +119,7 @@ export function CreditCardPaymentDialog({
 
   function handlePayFull() {
     if (maxAmount != null && maxAmount > 0) {
-      setAmount(String(maxAmount));
+      setAmount(roundAmountForDisplay(maxAmount));
     }
   }
 
@@ -179,7 +184,8 @@ export function CreditCardPaymentDialog({
           {maxAmount != null && (
             <div className="space-y-1">
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {t("accounts.currentOutstanding")}: {maxAmount.toLocaleString()}
+                {t("accounts.currentOutstanding")}:{" "}
+                {Number(roundAmountForDisplay(maxAmount)).toLocaleString()}
               </p>
               <Button
                 type="button"
