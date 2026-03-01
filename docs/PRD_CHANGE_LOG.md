@@ -5,6 +5,36 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 01/03/2026 (Activity Log: Financial Account)
+
+- lib/activity-log.ts — Added FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED.
+- app/api/financial-accounts/route.ts — Log on account create.
+- app/api/financial-accounts/[id]/route.ts — Log on account update with changes array (before/after).
+- app/api/financial-accounts/[id]/disable/route.ts — Log on account disable.
+- activity-log page — Added financialAccount entity type, actions, formatDetails.
+- i18n — Added labels for financial account actions and change fields.
+- docs/core/activity-log.md — Updated actions and entity types.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 01/03/2026 (Activity Log: Transaction Update Before/After)
+
+- lib/transactions.ts — TRANSACTION_UPDATED now stores `changes` array with { field, from, to } for each changed field (type, amount, category, date, account).
+- app/(dashboard)/dashboard/settings/activity-log/page.tsx — formatDetails for TRANSACTION_UPDATED displays "field: from → to" when changes exist.
+- i18n — Added activityLog.details.changeFields (type, amount, category, date, account).
+- docs/core/activity-log.md — Updated transaction update details format.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 01/03/2026 (Activity Log Detail Enhancement)
+
+- docs/core/activity-log.md — Updated: details format for transaction create/update/delete, credit card payment, export, import; added CREDIT_CARD_PAYMENT, USER_EMAIL_VERIFIED, USER_PASSWORD_RESET_REQUESTED to actions; UI description for transaction/credit-card detail display.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Activity Log detail enhancement.
+
+---
+
 ## 01/03/2026 (Category Settings)
 
 - docs/feature/categories.md — Added: Transaction Categories feature doc (default/custom, isDefault, CRUD in settings, ensureUserHasDefaultCategories).

@@ -8,7 +8,7 @@ import {
   parseTransactionsCsv,
   type ParsedTransactionCsvRow,
 } from "@/lib/transactions-csv";
-import { createActivityLog } from "@/lib/activity-log";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 
 async function findOrCreateCategoryByName(
@@ -363,7 +363,7 @@ export async function POST(request: Request) {
 
     void createActivityLog({
       userId,
-      action: "TRANSACTION_IMPORT",
+      action: ActivityLogAction.TRANSACTION_IMPORT,
       entityType: "transaction",
       details: {
         createdCount: result.createdCount,
