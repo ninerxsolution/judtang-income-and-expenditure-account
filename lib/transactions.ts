@@ -319,49 +319,95 @@ export async function updateTransaction(
     data: updateData,
   });
 
-  if (transaction.financialAccountId) {
-    const account = await prisma.financialAccount.findUnique({
-      where: { id: transaction.financialAccountId },
-      select: { type: true, name: true },
-    });
-    if (account?.type === "CREDIT_CARD") {
-      void recomputeOutstanding(transaction.financialAccountId);
-    }
-    const categoryRow = transaction.categoryId
-      ? await prisma.category.findUnique({
-          where: { id: transaction.categoryId },
-          select: { name: true },
-        })
-      : null;
-    void createActivityLog({
-      userId,
-      action: ActivityLogAction.TRANSACTION_UPDATED,
-      entityType: "transaction",
-      entityId: transaction.id,
-      details: {
-        type: transaction.type,
-        amount: transaction.amount,
-        category: transaction.category,
-        categoryName: categoryRow?.name ?? transaction.category ?? undefined,
-        occurredAt: transaction.occurredAt,
-        accountName: account?.name,
-        financialAccountId: transaction.financialAccountId,
-      },
-    });
-  } else {
-    void createActivityLog({
-      userId,
-      action: ActivityLogAction.TRANSACTION_UPDATED,
-      entityType: "transaction",
-      entityId: transaction.id,
-      details: {
-        type: transaction.type,
-        amount: transaction.amount,
-        category: transaction.category,
-        occurredAt: transaction.occurredAt,
-      },
+  const account = transaction.financialAccountId
+    ? await prisma.financialAccount.findUnique({
+        where: { id: transaction.financialAccountId },
+        select: { type: true, name: true },
+      })
+    : null;
+  if (account?.type === "CREDIT_CARD" && transaction.financialAccountId) {
+    void recomputeOutstanding(transaction.financialAccountId);
+  }
+  const categoryRow = transaction.categoryId
+    ? await prisma.category.findUnique({
+        where: { id: transaction.categoryId },
+        select: { name: true },
+      })
+    : null;
+  const newAccountName = account?.name;
+  const newCategoryName = categoryRow?.name ?? transaction.category ?? undefined;
+
+  const changes: { field: string; from: string; to: string }[] = [];
+  if (existing.type !== transaction.type) {
+    changes.push({ field: "type", from: existing.type, to: transaction.type });
+  }
+  if (Number(existing.amount) !== Number(transaction.amount)) {
+    changes.push({
+      field: "amount",
+      from: String(existing.amount),
+      to: String(transaction.amount),
     });
   }
+  const existingCategoryName = existing.categoryId
+    ? (
+        await prisma.category.findUnique({
+          where: { id: existing.categoryId },
+          select: { name: true },
+        })
+      )?.name ?? existing.category
+    : existing.category;
+  if ((existingCategoryName ?? "") !== (newCategoryName ?? "")) {
+    changes.push({
+      field: "category",
+      from: existingCategoryName ?? "—",
+      to: newCategoryName ?? "—",
+    });
+  }
+  const existingOccurredAt = existing.occurredAt instanceof Date
+    ? existing.occurredAt.toISOString()
+    : String(existing.occurredAt ?? "");
+  const newOccurredAt = transaction.occurredAt instanceof Date
+    ? transaction.occurredAt.toISOString()
+    : String(transaction.occurredAt ?? "");
+  if (existingOccurredAt !== newOccurredAt) {
+    changes.push({
+      field: "date",
+      from: existingOccurredAt,
+      to: newOccurredAt,
+    });
+  }
+  const existingAccountName = existing.financialAccountId
+    ? (
+        await prisma.financialAccount.findUnique({
+          where: { id: existing.financialAccountId },
+          select: { name: true },
+        })
+      )?.name
+    : undefined;
+  if ((existingAccountName ?? "") !== (newAccountName ?? "")) {
+    changes.push({
+      field: "account",
+      from: existingAccountName ?? "—",
+      to: newAccountName ?? "—",
+    });
+  }
+
+  void createActivityLog({
+    userId,
+    action: ActivityLogAction.TRANSACTION_UPDATED,
+    entityType: "transaction",
+    entityId: transaction.id,
+    details: {
+      type: transaction.type,
+      amount: transaction.amount,
+      category: transaction.category,
+      categoryName: newCategoryName,
+      occurredAt: transaction.occurredAt,
+      accountName: newAccountName,
+      financialAccountId: transaction.financialAccountId,
+      changes: changes.length > 0 ? changes : undefined,
+    },
+  });
 
   return transaction;
 }

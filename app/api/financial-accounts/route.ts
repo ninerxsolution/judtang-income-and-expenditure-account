@@ -7,6 +7,7 @@ import { getAccountBalance } from "@/lib/balance";
 import { getCurrentOutstanding, getAvailableCredit, getLatestStatement } from "@/lib/credit-card";
 import { maskAccountNumber } from "@/lib/format";
 import { isAccountIncomplete } from "@/lib/financial-accounts";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import type { AccountType } from "@prisma/client";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
@@ -206,6 +207,18 @@ export async function POST(request: Request) {
   try {
     const account = await prisma.financialAccount.create({
       data: createData,
+    });
+
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.FINANCIAL_ACCOUNT_CREATED,
+      entityType: "financialAccount",
+      entityId: account.id,
+      details: {
+        name: account.name,
+        type: account.type,
+        initialBalance: Number(account.initialBalance),
+      },
     });
 
     return NextResponse.json({

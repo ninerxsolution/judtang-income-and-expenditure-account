@@ -12,7 +12,7 @@ Records critical system events for auditing and tracking purposes.
 
 - **userId** — who performed the action (FK to User)
 - **action** — event type (see list below)
-- **entityType** — optional: `user` | `session` | `transaction` (other types reserved for future use)
+- **entityType** — optional: `user` | `session` | `transaction` | `financialAccount` (other types reserved for future use)
 - **entityId** — optional id of the related entity
 - **details** — optional JSON; format depends on action (see below)
 - **createdAt** — when the event occurred
@@ -22,7 +22,8 @@ Records critical system events for auditing and tracking purposes.
 - **User create/update:** `{ "name": "..." }` or `{ "changes": [ { "field": "name", "from": "old", "to": "new" }, ... ] }`.
 - **Delete / Restore:** `{ "name": "..." }` or `{ "title": "..." }` — what was deleted or restored.
 - **Session revoked:** `{ "scope": "one" | "others" | "all" }` — one session, all other sessions, or all sessions.
-- **Transaction create/update:** `{ type, amount, category, categoryName?, occurredAt, accountName?, financialAccountId }` — human-readable names stored at log time for audit.
+- **Transaction create:** `{ type, amount, category, categoryName?, occurredAt, accountName?, financialAccountId }` — human-readable names stored at log time for audit.
+- **Transaction update:** Same as create, plus `changes?: [ { field, from, to } ]` — for each changed field (type, amount, category, date, account), stores before/after values.
 - **Transaction delete:** `{ type, amount, occurredAt, accountName?, categoryName?, note? }`.
 - **Credit card payment:** `{ accountId, accountName, amount, occurredAt, fromAccountId?, fromAccountName? }`.
 - **Transaction export:** `{ rowCount, hasFilter, from?, to?, type?, financialAccountId?, accountName? }`.
@@ -34,6 +35,7 @@ Records critical system events for auditing and tracking purposes.
 - **Session:** SESSION_REVOKED
 - **Transaction:** TRANSACTION_CREATED, TRANSACTION_UPDATED, TRANSACTION_DELETED, TRANSACTION_EXPORT, TRANSACTION_IMPORT
 - **Credit card:** CREDIT_CARD_PAYMENT
+- **Financial account:** FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED
 
 Events are emitted from the relevant API routes and from the auth flow (register, sign-in, sign-out) via `lib/activity-log.ts` (`createActivityLog`). Logout is recorded when the client calls POST /api/auth/logout before signOut(). Failed log writes do not fail the main request.
 

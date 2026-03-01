@@ -23,6 +23,7 @@ const ENTITY_TYPES = [
   { value: "user", labelKey: "user" },
   { value: "session", labelKey: "session" },
   { value: "transaction", labelKey: "transaction" },
+  { value: "financialAccount", labelKey: "financialAccount" },
 ] as const;
 
 const ACTION_OPTIONS = [
@@ -41,6 +42,9 @@ const ACTION_OPTIONS = [
   { value: "TRANSACTION_EXPORT", labelKey: "TRANSACTION_EXPORT" },
   { value: "TRANSACTION_IMPORT", labelKey: "TRANSACTION_IMPORT" },
   { value: "CREDIT_CARD_PAYMENT", labelKey: "CREDIT_CARD_PAYMENT" },
+  { value: "FINANCIAL_ACCOUNT_CREATED", labelKey: "FINANCIAL_ACCOUNT_CREATED" },
+  { value: "FINANCIAL_ACCOUNT_UPDATED", labelKey: "FINANCIAL_ACCOUNT_UPDATED" },
+  { value: "FINANCIAL_ACCOUNT_DISABLED", labelKey: "FINANCIAL_ACCOUNT_DISABLED" },
 ] as const;
 
 function formatDateTime(iso: string, locale: string) {
@@ -115,6 +119,40 @@ function formatDetails(
           date: occurredAt || "—",
         }),
       );
+    } else if (action === "TRANSACTION_UPDATED") {
+      const changes = details.changes as DetailChange[] | undefined;
+      if (Array.isArray(changes) && changes.length > 0) {
+        changes.forEach((c) => {
+          if (!c || typeof c.field !== "string") return;
+          const fieldKey = `activityLog.details.changeField${c.field.charAt(0).toUpperCase() + c.field.slice(1)}`;
+          const fieldLabel = t(fieldKey) || c.field;
+          let fromVal = String(c.from ?? "");
+          let toVal = String(c.to ?? "");
+          if (c.field === "type") {
+            fromVal = t(`activityLog.details.transactionTypes.${c.from}`) || fromVal;
+            toVal = t(`activityLog.details.transactionTypes.${c.to}`) || toVal;
+          } else if (c.field === "amount") {
+            fromVal = `฿${formatAmount(c.from)}`;
+            toVal = `฿${formatAmount(c.to)}`;
+          } else if (c.field === "date") {
+            fromVal = formatDetailDate(c.from, locale) || fromVal;
+            toVal = formatDetailDate(c.to, locale) || toVal;
+          }
+          detailLines.push(
+            t("activityLog.details.changedField", {
+              field: fieldLabel,
+              from: fromVal,
+              to: toVal,
+            }),
+          );
+        });
+      } else {
+        if (typeLabel) detailLines.push(t("activityLog.details.transactionType", { type: typeLabel }));
+        if (amount) detailLines.push(t("activityLog.details.transactionAmount", { amount: `฿${amount}` }));
+        if (categoryName) detailLines.push(t("activityLog.details.transactionCategory", { category: categoryName }));
+        if (occurredAt) detailLines.push(t("activityLog.details.transactionDate", { date: occurredAt }));
+        if (accountName) detailLines.push(t("activityLog.details.transactionAccount", { account: accountName }));
+      }
     } else {
       if (typeLabel) detailLines.push(t("activityLog.details.transactionType", { type: typeLabel }));
       if (amount) detailLines.push(t("activityLog.details.transactionAmount", { amount: `฿${amount}` }));
@@ -162,6 +200,62 @@ function formatDetails(
         totalRows: totalRows ?? 0,
       }),
     );
+    return detailLines;
+  }
+
+  if (action === "FINANCIAL_ACCOUNT_CREATED") {
+    const name = details.name as string | undefined;
+    const type = details.type as string | undefined;
+    const typeLabel = type ? t(`accounts.type.${type}`) : "";
+    const initialBalance = formatAmount(details.initialBalance);
+    if (name) detailLines.push(t("activityLog.details.financialAccountName", { name }));
+    if (typeLabel) detailLines.push(t("activityLog.details.financialAccountType", { type: typeLabel }));
+    if (initialBalance) detailLines.push(t("activityLog.details.financialAccountInitialBalance", { amount: `฿${initialBalance}` }));
+    return detailLines;
+  }
+
+  if (action === "FINANCIAL_ACCOUNT_UPDATED") {
+    const changes = details.changes as DetailChange[] | undefined;
+    if (Array.isArray(changes) && changes.length > 0) {
+      changes.forEach((c) => {
+        if (!c || typeof c.field !== "string") return;
+        const fieldKey = `activityLog.details.accountChangeField${c.field.charAt(0).toUpperCase() + c.field.slice(1)}`;
+        const fieldLabel = t(fieldKey) || c.field;
+        let fromVal = String(c.from ?? "");
+        let toVal = String(c.to ?? "");
+        if (c.field === "type") {
+          fromVal = t(`accounts.type.${c.from}`) || fromVal;
+          toVal = t(`accounts.type.${c.to}`) || toVal;
+        } else if (c.field === "initialBalance" || c.field === "creditLimit") {
+          fromVal = `฿${formatAmount(c.from)}`;
+          toVal = `฿${formatAmount(c.to)}`;
+        } else if (c.field === "lastCheckedAt") {
+          fromVal = formatDetailDate(c.from, locale) || fromVal;
+          toVal = formatDetailDate(c.to, locale) || toVal;
+        } else if (c.field === "isDefault") {
+          fromVal = c.from === "true" ? t("activityLog.details.yes") : t("activityLog.details.no");
+          toVal = c.to === "true" ? t("activityLog.details.yes") : t("activityLog.details.no");
+        }
+        detailLines.push(
+          t("activityLog.details.changedField", {
+            field: fieldLabel,
+            from: fromVal,
+            to: toVal,
+          }),
+        );
+      });
+    } else if (typeof details.name === "string") {
+      detailLines.push(t("activityLog.details.financialAccountName", { name: details.name }));
+    }
+    return detailLines;
+  }
+
+  if (action === "FINANCIAL_ACCOUNT_DISABLED") {
+    const name = details.name as string | undefined;
+    const type = details.type as string | undefined;
+    const typeLabel = type ? t(`accounts.type.${type}`) : "";
+    if (name) detailLines.push(t("activityLog.details.financialAccountDisabled", { name }));
+    if (typeLabel) detailLines.push(t("activityLog.details.financialAccountType", { type: typeLabel }));
     return detailLines;
   }
 

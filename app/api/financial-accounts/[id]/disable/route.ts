@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -41,6 +42,14 @@ export async function PATCH(
     await prisma.financialAccount.update({
       where: { id },
       data: { isActive: false },
+    });
+
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.FINANCIAL_ACCOUNT_DISABLED,
+      entityType: "financialAccount",
+      entityId: id,
+      details: { name: account.name, type: account.type },
     });
 
     return NextResponse.json({ ok: true });

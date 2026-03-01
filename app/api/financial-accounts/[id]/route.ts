@@ -4,6 +4,7 @@ import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getAccountBalance } from "@/lib/balance";
 import { getCurrentOutstanding, getAvailableCredit, getLatestStatement } from "@/lib/credit-card";
+import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import type { AccountType } from "@prisma/client";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
@@ -205,6 +206,98 @@ export async function PATCH(
     const updated = await prisma.financialAccount.update({
       where: { id },
       data,
+    });
+
+    const changes: { field: string; from: string; to: string }[] = [];
+    if (data.name !== undefined && account.name !== updated.name) {
+      changes.push({ field: "name", from: account.name, to: updated.name });
+    }
+    if (data.type !== undefined && account.type !== updated.type) {
+      changes.push({ field: "type", from: account.type, to: updated.type });
+    }
+    if (data.initialBalance !== undefined && Number(account.initialBalance) !== Number(updated.initialBalance)) {
+      changes.push({
+        field: "initialBalance",
+        from: String(account.initialBalance),
+        to: String(updated.initialBalance),
+      });
+    }
+    if (data.isDefault !== undefined && account.isDefault !== updated.isDefault) {
+      changes.push({
+        field: "isDefault",
+        from: String(account.isDefault),
+        to: String(updated.isDefault),
+      });
+    }
+    if (data.bankName !== undefined && (account.bankName ?? "") !== (updated.bankName ?? "")) {
+      changes.push({
+        field: "bankName",
+        from: account.bankName ?? "—",
+        to: updated.bankName ?? "—",
+      });
+    }
+    if (data.accountNumber !== undefined && (account.accountNumber ?? "") !== (updated.accountNumber ?? "")) {
+      changes.push({
+        field: "accountNumber",
+        from: account.accountNumber ? "••••" + account.accountNumber.slice(-4) : "—",
+        to: updated.accountNumber ? "••••" + updated.accountNumber.slice(-4) : "—",
+      });
+    }
+    if (account.type === "CREDIT_CARD") {
+      if (data.creditLimit !== undefined && Number(account.creditLimit ?? 0) !== Number(updated.creditLimit ?? 0)) {
+        changes.push({
+          field: "creditLimit",
+          from: String(account.creditLimit ?? ""),
+          to: String(updated.creditLimit ?? ""),
+        });
+      }
+      if (data.statementClosingDay !== undefined && account.statementClosingDay !== updated.statementClosingDay) {
+        changes.push({
+          field: "statementClosingDay",
+          from: String(account.statementClosingDay ?? ""),
+          to: String(updated.statementClosingDay ?? ""),
+        });
+      }
+      if (data.dueDay !== undefined && account.dueDay !== updated.dueDay) {
+        changes.push({
+          field: "dueDay",
+          from: String(account.dueDay ?? ""),
+          to: String(updated.dueDay ?? ""),
+        });
+      }
+      if (data.interestRate !== undefined && (account.interestRate ?? null) !== (updated.interestRate ?? null)) {
+        changes.push({
+          field: "interestRate",
+          from: account.interestRate != null ? String(account.interestRate) : "—",
+          to: updated.interestRate != null ? String(updated.interestRate) : "—",
+        });
+      }
+      if (data.cardType !== undefined && (account.cardType ?? "") !== (updated.cardType ?? "")) {
+        changes.push({
+          field: "cardType",
+          from: account.cardType ?? "—",
+          to: updated.cardType ?? "—",
+        });
+      }
+    }
+    if (data.lastCheckedAt !== undefined) {
+      const oldVal = account.lastCheckedAt?.toISOString() ?? "—";
+      const newVal = updated.lastCheckedAt?.toISOString() ?? "—";
+      if (oldVal !== newVal) {
+        changes.push({ field: "lastCheckedAt", from: oldVal, to: newVal });
+      }
+    }
+
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.FINANCIAL_ACCOUNT_UPDATED,
+      entityType: "financialAccount",
+      entityId: updated.id,
+      details: {
+        name: updated.name,
+        type: updated.type,
+        changes: changes.length > 0 ? changes : undefined,
+      },
     });
 
     return NextResponse.json({
