@@ -295,6 +295,12 @@ export const enDictionary = {
     title: "Settings",
     description: "Manage your activity log, data tools, and active sessions.",
     contents: "Contents",
+    information: {
+      title: "Project information",
+      description: "Application details and version",
+      appName: "App name",
+      version: "Version",
+    },
     language: {
       title: "Language",
       titleWithNative: "Language / ภาษา",
@@ -428,6 +434,7 @@ export const enDictionary = {
       hasRecords: "At least one transaction on that day",
       income: "Income",
       expense: "Expense",
+      transfer: "Transfer",
       hintDayClick: "Click a day to review or add a transaction.",
       hintMonthClick: "Click a month to drill down into Day view.",
       hintYearClick: "Click a year to see its 12 months in Month view.",
@@ -505,7 +512,7 @@ export const enDictionary = {
       prev: "Previous",
       next: "Next",
       columns: {
-        date: "Date",
+        date: "Date & time",
         account: "Account",
         type: "Type",
         amount: "Amount",

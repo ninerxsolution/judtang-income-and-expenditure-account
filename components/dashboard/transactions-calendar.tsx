@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownCircle,
+  ArrowLeftRight,
   ArrowUpCircle,
   ChevronLeft,
   ChevronRight,
@@ -30,15 +31,17 @@ type CalendarSummaryItem = {
   count: number;
   incomeCount?: number;
   expenseCount?: number;
+  transferCount?: number;
 };
 
 type DailyTransaction = {
   id: string;
-  type: "INCOME" | "EXPENSE" | string;
+  type: "INCOME" | "EXPENSE" | "TRANSFER" | string;
   amount: number;
   category: string | null;
   note: string | null;
   occurredAt: string;
+  transferAccount?: { id: string; name: string } | null;
 };
 
 type CalendarDay = {
@@ -50,6 +53,7 @@ type CalendarDay = {
   count: number;
   incomeCount: number;
   expenseCount: number;
+  transferCount: number;
 };
 
 type ViewMode = "day" | "week" | "month" | "year";
@@ -60,6 +64,7 @@ type MonthSummaryItem = {
   count: number;
   incomeCount?: number;
   expenseCount?: number;
+  transferCount?: number;
 };
 
 type YearSummaryItem = {
@@ -68,6 +73,7 @@ type YearSummaryItem = {
   count: number;
   incomeCount?: number;
   expenseCount?: number;
+  transferCount?: number;
 };
 
 function formatDateInput(d: Date): string {
@@ -162,6 +168,7 @@ function buildCalendarDays(
       count: s?.count ?? 0,
       incomeCount: s?.incomeCount ?? 0,
       expenseCount: s?.expenseCount ?? 0,
+      transferCount: s?.transferCount ?? 0,
     });
 
     cursor.setDate(cursor.getDate() + 1);
@@ -219,6 +226,7 @@ function buildWeekDays(
       count: s?.count ?? 0,
       incomeCount: s?.incomeCount ?? 0,
       expenseCount: s?.expenseCount ?? 0,
+      transferCount: s?.transferCount ?? 0,
     });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -331,6 +339,7 @@ export function TransactionsCalendar() {
         const params = new URLSearchParams();
         params.set("from", rangeFrom);
         params.set("to", rangeTo);
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/calendar-summary?${params.toString()}`,
           { signal: controller.signal },
@@ -364,6 +373,11 @@ export function TransactionsCalendar() {
                 Number.isFinite(item.expenseCount)
                   ? item.expenseCount
                   : 0,
+              transferCount:
+                typeof item.transferCount === "number" &&
+                Number.isFinite(item.transferCount)
+                  ? item.transferCount
+                  : 0,
             })),
           );
         } else {
@@ -396,6 +410,7 @@ export function TransactionsCalendar() {
       try {
         const params = new URLSearchParams();
         params.set("year", String(year));
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/month-summary?${params.toString()}`,
           { signal: controller.signal },
@@ -428,6 +443,11 @@ export function TransactionsCalendar() {
                 typeof item.expenseCount === "number" &&
                 Number.isFinite(item.expenseCount)
                   ? item.expenseCount
+                  : 0,
+              transferCount:
+                typeof item.transferCount === "number" &&
+                Number.isFinite(item.transferCount)
+                  ? item.transferCount
                   : 0,
             })),
           );
@@ -467,6 +487,7 @@ export function TransactionsCalendar() {
         const params = new URLSearchParams();
         params.set("fromYear", String(yearRangeStart));
         params.set("toYear", String(yearRangeEnd));
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/year-summary?${params.toString()}`,
           { signal: controller.signal },
@@ -500,6 +521,11 @@ export function TransactionsCalendar() {
                 Number.isFinite(item.expenseCount)
                   ? item.expenseCount
                   : 0,
+              transferCount:
+                typeof item.transferCount === "number" &&
+                Number.isFinite(item.transferCount)
+                  ? item.transferCount
+                  : 0,
             })),
           );
         } else {
@@ -531,6 +557,7 @@ export function TransactionsCalendar() {
       const params = new URLSearchParams();
       params.set("date", dateIso);
       params.set("limit", "200");
+      params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
       const res = await fetch(`/api/transactions?${params.toString()}`);
       if (!res.ok) {
         if (res.status === 401) {
@@ -819,6 +846,9 @@ export function TransactionsCalendar() {
                         {day.expenseCount > 0 && (
                           <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                         )}
+                        {day.transferCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        )}
                       </div>
                       {hasData && (
                         <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
@@ -837,6 +867,8 @@ export function TransactionsCalendar() {
                 <span>{t("calendar.legend.income")}</span>
                 <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                 <span>{t("calendar.legend.expense")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                <span>{t("calendar.legend.transfer")}</span>
               </div>
               <span>{t("calendar.legend.hintDayClick")}</span>
             </div>
@@ -916,6 +948,9 @@ export function TransactionsCalendar() {
                         {day.expenseCount > 0 && (
                           <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                         )}
+                        {day.transferCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        )}
                       </div>
                       {hasData && (
                         <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -939,6 +974,8 @@ export function TransactionsCalendar() {
                 <span>{t("calendar.legend.income")}</span>
                 <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                 <span>{t("calendar.legend.expense")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                <span>{t("calendar.legend.transfer")}</span>
               </div>
               <span>{t("calendar.legend.hintDayClick")}</span>
             </div>
@@ -996,6 +1033,7 @@ export function TransactionsCalendar() {
                 const count = info?.count ?? 0;
                 const incomeCount = info?.incomeCount ?? 0;
                 const expenseCount = info?.expenseCount ?? 0;
+                const transferCount = info?.transferCount ?? 0;
                 const isCurrentMonth =
                   idx === today.getMonth() && year === today.getFullYear();
                 return (
@@ -1030,6 +1068,9 @@ export function TransactionsCalendar() {
                         {expenseCount > 0 && (
                           <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                         )}
+                        {transferCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        )}
                       </div>
                       {hasData && (
                         <span className="text-zinc-500 dark:text-zinc-400">
@@ -1048,6 +1089,8 @@ export function TransactionsCalendar() {
                 <span>{t("calendar.legend.income")}</span>
                 <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                 <span>{t("calendar.legend.expense")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                <span>{t("calendar.legend.transfer")}</span>
               </div>
               <span>{t("calendar.legend.hintMonthClick")}</span>
             </div>
@@ -1098,6 +1141,7 @@ export function TransactionsCalendar() {
                 const count = info?.count ?? 0;
                 const incomeCount = info?.incomeCount ?? 0;
                 const expenseCount = info?.expenseCount ?? 0;
+                const transferCount = info?.transferCount ?? 0;
                 const isCurrentYear = y === today.getFullYear();
                 return (
                   <button
@@ -1132,6 +1176,9 @@ export function TransactionsCalendar() {
                         {expenseCount > 0 && (
                           <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                         )}
+                        {transferCount > 0 && (
+                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        )}
                       </div>
                       {hasData && (
                         <span className="text-zinc-500 dark:text-zinc-400">
@@ -1150,6 +1197,8 @@ export function TransactionsCalendar() {
                 <span>{t("calendar.legend.income")}</span>
                 <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
                 <span>{t("calendar.legend.expense")}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                <span>{t("calendar.legend.transfer")}</span>
               </div>
               <span>{t("calendar.legend.hintYearClick")}</span>
             </div>
@@ -1225,6 +1274,17 @@ export function TransactionsCalendar() {
                 <ul className="animate-in fade-in-0 space-y-2 duration-200">
                   {dailyItems.map((tx) => {
                     const isIncome = tx.type === "INCOME";
+                    const isTransfer = tx.type === "TRANSFER";
+                    const iconStyle = isIncome
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                      : isTransfer
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+                    const Icon = isIncome
+                      ? ArrowDownCircle
+                      : isTransfer
+                        ? ArrowLeftRight
+                        : ArrowUpCircle;
                     return (
                       <li
                         key={tx.id}
@@ -1234,24 +1294,25 @@ export function TransactionsCalendar() {
                           <span
                             className={[
                               "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                              isIncome
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+                              iconStyle,
                             ]
                               .filter(Boolean)
                               .join(" ")}
                           >
-                            {isIncome ? (
-                              <ArrowDownCircle className="h-3.5 w-3.5" />
-                            ) : (
-                              <ArrowUpCircle className="h-3.5 w-3.5" />
-                            )}
+                            <Icon className="h-3.5 w-3.5" />
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1">
                               {tx.category && (
                                 <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
                                   {getCategoryDisplayName(tx.category, localeKey)}
+                                </span>
+                              )}
+                              {isTransfer && tx.transferAccount && (
+                                <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
+                                  {t("transactions.list.transferTo", {
+                                    account: tx.transferAccount.name,
+                                  })}
                                 </span>
                               )}
                               {tx.note && (

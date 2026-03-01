@@ -37,14 +37,19 @@ type Transaction = {
   createdAt: string;
 };
 
-function formatDate(iso: string, locale: string) {
+function formatDateTime(iso: string, locale: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(locale, {
+  const dateStr = d.toLocaleDateString(locale, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   });
+  const timeStr = d.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${dateStr} ${timeStr}`;
 }
 
 const PAGE_SIZE = 20;
@@ -81,6 +86,9 @@ export default function TransactionsPage() {
       params.set("offset", String(currentOffset));
       if (filterFrom) params.set("from", filterFrom);
       if (filterTo) params.set("to", filterTo);
+      if (filterFrom || filterTo) {
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+      }
       if (filterType !== "all") params.set("type", filterType);
       if (filterAccountId) params.set("financialAccountId", filterAccountId);
       const res = await fetch(`/api/transactions?${params.toString()}`);
@@ -323,7 +331,7 @@ export default function TransactionsPage() {
                       className="border-t border-zinc-100 dark:border-zinc-800"
                     >
                       <td className="px-4 py-2 align-top text-zinc-800 dark:text-zinc-100">
-                        {formatDate(tx.occurredAt, locale)}
+                        {formatDateTime(tx.occurredAt, locale)}
                       </td>
                       <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
                         {isTransfer ? (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getDateRangeInTimezone } from "@/lib/date-range";
 import { TransactionType } from "@/lib/transactions";
 import type { TransactionType as PrismaTransactionType } from "@prisma/client";
 import { serializeTransactionsToCsv } from "@/lib/transactions-csv";
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get("from") ?? undefined;
   const toParam = searchParams.get("to") ?? undefined;
+  const timezoneParam = searchParams.get("timezone") ?? "Asia/Bangkok";
   const typeParam = searchParams.get("type") ?? undefined;
   const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
@@ -27,17 +29,13 @@ export async function GET(request: Request) {
   let toDate: Date | undefined;
 
   if (fromParam) {
-    const d = new Date(fromParam);
-    if (!Number.isNaN(d.getTime())) {
-      fromDate = d;
-    }
+    const range = getDateRangeInTimezone(fromParam, timezoneParam);
+    if (range) fromDate = range.from;
   }
 
   if (toParam) {
-    const d = new Date(toParam);
-    if (!Number.isNaN(d.getTime())) {
-      toDate = d;
-    }
+    const range = getDateRangeInTimezone(toParam, timezoneParam);
+    if (range) toDate = range.to;
   }
 
   let typeFilter: string | undefined;

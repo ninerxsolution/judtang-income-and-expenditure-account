@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Bell, Monitor, Trash2, LogOut, Languages } from "lucide-react";
+import { Bell, Monitor, Trash2, LogOut, Languages, Info } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +34,13 @@ type SessionsResponse = {
   currentSessionId: string | null;
 };
 
+type AppInfoResponse = {
+  appName: string;
+  appVersion: string;
+  patchVersion: string;
+  fullVersion: string;
+};
+
 function formatRelative(iso: string): { key: "justNow" | "minutesAgo" | "hoursAgo" | "daysAgo"; count?: number } {
   const d = new Date(iso);
   const now = new Date();
@@ -60,6 +67,7 @@ export default function SettingsPage() {
   const { t, language, setLanguage } = useI18n();
 
   const [pendingLanguage, setPendingLanguage] = useState<Language | null>(null);
+  const [appInfo, setAppInfo] = useState<AppInfoResponse | null>(null);
   const [sessionsData, setSessionsData] = useState<SessionsResponse | null>(null);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
@@ -90,6 +98,13 @@ export default function SettingsPage() {
     fetchSessions();
   }, []);
 
+  useEffect(() => {
+    fetch("/api/app-info")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: AppInfoResponse | null) => data && setAppInfo(data))
+      .catch(() => {});
+  }, []);
+
   async function revokeOne(sessionId: string) {
     setRevoking(sessionId);
     try {
@@ -115,6 +130,7 @@ export default function SettingsPage() {
   }
 
   const tocItems = [
+    { id: "information", label: t("settings.information.title") },
     { id: "language", label: t("settings.language.titleWithNative") },
     { id: "activity-log", label: t("settings.activityLog.title") },
     { id: "categories", label: t("settings.categories.title") },
@@ -154,6 +170,48 @@ export default function SettingsPage() {
             {t("settings.description")}
           </p>
         </header>
+
+        {/* Project information */}
+        <section
+          id="information"
+          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+              <Info className="h-5 w-5" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                  {t("settings.information.title")}
+                </h2>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  {t("settings.information.description")}
+                </p>
+              </div>
+              {appInfo && (
+                <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      {t("settings.information.appName")}
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-zinc-800 dark:text-zinc-100">
+                      {appInfo.appName}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      {t("settings.information.version")}
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-zinc-800 dark:text-zinc-100">
+                      {appInfo.fullVersion}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Language selection */}
         <section
