@@ -1,0 +1,228 @@
+# PRD / Docs Changelog
+
+All notable changes to docs (PRD and split documents) are recorded here.  
+**Rule:** Any edit under `docs/` must add an entry here. See [RULE.md](./RULE.md).
+
+---
+
+## 01/03/2026 (TRANSFER Between Accounts)
+
+- prisma/schema.prisma — Added `transferAccountId` and `transferAccount` relation to Transaction.
+- prisma/migrations/ — Added migration for transferAccountId.
+- lib/balance.ts — getAccountBalance now includes TRANSFER (out -amount, in +amount).
+- lib/transactions.ts — createTransaction, updateTransaction, listTransactionsByUser support transferAccountId; list uses OR for account filter.
+- app/api/transactions/route.ts — POST validates and accepts transferAccountId for TRANSFER.
+- app/api/transactions/[id]/route.ts — GET/PATCH return transferAccountId, transferAccount.
+- app/api/transactions/export/route.ts — Filter by account includes transferAccountId (OR).
+- app/api/transactions/import/route.ts — CSV import supports TRANSFER and transferAccountId.
+- lib/transactions-csv.ts — Added transferAccountId to optional columns and serialization.
+- components/dashboard/transaction-form-dialog.tsx — Added TRANSFER type, from/to account dropdowns.
+- app/(dashboard)/dashboard/transactions/page.tsx — TRANSFER filter, badge, display.
+- i18n — Added transfer, fromAccount, toAccount, transferTo, validation keys.
+- docs/feature/transfers.md — New feature doc for TRANSFER.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 01/03/2026 (Financial Accounts: Hide/Show Default, Delete)
+
+- prisma/schema.prisma — Added `isHidden` to FinancialAccount.
+- prisma/migrations/ — Added migration for isHidden.
+- lib/financial-accounts.ts — ensureUserHasDefaultFinancialAccount and getDefaultFinancialAccount filter by isHidden.
+- app/api/financial-accounts/route.ts — GET returns isHidden, transactionCount; filters isActive.
+- app/api/financial-accounts/[id]/route.ts — PATCH supports isHidden; added DELETE (soft/hard delete).
+- lib/activity-log.ts — Added FINANCIAL_ACCOUNT_DELETED.
+- app/(dashboard)/dashboard/accounts/page.tsx — Hide/show default UI, delete menu + AlertDialog.
+- components/dashboard/transaction-form-dialog.tsx — Filter isHidden from account dropdown.
+- i18n — Added labels for hide/show default, delete, activity log FINANCIAL_ACCOUNT_DELETED.
+- docs/feature/financial-accounts.md — Added isHidden, DELETE endpoint, §6 Hide/Show Default, §7 Delete.
+- docs/core/activity-log.md — Added FINANCIAL_ACCOUNT_DELETED.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 01/03/2026 (Activity Log: Financial Account)
+
+- lib/activity-log.ts — Added FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED.
+- app/api/financial-accounts/route.ts — Log on account create.
+- app/api/financial-accounts/[id]/route.ts — Log on account update with changes array (before/after).
+- app/api/financial-accounts/[id]/disable/route.ts — Log on account disable.
+- activity-log page — Added financialAccount entity type, actions, formatDetails.
+- i18n — Added labels for financial account actions and change fields.
+- docs/core/activity-log.md — Updated actions and entity types.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 01/03/2026 (Activity Log: Transaction Update Before/After)
+
+- lib/transactions.ts — TRANSACTION_UPDATED now stores `changes` array with { field, from, to } for each changed field (type, amount, category, date, account).
+- app/(dashboard)/dashboard/settings/activity-log/page.tsx — formatDetails for TRANSACTION_UPDATED displays "field: from → to" when changes exist.
+- i18n — Added activityLog.details.changeFields (type, amount, category, date, account).
+- docs/core/activity-log.md — Updated transaction update details format.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 01/03/2026 (Activity Log Detail Enhancement)
+
+- docs/core/activity-log.md — Updated: details format for transaction create/update/delete, credit card payment, export, import; added CREDIT_CARD_PAYMENT, USER_EMAIL_VERIFIED, USER_PASSWORD_RESET_REQUESTED to actions; UI description for transaction/credit-card detail display.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Activity Log detail enhancement.
+
+---
+
+## 01/03/2026 (Category Settings)
+
+- docs/feature/categories.md — Added: Transaction Categories feature doc (default/custom, isDefault, CRUD in settings, ensureUserHasDefaultCategories).
+- docs/INDEX.md — Updated: feature section to link categories.md.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Category Settings.
+
+---
+
+## 01/03/2026 (Docs and Tests Update)
+
+- docs/feature/financial-accounts.md — Added: Financial Accounts feature doc (model, AccountType, isAccountIncomplete, bank/account number, account sections UI, incomplete behavior).
+- docs/feature/credit-card-engine.md — Updated: §3.1 bankName, accountNumber, cardType; interestRate in use; §4.4 fromAccountId and EXPENSE on from-account; §5 payment body; §6 validation (incomplete, from-account).
+- docs/INDEX.md — Updated: feature section to link financial-accounts.md.
+- docs/structure/testing-strategy.md — Updated: Financial & Credit Card focus area; lib/__tests__/financial-accounts.test.ts, lib/credit-card/__tests__/payment.test.ts; API integration tests deferred.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for docs update.
+
+---
+
+## 01/03/2026 (Credit Card: Interest Rate & Card Type)
+
+- docs/PRD_CHANGE_LOG.md — Changelog entry: Credit card accounts now support interestRate (%) and cardType (credit, debit, visa, master, jcb, amex, unionpay, truemoney, other).
+
+---
+
+## 01/03/2026 (Financial Account Enhancement)
+
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Financial Account Enhancement: bankName (Thai banks dropdown), accountNumber (bank/card number), masked display on accounts page and credit card payment dialog.
+
+---
+
+## 01/03/2026 (Credit Card Engine)
+
+- docs/feature/credit-card-engine.md — Added: Credit Card Engine feature doc (data model, core logic, APIs, validation).
+- docs/INDEX.md — Updated: feature section to link credit-card-engine.md.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Credit Card Engine.
+
+---
+
+## 26/02/2026 (email verification)
+
+- docs/core/authentication-authorization.md — Added Email verification: soft policy, flow, token storage; GET /api/auth/verify-email, POST /api/auth/resend-verification; /verify-email page; profile page shows verification status and resend button; /api/users/me returns emailVerified; register sends verification email; Google OAuth sets emailVerified.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for email verification feature.
+
+---
+
+## 26/02/2026 (password reset)
+
+- docs/core/authentication-authorization.md — Added Forgot password and reset password: flow, SMTP config, token storage, security; /api/auth/forgot-password (POST), /api/auth/reset-password (POST); pages /forgot-password, /reset-password.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for password reset feature.
+
+---
+
+## 26/02/2026
+
+- docs/PRD.md — §18.4: Transaction CRUD changed from full-page to modal/dialog. List merged into `/dashboard/transactions` (removed `/list` route). Create/Edit use TransactionFormDialog; Delete uses TransactionDeleteDialog. Calendar Add/Edit/Delete open modals in-page.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for transaction modal UX.
+- docs/PRD.md — §18: Added 18.3.8 Single Transaction (GET/PATCH/DELETE /api/transactions/[id]), 18.3.9 Summary (GET /api/transactions/summary); List API 18.3.2 extended with `type` query param; 18.4.1 New/Edit Transaction (edit mode with ?id=); 18.4.2 List filters (from, to, type), pagination, Edit/Delete per row; Calendar day modal Edit/Delete; Dashboard summary cards; Data Tools export filters (from, to, type). Implementation of missing income/expense features per plan.
+- docs/PRD.md — §18: (earlier) Added 18.3.6 Export, 18.3.7 Import, 18.4.4 Data Tools to match implementation.
+- docs/core/activity-log.md — entityType extended with `transaction`; actions extended with TRANSACTION_CREATED, TRANSACTION_UPDATED, TRANSACTION_DELETED, TRANSACTION_EXPORT, TRANSACTION_IMPORT; details format for export/import; UI path corrected to /dashboard/settings/activity-log (via Settings).
+- docs/INDEX.md — feature section updated to mention Income & Expense (PRD §18).
+- docs/structure/mvp-boundary.md — Note added that current implementation includes Income & Expense + Data Tools (PRD §18), not MVP must-have.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for docs sync and §18 feature updates.
+
+---
+
+## 24/02/2026
+
+- docs/feature/organization-management.md, docs/feature/project-management.md, docs/feature/task-management.md, docs/feature/data-center.md, docs/feature/note-management.md, docs/feature/conclusion.md — Removed (feature docs out of scope).
+- docs/prd_summary_for_commu/summary_app_prd_pwp.md — Removed; folder prd_summary_for_commu removed.
+- docs/INDEX.md — Feature section updated: only Authentication and Activity Log in scope; no separate feature docs for current scope.
+- docs/PRD.md — Scoped to Authentication and Activity Log: §1–§6 rewritten; §7 only Activity Log (§7.1); §12 Open Questions and §13 MVP Boundary updated.
+- docs/structure/product-overview.md — Aligned with Auth + Activity Log scope.
+- docs/structure/mvp-boundary.md — MVP Must Have: Auth, Activity Log, System Log; Org/Project/Task moved to Out of Scope.
+- docs/structure/open-questions.md — Updated to current scope (dashboard layout, future integrations).
+- docs/core/activity-log.md — entityType and actions limited to user and session; examples updated.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for docs clean (Auth + Activity Log only).
+ - docs/PRD.md — Added §18 Income & Expense Transactions & Calendar (data model, APIs, and UI behaviour) to document the current income/expense + calendar implementation.
+ - docs/structure/product-overview.md — Noted the presence of a lightweight Income & Expense tracker with calendar view in the current implementation.
+ - docs/PRD_CHANGE_LOG.md — Changelog entry for income/expense calendar docs update.
+
+---
+
+## 22/02/2026
+
+- prisma/seed.ts — Seed extended with Note and Conclusion: org-level notes (Acme, Beta), project-level notes (Website Revamp, Mobile App Pilot), task-level notes (Design new wireframes); conclusions on notes. Idempotent: skips when org/project already has notes.
+- docs/feature/note-management.md — Note Management implementation: data model (Note), association with org/project/task, API (list/create under org, project, task; get/patch/delete note under org), UI (org/project/task notes pages, note detail page).
+- docs/feature/conclusion.md — Conclusion implementation: data model (Conclusion, type enum NEW_TASK/MA/CR/KEY_DECISION), API under note (list/create/patch/delete), UI on note detail page.
+- docs/core/activity-log.md — Activity Log: entityType note, conclusion; actions NOTE_CREATED, NOTE_UPDATED, NOTE_DELETED, CONCLUSION_CREATED, CONCLUSION_UPDATED, CONCLUSION_DELETED.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Note Management, Conclusion, and seed.
+
+---
+
+## 21/02/2026
+
+- docs/core/activity-log.md — Activity Log implementation: data model (ActivityLog), action list, API GET /api/activity-log with filters, UI at /dashboard/activity-log (read-only list + filters). Emit from register, sign-in, org/project/task APIs.
+- docs/core/activity-log.md — Richer Activity Log: details format (create/delete/restore/update with changes array), API returns userDisplayName (who), UI shows "By: …" and formatted details (Deleted/Restored, field from→to).
+- docs/core/activity-log.md — UI: "By" and each detail item displayed on separate lines for readability.
+- docs/core/activity-log.md — Activity Log for session revoke and user actions: entityType session, SESSION_REVOKED (details.scope), USER_PROFILE_UPDATED, USER_PASSWORD_CHANGED; emitted from /api/sessions DELETE, /api/users/me PATCH, /api/users/me/password PATCH.
+- docs/core/activity-log.md — Activity Log for logout: USER_LOGGED_OUT; recorded via POST /api/auth/logout (client calls before signOut).
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Activity Log docs update.
+
+---
+
+## 14/02/2026
+
+- docs/feature/project-management.md — Clarified implementation from PRD: Project fields (name, description, thumbnail image URL, start/end due dates, status); Project Management backend and dashboard-level behavior implemented for Org → Projects, including trash/restore semantics aligned with Organizations.
+- docs/feature/organization-management.md — Updated: Key data to contact list (OrganizationContact, at least one), slug, delete behaviour (move to trash, restore, permanent delete); added API and UI summary.
+- docs/PRD.md — Updated: §7.1 Organization Management; Key Data aligned with contact list, slug, trash; link to feature doc.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for Organization docs sync.
+- docs/core/authentication-authorization.md — Added: Validation section (email format/length/normalize, password min 8 max 72); register and change-password use lib/validation.
+- docs/core/authentication-authorization.md — Updated: Session revoke is soft delete (UserSession.revokedAt); list/touch filter by revokedAt null; /api/sessions DELETE sets revokedAt instead of deleting rows.
+- docs/core/authentication-authorization.md — Added: /api/users/me (GET profile, PATCH name), /api/users/me/password (PATCH), User profile page (/dashboard/user) and dashboard nav.
+- docs/structure/testing-strategy.md — Added: users/me and users/me/password API test coverage.
+- docs/core/authentication-authorization.md — Updated: Session strategy (JWT + UserSession table), Session metadata (userAgent/ipAddress via touch + GET), /api/sessions APIs (GET, POST, DELETE), Route protection (JWT).
+- docs/structure/testing-strategy.md — Added: Authentication unit tests coverage (register, sessions GET/POST/DELETE, auth callbacks).
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+- docs/core/authentication-authorization.md — Added: Route protection (proxy.ts); Guard deferred.
+- docs/core/authentication-authorization.md — Added: Session strategy (DB, Prisma Adapter), Active users (heartbeat/lastActiveAt), Session metadata (IP, userAgent, createdAt).
+- docs/PRD.md — Updated: §8 Authentication; added Session, Active users & Session metadata bullets; link to core auth doc.
+- docs/structure/required_lib.md — Updated: Auth row to include @auth/prisma-adapter for DB session.
+- docs/prd_summary_for_commu/summary_app_prd_pwp.md — Updated: Authentication section; session storage, active users, session metadata.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
+## 03/02/2026
+
+- docs/PRD.md — Updated: §17 MVP Boundary; removed startup validation; use .env only for initial phase; /config optional for later.
+- docs/core/environment-config-strategy.md — Updated: removed Validation & Fail-fast Strategy; MVP Boundary aligned (no validation, /config excluded for initial phase).
+- docs/INDEX.md — Updated: environment-config-strategy description (validation removed, /config optional).
+- docs/PRD_CHANGE_LOG.md — This entry.
+- docs/PRD.md — Updated: §11 Technical Stack; Database now specified as MySQL (Prisma ORM).
+- docs/structure/technical-stack.md — Updated: Stack to use Prisma ORM for MySQL.
+- docs/structure/required_lib.md — Updated: Database lib from MySQL to Prisma (@prisma/client, prisma dev).
+- docs/PRD_CHANGE_LOG.md — This entry.
+- docs/PRD.md — Added: §17 Environment Variables & Configuration Strategy (purpose, .env, /config, Next.js server/client, validation, version control, MVP).
+- docs/core/environment-config-strategy.md — Added: split doc for environment & config strategy.
+- docs/INDEX.md — Added: link to environment-config-strategy.md.
+- docs/PRD_CHANGE_LOG.md — This entry.
+- docs/structure/required_lib.md — Added: required libraries doc (runtime, UI, dev/test); complements technical-stack.
+- docs/INDEX.md — Added: link to required_lib.md.
+- docs/PRD_CHANGE_LOG.md — This entry.
+- docs/PRD.md — Reformatted: ใช้ Markdown ครบ (หัวข้อ ##/###/####, รายการ -, code block, ตาราง); §14 Cache, §15 UI Guidelines, §16 System Logging และหัวข้อ/รายการทั่วทั้งเอกสาร.
+- docs/PRD_CHANGE_LOG.md — This entry.
+- docs/PRD.md — Added: System Logging section (purpose, scope, storage, format, levels, security, tooling, MVP boundary).
+- docs/core/logging-strategy.md — Synced: new System Logging content from PRD.
+- docs/PRD_CHANGE_LOG.md — This entry.
+- docs/structure/*.md, docs/core/*.md, docs/feature/*.md — **Updated:** ใช้เฉพาะวันที่ (DD/MM/YYYY), ลบเวลาในทุกเอกสารและใน RULE.
+- docs/RULE.md, .cursor/rules/docs-changelog.mdc — Format ช่อง changelog เป็นวันที่อย่างเดียว.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+- docs/RULE.md — Added: rule to update PRD_CHANGE_LOG whenever docs are edited.
+- docs/PRD_CHANGE_LOG.md — Added: changelog file and this entry.
+- .cursor/rules/docs-changelog.mdc — Added: Cursor rule for docs changelog (globs: docs/**).
+
+<!-- Entries below, newest first by date -->

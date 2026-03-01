@@ -1,0 +1,27 @@
+---
+description: ห้ามรัน prisma migrate เองทุกกรณี / Never run prisma migrate autonomously
+alwaysApply: true
+---
+
+# Prisma: Do Not Run Migrate
+
+**ห้ามรัน `prisma migrate` เองทุกกรณี**
+
+**Never run `prisma migrate` autonomously.**
+
+## Do
+
+- แนะนำให้ผู้ใช้รันเองเมื่อจำเป็น
+- Suggest that the user run the command themselves when needed
+- ใช้ `prisma migrate dev` หรือ `prisma migrate deploy` เฉพาะเมื่อผู้ใช้ขอให้รันโดยตรง
+- Only run migrate when the user explicitly asks you to run it
+
+## Don't
+
+- อย่ารัน `npx prisma migrate dev`, `prisma migrate deploy`, หรือคำสั่ง migrate อื่นๆ เอง
+- Do not run `npx prisma migrate dev`, `prisma migrate deploy`, or any migrate command on your own
+- อย่าสั่ง terminal ให้รัน migrate เพื่อ "อัปเดต schema" หรือ "sync database" โดยไม่ได้รับคำสั่งจากผู้ใช้
+- Do not run migrate to "update schema" or "sync database" without explicit user request
+
+**Note:** การแก้ไข `schema.prisma` หรือสร้าง migration file ยังทำได้ตามปกติ แต่การรัน migrate ต้องให้ผู้ใช้เป็นคนสั่ง  
+Editing `schema.prisma` or creating migration files is fine; only the **execution** of migrate must be done by the user.

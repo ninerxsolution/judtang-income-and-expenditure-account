@@ -1,0 +1,14 @@
+---
+description: When editing docs/, always update PRD_CHANGE_LOG.md with date (UTC), files changed, and brief description
+globs: docs/**
+alwaysApply: false
+---
+
+# Docs Changelog Rule
+
+When you **create or modify any file** under `docs/`, you **must** update `docs/PRD_CHANGE_LOG.md` in the same change set.
+
+- **Entry format:** Date as `DD/MM/YYYY`, then list of files changed and a brief description.
+- **Exception:** Editing only `PRD_CHANGE_LOG.md` (e.g. typo fix) does not require adding a new entry.
+
+Full rule and examples: see `docs/RULE.md`.

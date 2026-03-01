@@ -1,0 +1,222 @@
+// Prisma schema — MySQL. Auth.js (NextAuth) + User extensions.
+// Test connection: npx prisma db push (or npm run db:push)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// --- Enums for Financial features ---
+
+enum AccountType {
+  BANK
+  CREDIT_CARD
+  WALLET
+  CASH
+  OTHER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  PAYMENT
+  INTEREST
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  POSTED
+  VOID
+}
+
+// --- Auth.js required models ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  // Credentials: hashed password (null for OAuth-only users)
+  password      String?   @db.Text
+  // Active users: last activity timestamp
+  lastActiveAt  DateTime?
+  accounts           Account[]
+  // JWT session tracking (for list/revoke)
+  userSessions       UserSession[]
+  activityLogs       ActivityLog[]
+  transactions       Transaction[]
+  financialAccounts  FinancialAccount[]
+  categories         Category[]
+}
+
+// Tracks active JWT sessions per user (sessionId in JWT cookie).
+// Used for "active sessions" list and revoke-one/revoke-all.
+// revokedAt: null = active; set when user revokes (soft delete).
+model UserSession {
+  id           String    @id @default(cuid())
+  sessionId    String    @unique
+  userId       String
+  userAgent    String?   @db.Text
+  ipAddress    String?
+  lastActiveAt DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires   DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Activity Log (audit trail) ---
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  entityType String?
+  entityId   String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// --- Financial Accounts (Book Bank) ---
+
+model FinancialAccount {
+  id             String   @id @default(cuid())
+  name           String
+  type           AccountType
+  initialBalance Decimal   @db.Decimal(15, 2)
+  isActive       Boolean   @default(true)
+  isDefault      Boolean   @default(false)
+  isHidden       Boolean   @default(false)
+  lastCheckedAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  transfersTo    Transaction[] @relation("TransferTo")
+  creditCardStatements CreditCardStatement[]
+
+  // Credit card specific (nullable for non-CREDIT_CARD accounts)
+  creditLimit           Decimal?  @db.Decimal(15, 2)
+  statementClosingDay   Int?
+  dueDay                Int?
+  currentOutstanding    Decimal?  @db.Decimal(15, 2)
+  availableCredit       Decimal?  @db.Decimal(15, 2)
+  interestRate          Decimal?  @db.Decimal(8, 4)
+  interestCalculatedUntil DateTime?
+  cardType              String?
+
+  // Bank/account identification (optional)
+  bankName      String?
+  accountNumber String?
+
+  @@index([userId])
+}
+
+// --- Categories (master list) ---
+
+model Category {
+  id          String        @id @default(cuid())
+  name        String
+  isDefault   Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// --- Income & Expense Transactions ---
+
+model Transaction {
+  id                   String            @id @default(cuid())
+  userId               String
+  type                 TransactionType
+  status               TransactionStatus @default(POSTED)
+  amount               Decimal           @db.Decimal(15, 2)
+  category             String?
+  note                 String?           @db.Text
+  occurredAt           DateTime
+  postedDate           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  financialAccountId   String?
+  transferAccountId   String?
+  categoryId           String?
+  statementId          String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  financialAccount FinancialAccount?   @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  transferAccount  FinancialAccount?    @relation("TransferTo", fields: [transferAccountId], references: [id], onDelete: SetNull)
+  categoryRef      Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  statement        CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([financialAccountId])
+  @@index([transferAccountId])
+  @@index([statementId])
+}
+
+// --- Credit Card Statement ---
+
+model CreditCardStatement {
+  id               String   @id @default(cuid())
+  accountId        String
+  periodStart      DateTime
+  periodEnd        DateTime
+  closingDate      DateTime
+  dueDate          DateTime
+  statementBalance Decimal  @db.Decimal(15, 2)
+  minimumPayment   Decimal  @db.Decimal(15, 2)
+  paidAmount       Decimal  @default(0) @db.Decimal(15, 2)
+  isClosed         Boolean  @default(false)
+  isPaid           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  account      FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([accountId])
+  @@index([accountId, closingDate])
+}

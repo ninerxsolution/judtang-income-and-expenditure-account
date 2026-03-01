@@ -1,0 +1,36 @@
+---
+description: Use Lucide React (lucide-react) for all icons in the project
+alwaysApply: true
+---
+
+# Icons: Use Lucide React
+
+เมื่อต้องใช้ Icon ให้ใช้ **lucide-react** (Lucide Icons) เสมอ
+
+When you need to add or suggest **icons** in the project, always use **Lucide React** (`lucide-react`).
+
+## Do
+
+- Import icons from `lucide-react`: `import { IconName } from 'lucide-react'`
+- Prefer named imports for the icons you need (e.g. `ChevronDown`, `Settings`, `Search`)
+- Use the same icon set as shadcn/ui (this project is configured with Lucide)
+
+## Don't
+
+- Don't add or suggest other icon libraries (e.g. react-icons, Heroicons, Font Awesome) for new UI
+- Don't use emoji or Unicode symbols as a substitute when a Lucide icon exists
+
+## Example
+
+```tsx
+import { ChevronDown, Settings } from 'lucide-react';
+
+<Button variant="ghost" size="icon">
+  <Settings className="h-4 w-4" />
+</Button>
+```
+
+## Reference
+
+- Package: `lucide-react` (already in the project)
+- Browse icons: https://lucide.dev/icons/
