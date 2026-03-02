@@ -23,7 +23,7 @@ Sections in order:
 4. **Feature Grid** — 2×2 grid: Credit card management, Transfer between accounts, Import/Export, Update history
 5. **Engine / Architecture Section** — Design principles (ledger-based, liability separation, etc.)
 6. **Call To Action** — Single headline + Get Started button
-7. **Footer** — Version, Tech stack, Release Notes link, Copyright
+7. **Footer** — Version, Tech stack, Release Notes link, Privacy Policy link, Copyright
 
 ---
 
@@ -114,7 +114,7 @@ All landing content under `home.*`:
 - `home.features.*` — Feature grid (creditCard, transfer, importExport, releaseTracking)
 - `home.engine.*` — Engine section
 - `home.cta.*` — CTA section
-- `home.footer.*` — Footer (version, techStack, releaseNotes, copyright)
+- `home.footer.*` — Footer (version, techStack, releaseNotes, privacyPolicy, copyright)
 
 ---
 

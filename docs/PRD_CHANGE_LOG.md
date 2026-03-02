@@ -5,6 +5,17 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Privacy Policy page)
+
+- docs/feature/privacy-policy.md — New: full spec for Privacy Policy page (route, data classification, 10 sections, third-party disclosure, i18n structure, footer link, versioning, out of scope).
+- docs/INDEX.md — Added privacy-policy.md to feature list.
+- docs/PRD.md — §1 Overview: added Privacy Policy; §7.3: new Privacy Policy section.
+- docs/structure/mvp-boundary.md — Added Privacy Policy to Implemented list.
+- docs/feature/public-landing-page.md — Updated footer section: added Privacy Policy link.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Vercel Analytics integration)
 
 - docs/PRD.md — §11 Technical Stack: added Analytics (Vercel Web Analytics via `@vercel/analytics/next`).

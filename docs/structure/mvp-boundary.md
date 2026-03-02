@@ -16,6 +16,7 @@
 
 - **Public Landing Page** (`/`) — Product overview, theme/language switchers, entry points (PRD §7.2)
 - **Public Releases Page** (`/releases`) — Changelog for unauthenticated users
+- **Privacy Policy** (`/privacy`) — Public policy page, PDPA/GDPR-ready, 10 sections, footer link (PRD §7.3)
 - **Income & Expense** — Transactions, calendar, Data Tools for CSV import/export (PRD §18)
 - **Financial Accounts** — Bank, wallet, cash, credit card (PRD §18)
 - **Credit Card Engine** — Statement cycle, payment allocation (PRD §18)

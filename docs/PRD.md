@@ -7,7 +7,7 @@
 
 ## 1. Overview
 
-**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), and **Income & Expense** tracking with multi-account and credit card support.
+**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), a **Public Privacy Policy** (`/privacy`), and **Income & Expense** tracking with multi-account and credit card support.
 
 It is built on Next.js with NextAuth and a MySQL database, and is intended for general users and teams who need personal finance management with login and audit trails.
 
@@ -65,6 +65,10 @@ Records critical system events for auditing and tracking purposes. See [activity
 ### 7.2 Public Landing Page
 
 The home page (`/`) serves as the public entry point. It introduces the product (Judtang Financial Engine), explains core capabilities, and provides entry points to sign in or register. Includes navbar (theme switcher, language switcher, Releases, Login, Get Started), Hero, Core Value, Feature Grid, Engine section, CTA, and Footer. The public releases page (`/releases`) shows the changelog without login. See [feature/public-landing-page.md](feature/public-landing-page.md) for full spec.
+
+### 7.3 Privacy Policy
+
+A public Privacy Policy page at `/privacy` (no login required) that reflects actual system behavior and satisfies PDPA / GDPR-ready transparency requirements. Covers data collected, data not collected, usage purposes, security practices, third-party services (Cloudflare Turnstile, hosting, email), data retention, user rights, account deletion, and contact information. Version 1.0, effective 2 March 2026. Linked in the landing page footer. See [feature/privacy-policy.md](feature/privacy-policy.md) for full spec.
 
 ---
 
