@@ -6,8 +6,20 @@ import {
   createCategory,
   ensureUserHasDefaultCategories,
 } from "@/lib/categories";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
+
+async function fetchCategoriesList(userId: string): Promise<{ id: string; name: string; createdAt: string; isDefault: boolean }[]> {
+  const categories = await listCategoriesByUser(userId);
+  type CategoryItem = (typeof categories)[number];
+  return categories.map((c: CategoryItem) => ({
+    id: c.id,
+    name: c.name,
+    createdAt: c.createdAt.toISOString(),
+    isDefault: c.isDefault,
+  }));
+}
 
 export async function GET() {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
@@ -19,16 +31,13 @@ export async function GET() {
 
   try {
     await ensureUserHasDefaultCategories(userId);
-    const categories = await listCategoriesByUser(userId);
-    type CategoryItem = (typeof categories)[number];
-    return NextResponse.json(
-      categories.map((c: CategoryItem) => ({
-        id: c.id,
-        name: c.name,
-        createdAt: c.createdAt.toISOString(),
-        isDefault: c.isDefault,
-      }))
+    const getCached = unstable_cache(
+      (uid: string) => fetchCategoriesList(uid),
+      cacheKey("categories", userId),
+      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["categories"] },
     );
+    const data = await getCached(userId);
+    return NextResponse.json(data);
   } catch {
     return NextResponse.json(
       { error: "Failed to load categories" },
@@ -62,6 +71,7 @@ export async function POST(request: Request) {
 
   try {
     const category = await createCategory(userId, name);
+    revalidateTag("categories", "max");
     return NextResponse.json({
       id: category.id,
       name: category.name,

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { getTransactionsSummary } from "@/lib/transactions";
 import { getTotalBalance } from "@/lib/balance";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -16,6 +17,40 @@ function endOfMonth(year: number, month: number): Date {
   const d = new Date(year, month + 1, 0);
   d.setHours(23, 59, 59, 999);
   return d;
+}
+
+async function fetchSummary(
+  userId: string,
+  isAllTime: boolean,
+  fromParam: string | null,
+  toParam: string | null,
+  financialAccountId: string | undefined,
+) {
+  const options: {
+    from?: Date;
+    to?: Date;
+    financialAccountId?: string;
+  } = { financialAccountId };
+
+  if (!isAllTime && fromParam && toParam) {
+    const fromDate = new Date(fromParam);
+    const toDate = new Date(toParam);
+    if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
+      options.from = fromDate;
+      options.to = toDate;
+    }
+  }
+  if (!isAllTime && (options.from == null || options.to == null)) {
+    const now = new Date();
+    options.from = startOfMonth(now.getFullYear(), now.getMonth());
+    options.to = endOfMonth(now.getFullYear(), now.getMonth());
+  }
+
+  const [summary, totalBalance] = await Promise.all([
+    getTransactionsSummary(userId, options),
+    getTotalBalance(userId),
+  ]);
+  return { ...summary, totalBalance };
 }
 
 export async function GET(request: Request) {
@@ -32,39 +67,17 @@ export async function GET(request: Request) {
   const toParam = searchParams.get("to");
   const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
 
-  const options: {
-    from?: Date;
-    to?: Date;
-    financialAccountId?: string;
-  } = {
-    financialAccountId: financialAccountIdParam,
-  };
-
   const isAllTime = allParam === "1" || allParam === "true";
 
-  if (isAllTime) {
-    // All-time: no date filter (options.from and options.to stay undefined)
-  } else if (fromParam && toParam) {
-    const fromDate = new Date(fromParam);
-    const toDate = new Date(toParam);
-    if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime())) {
-      options.from = fromDate;
-      options.to = toDate;
-    }
-  }
-
-  if (!isAllTime && (options.from == null || options.to == null)) {
-    const now = new Date();
-    options.from = startOfMonth(now.getFullYear(), now.getMonth());
-    options.to = endOfMonth(now.getFullYear(), now.getMonth());
-  }
-
   try {
-    const [summary, totalBalance] = await Promise.all([
-      getTransactionsSummary(userId, options),
-      getTotalBalance(userId),
-    ]);
-    return NextResponse.json({ ...summary, totalBalance });
+    const getCached = unstable_cache(
+      (uid: string, all: boolean, from: string | null, to: string | null, accId: string | undefined) =>
+        fetchSummary(uid, all, from, to, accId),
+      cacheKey("transactions-summary", userId, isAllTime ? "1" : "0", fromParam ?? "", toParam ?? "", financialAccountIdParam ?? ""),
+      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
+    );
+    const data = await getCached(userId, isAllTime, fromParam, toParam, financialAccountIdParam);
+    return NextResponse.json(data);
   } catch {
     return NextResponse.json(
       { error: "Failed to load summary" },

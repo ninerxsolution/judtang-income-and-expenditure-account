@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { recordPayment } from "@/lib/credit-card";
+import { revalidateTag } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -64,6 +65,7 @@ export async function POST(
       note: body.note,
     });
 
+    revalidateTag("transactions", "max");
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,

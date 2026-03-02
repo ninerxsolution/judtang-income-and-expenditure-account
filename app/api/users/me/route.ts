@@ -7,17 +7,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
-export async function GET() {
-  const session = (await getServerSession(authOptions)) as SessionWithId | null;
-  const userId = session?.user?.id;
-
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+async function fetchUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -32,14 +26,12 @@ export async function GET() {
     },
   });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+  if (!user) return null;
 
   type AccountItem = (typeof user.accounts)[number];
   const linkedAccounts = user.accounts.map((a: AccountItem) => a.provider);
 
-  return NextResponse.json({
+  return {
     id: user.id,
     name: user.name ?? null,
     email: user.email ?? null,
@@ -49,7 +41,31 @@ export async function GET() {
     lastActiveAt: user.lastActiveAt?.toISOString() ?? null,
     hasPassword: !!user.password,
     linkedAccounts,
-  });
+  };
+}
+
+export async function GET() {
+  const session = (await getServerSession(authOptions)) as SessionWithId | null;
+  const userId = session?.user?.id;
+
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const getCached = unstable_cache(
+      (uid: string) => fetchUserProfile(uid),
+      cacheKey("users-me", userId),
+      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["users-me"] },
+    );
+    const data = await getCached(userId);
+    if (!data) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json(data);
+  } catch {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
 }
 
 export async function PATCH(request: Request) {
@@ -91,6 +107,7 @@ export async function PATCH(request: Request) {
         },
       });
     }
+    revalidateTag("users-me", "max");
   }
 
   return NextResponse.json({ ok: true });

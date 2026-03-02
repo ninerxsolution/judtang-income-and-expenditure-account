@@ -6,8 +6,74 @@ import {
   getDateRangeInTimezone,
   toDateStringInTimezone,
 } from "@/lib/date-range";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
+
+type MonthSummaryItem = {
+  monthIndex: number;
+  hasTransactions: boolean;
+  count: number;
+  incomeCount: number;
+  expenseCount: number;
+  transferCount: number;
+};
+
+async function fetchMonthSummary(
+  userId: string,
+  year: number,
+  timezone: string,
+): Promise<MonthSummaryItem[]> {
+  const fromRange = getDateRangeInTimezone(`${year}-01-01`, timezone);
+  const toRange = getDateRangeInTimezone(`${year}-12-31`, timezone);
+  if (!fromRange || !toRange) throw new Error("Invalid year");
+
+  const items = await prisma.transaction.findMany({
+    where: {
+      userId,
+      occurredAt: { gte: fromRange.from, lte: toRange.to },
+    },
+    select: { occurredAt: true, type: true },
+  });
+
+  const monthMap = new Map<
+    number,
+    { count: number; incomeCount: number; expenseCount: number; transferCount: number }
+  >();
+
+  for (const tx of items) {
+    const dateStr = toDateStringInTimezone(tx.occurredAt, timezone);
+    const monthPart = dateStr.split("-")[1];
+    const m = monthPart ? parseInt(monthPart, 10) - 1 : 0;
+    const prev = monthMap.get(m) ?? {
+      count: 0,
+      incomeCount: 0,
+      expenseCount: 0,
+      transferCount: 0,
+    };
+    const typeUpper = String(tx.type).toUpperCase();
+    const isIncome = typeUpper === "INCOME";
+    const isExpense = typeUpper === "EXPENSE";
+    const isTransfer = typeUpper === "TRANSFER";
+    monthMap.set(m, {
+      count: prev.count + 1,
+      incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
+      expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+      transferCount: prev.transferCount + (isTransfer ? 1 : 0),
+    });
+  }
+
+  return Array.from(monthMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([monthIndex, { count, incomeCount, expenseCount, transferCount }]) => ({
+      monthIndex,
+      hasTransactions: count > 0,
+      count,
+      incomeCount,
+      expenseCount,
+      transferCount,
+    }));
+}
 
 export async function GET(request: Request) {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
@@ -29,77 +95,13 @@ export async function GET(request: Request) {
     );
   }
 
-  const fromRange = getDateRangeInTimezone(
-    `${yearNumber}-01-01`,
-    timezoneParam,
-  );
-  const toRange = getDateRangeInTimezone(
-    `${yearNumber}-12-31`,
-    timezoneParam,
-  );
-  if (!fromRange || !toRange) {
-    return NextResponse.json(
-      { error: "Invalid year parameter" },
-      { status: 400 },
-    );
-  }
-
-  const from = fromRange.from;
-  const to = toRange.to;
-
   try {
-    const items = await prisma.transaction.findMany({
-      where: {
-        userId,
-        occurredAt: {
-          gte: from,
-          lte: to,
-        },
-      },
-      select: {
-        occurredAt: true,
-        type: true,
-      },
-    });
-
-    const monthMap = new Map<
-      number,
-      { count: number; incomeCount: number; expenseCount: number; transferCount: number }
-    >();
-
-    for (const tx of items) {
-      const dateStr = toDateStringInTimezone(tx.occurredAt, timezoneParam);
-      const monthPart = dateStr.split("-")[1];
-      const m = monthPart ? parseInt(monthPart, 10) - 1 : 0; // 0-11
-      const prev = monthMap.get(m) ?? {
-        count: 0,
-        incomeCount: 0,
-        expenseCount: 0,
-        transferCount: 0,
-      };
-      const typeUpper = String(tx.type).toUpperCase();
-      const isIncome = typeUpper === "INCOME";
-      const isExpense = typeUpper === "EXPENSE";
-      const isTransfer = typeUpper === "TRANSFER";
-      monthMap.set(m, {
-        count: prev.count + 1,
-        incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
-        expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
-        transferCount: prev.transferCount + (isTransfer ? 1 : 0),
-      });
-    }
-
-    const result = Array.from(monthMap.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([monthIndex, { count, incomeCount, expenseCount, transferCount }]) => ({
-        monthIndex,
-        hasTransactions: count > 0,
-        count,
-        incomeCount,
-        expenseCount,
-        transferCount,
-      }));
-
+    const getCached = unstable_cache(
+      (uid: string, year: number, tz: string) => fetchMonthSummary(uid, year, tz),
+      cacheKey("transactions-month-summary", userId, String(yearNumber), timezoneParam),
+      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
+    );
+    const result = await getCached(userId, yearNumber, timezoneParam);
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(

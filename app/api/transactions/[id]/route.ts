@@ -8,6 +8,7 @@ import {
   TransactionType,
 } from "@/lib/transactions";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
+import { revalidateTag } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -192,6 +193,7 @@ export async function PATCH(
     const txWithInclude = transaction as typeof transaction & {
       transferAccount?: { id: string; name: string } | null;
     };
+    revalidateTag("transactions", "max");
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
@@ -241,6 +243,7 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
     }
+    revalidateTag("transactions", "max");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

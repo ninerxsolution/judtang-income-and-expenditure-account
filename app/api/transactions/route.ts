@@ -7,6 +7,7 @@ import {
   TransactionType,
   listTransactionsByUser,
 } from "@/lib/transactions";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
 import {
   ensureUserHasDefaultFinancialAccount,
   isAccountIncomplete,
@@ -173,6 +174,7 @@ export async function POST(request: Request) {
           fromAccountId: body.fromAccountId,
           note: body.note ?? undefined,
         });
+        revalidateTag("transactions", "max");
         return NextResponse.json({
           id: transaction.id,
           type: transaction.type,
@@ -227,6 +229,7 @@ export async function POST(request: Request) {
       });
       if (toAcc) transferAccount = toAcc;
     }
+    revalidateTag("transactions", "max");
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
@@ -249,6 +252,102 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+type SerializableTransaction = {
+  id: string;
+  type: string;
+  status: string;
+  amount: number;
+  financialAccountId: string | null;
+  financialAccount: { id: string; name: string } | null;
+  transferAccountId: string | null;
+  transferAccount: { id: string; name: string } | null;
+  categoryId: string | null;
+  categoryRef: { id: string; name: string } | null;
+  category: string | null;
+  note: string | null;
+  occurredAt: string;
+  postedDate: string | null;
+  createdAt: string;
+};
+
+async function fetchTransactionsList(
+  userId: string,
+  fromParam: string | undefined,
+  toParam: string | undefined,
+  dateParam: string | undefined,
+  timezone: string,
+  typeParam: string | undefined,
+  financialAccountId: string | undefined,
+  limit: number,
+  offset: number,
+): Promise<SerializableTransaction[]> {
+  let fromDate: Date | undefined;
+  let toDate: Date | undefined;
+
+  if (dateParam) {
+    const range = getDateRangeInTimezone(dateParam, timezone);
+    if (range) {
+      fromDate = range.from;
+      toDate = range.to;
+    }
+  } else {
+    if (fromParam) {
+      const range = getDateRangeInTimezone(fromParam, timezone);
+      if (range) fromDate = range.from;
+    }
+    if (toParam) {
+      const range = getDateRangeInTimezone(toParam, timezone);
+      if (range) toDate = range.to;
+    }
+  }
+
+  let typeFilter: (typeof VALID_TYPES)[number] | undefined;
+  if (typeParam) {
+    const upper = typeParam.toUpperCase();
+    if (VALID_TYPES.includes(upper as (typeof VALID_TYPES)[number])) {
+      typeFilter = upper as (typeof VALID_TYPES)[number];
+    }
+  }
+
+  const transactions = await listTransactionsByUser(userId, {
+    from: fromDate,
+    to: toDate,
+    type: typeFilter,
+    financialAccountId,
+    limit,
+    offset,
+  });
+
+  type TxItem = (typeof transactions)[number];
+  return transactions.map((t: TxItem) => {
+    const tx = t as TxItem & {
+      financialAccount?: { id: string; name: string } | null;
+      transferAccount?: { id: string; name: string } | null;
+      categoryRef?: { id: string; name: string } | null;
+    };
+    return {
+      id: tx.id,
+      type: tx.type,
+      status: tx.status,
+      amount:
+        typeof tx.amount === "object" && tx.amount != null && "toNumber" in tx.amount
+          ? (tx.amount as { toNumber: () => number }).toNumber()
+          : Number(tx.amount),
+      financialAccountId: tx.financialAccountId,
+      financialAccount: tx.financialAccount ?? null,
+      transferAccountId: tx.transferAccountId ?? null,
+      transferAccount: tx.transferAccount ?? null,
+      categoryId: tx.categoryId,
+      categoryRef: tx.categoryRef ?? null,
+      category: tx.category,
+      note: tx.note,
+      occurredAt: tx.occurredAt.toISOString(),
+      postedDate: tx.postedDate?.toISOString() ?? null,
+      createdAt: tx.createdAt.toISOString(),
+    };
+  });
 }
 
 export async function GET(request: Request) {
@@ -275,73 +374,44 @@ export async function GET(request: Request) {
   );
   const offset = offsetParam ? Number.parseInt(offsetParam, 10) || 0 : 0;
 
-  let fromDate: Date | undefined;
-  let toDate: Date | undefined;
-
-  if (dateParam) {
-    const range = getDateRangeInTimezone(dateParam, timezoneParam);
-    if (range) {
-      fromDate = range.from;
-      toDate = range.to;
-    }
-  } else {
-    if (fromParam) {
-      const range = getDateRangeInTimezone(fromParam, timezoneParam);
-      if (range) fromDate = range.from;
-    }
-    if (toParam) {
-      const range = getDateRangeInTimezone(toParam, timezoneParam);
-      if (range) toDate = range.to;
-    }
-  }
-
-  let typeFilter: (typeof VALID_TYPES)[number] | undefined;
-  if (typeParam) {
-    const upper = typeParam.toUpperCase();
-    if (VALID_TYPES.includes(upper as (typeof VALID_TYPES)[number])) {
-      typeFilter = upper as (typeof VALID_TYPES)[number];
-    }
-  }
-
   try {
-    const transactions = await listTransactionsByUser(userId, {
-      from: fromDate,
-      to: toDate,
-      type: typeFilter,
-      financialAccountId: financialAccountIdParam,
+    const getCached = unstable_cache(
+      (
+        uid: string,
+        from: string | undefined,
+        to: string | undefined,
+        date: string | undefined,
+        tz: string,
+        type: string | undefined,
+        accId: string | undefined,
+        lim: number,
+        off: number,
+      ) => fetchTransactionsList(uid, from, to, date, tz, type, accId, lim, off),
+      cacheKey(
+        "transactions-list",
+        userId,
+        fromParam ?? "",
+        toParam ?? "",
+        dateParam ?? "",
+        timezoneParam,
+        typeParam ?? "",
+        financialAccountIdParam ?? "",
+        String(limit),
+        String(offset),
+      ),
+      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
+    );
+    const data = await getCached(
+      userId,
+      fromParam,
+      toParam,
+      dateParam,
+      timezoneParam,
+      typeParam,
+      financialAccountIdParam,
       limit,
       offset,
-    });
-
-    type TxItem = (typeof transactions)[number];
-    const data = transactions.map((t: TxItem) => {
-      const tx = t as typeof t & {
-        financialAccount?: { id: string; name: string } | null;
-        transferAccount?: { id: string; name: string } | null;
-        categoryRef?: { id: string; name: string } | null;
-      };
-      return {
-        id: tx.id,
-        type: tx.type,
-        status: tx.status,
-        amount:
-          typeof tx.amount === "object" && tx.amount != null && "toNumber" in tx.amount
-            ? (tx.amount as { toNumber: () => number }).toNumber()
-            : Number(tx.amount),
-        financialAccountId: tx.financialAccountId,
-        financialAccount: tx.financialAccount,
-        transferAccountId: tx.transferAccountId ?? null,
-        transferAccount: tx.transferAccount ?? null,
-        categoryId: tx.categoryId,
-        categoryRef: tx.categoryRef,
-        category: tx.category,
-        note: tx.note,
-        occurredAt: tx.occurredAt.toISOString(),
-        postedDate: tx.postedDate?.toISOString() ?? null,
-        createdAt: tx.createdAt.toISOString(),
-      };
-    });
-
+    );
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(

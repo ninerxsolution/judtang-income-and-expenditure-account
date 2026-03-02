@@ -1,6 +1,6 @@
 # Caching Strategy (Level 1 – Application-Level Cache)
 
-**Updated:** caching-strategy (03/02/2026)
+**Updated:** 02/03/2026 (implementation)
 
 **Source:** PRD §14
 
@@ -22,13 +22,31 @@ This caching strategy applies to read-only and read-heavy operations only, such 
 
 Write operations (create/update/delete) are explicitly excluded from caching.
 
+## Implementation
+
+Application-level cache is implemented using Next.js `unstable_cache` in API route handlers. Configuration is centralized in `lib/cache.ts`:
+
+- **Revalidate:** 45 seconds (`CACHE_REVALIDATE_SECONDS`)
+- **Cache keys:** Include `userId` and relevant query parameters so data is isolated per user and per request shape
+
+**Cached GET routes:**
+
+- `GET /api/transactions/summary` — summary + total balance
+- `GET /api/transactions` — transaction list (with filters)
+- `GET /api/transactions/calendar-summary` — calendar day summary
+- `GET /api/transactions/month-summary` — month summary
+- `GET /api/transactions/year-summary` — year summary
+- `GET /api/financial-accounts` — account list (after ensure default)
+- `GET /api/categories` — category list (after ensure default)
+- `GET /api/users/me` — current user profile
+
+Auth is always checked first via `getServerSession`; only the data-fetch portion is cached. Routes that run `ensureUserHasDefault*` run that step before reading from cache.
+
 ## Caching Approach
 
-The system will use Next.js application-level caching, including:
+The system uses Next.js application-level caching:
 
-- Server Component cache
-- fetch() cache with revalidate
-- React cache() utility for database queries
+- **API layer:** `unstable_cache` wraps the database/query logic for the GET routes listed above. Cached callbacks return JSON-serializable data only.
 
 Caching is performed in-memory per deployment instance, managed automatically by the Next.js runtime.
 
@@ -42,10 +60,10 @@ This ensures data remains reasonably fresh while significantly reducing redundan
 
 ## Cache Invalidation
 
-- Cached data is automatically invalidated based on the configured revalidation interval
-- Manual cache invalidation is not implemented at this level
-- Write operations rely on short cache TTLs rather than explicit invalidation logic
-- This design favors simplicity and predictability over aggressive consistency guarantees.
+- Cached data is automatically invalidated based on the configured revalidation interval (45 seconds)
+- **On-demand invalidation:** Each cached route uses a `tags` option. When mutations occur, the corresponding route calls `revalidateTag(tag)` so the next request fetches fresh data
+- **Tags:** `transactions` (summary, list, calendar, month, year), `financial-accounts`, `categories`, `users-me`
+- **Mutation points:** Transaction create/update/delete/import, financial account create/update/delete/disable/restore, credit card payment, category create/update/delete, user profile update
 
 ## Non-Goals
 

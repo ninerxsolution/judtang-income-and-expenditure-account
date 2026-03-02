@@ -10,6 +10,7 @@ import {
 } from "@/lib/transactions-csv";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
+import { revalidateTag } from "@/lib/cache";
 
 async function findOrCreateCategoryByName(
   tx: Pick<typeof prisma, "category">,
@@ -406,6 +407,7 @@ export async function POST(request: Request) {
       },
     });
 
+    revalidateTag("transactions", "max");
     return NextResponse.json({
       createdCount: result.createdCount,
       updatedCount: result.updatedCount,

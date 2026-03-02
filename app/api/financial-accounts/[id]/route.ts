@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getAccountBalance } from "@/lib/balance";
 import { getCurrentOutstanding, getAvailableCredit, getLatestStatement } from "@/lib/credit-card";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import { revalidateTag } from "@/lib/cache";
 import type { AccountType } from "@prisma/client";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
@@ -312,6 +313,8 @@ export async function PATCH(
       },
     });
 
+    revalidateTag("financial-accounts", "max");
+    revalidateTag("transactions", "max");
     return NextResponse.json({
       id: updated.id,
       name: updated.name,
@@ -395,6 +398,8 @@ export async function DELETE(
         details: { name: account.name, type: account.type },
       });
     }
+    revalidateTag("financial-accounts", "max");
+    revalidateTag("transactions", "max");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

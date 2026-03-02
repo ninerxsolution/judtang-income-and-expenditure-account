@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import { revalidateTag } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -45,6 +46,8 @@ export async function PATCH(
       details: { name: account.name, type: account.type },
     });
 
+    revalidateTag("financial-accounts", "max");
+    revalidateTag("transactions", "max");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

@@ -6,8 +6,77 @@ import {
   getDateRangeInTimezone,
   toDateStringInTimezone,
 } from "@/lib/date-range";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
+
+type YearSummaryItem = {
+  year: number;
+  hasTransactions: boolean;
+  count: number;
+  incomeCount: number;
+  expenseCount: number;
+  transferCount: number;
+};
+
+async function fetchYearSummary(
+  userId: string,
+  fromYear: number,
+  toYear: number,
+  timezone: string,
+): Promise<YearSummaryItem[]> {
+  const startYear = Math.min(fromYear, toYear);
+  const endYear = Math.max(fromYear, toYear);
+  const fromRange = getDateRangeInTimezone(`${startYear}-01-01`, timezone);
+  const toRange = getDateRangeInTimezone(`${endYear}-12-31`, timezone);
+  if (!fromRange || !toRange) throw new Error("Invalid year parameters");
+
+  const items = await prisma.transaction.findMany({
+    where: {
+      userId,
+      occurredAt: { gte: fromRange.from, lte: toRange.to },
+    },
+    select: { occurredAt: true, type: true },
+  });
+
+  const yearMap = new Map<
+    number,
+    { count: number; incomeCount: number; expenseCount: number; transferCount: number }
+  >();
+
+  for (const tx of items) {
+    const dateStr = toDateStringInTimezone(tx.occurredAt, timezone);
+    const yearPart = dateStr.split("-")[0];
+    const y = yearPart ? parseInt(yearPart, 10) : tx.occurredAt.getFullYear();
+    const prev = yearMap.get(y) ?? {
+      count: 0,
+      incomeCount: 0,
+      expenseCount: 0,
+      transferCount: 0,
+    };
+    const typeUpper = String(tx.type).toUpperCase();
+    const isIncome = typeUpper === "INCOME";
+    const isExpense = typeUpper === "EXPENSE";
+    const isTransfer = typeUpper === "TRANSFER";
+    yearMap.set(y, {
+      count: prev.count + 1,
+      incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
+      expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
+      transferCount: prev.transferCount + (isTransfer ? 1 : 0),
+    });
+  }
+
+  return Array.from(yearMap.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([year, { count, incomeCount, expenseCount, transferCount }]) => ({
+      year,
+      hasTransactions: count > 0,
+      count,
+      incomeCount,
+      expenseCount,
+      transferCount,
+    }));
+}
 
 export async function GET(request: Request) {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
@@ -32,80 +101,14 @@ export async function GET(request: Request) {
     );
   }
 
-  const startYear = Math.min(fromYear, toYear);
-  const endYear = Math.max(fromYear, toYear);
-
-  const fromRange = getDateRangeInTimezone(
-    `${startYear}-01-01`,
-    timezoneParam,
-  );
-  const toRange = getDateRangeInTimezone(
-    `${endYear}-12-31`,
-    timezoneParam,
-  );
-  if (!fromRange || !toRange) {
-    return NextResponse.json(
-      { error: "Invalid year parameters" },
-      { status: 400 },
-    );
-  }
-
-  const from = fromRange.from;
-  const to = toRange.to;
-
   try {
-    const items = await prisma.transaction.findMany({
-      where: {
-        userId,
-        occurredAt: {
-          gte: from,
-          lte: to,
-        },
-      },
-      select: {
-        occurredAt: true,
-        type: true,
-      },
-    });
-
-    const yearMap = new Map<
-      number,
-      { count: number; incomeCount: number; expenseCount: number; transferCount: number }
-    >();
-
-    for (const tx of items) {
-      const dateStr = toDateStringInTimezone(tx.occurredAt, timezoneParam);
-      const yearPart = dateStr.split("-")[0];
-      const y = yearPart ? parseInt(yearPart, 10) : tx.occurredAt.getFullYear();
-      const prev = yearMap.get(y) ?? {
-        count: 0,
-        incomeCount: 0,
-        expenseCount: 0,
-        transferCount: 0,
-      };
-      const typeUpper = String(tx.type).toUpperCase();
-      const isIncome = typeUpper === "INCOME";
-      const isExpense = typeUpper === "EXPENSE";
-      const isTransfer = typeUpper === "TRANSFER";
-      yearMap.set(y, {
-        count: prev.count + 1,
-        incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
-        expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
-        transferCount: prev.transferCount + (isTransfer ? 1 : 0),
-      });
-    }
-
-    const result = Array.from(yearMap.entries())
-      .sort(([a], [b]) => a - b)
-      .map(([year, { count, incomeCount, expenseCount, transferCount }]) => ({
-        year,
-        hasTransactions: count > 0,
-        count,
-        incomeCount,
-        expenseCount,
-        transferCount,
-      }));
-
+    const getCached = unstable_cache(
+      (uid: string, fy: number, ty: number, tz: string) =>
+        fetchYearSummary(uid, fy, ty, tz),
+      cacheKey("transactions-year-summary", userId, String(fromYear), String(toYear), timezoneParam),
+      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
+    );
+    const result = await getCached(userId, fromYear, toYear, timezoneParam);
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(

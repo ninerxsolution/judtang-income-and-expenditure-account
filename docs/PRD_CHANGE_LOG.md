@@ -5,6 +5,35 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Cache invalidation on mutation)
+
+- lib/cache.ts — Export revalidateTag from next/cache.
+- app/api/transactions/* — Add tags to unstable_cache; call revalidateTag("transactions") on POST, PATCH, DELETE, import.
+- app/api/financial-accounts/* — Add tags; call revalidateTag on create, update, delete, disable, restore.
+- app/api/credit-card/[id]/payment/route.ts — Call revalidateTag("transactions") after recordPayment.
+- app/api/categories/* — Add tags; call revalidateTag("categories") on create, update, delete.
+- app/api/users/me/route.ts — Add tags; call revalidateTag("users-me") on PATCH.
+- docs/core/caching-strategy.md — Update Cache Invalidation section: tags, revalidateTag, mutation points.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 02/03/2026 (Application-level cache implementation)
+
+- lib/cache.ts — New: revalidate constant (45s), cacheKey helper, re-export unstable_cache.
+- app/api/transactions/summary/route.ts — GET wrapped with unstable_cache.
+- app/api/transactions/route.ts — GET list wrapped with unstable_cache.
+- app/api/transactions/calendar-summary/route.ts — GET wrapped with unstable_cache.
+- app/api/transactions/month-summary/route.ts — GET wrapped with unstable_cache.
+- app/api/transactions/year-summary/route.ts — GET wrapped with unstable_cache.
+- app/api/financial-accounts/route.ts — GET wrapped with unstable_cache (after ensureUserHasDefaultFinancialAccount).
+- app/api/categories/route.ts — GET wrapped with unstable_cache (after ensureUserHasDefaultCategories).
+- app/api/users/me/route.ts — GET wrapped with unstable_cache.
+- docs/core/caching-strategy.md — Added Implementation section: cached routes, revalidate, key shape.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 01/03/2026 (TRANSFER Between Accounts)
 
 - prisma/schema.prisma — Added `transferAccountId` and `transferAccount` relation to Transaction.
