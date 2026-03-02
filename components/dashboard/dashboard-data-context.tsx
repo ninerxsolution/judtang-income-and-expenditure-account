@@ -74,7 +74,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/dashboard/init");
+      const res = await fetch("/api/dashboard/init", { cache: "no-store" });
       if (!res.ok) {
         setUser(null);
         setSummary(null);

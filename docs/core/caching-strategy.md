@@ -1,6 +1,6 @@
 # Caching Strategy (Level 1 – Application-Level Cache)
 
-**Updated:** 02/03/2026 (bug fixes — invalidation coverage and client-side no-store)
+**Updated:** 02/03/2026 (dashboard init — removed unstable_cache; no-store on client fetch)
 
 **Source:** PRD §14
 
@@ -31,7 +31,6 @@ Application-level cache is implemented using Next.js `unstable_cache` in API rou
 
 **Cached GET routes:**
 
-- `GET /api/dashboard/init` — batch API for dashboard initial load (user, summary, appInfo, recentTransactions)
 - `GET /api/transactions/summary` — summary + total balance
 - `GET /api/transactions` — transaction list (with filters)
 - `GET /api/transactions/calendar-summary` — calendar day summary
@@ -63,25 +62,28 @@ This ensures data remains reasonably fresh while significantly reducing redundan
 
 - Cached data is automatically invalidated based on the configured revalidation interval (45 seconds)
 - **On-demand invalidation:** Each cached route uses a `tags` option. When mutations occur, the corresponding route calls `revalidateTag(tag)` so the next request fetches fresh data
-- **Tags:** `dashboard-init`, `transactions` (summary, list, calendar, month, year), `financial-accounts`, `categories`, `users-me`
+- **Tags:** `transactions` (summary, list, calendar, month, year), `financial-accounts`, `categories`, `users-me`
 - **Mutation points and tags invalidated:**
 
 | Mutation | Tags invalidated |
 |---|---|
-| Transaction create/update/delete/import | `transactions`, `financial-accounts`, `dashboard-init` |
-| Financial account create/update/delete/disable/restore | `financial-accounts`, `transactions`, `dashboard-init` |
-| Credit card payment | `transactions`, `financial-accounts`, `dashboard-init` |
-| Credit card close-statement | `financial-accounts`, `transactions`, `dashboard-init` |
+| Transaction create/update/delete/import | `transactions`, `financial-accounts` |
+| Financial account create/update/delete/disable/restore | `financial-accounts`, `transactions` |
+| Credit card payment | `transactions`, `financial-accounts` |
+| Credit card close-statement | `financial-accounts`, `transactions` |
 | Category create/update/delete | `categories` |
-| User profile update | `users-me`, `dashboard-init` |
+| User profile update | `users-me` |
 
 > **Note:** Transaction mutations invalidate `financial-accounts` in addition to `transactions` because account balances are computed from transaction history. Failing to invalidate this tag would cause stale balances on the Accounts page until the TTL expires.
+
+> **Note:** `GET /api/dashboard/init` is intentionally excluded from `unstable_cache`. Because the client calls this endpoint immediately after a mutation (via `refreshDashboard()`), using stale-while-revalidate semantics caused the dashboard to display stale data on the first refresh. The route now queries the database directly on every request and responds with `Cache-Control: no-store`.
 
 ## Client-Side Fetch Behavior
 
 Client components that call cached API routes use `{ cache: "no-store" }` on the browser `fetch` call. This prevents HTTP-level browser caching from serving stale responses after a mutation. The server-side `unstable_cache` is unaffected — it still caches and invalidates based on tags as described above.
 
 Affected client fetch calls:
+- `GET /api/dashboard/init` — `DashboardDataProvider` refresh (always `no-store`; route also sets `Cache-Control: no-store`)
 - `GET /api/financial-accounts` — Accounts page `fetchAccounts()`
 - `GET /api/transactions` — calendar `openDay()`, transactions page `refreshList()`
 - `GET /api/transactions/calendar-summary` — calendar day/week summary

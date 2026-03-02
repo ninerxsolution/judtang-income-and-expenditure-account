@@ -44,6 +44,7 @@ export const thDictionary = {
       noAccount: "ยังไม่มีบัญชีใช่ไหม?",
       registerCta: "สร้างบัญชีใหม่",
       forgotPassword: "ลืมรหัสผ่าน?",
+      rememberMe: "จดจำฉันไว้",
     },
     register: {
       title: "สร้างบัญชีใหม่",

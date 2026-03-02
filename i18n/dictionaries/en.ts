@@ -44,6 +44,7 @@ export const enDictionary = {
       noAccount: "Don't have an account?",
       registerCta: "Create one",
       forgotPassword: "Forgot password?",
+      rememberMe: "Remember me",
     },
     register: {
       title: "Create account",

@@ -9,7 +9,6 @@ import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTransactionsSummary, listTransactionsByUser } from "@/lib/transactions";
 import { getTotalBalance } from "@/lib/balance";
-import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -124,16 +123,10 @@ export async function GET() {
   }
 
   try {
-    const getCached = unstable_cache(
-      (uid: string) => fetchDashboardInit(uid),
-      cacheKey("dashboard-init", userId),
-      {
-        revalidate: CACHE_REVALIDATE_SECONDS,
-        tags: ["dashboard-init", "transactions", "users-me"],
-      },
-    );
-    const data = await getCached(userId);
-    return NextResponse.json(data);
+    const data = await fetchDashboardInit(userId);
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch {
     return NextResponse.json(
       { error: "Failed to load dashboard" },
