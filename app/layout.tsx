@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/components/providers/i18n-provider";
+import { Analytics } from "@vercel/analytics/next"
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_LOCALES,
@@ -76,6 +77,7 @@ export default async function RootLayout({
             <Toaster />
           </ThemeProvider>
         </I18nProvider>
+        <Analytics />
       </body>
     </html>
   );
