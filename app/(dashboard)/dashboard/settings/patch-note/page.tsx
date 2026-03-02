@@ -67,7 +67,7 @@ function SectionBlock({
       >
         {headingLabel}
       </h3>
-      <div className="changelog-body text-sm text-zinc-700 dark:text-zinc-300 [&_ul]:list-inside [&_ul]:list-disc [&_ol]:list-inside [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-zinc-200 [&_pre]:p-2 [&_code]:rounded [&_code]:bg-zinc-200 [&_code]:px-1 [&_code]:py-0.5 [&_hr]:my-8 [&_hr]:border-zinc-200 dark:[&_pre]:bg-zinc-800 dark:[&_code]:bg-zinc-800 dark:[&_hr]:border-zinc-700">
+      <div className="changelog-body text-sm text-zinc-700 dark:text-zinc-300 [&_ul]:list-inside [&_ul]:list-disc [&_ol]:list-inside [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-zinc-200 [&_pre]:p-2 [&_code]:rounded [&_code]:bg-zinc-200 [&_code]:px-1 [&_code]:py-0.5 [&_hr]:my-10 [&_hr]:border-zinc-200 dark:[&_pre]:bg-zinc-800 dark:[&_code]:bg-zinc-800 dark:[&_hr]:border-zinc-700">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body}</ReactMarkdown>
       </div>
     </div>
@@ -152,7 +152,7 @@ export default async function PatchNotePage() {
           </ul>
         </nav>
       </aside>
-      <main className="min-w-0 flex-1 space-y-8">
+      <main className="min-w-0 flex-1">
         {versions.map((version) => (
           <VersionBlock key={version.version} version={version} language={language} />
         ))}

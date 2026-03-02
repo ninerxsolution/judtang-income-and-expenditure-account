@@ -122,141 +122,141 @@ export function CategorySettings() {
 
   return (
     <section className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
-      <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
-          <Tag className="h-5 w-5" />
-        </div>
-        <div className="flex-1 space-y-4">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-7 w-7 items-center justify-center">
+            <Tag className="h-5 w-5" />
+          </div>
           <div>
             <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
               {t("settings.categories.title")}
             </h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
               {t("settings.categories.description")}
             </p>
           </div>
-
-          {loading && !categories.length ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-10 w-full rounded-md" />
-              ))}
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {t("settings.categories.loading")}
-              </p>
-            </div>
-          ) : error ? (
-            <p className="text-sm text-red-600 dark:text-red-400">
-              {t("settings.categories.error")}
-            </p>
-          ) : (
-            <>
-              {/* Default categories (read-only) */}
-              {defaultCategories.length > 0 && (
-                <div>
-                  <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                    {t("settings.categories.defaultLabel")}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {defaultCategories.map((c) => (
-                      <span
-                        key={c.id}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900/60"
-                      >
-                        <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                        {getCategoryDisplayName(c.name, localeKey)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Custom categories (CRUD) */}
-              <div>
-                <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                  {t("settings.categories.customLabel")}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {customCategories.length === 0 && !addExpanded && (
-                    <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {t("settings.categories.empty")}
-                    </span>
-                  )}
-                  {customCategories.map((c) => (
-                    <span
-                      key={c.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900/60"
-                    >
-                      {getCategoryDisplayName(c.name, localeKey)}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        onClick={() => openEdit(c)}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0 -mr-1 rounded-full text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
-                        onClick={() => setDeleteId(c.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </span>
-                  ))}
-
-                  {/* Add capsule - + button, expands to input + check on click */}
-                  {addExpanded ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900/60">
-                      <input
-                        type="text"
-                        value={addName}
-                        onChange={(e) => setAddName(e.target.value)}
-                        placeholder={t("settings.categories.addPlaceholder")}
-                        className="min-w-[100px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none focus:ring-0 dark:bg-transparent"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") {
-                            setAddExpanded(false);
-                            setAddName("");
-                          }
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void handleAddFromCapsule();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-400"
-                        onClick={() => void handleAddFromCapsule()}
-                        disabled={!addName.trim() || addPending}
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setAddExpanded(true)}
-                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-300"
-                    >
-                      <Plus className="h-3.5 w-3.5 shrink-0" />
-                      {t("settings.categories.addButton")}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </div>
+
+      {loading && !categories.length ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-10 w-full rounded-md" />
+          ))}
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {t("settings.categories.loading")}
+          </p>
+        </div>
+      ) : error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {t("settings.categories.error")}
+        </p>
+      ) : (
+        <>
+          {/* Default categories (read-only) */}
+          {defaultCategories.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {t("settings.categories.defaultLabel")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {defaultCategories.map((c) => (
+                  <span
+                    key={c.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900/60"
+                  >
+                    <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                    {getCategoryDisplayName(c.name, localeKey)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Custom categories (CRUD) */}
+          <div className={defaultCategories.length > 0 ? "mt-4" : ""}>
+            <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              {t("settings.categories.customLabel")}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {customCategories.length === 0 && !addExpanded && (
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {t("settings.categories.empty")}
+                </span>
+              )}
+              {customCategories.map((c) => (
+                <span
+                  key={c.id}
+                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900/60"
+                >
+                  {getCategoryDisplayName(c.name, localeKey)}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    onClick={() => openEdit(c)}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 -mr-1 rounded-full text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
+                    onClick={() => setDeleteId(c.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </span>
+              ))}
+
+              {/* Add capsule - + button, expands to input + check on click */}
+              {addExpanded ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900/60">
+                  <input
+                    type="text"
+                    value={addName}
+                    onChange={(e) => setAddName(e.target.value)}
+                    placeholder={t("settings.categories.addPlaceholder")}
+                    className="min-w-[100px] border-0 bg-transparent px-1 py-0.5 text-sm outline-none focus:ring-0 dark:bg-transparent"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setAddExpanded(false);
+                        setAddName("");
+                      }
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleAddFromCapsule();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-400"
+                    onClick={() => void handleAddFromCapsule()}
+                    disabled={!addName.trim() || addPending}
+                  >
+                    <Check className="h-3 w-3" />
+                  </Button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddExpanded(true)}
+                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-300"
+                >
+                  <Plus className="h-3.5 w-3.5 shrink-0" />
+                  {t("settings.categories.addButton")}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <CategoryFormDialog
         open={formOpen}
