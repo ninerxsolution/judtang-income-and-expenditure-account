@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.6 - 2026-03-02
+
+## Fixed
+
+- The **"This month"** summary cards (Income / Expense / Balance) and **Recent transactions** on the dashboard now update immediately after adding, editing, or deleting a transaction from the calendar — previously the data remained stale even after a refresh due to stale-while-revalidate caching on the dashboard API.
+
+---
+
 # v0.9.5 - 2026-03-02
 
 ## Fixed

@@ -5,6 +5,15 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Dashboard real-time refresh fix)
+
+- app/api/dashboard/init/route.ts — Removed `unstable_cache`; route now queries DB directly on every request and returns `Cache-Control: no-store`. This fixes stale summary cards and recent transactions on dashboard after mutation.
+- components/dashboard/dashboard-data-context.tsx — `fetch("/api/dashboard/init")` now uses `{ cache: "no-store" }` to prevent browser HTTP caching.
+- docs/core/caching-strategy.md — Removed `GET /api/dashboard/init` from cached routes list; updated tags table (removed `dashboard-init` tag); added explanatory note on why dashboard/init is excluded from `unstable_cache`; added `GET /api/dashboard/init` to client-side no-store list.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Cache invalidation bug fixes)
 
 - app/api/dashboard/init/route.ts — Fixed summary to filter by current month (Asia/Bangkok timezone) instead of all-time; added `getCurrentMonthRange()` helper.
