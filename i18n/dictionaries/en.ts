@@ -528,6 +528,7 @@ export const enDictionary = {
       version: "v{version}",
       techStack: "",
       releaseNotes: "Release notes",
+      privacyPolicy: "Privacy Policy",
       copyright: "© {year} Judtang",
     },
   },
@@ -763,6 +764,152 @@ export const enDictionary = {
     },
     createdPrefix: "Created {relative}",
     empty: "No sessions found.",
+  },
+  privacy: {
+    meta: {
+      title: "Privacy Policy",
+      description:
+        "Judtang Privacy Policy — what data we collect, how we use it, and your rights.",
+    },
+    title: "Privacy Policy",
+    version: "Version 1.0",
+    effectiveDate: "Effective Date: March 2, 2026",
+    lastUpdated: "Last updated: March 2, 2026",
+    backToHome: "Back to Home",
+    sections: {
+      introduction: {
+        title: "1. Introduction",
+        body: 'Judtang ("we", "our") takes your privacy seriously. This policy explains what information we collect when you use the Judtang financial management application, how we use it, and your rights regarding your data.\n\nBy using our service, you agree to this policy. If you disagree with any part, please stop using the service.',
+      },
+      dataCollected: {
+        title: "2. Information We Collect",
+        intro: "We collect only the information necessary to provide our service.",
+        categories: [
+          {
+            heading: "Account Information",
+            items: [
+              "Email address",
+              "Username",
+              "Password (hashed only — never stored in plain text)",
+            ],
+          },
+          {
+            heading: "Financial Metadata",
+            items: [
+              "Account name",
+              "Account type (Bank, Wallet, Cash, Credit Card)",
+              "Credit limit",
+              "Statement cycle and due date",
+              "Last 4 digits of card number (credit card accounts only, if provided by user)",
+            ],
+          },
+          {
+            heading: "Usage & Technical Data",
+            items: [
+              "IP address",
+              "Device and browser information",
+              "Login timestamps",
+              "Basic audit logs",
+            ],
+          },
+        ],
+        notCollected: {
+          title: "Information We Do NOT Collect",
+          intro:
+            "To minimize risk and protect you, our system does not store the following:",
+          items: [
+            "Full credit or debit card number",
+            "CVV code",
+            "Card expiration date",
+            "Online banking credentials",
+            "National ID number",
+            "Biometric data",
+          ],
+        },
+      },
+      dataUse: {
+        title: "3. How We Use Information",
+        intro: "We use the collected information solely for the following purposes.",
+        items: [
+          "Manage user accounts and authentication",
+          "Provide financial tracking and account management features",
+          "Send transactional emails (password reset, email verification)",
+          "Improve the security and reliability of the service",
+          "Monitor and prevent unauthorized activity",
+        ],
+      },
+      security: {
+        title: "4. Data Storage & Security",
+        intro:
+          "We implement several technical measures to protect your information.",
+        items: [
+          "All data transmission encrypted with HTTPS",
+          "Passwords hashed using a secure algorithm (bcrypt/argon2)",
+          "Access control enforced on the principle of least privilege",
+          "Database access restricted and monitored",
+          "No sensitive data stored in plain text",
+        ],
+        note: "While we apply reasonable safeguards, no system is 100% secure. We recommend using a strong, unique password and keeping your login credentials private.",
+      },
+      thirdParty: {
+        title: "5. Third-Party Services",
+        intro:
+          "We use trusted third-party providers to operate our service. These providers may process your data under their own privacy policies.",
+        providers: [
+          {
+            name: "Cloud Hosting Provider",
+            purpose: "Application infrastructure and hosting",
+          },
+          {
+            name: "Email Delivery Service",
+            purpose: "Sending transactional emails (verification, reset)",
+          },
+          {
+            name: "Cloudflare Turnstile",
+            purpose: "Bot protection and CAPTCHA verification",
+          },
+        ],
+        note: "We do not sell, trade, or share your personal information with third parties for marketing purposes.",
+      },
+      retention: {
+        title: "6. Data Retention",
+        body: "We retain your personal data for as long as your account is active or as needed to provide the service.\n\nWhen you delete your account, your personal data, financial accounts, and transaction history are permanently removed from our systems. Backup copies may persist until the scheduled backup rotation cycle completes.",
+      },
+      rights: {
+        title: "7. Your Rights",
+        intro:
+          "You have the following rights regarding your personal data (under PDPA and GDPR-aligned principles).",
+        items: [
+          "Right of Access — request a copy of the data we hold about you",
+          "Right to Rectification — request correction of inaccurate data",
+          "Right to Erasure — request deletion of your data (right to be forgotten)",
+          "Right to Object — object to processing in certain circumstances",
+          "Right to Data Portability — request your data in a portable format",
+        ],
+        note: "To exercise any of these rights, please contact us through the channels listed in the Contact section.",
+      },
+      deletion: {
+        title: "8. Account Deletion",
+        body: "You may delete your account at any time through the Settings page. Deletion permanently removes your personal data from our active systems.",
+        removesTitle: "Data removed upon deletion",
+        removes: [
+          "Profile and account information",
+          "All financial accounts",
+          "All transaction records",
+          "All statement records",
+        ],
+        backupNote:
+          "Backup copies may persist until the scheduled backup rotation cycle completes.",
+      },
+      changes: {
+        title: "9. Changes to This Policy",
+        body: "We may update this policy from time to time. When material changes occur, we will notify you via email or an in-app notice. The updated effective date will be shown at the top of this page.\n\nContinued use of the service after changes constitutes acceptance of the updated policy.",
+      },
+      contact: {
+        title: "10. Contact Information",
+        body: "If you have questions about this Privacy Policy or wish to exercise your rights, please contact us through the in-app support channel or via your account Settings page.",
+      },
+    },
   },
 };
 
