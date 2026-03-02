@@ -91,7 +91,7 @@ export default function TransactionsPage() {
       }
       if (filterType !== "all") params.set("type", filterType);
       if (filterAccountId) params.set("financialAccountId", filterAccountId);
-      const res = await fetch(`/api/transactions?${params.toString()}`);
+      const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) {
         if (res.status === 401) {
           setError(t("common.errors.unauthenticated"));

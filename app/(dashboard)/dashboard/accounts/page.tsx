@@ -144,7 +144,7 @@ export default function AccountsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/financial-accounts");
+      const res = await fetch("/api/financial-accounts", { cache: "no-store" });
       if (!res.ok) {
         if (res.status === 401) {
           setError(t("common.errors.unauthenticated"));

@@ -61,6 +61,10 @@ export const enDictionary = {
       success: "Account created. Please sign in.",
       haveAccount: "Already have an account?",
       signInCta: "Sign in",
+      agreeToTerms: "I agree to the {terms} and {privacy}",
+      agreeToTermsTerms: "Terms & Conditions",
+      agreeToTermsPrivacy: "Privacy Policy",
+      termsRequired: "You must agree to the Terms & Conditions to continue.",
     },
     forgotPassword: {
       title: "Forgot password",
@@ -529,6 +533,7 @@ export const enDictionary = {
       techStack: "",
       releaseNotes: "Release notes",
       privacyPolicy: "Privacy Policy",
+      termsAndConditions: "Terms & Conditions",
       copyright: "© {year} Judtang",
     },
   },
@@ -908,6 +913,86 @@ export const enDictionary = {
       contact: {
         title: "10. Contact Information",
         body: "If you have questions about this Privacy Policy or wish to exercise your rights, please contact us through the in-app support channel or via your account Settings page.",
+      },
+    },
+  },
+  terms: {
+    meta: {
+      title: "Terms & Conditions — Judtang",
+      description:
+        "Read the Terms & Conditions governing your use of the Judtang financial tracking service.",
+    },
+    title: "Terms & Conditions",
+    version: "Version {version}",
+    effectiveDate: "Effective Date: March 2, 2026",
+    lastUpdated: "Last Updated: March 2, 2026",
+    backToHome: "Back to home",
+    sections: {
+      acceptance: {
+        title: "1. Acceptance of Terms",
+        body: "By creating an account or continuing to use Judtang, you agree to be bound by these Terms & Conditions. If you do not agree to these terms, please do not use this service.\n\nThese terms apply to all users of the Judtang financial tracking platform.",
+      },
+      serviceDescription: {
+        title: "2. Description of Service",
+        body: "Judtang is a personal financial tracking tool that allows you to record, categorize, and review your income and expenses across multiple accounts.",
+        clarifications: [
+          "Judtang does not process payments on your behalf",
+          "Judtang does not provide financial, investment, or tax advice",
+          "Judtang does not connect directly to your bank accounts",
+          "Judtang is not a bank, financial institution, or payment service",
+          "All data you enter is self-reported and not verified by the system",
+        ],
+      },
+      userResponsibilities: {
+        title: "3. User Responsibilities",
+        intro: "By using this service, you agree to:",
+        items: [
+          "Provide accurate and complete information when creating your account",
+          "Keep your account credentials secure and confidential",
+          "Use the service in compliance with applicable laws and regulations",
+          "Not attempt to reverse-engineer, hack, or disrupt the system",
+          "Not use the service for unlawful, fraudulent, or abusive purposes",
+          "Be solely responsible for the accuracy of all financial data you enter",
+        ],
+      },
+      liability: {
+        title: "4. Limitation of Liability",
+        intro:
+          'The service is provided "as is" and "as available" without warranties of any kind.',
+        items: [
+          "We do not guarantee the accuracy, completeness, or reliability of the service",
+          "We are not liable for any financial losses resulting from your use of this service",
+          "We are not responsible for errors arising from inaccurate data entered by you",
+          "We do not guarantee uninterrupted or error-free service",
+          "We are not liable for any indirect, incidental, or consequential damages",
+        ],
+        note: "Your use of this service is entirely at your own risk. Always verify important financial information through your official bank or financial institution.",
+      },
+      termination: {
+        title: "5. Account Termination",
+        providerRights: {
+          title: "Service provider rights",
+          items: [
+            "Suspend or terminate accounts that violate these terms",
+            "Remove users engaging in abusive or unlawful behavior",
+            "Discontinue the service with reasonable prior notice",
+          ],
+        },
+        userRights: {
+          title: "Your rights",
+          items: [
+            "Delete your account at any time through the Settings page",
+            "Upon deletion, your personal data is permanently removed from active systems",
+          ],
+        },
+      },
+      intellectualProperty: {
+        title: "6. Intellectual Property",
+        body: "The Judtang software, design, code, and branding are the intellectual property of the service provider. All rights are reserved.\n\nYou retain full ownership of the financial data you enter into the system. We do not claim any rights over your personal financial records.",
+      },
+      changes: {
+        title: "7. Changes to Terms",
+        body: "We may update these Terms & Conditions from time to time. When material changes are made, the version number and effective date will be updated on this page.\n\nContinued use of the service after changes are posted constitutes acceptance of the updated terms.",
       },
     },
   },

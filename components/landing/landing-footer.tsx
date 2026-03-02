@@ -30,6 +30,12 @@ export function LandingFooter({ language, version }: LandingFooterProps) {
             >
               {translate(language, "home.footer.privacyPolicy")}
             </Link>
+            <Link
+              href="/terms"
+              className="hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              {translate(language, "home.footer.termsAndConditions")}
+            </Link>
           </div>
           <p className="text-sm text-zinc-500 dark:text-zinc-500">
             {translate(language, "home.footer.copyright", { year: String(year) })}

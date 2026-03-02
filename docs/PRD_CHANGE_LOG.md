@@ -5,6 +5,22 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Cache invalidation bug fixes)
+
+- app/api/dashboard/init/route.ts — Fixed summary to filter by current month (Asia/Bangkok timezone) instead of all-time; added `getCurrentMonthRange()` helper.
+- app/api/transactions/route.ts — POST now also calls `revalidateTag("financial-accounts")` (both PAYMENT branch and general branch).
+- app/api/transactions/[id]/route.ts — PATCH and DELETE now also call `revalidateTag("financial-accounts")`.
+- app/api/transactions/import/route.ts — POST now also calls `revalidateTag("financial-accounts")`.
+- app/api/credit-card/[id]/payment/route.ts — POST now also calls `revalidateTag("financial-accounts")`.
+- app/api/credit-card/[id]/close-statement/route.ts — Added `revalidateTag` for all three tags (`financial-accounts`, `transactions`, `dashboard-init`); previously had no revalidation at all.
+- app/(dashboard)/dashboard/accounts/page.tsx — `fetchAccounts()` now uses `{ cache: "no-store" }`.
+- components/dashboard/transactions-calendar.tsx — All client-side fetches (`openDay`, calendar-summary, month-summary, year-summary) now use `{ cache: "no-store" }`.
+- app/(dashboard)/dashboard/transactions/page.tsx — `refreshList()` fetch now uses `{ cache: "no-store" }`.
+- docs/core/caching-strategy.md — Updated Cache Invalidation section: expanded mutation points table; added `financial-accounts` column; added Client-Side Fetch Behavior section documenting `no-store` pattern.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Privacy Policy page)
 
 - docs/feature/privacy-policy.md — New: full spec for Privacy Policy page (route, data classification, 10 sections, third-party disclosure, i18n structure, footer link, versioning, out of scope).

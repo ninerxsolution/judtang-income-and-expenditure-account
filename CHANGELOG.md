@@ -2,6 +2,18 @@
 
 ---
 
+# v0.9.5 - 2026-03-02
+
+## Fixed
+
+- The **"This month"** summary cards on the dashboard now correctly show income, expense, and balance for the **current month only** — previously they were summing up all transactions across all time.
+- Account balances and transaction counts on the **Accounts page** now update immediately after creating, editing, or deleting a transaction — no page refresh required.
+- The **calendar view** (dots and transaction list inside the day dialog) now refreshes instantly after adding, editing, or deleting a transaction.
+- The **transaction list** on the Transactions page also reflects changes immediately.
+- Closing a credit card statement now correctly refreshes the account's statement data without a page refresh.
+
+---
+
 # v0.9.4 - 2026-03-02
 
 ## Added
