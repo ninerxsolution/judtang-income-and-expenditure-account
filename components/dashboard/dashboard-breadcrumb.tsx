@@ -11,6 +11,8 @@ export function getSegmentLabel(segment: string): string {
     user: "User profile",
     me: "User profile",
     sessions: "Sessions",
+    settings: "Settings",
+    "patch-note": "Patch note",
     transactions: "Transactions",
     tools: "Tools",
     calendar: "Calendar",

@@ -329,6 +329,20 @@ export const enDictionary = {
       description: "Application details and version",
       appName: "App name",
       version: "Version",
+      patchNote: "Release notes",
+    },
+    patchNote: {
+      title: "Release notes",
+      empty: "No release notes available.",
+      noReleases: "No releases yet.",
+      sections: {
+        added: "Added",
+        changed: "Changed",
+        fixed: "Fixed",
+        removed: "Removed",
+        breaking: "Breaking",
+        migration: "Migration",
+      },
     },
     language: {
       title: "Language",

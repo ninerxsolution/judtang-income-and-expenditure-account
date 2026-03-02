@@ -143,11 +143,11 @@ export default function SettingsPage() {
       {/* Table of contents - left sidebar */}
       <nav
         aria-label={t("settings.contents")}
-        className="hidden w-44 shrink-0 lg:block"
+        className="sticky top-24 self-start hidden w-44 shrink-0 lg:block"
       >
         <div className="space-y-1">
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            {t("settings.contents")}
+            {t("settings.contents")} 
           </p>
           {tocItems.map((item) => (
             <button
@@ -167,7 +167,7 @@ export default function SettingsPage() {
         <header className="space-y-1">
           <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {t("settings.description")}
+            {t("settings.description")} 
           </p>
         </header>
 
@@ -209,6 +209,10 @@ export default function SettingsPage() {
                   </div>
                 </dl>
               )}
+
+              <Link href="/dashboard/settings/patch-note" target="_blank" className="inline-flex items-center text-sm font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 underline-offset-4 hover:underline">
+                {t("settings.information.patchNote")}
+              </Link>
             </div>
           </div>
         </section>

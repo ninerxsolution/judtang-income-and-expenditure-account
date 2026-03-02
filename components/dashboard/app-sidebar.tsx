@@ -349,7 +349,7 @@ export function AppSidebarLayout({
             </DropdownMenu>
           </div>
         </header>
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-16 md:pb-0">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pb-16 md:pb-0">
           {children}
         </div>
         <MobileBottomNav />
