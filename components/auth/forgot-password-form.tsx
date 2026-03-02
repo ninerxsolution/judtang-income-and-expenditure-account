@@ -6,25 +6,41 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EMAIL_MAX_LENGTH } from "@/lib/validation";
 import { FormField } from "./form-field";
+import { TurnstileCaptcha } from "@/components/common/turnstile-captcha";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsLocalhost } from "@/hooks/use-is-localhost";
 
 export function ForgotPasswordForm() {
   const { t } = useI18n();
   const [email, setEmail] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const sitekey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY;
+  const isLocalhost = useIsLocalhost();
+  const requiresTurnstile = !!sitekey && !isLocalhost;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+    if (requiresTurnstile && !turnstileToken) {
+      const msg = t("auth.turnstileRequired");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     setPending(true);
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          ...(requiresTurnstile && { turnstileToken }),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -77,7 +93,12 @@ export function ForgotPasswordForm() {
         {error && (
           <p className="text-destructive text-sm">{error}</p>
         )}
-        <Button type="submit" disabled={pending} className="w-full">
+        <TurnstileCaptcha onTokenChange={setTurnstileToken} />
+        <Button
+          type="submit"
+          disabled={pending || (requiresTurnstile && !turnstileToken)}
+          className="w-full"
+        >
           {pending ? t("auth.forgotPassword.pending") : t("auth.forgotPassword.submit")}
         </Button>
       </form>

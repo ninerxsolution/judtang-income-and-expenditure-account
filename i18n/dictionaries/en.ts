@@ -98,6 +98,8 @@ export const enDictionary = {
       button: "Log out",
       success: "Signed out.",
     },
+    turnstileRequired: "Please complete the verification",
+    turnstileFailed: "Verification failed. Please try again.",
   },
   dashboard: {
     sidebar: {

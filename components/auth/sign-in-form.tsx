@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { EMAIL_MAX_LENGTH, MAX_PASSWORD_LENGTH } from "@/lib/validation";
 import { FormField } from "./form-field";
+import { TurnstileCaptcha } from "@/components/common/turnstile-captcha";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsLocalhost } from "@/hooks/use-is-localhost";
 
 type SignInFormProps = {
   callbackUrl?: string;
@@ -20,16 +22,28 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [pending, setPending] = useState(false);
 
+  const sitekey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY;
+  const isLocalhost = useIsLocalhost();
+  const requiresTurnstile = !!sitekey && !isLocalhost;
+
   async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (requiresTurnstile && !turnstileToken) {
+      const msg = t("auth.turnstileRequired");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     setError(null);
     setPending(true);
     const result = await signIn("credentials", {
       email,
       password,
+      ...(requiresTurnstile && { turnstileToken }),
       callbackUrl,
       redirect: true,
     });
@@ -82,7 +96,12 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
         {(error ?? initialError) && (
           <p className="text-destructive text-sm">{error ?? initialError}</p>
         )}
-        <Button type="submit" disabled={pending} className="w-full">
+        <TurnstileCaptcha onTokenChange={setTurnstileToken} />
+        <Button
+          type="submit"
+          disabled={pending || (requiresTurnstile && !turnstileToken)}
+          className="w-full"
+        >
           {pending ? t("auth.signIn.pending") : t("auth.signIn.submit")}
         </Button>
       </form>

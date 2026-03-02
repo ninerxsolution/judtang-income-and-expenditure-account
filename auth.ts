@@ -11,6 +11,10 @@ import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import {
+  verifyTurnstileToken,
+  shouldSkipTurnstileVerification,
+} from "@/lib/turnstile";
 
 type JWTWithId = { id?: string; sessionId?: string; sub?: string };
 
@@ -32,9 +36,19 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        turnstileToken: { label: "Turnstile", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        if (!shouldSkipTurnstileVerification()) {
+          if (!credentials.turnstileToken) return null;
+          const result = await verifyTurnstileToken(
+            String(credentials.turnstileToken)
+          );
+          if (!result.success) return null;
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: String(credentials.email) },
         });

@@ -10,7 +10,9 @@ import {
   MIN_PASSWORD_LENGTH,
 } from "@/lib/validation";
 import { FormField } from "./form-field";
+import { TurnstileCaptcha } from "@/components/common/turnstile-captcha";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsLocalhost } from "@/hooks/use-is-localhost";
 
 type ResetPasswordFormProps = {
   token: string;
@@ -21,13 +23,23 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const { t } = useI18n();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const sitekey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY;
+  const isLocalhost = useIsLocalhost();
+  const requiresTurnstile = !!sitekey && !isLocalhost;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-
+    if (requiresTurnstile && !turnstileToken) {
+      const msg = t("auth.turnstileRequired");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
       const msg = t("auth.register.passwordTooShort", { count: MIN_PASSWORD_LENGTH });
       setError(msg);
@@ -52,7 +64,11 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword }),
+        body: JSON.stringify({
+          token,
+          newPassword,
+          ...(requiresTurnstile && { turnstileToken }),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -97,7 +113,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         {error && (
           <p className="text-destructive text-sm">{error}</p>
         )}
-        <Button type="submit" disabled={pending} className="w-full">
+        <TurnstileCaptcha onTokenChange={setTurnstileToken} />
+        <Button
+          type="submit"
+          disabled={pending || (requiresTurnstile && !turnstileToken)}
+          className="w-full"
+        >
           {pending ? t("auth.resetPassword.pending") : t("auth.resetPassword.submit")}
         </Button>
       </form>

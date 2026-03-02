@@ -12,7 +12,9 @@ import {
   MIN_PASSWORD_LENGTH,
 } from "@/lib/validation";
 import { FormField } from "./form-field";
+import { TurnstileCaptcha } from "@/components/common/turnstile-captcha";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsLocalhost } from "@/hooks/use-is-localhost";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -21,12 +23,23 @@ export function RegisterForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const sitekey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY;
+  const isLocalhost = useIsLocalhost();
+  const requiresTurnstile = !!sitekey && !isLocalhost;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    if (requiresTurnstile && !turnstileToken) {
+      const msg = t("auth.turnstileRequired");
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     if (password.length < MIN_PASSWORD_LENGTH) {
       const msg = t("auth.register.passwordTooShort", { count: MIN_PASSWORD_LENGTH });
       setError(msg);
@@ -44,7 +57,12 @@ export function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password, name: name || undefined }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          name: name || undefined,
+          ...(requiresTurnstile && { turnstileToken }),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -110,7 +128,12 @@ export function RegisterForm() {
         {error && (
           <p className="text-destructive text-sm">{error}</p>
         )}
-        <Button type="submit" disabled={pending} className="w-full">
+        <TurnstileCaptcha onTokenChange={setTurnstileToken} />
+        <Button
+          type="submit"
+          disabled={pending || (requiresTurnstile && !turnstileToken)}
+          className="w-full"
+        >
           {pending ? t("auth.register.pending") : t("auth.register.submit")}
         </Button>
       </form>

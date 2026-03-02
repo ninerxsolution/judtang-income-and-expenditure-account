@@ -13,16 +13,47 @@ import {
 } from "@/lib/validation";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import {
+  verifyTurnstileToken,
+  shouldSkipTurnstileVerification,
+} from "@/lib/turnstile";
 
 const TOKEN_EXPIRY_HOURS = 1;
 
+function getClientIp(request: Request): string | null {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip")
+  );
+}
+
 export async function POST(request: Request) {
   try {
-    let body: { email?: string };
+    let body: { email?: string; turnstileToken?: string };
     try {
       body = await request.json();
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    if (!shouldSkipTurnstileVerification(request)) {
+      const { turnstileToken } = body;
+      if (!turnstileToken || typeof turnstileToken !== "string") {
+        return NextResponse.json(
+          { error: "Verification required" },
+          { status: 400 }
+        );
+      }
+      const result = await verifyTurnstileToken(
+        turnstileToken,
+        getClientIp(request)
+      );
+      if (!result.success) {
+        return NextResponse.json(
+          { error: "Verification failed" },
+          { status: 400 }
+        );
+      }
     }
 
     const email = body.email;

@@ -98,6 +98,8 @@ export const thDictionary = {
       button: "ออกจากระบบ",
       success: "ออกจากระบบเรียบร้อย",
     },
+    turnstileRequired: "กรุณายืนยันตัวตน",
+    turnstileFailed: "ยืนยันตัวตนไม่สำเร็จ โปรดลองใหม่",
   },
   dashboard: {
     sidebar: {

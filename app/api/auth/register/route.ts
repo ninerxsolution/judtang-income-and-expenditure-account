@@ -15,21 +15,61 @@ import {
   validatePasswordLength,
 } from "@/lib/validation";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import {
+  verifyTurnstileToken,
+  shouldSkipTurnstileVerification,
+} from "@/lib/turnstile";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { ensureUserHasDefaultCategories } from "@/lib/categories";
 import { sendEmailVerification } from "@/lib/email";
 
 const VERIFY_TOKEN_EXPIRY_HOURS = 24;
 
+function getClientIp(request: Request): string | null {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip")
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, name } = body as { email?: string; password?: string; name?: string };
+    const {
+      email,
+      password,
+      name,
+      turnstileToken,
+    } = body as {
+      email?: string;
+      password?: string;
+      name?: string;
+      turnstileToken?: string;
+    };
     if (!email || !password) {
       return NextResponse.json(
         { error: "email and password required" },
         { status: 400 }
       );
+    }
+
+    if (!shouldSkipTurnstileVerification(request)) {
+      if (!turnstileToken || typeof turnstileToken !== "string") {
+        return NextResponse.json(
+          { error: "Verification required" },
+          { status: 400 }
+        );
+      }
+      const result = await verifyTurnstileToken(
+        turnstileToken,
+        getClientIp(request)
+      );
+      if (!result.success) {
+        return NextResponse.json(
+          { error: "Verification failed" },
+          { status: 400 }
+        );
+      }
     }
 
     const normalizedEmail = normalizeEmail(String(email));
