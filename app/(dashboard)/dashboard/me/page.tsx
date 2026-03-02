@@ -303,7 +303,7 @@ export default function UserPage() {
       {/* Profile block */}
       <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
         <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-4">Profile</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {profile.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -322,7 +322,7 @@ export default function UserPage() {
             <p className="font-medium text-zinc-900 dark:text-zinc-100">
               {profile.name || "—"}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm text-zinc-600 dark:text-zinc-400">{profile.email ?? "—"}</p>
               {profile.email && (
                 profile.emailVerified ? (
@@ -331,7 +331,7 @@ export default function UserPage() {
                     {t("profile.emailVerified")}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex flex-wrap items-center gap-1.5">
                     <span className="text-xs text-amber-600 dark:text-amber-500">
                       {t("profile.emailNotVerified")}
                     </span>
