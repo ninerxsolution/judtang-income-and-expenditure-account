@@ -1,6 +1,6 @@
 # Caching Strategy (Level 1 – Application-Level Cache)
 
-**Updated:** 02/03/2026 (implementation)
+**Updated:** 02/03/2026 (bug fixes — invalidation coverage and client-side no-store)
 
 **Source:** PRD §14
 
@@ -64,7 +64,29 @@ This ensures data remains reasonably fresh while significantly reducing redundan
 - Cached data is automatically invalidated based on the configured revalidation interval (45 seconds)
 - **On-demand invalidation:** Each cached route uses a `tags` option. When mutations occur, the corresponding route calls `revalidateTag(tag)` so the next request fetches fresh data
 - **Tags:** `dashboard-init`, `transactions` (summary, list, calendar, month, year), `financial-accounts`, `categories`, `users-me`
-- **Mutation points:** Transaction create/update/delete/import, financial account create/update/delete/disable/restore, credit card payment, category create/update/delete, user profile update. Each mutation invalidates `dashboard-init` when it affects dashboard data.
+- **Mutation points and tags invalidated:**
+
+| Mutation | Tags invalidated |
+|---|---|
+| Transaction create/update/delete/import | `transactions`, `financial-accounts`, `dashboard-init` |
+| Financial account create/update/delete/disable/restore | `financial-accounts`, `transactions`, `dashboard-init` |
+| Credit card payment | `transactions`, `financial-accounts`, `dashboard-init` |
+| Credit card close-statement | `financial-accounts`, `transactions`, `dashboard-init` |
+| Category create/update/delete | `categories` |
+| User profile update | `users-me`, `dashboard-init` |
+
+> **Note:** Transaction mutations invalidate `financial-accounts` in addition to `transactions` because account balances are computed from transaction history. Failing to invalidate this tag would cause stale balances on the Accounts page until the TTL expires.
+
+## Client-Side Fetch Behavior
+
+Client components that call cached API routes use `{ cache: "no-store" }` on the browser `fetch` call. This prevents HTTP-level browser caching from serving stale responses after a mutation. The server-side `unstable_cache` is unaffected — it still caches and invalidates based on tags as described above.
+
+Affected client fetch calls:
+- `GET /api/financial-accounts` — Accounts page `fetchAccounts()`
+- `GET /api/transactions` — calendar `openDay()`, transactions page `refreshList()`
+- `GET /api/transactions/calendar-summary` — calendar day/week summary
+- `GET /api/transactions/month-summary` — calendar month view
+- `GET /api/transactions/year-summary` — calendar year view
 
 ## Non-Goals
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { closeStatement } from "@/lib/credit-card";
+import { revalidateTag } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -68,6 +69,9 @@ export async function POST(
 
   try {
     const result = await closeStatement(id, closingDate);
+    revalidateTag("financial-accounts", "max");
+    revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({ id: result.id });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to close statement";

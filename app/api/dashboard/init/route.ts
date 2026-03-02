@@ -13,7 +13,47 @@ import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache"
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
+const DASHBOARD_TIMEZONE = "Asia/Bangkok";
+
+function getCurrentMonthRange(timezone: string): { from: Date; to: Date } {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(now);
+  const year = parseInt(parts.find((p) => p.type === "year")?.value ?? "0", 10);
+  const month = parseInt(parts.find((p) => p.type === "month")?.value ?? "0", 10);
+
+  // Get timezone offset at noon of the 1st to avoid DST edge cases
+  const refDate = new Date(Date.UTC(year, month - 1, 1, 12, 0, 0, 0));
+  const refFmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    hour: "numeric",
+    hour12: false,
+    minute: "numeric",
+    second: "numeric",
+  });
+  const rp = refFmt.formatToParts(refDate);
+  const tzH = parseInt(rp.find((p) => p.type === "hour")?.value ?? "0", 10);
+  const tzM = parseInt(rp.find((p) => p.type === "minute")?.value ?? "0", 10);
+  const tzS = parseInt(rp.find((p) => p.type === "second")?.value ?? "0", 10);
+  const offsetMs =
+    (tzH * 3600 + tzM * 60 + tzS) * 1000 -
+    (refDate.getUTCHours() * 3600 + refDate.getUTCMinutes() * 60 + refDate.getUTCSeconds()) * 1000;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const fromMs = Date.UTC(year, month - 1, 1, 0, 0, 0, 0) - offsetMs;
+  const toMs = Date.UTC(year, month - 1, daysInMonth, 0, 0, 0, 0) - offsetMs + 24 * 3600000 - 1;
+
+  return { from: new Date(fromMs), to: new Date(toMs) };
+}
+
 async function fetchDashboardInit(userId: string) {
+  const monthRange = getCurrentMonthRange(DASHBOARD_TIMEZONE);
+
   const [user, summaryResult, transactions] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
@@ -21,7 +61,7 @@ async function fetchDashboardInit(userId: string) {
     }),
     (async () => {
       const [summary, totalBalance] = await Promise.all([
-        getTransactionsSummary(userId, {}),
+        getTransactionsSummary(userId, { from: monthRange.from, to: monthRange.to }),
         getTotalBalance(userId),
       ]);
       return { ...summary, totalBalance };

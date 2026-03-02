@@ -343,7 +343,7 @@ export function TransactionsCalendar() {
         params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/calendar-summary?${params.toString()}`,
-          { signal: controller.signal },
+          { signal: controller.signal, cache: "no-store" },
         );
         if (!res.ok) {
           if (res.status === 401) {
@@ -414,7 +414,7 @@ export function TransactionsCalendar() {
         params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/month-summary?${params.toString()}`,
-          { signal: controller.signal },
+          { signal: controller.signal, cache: "no-store" },
         );
         if (!res.ok) {
           if (res.status === 401) {
@@ -491,7 +491,7 @@ export function TransactionsCalendar() {
         params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
         const res = await fetch(
           `/api/transactions/year-summary?${params.toString()}`,
-          { signal: controller.signal },
+          { signal: controller.signal, cache: "no-store" },
         );
         if (!res.ok) {
           if (res.status === 401) {
@@ -559,7 +559,7 @@ export function TransactionsCalendar() {
       params.set("date", dateIso);
       params.set("limit", "200");
       params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
-      const res = await fetch(`/api/transactions?${params.toString()}`);
+      const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) {
         if (res.status === 401) {
           setDailyError(t("common.errors.unauthenticated"));
