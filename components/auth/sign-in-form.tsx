@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { EMAIL_MAX_LENGTH, MAX_PASSWORD_LENGTH } from "@/lib/validation";
 import { FormField } from "./form-field";
@@ -22,6 +23,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [pending, setPending] = useState(false);
@@ -43,6 +45,7 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
     const result = await signIn("credentials", {
       email,
       password,
+      rememberMe: String(rememberMe),
       ...(requiresTurnstile && { turnstileToken }),
       callbackUrl,
       redirect: true,
@@ -92,6 +95,19 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
               {t("auth.signIn.forgotPassword")}
             </Link>
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="remember-me"
+            checked={rememberMe}
+            onCheckedChange={(checked) => setRememberMe(checked === true)}
+          />
+          <label
+            htmlFor="remember-me"
+            className="text-sm text-muted-foreground cursor-pointer select-none"
+          >
+            {t("auth.signIn.rememberMe")}
+          </label>
         </div>
         {(error ?? initialError) && (
           <p className="text-destructive text-sm">{error ?? initialError}</p>

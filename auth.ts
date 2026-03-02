@@ -16,7 +16,7 @@ import {
   shouldSkipTurnstileVerification,
 } from "@/lib/turnstile";
 
-type JWTWithId = { id?: string; sessionId?: string; sub?: string };
+type JWTWithId = { id?: string; sessionId?: string; sub?: string; rememberMe?: boolean };
 
 const isSecure = process.env.NEXTAUTH_URL?.startsWith("https://");
 
@@ -37,6 +37,7 @@ export const authOptions: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
         turnstileToken: { label: "Turnstile", type: "text" },
+        rememberMe: { label: "Remember Me", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -63,6 +64,7 @@ export const authOptions: AuthOptions = {
           email: user.email ?? undefined,
           name: user.name ?? undefined,
           image: user.image ?? undefined,
+          rememberMe: credentials.rememberMe === "true",
         };
       },
     }),
@@ -82,15 +84,25 @@ export const authOptions: AuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       const t = token as JWTWithId;
       if (user?.id) {
         t.id = user.id;
         const sessionId = randomUUID();
+        const isCredentials = !account || account.provider === "credentials";
+        // rememberMe only applies to credentials sign-in; OAuth always gets long TTL
+        const rememberMe = isCredentials
+          ? (user as { rememberMe?: boolean }).rememberMe === true
+          : true;
+        const ttlDays = rememberMe
+          ? Number(process.env.REMEMBER_ME_TTL_DAYS ?? 30)
+          : Number(process.env.DEFAULT_SESSION_TTL_HOURS ?? 24) / 24;
+        const expiresAt = new Date(Date.now() + ttlDays * 86_400_000);
         await prisma.userSession.create({
-          data: { sessionId, userId: user.id },
+          data: { sessionId, userId: user.id, rememberMe, expiresAt },
         });
         t.sessionId = sessionId;
+        t.rememberMe = rememberMe;
         void createActivityLog({
           userId: user.id,
           action: ActivityLogAction.USER_LOGGED_IN,
@@ -104,6 +116,16 @@ export const authOptions: AuthOptions = {
           where: { sessionId: t.sessionId, revokedAt: null },
         });
         if (!row) {
+          delete t.sub;
+          delete t.id;
+          delete t.sessionId;
+          return t;
+        }
+        if (row.expiresAt < new Date()) {
+          await prisma.userSession.update({
+            where: { sessionId: t.sessionId },
+            data: { revokedAt: new Date() },
+          });
           delete t.sub;
           delete t.id;
           delete t.sessionId;
