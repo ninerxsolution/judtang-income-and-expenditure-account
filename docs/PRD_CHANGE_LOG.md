@@ -120,6 +120,14 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Cloudflare Turnstile bot protection)
+
+- docs/PRD.md — §8 Authentication: documented Cloudflare Turnstile protection on public auth forms and environment variables.
+- docs/core/authentication-authorization.md — Added Bot protection (Cloudflare Turnstile) section describing forms, verification flow, and local-development behavior.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this update.
+
+---
+
 ## 01/03/2026 (Activity Log: Financial Account)
 
 - lib/activity-log.ts — Added FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED.

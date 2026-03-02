@@ -76,6 +76,10 @@ The home page (`/`) serves as the public entry point. It introduces the product 
 - Supports:
   - Email + Password (Credentials)
   - Google OAuth
+ - Bot protection for public auth forms via **Cloudflare Turnstile**:
+   - Widget embedded on `/sign-in` (Credentials only), `/register`, `/forgot-password`, and `/reset-password`.
+   - Server-side verification uses `CLOUDFLARE_TURNSTILE_SECRETKEY` and `CLOUDFLARE_TURNSTILE_SITEKEY` (client-side uses `NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY`).
+   - Local development and environments where Cloudflare challenges are not reachable can skip verification (see core docs for rules).
 
 ### User Master
 

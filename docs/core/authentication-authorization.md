@@ -67,6 +67,25 @@
 - **Token storage:** `VerificationToken` (identifier = email, token, expires). Existing tokens for the same email are deleted before creating a new one.
 - **Security:** Always returns `{ ok: true }` from forgot-password to prevent email enumeration; OAuth-only users do not receive an email but get the same response.
 
+## Bot protection (Cloudflare Turnstile)
+
+- Uses **Cloudflare Turnstile** for human verification on **public auth forms**:
+  - `/sign-in` (Credentials provider only; Google OAuth button is unchanged).
+  - `/register`
+  - `/forgot-password`
+  - `/reset-password`
+- Frontend uses `react-turnstile` and a shared `TurnstileCaptcha` component, which renders the widget when `NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY` is set and the app is not running on `localhost`.
+- Each form includes a `turnstileToken` field in the payload when verification is required.
+- Server-side verification:
+  - Helper `verifyTurnstileToken` in `lib/turnstile.ts` calls `https://challenges.cloudflare.com/turnstile/v0/siteverify` with `CLOUDFLARE_TURNSTILE_SECRETKEY`, the token, and optional `remoteip`.
+  - Credentials sign-in (NextAuth `authorize`) and the following APIs enforce verification when enabled:
+    - `POST /api/auth/register`
+    - `POST /api/auth/forgot-password`
+    - `POST /api/auth/reset-password`
+- Local development and environments that cannot reach Cloudflare:
+  - Helper `shouldSkipTurnstileVerification(request?)` skips verification when `APP_ENV=development`, when `NEXTAUTH_URL` or the `Host` header contains `localhost`/`127.0.0.1`, or when `CLOUDFLARE_TURNSTILE_SECRETKEY` is not configured.
+  - On localhost, the widget is also hidden on the client via `useIsLocalhost`, so developers can test auth flows without Turnstile connectivity.
+
 ### /api/auth/forgot-password
 
 - **POST** — Request password reset; body `{ email: string }`. Validates email format/length. If user exists with password: creates token, sends email, logs `USER_PASSWORD_RESET_REQUESTED`. Always returns `{ ok: true }` on valid input.
