@@ -102,7 +102,7 @@ export default function SettingsPage() {
     fetch("/api/app-info")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: AppInfoResponse | null) => data && setAppInfo(data))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   async function revokeOne(sessionId: string) {
@@ -147,7 +147,7 @@ export default function SettingsPage() {
       >
         <div className="space-y-1">
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            {t("settings.contents")} 
+            {t("settings.contents")}
           </p>
           {tocItems.map((item) => (
             <button
@@ -167,7 +167,7 @@ export default function SettingsPage() {
         <header className="space-y-1">
           <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {t("settings.description")} 
+            {t("settings.description")}
           </p>
         </header>
 
@@ -245,11 +245,10 @@ export default function SettingsPage() {
               onClick={() => {
                 if (language !== "th") setPendingLanguage("th");
               }}
-              className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${
-                language === "th"
+              className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${language === "th"
                   ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              }`}
+                }`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {t("settings.language.optionThai")}
@@ -259,11 +258,10 @@ export default function SettingsPage() {
               onClick={() => {
                 if (language !== "en") setPendingLanguage("en");
               }}
-              className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${
-                language === "en"
+              className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${language === "en"
                   ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-              }`}
+                }`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {t("settings.language.optionEnglish")}
@@ -413,13 +411,13 @@ export default function SettingsPage() {
                           formatRelative(s.lastActiveAt).key === "justNow"
                             ? undefined
                             : {
-                                relative: t(
-                                  `common.time.${formatRelative(s.lastActiveAt).key}`,
-                                  formatRelative(s.lastActiveAt).count
-                                    ? { count: formatRelative(s.lastActiveAt).count! }
-                                    : undefined,
-                                ),
-                              },
+                              relative: t(
+                                `common.time.${formatRelative(s.lastActiveAt).key}`,
+                                formatRelative(s.lastActiveAt).count
+                                  ? { count: formatRelative(s.lastActiveAt).count! }
+                                  : undefined,
+                              ),
+                            },
                         )}
                       </p>
                     </div>
@@ -443,11 +441,11 @@ export default function SettingsPage() {
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 {otherSessions.length === 1
                   ? t("settings.sessions.otherDevicesSummarySingular", {
-                      count: otherSessions.length,
-                    })
+                    count: otherSessions.length,
+                  })
                   : t("settings.sessions.otherDevicesSummaryPlural", {
-                      count: otherSessions.length,
-                    })}
+                    count: otherSessions.length,
+                  })}
               </p>
               <Link
                 href="/dashboard/settings/sessions"
