@@ -72,6 +72,7 @@ model User {
   transactions       Transaction[]
   financialAccounts  FinancialAccount[]
   categories         Category[]
+  termsAcceptances   UserTermsAcceptance[]
 }
 
 // Tracks active JWT sessions per user (sessionId in JWT cookie).
@@ -196,6 +197,20 @@ model Transaction {
   @@index([financialAccountId])
   @@index([transferAccountId])
   @@index([statementId])
+}
+
+// --- Terms & Conditions Acceptance Log ---
+
+model UserTermsAcceptance {
+  id           String   @id @default(cuid())
+  userId       String
+  termsVersion String
+  acceptedAt   DateTime @default(now())
+  ipAddress    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // --- Credit Card Statement ---

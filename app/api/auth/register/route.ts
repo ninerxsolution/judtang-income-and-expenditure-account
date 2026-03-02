@@ -39,16 +39,24 @@ export async function POST(request: Request) {
       email,
       password,
       name,
+      termsVersion,
       turnstileToken,
     } = body as {
       email?: string;
       password?: string;
       name?: string;
+      termsVersion?: string;
       turnstileToken?: string;
     };
     if (!email || !password) {
       return NextResponse.json(
         { error: "email and password required" },
+        { status: 400 }
+      );
+    }
+    if (!termsVersion || typeof termsVersion !== "string") {
+      return NextResponse.json(
+        { error: "Terms & Conditions acceptance required" },
         { status: 400 }
       );
     }
@@ -121,6 +129,14 @@ export async function POST(request: Request) {
       action: ActivityLogAction.USER_REGISTERED,
       entityType: "user",
       entityId: user.id,
+    });
+
+    await prisma.userTermsAcceptance.create({
+      data: {
+        userId: user.id,
+        termsVersion,
+        ipAddress: getClientIp(request),
+      },
     });
 
     await ensureUserHasDefaultFinancialAccount(user.id);
