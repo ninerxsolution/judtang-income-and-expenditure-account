@@ -6,6 +6,10 @@ import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { getAccountBalance } from "@/lib/balance";
 import { getCurrentOutstanding, getAvailableCredit, getLatestStatement } from "@/lib/credit-card";
 import { maskAccountNumber } from "@/lib/format";
+import {
+  getAccountNumberForMasking,
+  processAccountNumberForStorage,
+} from "@/lib/account-number";
 import { isAccountIncomplete } from "@/lib/financial-accounts";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
@@ -81,7 +85,10 @@ async function fetchFinancialAccountsList(
         isIncomplete,
         transactionCount: txCount,
         bankName: acc.bankName ?? null,
-        accountNumberMasked: maskAccountNumber(acc.accountNumber),
+        accountNumberMasked: maskAccountNumber(
+          getAccountNumberForMasking(acc.accountNumber, acc.accountNumberMode)
+        ),
+        accountNumberMode: acc.accountNumberMode ?? null,
       };
 
       if (acc.type === "CREDIT_CARD") {
@@ -169,6 +176,7 @@ export async function POST(request: Request) {
     cardType?: string | null;
     bankName?: string | null;
     accountNumber?: string | null;
+    accountNumberMode?: string | null;
   };
   try {
     body = await request.json();
@@ -230,8 +238,13 @@ export async function POST(request: Request) {
     createData.bankName = typeof body.bankName === "string" && body.bankName.trim() ? body.bankName.trim() : null;
   }
   if (body.accountNumber !== undefined) {
-    const digits = typeof body.accountNumber === "string" ? body.accountNumber.replace(/\D/g, "") : "";
-    createData.accountNumber = digits ? digits : null;
+    const mode = body.accountNumberMode === "FULL" ? "FULL" : "LAST_4_ONLY";
+    const { accountNumber: stored, accountNumberMode: storedMode } =
+      processAccountNumberForStorage(body.accountNumber, mode, type);
+    if (stored !== null) {
+      createData.accountNumber = stored;
+      createData.accountNumberMode = storedMode;
+    }
   }
 
   try {
@@ -267,7 +280,8 @@ export async function POST(request: Request) {
       interestRate: account.interestRate != null ? Number(account.interestRate) : null,
       cardType: account.cardType ?? null,
       bankName: account.bankName ?? null,
-      accountNumber: account.accountNumber ?? null,
+      accountNumber: null,
+      accountNumberMode: account.accountNumberMode ?? null,
       lastCheckedAt: account.lastCheckedAt?.toISOString() ?? null,
       createdAt: account.createdAt.toISOString(),
     });

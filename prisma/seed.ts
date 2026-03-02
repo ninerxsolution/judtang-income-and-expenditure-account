@@ -70,6 +70,11 @@ function randomAccountNumber(digits: number): string {
   return s;
 }
 
+/** Last 4 digits only (for CREDIT_CARD, BANK/WALLET in LAST_4_ONLY mode) */
+function randomLast4(): string {
+  return randomAccountNumber(4);
+}
+
 async function seedUsers(): Promise<{ id: string; email: string | null; name: string | null }> {
   let user = await prisma.user.findUnique({
     where: { email: DEFAULT_USER.email },
@@ -137,7 +142,8 @@ async function seedFinancialAccounts(
           name: `บัญชี${bank.nameTh}`,
           type: "BANK",
           bankName: bank.id,
-          accountNumber: randomAccountNumber(10),
+          accountNumber: randomLast4(),
+          accountNumberMode: "LAST_4_ONLY",
           initialBalance: randomAmount(20000, 80000),
           isActive: true,
           isDefault: false,
@@ -163,7 +169,8 @@ async function seedFinancialAccounts(
         name: `บัญชี${bank.nameTh}`,
         type: "BANK",
         bankName: bank.id,
-        accountNumber: randomAccountNumber(10),
+        accountNumber: randomLast4(),
+        accountNumberMode: "LAST_4_ONLY",
         initialBalance: randomAmount(20000, 80000),
         isActive: true,
         isDefault: false,
@@ -200,7 +207,7 @@ async function seedFinancialAccounts(
         name: i === 0 ? `บัตรเครดิต${bank.nameTh}` : `บัตรเครดิต${bank.nameTh} 2`,
         type: "CREDIT_CARD",
         bankName: bank.id,
-        accountNumber: randomAccountNumber(16),
+        accountNumber: randomLast4(),
         initialBalance: 0,
         isActive: true,
         isDefault: false,
@@ -236,7 +243,8 @@ async function seedFinancialAccounts(
           name: w.name,
           type: "WALLET",
           bankName: w.bankName,
-          accountNumber: randomAccountNumber(10),
+          accountNumber: randomLast4(),
+          accountNumberMode: "LAST_4_ONLY",
           initialBalance: randomAmount(500, 5000),
           isActive: true,
           isDefault: false,
@@ -252,7 +260,8 @@ async function seedFinancialAccounts(
         name: "TrueMoney Wallet",
         type: "WALLET",
         bankName: "truemoney",
-        accountNumber: randomAccountNumber(10),
+        accountNumber: randomLast4(),
+        accountNumberMode: "LAST_4_ONLY",
         initialBalance: randomAmount(1000, 3000),
         isActive: true,
         isDefault: false,
@@ -273,7 +282,8 @@ async function seedFinancialAccounts(
         name: "บัญชีอื่นๆ",
         type: "OTHER",
         bankName: BANK_OTHER,
-        accountNumber: randomAccountNumber(8),
+        accountNumber: randomLast4(),
+        accountNumberMode: "LAST_4_ONLY",
         initialBalance: randomAmount(0, 5000),
         isActive: true,
         isDefault: false,
@@ -295,7 +305,8 @@ async function seedFinancialAccounts(
         name: `บัญชี${bank.nameTh} (ปิดแล้ว)`,
         type: "BANK",
         bankName: bank.id,
-        accountNumber: randomAccountNumber(10),
+        accountNumber: randomLast4(),
+        accountNumberMode: "LAST_4_ONLY",
         initialBalance: randomAmount(5000, 15000),
         isActive: true,
         isDefault: false,

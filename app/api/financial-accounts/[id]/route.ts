@@ -6,6 +6,11 @@ import { getAccountBalance } from "@/lib/balance";
 import { getCurrentOutstanding, getAvailableCredit, getLatestStatement } from "@/lib/credit-card";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { revalidateTag } from "@/lib/cache";
+import {
+  getAccountNumberForMasking,
+  getFullAccountNumber,
+  processAccountNumberForStorage,
+} from "@/lib/account-number";
 import type { AccountType } from "@prisma/client";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
@@ -39,6 +44,11 @@ export async function GET(
     select: { occurredAt: true },
   });
 
+  const accountNumberForForm =
+    getFullAccountNumber(account.accountNumber, account.accountNumberMode) ??
+    account.accountNumber ??
+    null;
+
   const base = {
     id: account.id,
     name: account.name,
@@ -51,7 +61,8 @@ export async function GET(
     balance,
     lastTransactionDate: lastTx?.occurredAt?.toISOString() ?? null,
     bankName: account.bankName ?? null,
-    accountNumber: account.accountNumber ?? null,
+    accountNumber: accountNumberForForm,
+    accountNumberMode: account.accountNumberMode ?? null,
   };
 
   if (account.type === "CREDIT_CARD") {
@@ -120,6 +131,7 @@ export async function PATCH(
     cardType?: string | null;
     bankName?: string | null;
     accountNumber?: string | null;
+    accountNumberMode?: string | null;
   };
   try {
     body = await request.json();
@@ -142,6 +154,7 @@ export async function PATCH(
     cardType?: string | null;
     bankName?: string | null;
     accountNumber?: string | null;
+    accountNumberMode?: string | null;
   } = {};
 
   if (typeof body.name === "string" && body.name.trim()) {
@@ -200,8 +213,11 @@ export async function PATCH(
     data.bankName = typeof body.bankName === "string" && body.bankName.trim() ? body.bankName.trim() : null;
   }
   if (body.accountNumber !== undefined) {
-    const digits = typeof body.accountNumber === "string" ? body.accountNumber.replace(/\D/g, "") : "";
-    data.accountNumber = digits ? digits : null;
+    const mode = body.accountNumberMode === "FULL" ? "FULL" : "LAST_4_ONLY";
+    const { accountNumber: stored, accountNumberMode: storedMode } =
+      processAccountNumberForStorage(body.accountNumber, mode, account.type);
+    data.accountNumber = stored;
+    data.accountNumberMode = storedMode;
   }
 
   if (Object.keys(data).length === 0) {
@@ -250,10 +266,14 @@ export async function PATCH(
       });
     }
     if (data.accountNumber !== undefined && (account.accountNumber ?? "") !== (updated.accountNumber ?? "")) {
+      const mask = (v: string | null, m: string | null) => {
+        const digits = getAccountNumberForMasking(v, m);
+        return digits ? "••••" + digits.slice(-4) : "—";
+      };
       changes.push({
         field: "accountNumber",
-        from: account.accountNumber ? "••••" + account.accountNumber.slice(-4) : "—",
-        to: updated.accountNumber ? "••••" + updated.accountNumber.slice(-4) : "—",
+        from: mask(account.accountNumber, account.accountNumberMode),
+        to: mask(updated.accountNumber, updated.accountNumberMode),
       });
     }
     if (account.type === "CREDIT_CARD") {
@@ -316,6 +336,11 @@ export async function PATCH(
     revalidateTag("financial-accounts", "max");
     revalidateTag("transactions", "max");
     revalidateTag("dashboard-init", "max");
+    const accountNumberForForm =
+      getFullAccountNumber(updated.accountNumber, updated.accountNumberMode) ??
+      updated.accountNumber ??
+      null;
+
     return NextResponse.json({
       id: updated.id,
       name: updated.name,
@@ -330,7 +355,8 @@ export async function PATCH(
       interestRate: updated.interestRate != null ? Number(updated.interestRate) : null,
       cardType: updated.cardType ?? null,
       bankName: updated.bankName ?? null,
-      accountNumber: updated.accountNumber ?? null,
+      accountNumber: accountNumberForForm,
+      accountNumberMode: updated.accountNumberMode ?? null,
       lastCheckedAt: updated.lastCheckedAt?.toISOString() ?? null,
       createdAt: updated.createdAt.toISOString(),
     });

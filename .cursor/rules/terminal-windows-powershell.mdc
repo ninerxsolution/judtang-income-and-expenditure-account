@@ -24,7 +24,7 @@ Environment is **Windows**. All terminal commands must be PowerShell/CMD compati
 
 To change directory and run npm install, use **two separate commands**:
 
-1. `cd d:\personal\website-project\personal-workflow-pipeline`
+1. `cd d:\personal\website-project\judtang-income-and-expenditure-account`
 2. `npm install @auth/prisma-adapter`
 
 Wrong: `cd ... && npm install ...`

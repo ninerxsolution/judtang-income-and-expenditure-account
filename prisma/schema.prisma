@@ -148,8 +148,9 @@ model FinancialAccount {
   cardType              String?
 
   // Bank/account identification (optional)
-  bankName      String?
-  accountNumber String?
+  bankName           String?
+  accountNumber      String?  @db.Text  // ciphertext (FULL) or plain last4 (LAST_4_ONLY)
+  accountNumberMode  String?  // "FULL" | "LAST_4_ONLY" (BANK, WALLET)
 
   @@index([userId])
 }

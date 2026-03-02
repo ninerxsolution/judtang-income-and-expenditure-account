@@ -2,6 +2,26 @@
 
 ---
 
+# v0.9.7 - 2026-03-02
+
+## Added
+
+- **Encrypted account/card numbers** — Full account numbers (FULL mode) are encrypted with AES-256-GCM before storage
+- **Account number storage mode** — Bank and wallet accounts can choose: store full number (encrypted) or last 4 digits only
+- **Credit card last 4 only** — Enter only the last 4 digits of the card; full number is never stored
+
+## Changed
+
+- **Delete account/card confirmation** — Uses a random 6-character code for all delete confirmations (instead of entering full account number)
+- Reveal (eye) button only appears for accounts storing full number (FULL mode)
+
+## Migration
+
+- Added `accountNumberMode` field and changed `accountNumber` to TEXT for encrypted payloads
+- Set `ENCRYPTION_KEY` in `.env` to use full-number storage mode (generate key: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`)
+
+---
+
 # v0.9.6 - 2026-03-02
 
 ## Fixed

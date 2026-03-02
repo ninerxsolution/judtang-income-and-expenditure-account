@@ -96,6 +96,7 @@ type FinancialAccount = {
   } | null;
   bankName?: string | null;
   accountNumberMasked?: string;
+  accountNumberMode?: string | null;
   interestRate?: number | null;
   cardType?: string | null;
   isIncomplete?: boolean;
@@ -136,7 +137,6 @@ export default function AccountsPage() {
   const [deletePending, setDeletePending] = useState(false);
   const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
   const [deleteExpectedValue, setDeleteExpectedValue] = useState("");
-  const [deleteConfirmType, setDeleteConfirmType] = useState<"accountNumber" | "randomCode" | null>(null);
   const [copiedAccountId, setCopiedAccountId] = useState<string | null>(null);
   const [hoveredAccountId, setHoveredAccountId] = useState<string | null>(null);
 
@@ -299,29 +299,12 @@ export default function AccountsPage() {
     }
     setDeleteAccount(acc);
     setDeleteConfirmValue("");
-    setDeleteExpectedValue("");
-    if (acc.accountNumberMasked && acc.accountNumberMasked.trim()) {
-      setDeleteConfirmType("accountNumber");
-      void fetch(`/api/financial-accounts/${acc.id}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data: { accountNumber?: string | null } | null) => {
-          const digits = data?.accountNumber
-            ? String(data.accountNumber).replace(/\D/g, "")
-            : "";
-          setDeleteExpectedValue(digits);
-        })
-        .catch(() => setDeleteExpectedValue(""));
-    } else {
-      setDeleteConfirmType("randomCode");
-      setDeleteExpectedValue(generateRandomConfirmationCode());
-    }
+    setDeleteExpectedValue(generateRandomConfirmationCode());
   }
 
   const deleteConfirmMatches =
     deleteExpectedValue &&
-    (deleteConfirmType === "accountNumber"
-      ? deleteConfirmValue.replace(/\D/g, "") === deleteExpectedValue
-      : deleteConfirmValue.toUpperCase() === deleteExpectedValue);
+    deleteConfirmValue.toUpperCase() === deleteExpectedValue;
 
   async function handleDeleteConfirm() {
     if (!deleteAccount || deletePending) return;
@@ -571,25 +554,26 @@ export default function AccountsPage() {
                             );
                           })()}
                         </p>
-                        {acc.accountNumberMasked && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                            onClick={() => toggleRevealAccountNumber(acc)}
-                            title={
-                              revealedAccountIds.has(acc.id)
-                                ? t("accounts.hideAccountNumber")
-                                : t("accounts.showAccountNumber")
-                            }
-                          >
-                            {revealedAccountIds.has(acc.id) ? (
-                              <EyeOff className="h-3.5 w-3.5" />
-                            ) : (
-                              <Eye className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        )}
+                        {acc.accountNumberMasked &&
+                          acc.accountNumberMode === "FULL" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                              onClick={() => toggleRevealAccountNumber(acc)}
+                              title={
+                                revealedAccountIds.has(acc.id)
+                                  ? t("accounts.hideAccountNumber")
+                                  : t("accounts.showAccountNumber")
+                              }
+                            >
+                              {revealedAccountIds.has(acc.id) ? (
+                                <EyeOff className="h-3.5 w-3.5" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
                       </div>
                     )}
                   </div>
@@ -865,7 +849,6 @@ export default function AccountsPage() {
             setDeleteAccount(null);
             setDeleteConfirmValue("");
             setDeleteExpectedValue("");
-            setDeleteConfirmType(null);
           }
         }}
       >
@@ -881,62 +864,22 @@ export default function AccountsPage() {
                 : t("accounts.deleteConfirmNoTransactions")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {deleteAccount && deleteConfirmType && (() => {
-            const isThai = locale?.startsWith("th");
-            const accountNumberHint = deleteAccount.accountNumberMasked
-              ? isThai
-                ? ` (ลงท้าย ${deleteAccount.accountNumberMasked})`
-                : ` (ending in ${deleteAccount.accountNumberMasked})`
-              : "";
-            const rawLabel =
-              deleteConfirmType === "accountNumber"
-                ? t("accounts.deleteConfirmAccountNumber") + accountNumberHint
-                : t("accounts.deleteConfirmRandomCodeLabel");
-            const rawPlaceholder =
-              deleteConfirmType === "accountNumber"
-                ? t("accounts.deleteConfirmAccountNumberPlaceholder")
-                : t("accounts.deleteConfirmRandomCodePlaceholder");
-            const deleteConfirmLabel = rawLabel.startsWith("accounts.")
-              ? deleteConfirmType === "accountNumber"
-                ? (isThai
-                    ? "กรอกหมายเลขบัญชี/บัตรให้ครบเพื่อยืนยันการลบ"
-                    : "Enter the full account/card number to confirm deletion") +
-                  accountNumberHint
-                : isThai
-                  ? "กรอกรหัสด้านล่างเพื่อยืนยันการลบ"
-                  : "Enter the code below to confirm deletion"
-              : rawLabel;
-            const deleteConfirmPlaceholder = rawPlaceholder.startsWith("accounts.")
-              ? deleteConfirmType === "accountNumber"
-                ? isThai
-                  ? "กรอกหมายเลขบัญชี/บัตร"
-                  : "Enter account/card number"
-                : isThai
-                  ? "กรอกรหัส"
-                  : "Enter code"
-              : rawPlaceholder;
-            const displayCode =
-              deleteConfirmType === "accountNumber" && deleteExpectedValue
-                ? deleteAccount.type === "CREDIT_CARD"
-                  ? formatCardNumber(deleteExpectedValue)
-                  : formatBankAccountNumber(deleteExpectedValue)
-                : deleteConfirmType === "randomCode" && deleteExpectedValue
-                  ? deleteExpectedValue
-                  : null;
-            return (
+          {deleteAccount && deleteExpectedValue && (
             <div className="space-y-2">
               <Label htmlFor="delete-confirm-input">
-                {deleteConfirmLabel}
+                {t("accounts.deleteConfirmRandomCodeLabel").startsWith("accounts.")
+                  ? (locale?.startsWith("th") ? "กรอกรหัสด้านล่างเพื่อยืนยันการลบ" : "Enter the code below to confirm deletion")
+                  : t("accounts.deleteConfirmRandomCodeLabel")}
               </Label>
-              {displayCode && (
-                <p className="select-none rounded-md bg-zinc-100 px-3 py-2 font-mono text-sm dark:bg-zinc-800">
-                  {displayCode}
-                </p>
-              )}
+              <p className="select-none rounded-md bg-zinc-100 px-3 py-2 font-mono text-sm dark:bg-zinc-800">
+                {deleteExpectedValue}
+              </p>
               <Input
                 id="delete-confirm-input"
                 type="text"
-                placeholder={deleteConfirmPlaceholder}
+                placeholder={t("accounts.deleteConfirmRandomCodePlaceholder").startsWith("accounts.")
+                  ? (locale?.startsWith("th") ? "กรอกรหัส" : "Enter code")
+                  : t("accounts.deleteConfirmRandomCodePlaceholder")}
                 value={deleteConfirmValue}
                 onChange={(e) => setDeleteConfirmValue(e.target.value)}
                 disabled={deletePending}
@@ -944,8 +887,7 @@ export default function AccountsPage() {
                 className="font-mono"
               />
             </div>
-            );
-          })()}
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deletePending}>
               {t("common.actions.cancel")}
