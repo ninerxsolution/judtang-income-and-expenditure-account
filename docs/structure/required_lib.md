@@ -18,6 +18,7 @@ This document lists required libraries and tools for the project. Use it for onb
 | Auth          | NextAuth + @auth/prisma-adapter | Email + Password, Google OAuth; DB session via Prisma Adapter |
 | Database      | Prisma           | ORM for MySQL; @prisma/client + prisma (dev). User data, Activity Log |
 | Logging (file)| Winston          | Structured JSON, date-based dirs |
+| Analytics     | @vercel/analytics | Vercel Web Analytics for anonymous page views |
 
 ---
 

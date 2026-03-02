@@ -136,6 +136,7 @@ The home page (`/`) serves as the public entry point. It introduces the product 
 - Framework: Next.js
 - Authentication: NextAuth
 - Database: MySQL (Prisma ORM)
+- Analytics: Vercel Web Analytics (`@vercel/analytics/next`)
 - Logging: Winston (file-based)
 - Testing: Jest + Supertest
 

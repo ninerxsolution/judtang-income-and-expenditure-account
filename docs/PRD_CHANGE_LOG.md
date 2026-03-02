@@ -5,6 +5,15 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Vercel Analytics integration)
+
+- docs/PRD.md — §11 Technical Stack: added Analytics (Vercel Web Analytics via `@vercel/analytics/next`).
+- docs/structure/technical-stack.md — Updated: added Analytics row.
+- docs/structure/required_lib.md — Updated: added @vercel/analytics under Runtime / Application.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Dashboard performance optimization)
 
 - docs/core/caching-strategy.md — Added `GET /api/dashboard/init` batch API; added `dashboard-init` tag and mutation invalidation.

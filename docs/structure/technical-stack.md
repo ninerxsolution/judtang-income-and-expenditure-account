@@ -11,6 +11,7 @@
 - Framework: Next.js
 - Authentication: NextAuth
 - Database: MySQL (Prisma ORM)
+- Analytics: Vercel Web Analytics (`@vercel/analytics/next`)
 - Logging: Winston (file-based)
 - Testing: Jest + Supertest
 - Theme: next-themes (Light / Dark / System)

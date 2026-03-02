@@ -4,6 +4,14 @@ Format: `# vMAJOR.MINOR.PATCH - YYYY-MM-DD` then `## Section` (Added, Changed, F
 
 ---
 
+# v1.3.0 - 2026-03-02
+
+## Added
+
+- Vercel Web Analytics integration: `@vercel/analytics/next` added to the root layout to enable anonymous page view tracking across the application.
+
+---
+
 # v0.1.0 - 2026-02-03
 
 ## Added
