@@ -155,6 +155,26 @@ function useHeaderSummary() {
   return { balance };
 }
 
+type AppInfoResponse = {
+  appName: string;
+  appVersion: string;
+  patchVersion: string;
+  fullVersion: string;
+};
+
+function useAppInfo() {
+  const [appInfo, setAppInfo] = useState<AppInfoResponse | null>(null);
+
+  useEffect(() => {
+    fetch("/api/app-info")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: AppInfoResponse | null) => data && setAppInfo(data))
+      .catch(() => {});
+  }, []);
+
+  return { appInfo };
+}
+
 const navItems = [
   {
     key: "accounts",
@@ -186,6 +206,7 @@ export function AppSidebarLayout({
   const pathname = usePathname();
   const { profile } = useHeaderProfile();
   const { balance } = useHeaderSummary();
+  const { appInfo } = useAppInfo();
   const { t } = useI18n();
   const { fullscreen, toggleFullscreen } = useFullscreen();
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -251,7 +272,7 @@ export function AppSidebarLayout({
         </SidebarContent>
         <SidebarFooter>
           <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-            beta 0.0.0-967-080.1
+            {appInfo?.fullVersion ?? "—"}
           </div>
         </SidebarFooter>
         <SidebarRail />
