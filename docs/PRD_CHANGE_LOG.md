@@ -5,6 +5,17 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Release Notes / Patch Note page)
+
+- CHANGELOG.md — New: single source of truth for release notes (format: # vX.Y.Z - date, ## Added/Changed/etc.).
+- lib/changelog.ts — New: parseChangelog, getChangelogVersions (build-time read from project root).
+- app/(dashboard)/dashboard/settings/patch-note/page.tsx — New: Server Component; renders CHANGELOG.md with react-markdown; Breaking/Migration sections styled; empty state when no file or no versions.
+- i18n/dictionaries/en.ts, i18n/dictionaries/th.ts — settings.information.patchNote, settings.patchNote.title/empty/noReleases.
+- components/dashboard/dashboard-breadcrumb.tsx — Breadcrumb labels for settings, patch-note.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Cache invalidation on mutation)
 
 - lib/cache.ts — Export revalidateTag from next/cache.

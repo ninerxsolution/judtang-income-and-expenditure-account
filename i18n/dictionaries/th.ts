@@ -329,6 +329,20 @@ export const thDictionary = {
       description: "รายละเอียดและเวอร์ชันของแอปพลิเคชัน",
       appName: "ชื่อแอป",
       version: "เวอร์ชัน",
+      patchNote: "หมายเหตุแพตช์",
+    },
+    patchNote: {
+      title: "หมายเหตุแพตช์",
+      empty: "ไม่มีหมายเหตุการอัปเดต",
+      noReleases: "ยังไม่มีรายการรุ่นที่เผยแพร่",
+      sections: {
+        added: "เพิ่ม",
+        changed: "เปลี่ยนแปลง",
+        fixed: "แก้ไข",
+        removed: "ลบออก",
+        breaking: "Breaking change",
+        migration: "การย้ายข้อมูล",
+      },
     },
     language: {
       title: "ภาษา",
