@@ -1,135 +1,29 @@
 # Changelog
 
-Format: `# vMAJOR.MINOR.PATCH - YYYY-MM-DD` then `## Section` (Added, Changed, Fixed, Removed, Breaking, Migration).
-
 ---
 
-# v1.3.0 - 2026-03-02
+# v0.9.3 - 2026-03-02
 
 ## Added
 
-- Vercel Web Analytics integration: `@vercel/analytics/next` added to the root layout to enable anonymous page view tracking across the application.
+- A new **Releases** page is now publicly accessible — anyone can view what's new without signing in.
+- The app now includes a **public landing page** explaining what the app does, with a theme switcher (Light / Dark / System) and language switcher (Thai / English).
 
 ---
 
-# v0.1.0 - 2026-02-03
+# v0.9.2 - 2026-03-02
 
-## Added
+## Improved
 
-- Product Requirements Document (PRD) and split docs (structure/, core/, feature/).
-- Environment variables & configuration strategy (.env, /config optional, MVP boundary).
-- System logging strategy (file-based, Winston, JSON format).
-- Required libraries doc (runtime, UI, dev/test); technical stack (Next.js, NextAuth, MySQL/Prisma).
-- Docs changelog rule: PRD_CHANGE_LOG.md; Cursor rule for docs/**.
-
-## Changed
-
-- PRD reformatted with Markdown (headings, lists, code blocks, tables).
-- MVP Boundary: Environment & config — no startup validation; .env only for initial phase.
+- The dashboard now loads noticeably faster. Less waiting, more doing.
 
 ---
 
-# v0.2.0 - 2026-02-14
+# v0.9.1 - 2026-03-02
 
 ## Added
 
-- Session strategy: JWT + UserSession table (Prisma Adapter); session metadata (userAgent, ipAddress via touch).
-- Active users: heartbeat, lastActiveAt; session list and revoke (GET/POST/DELETE /api/sessions).
-- User profile: GET/PATCH /api/users/me (name); PATCH /api/users/me/password; profile page (/dashboard/me) and dashboard nav.
-- Route protection (proxy); session revoke as soft delete (UserSession.revokedAt).
-- Validation: email format/length/normalize, password min 8 max 72 (register, change-password); lib/validation.
-- Testing strategy: users/me and users/me/password API tests; auth unit tests (register, sessions, callbacks).
-
-## Changed
-
-- Session revoke: list/touch filter by revokedAt null; DELETE sets revokedAt instead of deleting rows.
-
----
-
-# v0.3.0 - 2026-02-21
-
-## Added
-
-- Activity Log: data model (ActivityLog), action list, API GET /api/activity-log with filters.
-- Activity Log UI at /dashboard/settings/activity-log (read-only list + filters).
-- Emit from register, sign-in, org/project/task APIs; details format (create/delete/restore/update with changes array).
-- API returns userDisplayName; UI shows "By: …" and formatted details (Deleted/Restored, field from→to).
-- Entity types and actions: user, session; SESSION_REVOKED (details.scope), USER_PROFILE_UPDATED, USER_PASSWORD_CHANGED, USER_LOGGED_OUT.
-- Emit from /api/sessions DELETE, /api/users/me PATCH, /api/users/me/password PATCH; USER_LOGGED_OUT via POST /api/auth/logout.
-
----
-
-# v0.4.0 - 2026-02-24
-
-## Added
-
-- PRD §18 Income & Expense: data model (Transaction), APIs, UI behaviour (transactions, calendar, data tools).
-- Product overview: lightweight Income & Expense tracker with calendar view documented.
-
-## Changed
-
-- Scope: Auth + Activity Log only; Organization/Project/Task/Note/Conclusion moved out of scope.
-- MVP Boundary: Auth, Activity Log, System Log in scope; Org/Project/Task out of scope.
-- INDEX.md feature section: only Authentication and Activity Log; Income & Expense noted in PRD §18.
-
-## Removed
-
-- Feature docs: organization-management, project-management, task-management, data-center, note-management, conclusion; prd_summary_for_commu folder.
-
----
-
-# v0.5.0 - 2026-02-26
-
-## Added
-
-- Transaction CRUD via modal/dialog; list merged into /dashboard/transactions (removed /list route).
-- Create/Edit: TransactionFormDialog; Delete: TransactionDeleteDialog; calendar day modal Add/Edit/Delete in-page.
-- APIs: GET/PATCH/DELETE /api/transactions/[id]; GET /api/transactions/summary; list API extended with `type` query param.
-- List filters (from, to, type), pagination, Edit/Delete per row; Data Tools export filters (from, to, type).
-- Dashboard summary cards; calendar day modal Edit/Delete.
-- Activity Log: entityType transaction; TRANSACTION_CREATED, TRANSACTION_UPDATED, TRANSACTION_DELETED, TRANSACTION_EXPORT, TRANSACTION_IMPORT; details format for export/import.
-- Activity Log UI path: /dashboard/settings/activity-log (via Settings).
-
----
-
-# v0.6.0 - 2026-02-26
-
-## Added
-
-- Forgot password: POST /api/auth/forgot-password; SMTP config, token storage; /forgot-password page.
-- Reset password: POST /api/auth/reset-password; /reset-password page; security and token handling.
-- Activity Log: USER_PASSWORD_RESET_REQUESTED (documented).
-
----
-
-# v0.7.0 - 2026-02-26
-
-## Added
-
-- Email verification: soft policy, flow, token storage; GET /api/auth/verify-email, POST /api/auth/resend-verification.
-- /verify-email page; profile page shows verification status and resend button.
-- /api/users/me returns emailVerified; register sends verification email; Google OAuth sets emailVerified.
-- Activity Log: USER_EMAIL_VERIFIED.
-
----
-
-# v0.8.0 - 2026-03-01
-
-## Added
-
-- Credit Card Engine feature: data model (Transaction status/postedDate/statementId, CreditCardStatement), core logic (outstanding, available credit, expense/payment flow, statement closing).
-- FinancialAccount for CREDIT_CARD: creditLimit, statementClosingDay, dueDay, currentOutstanding, availableCredit, interestRate, interestCalculatedUntil, cardType, bankName, accountNumber.
-- Thai banks dropdown; accountNumber/bank number masked display on accounts page and credit card payment dialog.
-- interestRate (%) and cardType (credit, debit, visa, master, jcb, amex, unionpay, truemoney, other).
-- Payment API and validation (incomplete account, from-account); recordPayment with fromAccountId (EXPENSE on from-account).
-
-## Changed
-
-- FinancialAccount schema: bankName, accountNumber, interestRate, cardType; isAccountIncomplete checks.
-
-## Migration
-
-- Run prisma migrate deploy if schema changed.
+- You can now view **Patch Notes** directly in the app under Settings → Patch Notes, so you're always up to date on what's changed.
 
 ---
 
@@ -137,100 +31,88 @@ Format: `# vMAJOR.MINOR.PATCH - YYYY-MM-DD` then `## Section` (Added, Changed, F
 
 ## Added
 
-- Transaction Categories: default/custom, isDefault, CRUD in settings; ensureUserHasDefaultCategories.
-- Activity Log: FINANCIAL_ACCOUNT_CREATED, FINANCIAL_ACCOUNT_UPDATED, FINANCIAL_ACCOUNT_DISABLED; entityType financialAccount; emit from account create/update/disable.
-- Activity Log: TRANSACTION_UPDATED details with `changes` array (field, from, to) for type, amount, category, date, account.
-- Activity log page: financialAccount entity type, actions, formatDetails for transaction update and account changes.
-- Financial Accounts: isHidden on FinancialAccount; hide/show default account in UI; DELETE endpoint (soft/hard delete).
-- Activity Log: FINANCIAL_ACCOUNT_DELETED; delete menu + AlertDialog on accounts page.
-- Transaction form: filter isHidden from account dropdown.
-
-## Changed
-
-- ensureUserHasDefaultFinancialAccount and getDefaultFinancialAccount filter by isHidden.
-- GET /api/financial-accounts returns isHidden, transactionCount; filters isActive.
+- **Transfer between accounts** — you can now record money moved from one account to another as a Transfer transaction.
+- Transfers are included in your account balance calculations and can be filtered in your transaction list.
+- CSV import now supports Transfer transactions.
 
 ## Migration
 
-- Run prisma migrate deploy for isHidden.
+- The Transfer feature requires a new database field on transactions to link the source and destination accounts together.
 
 ---
 
-# v0.10.0 - 2026-03-01
+# v0.8.0 - 2026-03-01
 
 ## Added
 
-- Transaction type TRANSFER between accounts: transferAccountId and transferAccount relation on Transaction.
-- getAccountBalance includes TRANSFER (out -amount, in +amount).
-- createTransaction, updateTransaction, listTransactionsByUser support transferAccountId; list uses OR for account filter.
-- POST /api/transactions validates and accepts transferAccountId for TRANSFER; GET/PATCH return transferAccountId, transferAccount.
-- Export/import filter by account includes transferAccountId (OR); CSV import supports TRANSFER and transferAccountId.
-- Transaction form: TRANSFER type, from/to account dropdowns; transactions page: TRANSFER filter, badge, display.
+- **Transaction Categories** — organize your income and expenses with default categories, or create your own under Settings.
+- **Hide accounts** — you can now hide accounts from your transaction forms without deleting them.
+- Activity log now tracks when accounts are created, updated, or removed.
 
 ## Migration
 
-- Run prisma migrate deploy for transferAccountId.
+- The Hide Account feature requires a new database field to remember which accounts you've chosen to hide.
 
 ---
 
-# v0.11.0 - 2026-03-02
+# v0.7.0 - 2026-03-01
 
 ## Added
 
-- Application-level cache: lib/cache.ts (revalidate 45s, cacheKey helper, re-export unstable_cache).
-- unstable_cache on GET: transactions (list, summary, calendar-summary, month-summary, year-summary), financial-accounts, categories, users/me.
-- Cache invalidation: revalidateTag from next/cache; tags on cached routes.
-- revalidateTag("transactions") on transactions POST, PATCH, DELETE, import; credit-card payment.
-- revalidateTag on financial-accounts create, update, delete, disable, restore; categories create, update, delete; users/me PATCH.
-- docs/core/caching-strategy.md: implementation and invalidation section.
+- **Credit Card support** — track credit card spending, payments, and statements.
+- Set your credit limit, statement closing day, due date, and interest rate per card.
+- Supports major card types: Visa, Mastercard, JCB, Amex, UnionPay, TrueMoney.
+- Thai bank names available as a dropdown when adding a card.
+- Card and account numbers are masked for security in the UI.
+
+## Migration
+
+- The Credit Card feature requires new database structures to store card details (credit limit, interest rate, card type, bank name, account number) and to track monthly statements and transaction statuses.
 
 ---
 
-# v1.0.0 - 2026-03-02
+# v0.6.0 - 2026-02-26
 
 ## Added
 
-- Release Notes / Patch Note page at /dashboard/settings/patch-note (CHANGELOG.md as single source of truth).
-- lib/changelog.ts: parseChangelog, getChangelogVersions (build-time read); react-markdown + remark-gfm for rendering.
-- Breaking and Migration sections visually distinct; empty state when no file or no versions.
-- Settings link to patch notes; i18n: settings.information.patchNote, settings.patchNote.title/empty/noReleases (en/th).
-- Breadcrumb labels for settings and patch-note.
+- **Email verification** — after signing up, you'll receive a verification email. Your profile page shows your verification status and lets you resend the email if needed.
 
 ---
 
-# v1.1.0 - 2026-03-02
+# v0.5.0 - 2026-02-26
 
 ## Added
 
-- Public Product Landing Page at `/`: Navbar, Hero, Core Value, Feature Grid, Engine section, CTA, Footer.
-- Public Releases page at `/releases` (changelog for unauthenticated users).
-- Theme switcher in navbar (Light / Dark / System).
-- Language switcher in navbar (ไทย / English).
-- Landing components: landing-navbar, landing-hero, landing-core-value, landing-feature-grid, landing-engine, landing-cta, landing-footer.
-- i18n: home.nav, home.hero, home.coreValue, home.features, home.engine, home.cta, home.footer (theme, language, user-friendly content).
-
-## Changed
-
-- Home page refactored from simple card to full landing page.
-- All landing content translated to user-friendly language (no technical jargon) for general users.
+- **Forgot your password?** — you can now reset your password via email from the login page.
 
 ---
 
-# v1.2.0 - 2026-03-02
+# v0.4.0 - 2026-02-26
 
 ## Added
 
-- Dashboard Performance Optimization: reduces HTTP requests on Dashboard page load.
-- GET /api/dashboard/init: Batch API returning user, summary, appInfo, and recentTransactions in a single response.
-- DashboardDataContext + DashboardDataProvider: share data between sidebar and dashboard page.
-- TransactionsList supports `initialData` prop to use context data without duplicate fetch.
+- **Income & Expense transactions** — create, edit, and delete transactions through a clean dialog. Includes filters by date range and type.
+- **Calendar view** — see your income and expenses laid out by day. Add or edit transactions directly from the calendar.
+- **Summary cards** on the dashboard showing your financial overview at a glance.
+- **Export** your transactions to CSV with date and type filters.
 
-## Changed
+---
 
-- AppSidebar uses useDashboardData() instead of separate fetches (users/me, summary, app-info).
-- Dashboard page uses useDashboardData() instead of fetching summary itself.
-- revalidateTag("dashboard-init") in mutation routes (transactions, financial-accounts, credit-card payment, users/me).
-- TransactionsCalendar calls refreshDashboard() after create/update/delete transaction.
-- docs/core/caching-strategy.md: added dashboard-init route and tag.
+# v0.3.0 - 2026-02-21
+
+## Added
+
+- **Activity Log** — view a history of actions in your account (sign-ins, password changes, transaction edits, etc.) under Settings → Activity Log.
+- Filters available to narrow down activity by type or date.
+
+---
+
+# v0.2.0 - 2026-02-14
+
+## Added
+
+- **Session management** — view and revoke active sessions from your account settings.
+- **Profile page** — update your display name or change your password under Dashboard → Profile.
+- Sessions are tracked per device, so you can see where you're logged in and sign out remotely.
 
 ---
