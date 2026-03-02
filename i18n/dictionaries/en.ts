@@ -432,13 +432,102 @@ export const enDictionary = {
     },
   },
   home: {
-    title: "Judtang Income and Expenditure Account",
+    title: "Judtang",
     subtitle:
       "Income & expense management system and a base for teams that need login and activity logging.",
     body:
       "This project provides Authentication (register/sign in with email or Google) and an Activity Log to track important events like login, logout, and profile changes. Built with Next.js, NextAuth, and MySQL.",
     signInCta: "Sign in",
     dashboardCta: "Dashboard (protected)",
+    nav: {
+      releases: "Releases",
+      login: "Login",
+      getStarted: "Get Started",
+      backToHome: "Back to home",
+      themeLight: "Light",
+      themeDark: "Dark",
+      themeSystem: "System",
+    },
+    hero: {
+      headline: "Control all your accounts systematically",
+      subheadline:
+        "Multi-account income & expense management with billing cycles, credit card payments, and accurate balance calculation.",
+      primaryCta: "Get Started",
+      secondaryCta: "See what it can do",
+      previewLabel: "Dashboard preview",
+    },
+    coreValue: {
+      structured: {
+        title: "Structured accounting",
+        description:
+          "Not just logging transactions. Supports billing cycles and credit card payment allocation.",
+      },
+      multiAccount: {
+        title: "Multiple accounts",
+        description: "Supports bank accounts, wallets, cash, and credit cards",
+      },
+      deterministic: {
+        title: "Accurate balance",
+        description:
+          "Calculated from actual transactions. No floating or incorrect numbers.",
+      },
+    },
+    features: {
+      creditCard: {
+        title: "Credit card management",
+        items: [
+          "Clear billing cycles you can track",
+          "Payment due date reminders",
+          "Pay minimum or full amount",
+          "Transfer payment from other accounts",
+        ],
+      },
+      transfer: {
+        title: "Transfer between accounts",
+        items: [
+          "Transfer money between accounts",
+          "Automatic balance calculation",
+          "Verify accuracy anytime",
+        ],
+      },
+      importExport: {
+        title: "Import / Export data",
+        items: [
+          "Import from Excel or CSV files",
+          "Reconcile with bank statements",
+          "Review transaction history",
+        ],
+      },
+      releaseTracking: {
+        title: "Update history",
+        items: [
+          "View past versions",
+          "Release notes for every update",
+          "Changes categorized (Added / Changed / Fixed / Removed)",
+        ],
+      },
+    },
+    engine: {
+      title: "Designed for real money management, not just note-taking",
+      description: "The system works with these principles:",
+      bullets: [
+        "Organized transaction records",
+        "Clear separation of credit card accounts",
+        "Real billing cycle tracking",
+        "Full transaction lifecycle management",
+        "Clear structure, easy to maintain",
+      ],
+    },
+    cta: {
+      headline: "Organize your finances today",
+      button: "Get Started",
+    },
+    footer: {
+      version: "v{version}",
+      techStack: "",
+      releaseNotes: "Release notes",
+      copyright: "© {year} Judtang",
+    },
   },
   calendar: {
     title: "Transactions calendar",

@@ -1,6 +1,6 @@
 # Product Overview
 
-**Updated:** product-overview (24/02/2026)
+**Updated:** product-overview (02/03/2026)
 
 **Source:** PRD §1–6
 
@@ -8,9 +8,13 @@
 
 ## 1. Overview
 
-This system provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. It is built on Next.js with NextAuth and a MySQL database, and is intended as a reusable base for solutions that need login and audit trails.
+**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. It is built on Next.js with NextAuth and a MySQL database, and is intended as a reusable base for solutions that need login and audit trails.
 
-The current implementation also includes a lightweight **Income & Expense tracking** feature with a **calendar view** for personal finance-style usage. This tracker is intentionally simple and is treated as an example feature that can be reused or extended in future solutions.
+The product includes:
+
+- **Public Landing Page** (`/`) — Product overview, core value, feature grid, entry points (Login, Get Started). Theme and language switchers. User-friendly content in Thai and English.
+- **Public Releases Page** (`/releases`) — Changelog for unauthenticated users.
+- **Income & Expense tracking** — Multi-account support, credit card management, calendar view, import/export. See [PRD.md](../PRD.md) §18 and [feature/](../feature/).
 
 ---
 
@@ -46,5 +50,6 @@ To enable secure sign-in and registration, session management, and a reliable au
 
 ## 6. Target Users
 
-- Developers and teams who need a shared login and activity-log baseline.
+- **General users** — People who want to manage personal income and expenses, including credit cards and multiple accounts.
+- **Developers and teams** — Who need a shared login and activity-log baseline.
 - Any solution that will add new features on top of Auth and Activity Log.

@@ -189,3 +189,21 @@
 - Breadcrumb labels สำหรับ settings และ patch-note.
 
 ---
+
+# v1.1.0 - 2026-03-02
+
+## Added
+
+- หน้า Public Product Landing ที่ `/`: Navbar, Hero, Core Value, Feature Grid, Engine, CTA, Footer.
+- หน้า Releases ที่ `/releases` (changelog สำหรับผู้ใช้ที่ยังไม่ล็อกอิน).
+- Theme switcher ใน navbar (สว่าง / มืด / ตามระบบ).
+- Language switcher ใน navbar (ไทย / English).
+- Landing components: landing-navbar, landing-hero, landing-core-value, landing-feature-grid, landing-engine, landing-cta, landing-footer.
+- i18n: home.nav, home.hero, home.coreValue, home.features, home.engine, home.cta, home.footer (theme, language, เนื้อหาเข้าใจง่าย).
+
+## Changed
+
+- หน้าแรกเปลี่ยนจาก card ธรรมดาเป็น landing page เต็มรูปแบบ.
+- เนื้อหา landing ทั้งหมดแปลเป็นภาษาที่เข้าใจง่าย (ไม่ใช้ศัพท์เทคนิค) สำหรับผู้ใช้ทั่วไป.
+
+---

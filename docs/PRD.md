@@ -1,14 +1,15 @@
 # Product Requirements Document (PRD)
-## Project: Authentication & Activity Log (scoped solution)
+## Project: Judtang Financial Engine
 
-**This document is the authoritative source.** This solution keeps only **Authentication** and **Activity Log** from a larger codebase; other features will be rebuilt as needed. Split documents for maintainability and code generation are in [structure/](structure/), [core/](core/), and [feature/](feature/). See [INDEX.md](INDEX.md) for the mapping.
+**This document is the authoritative source.** Split documents for maintainability and code generation are in [structure/](structure/), [core/](core/), and [feature/](feature/). See [INDEX.md](INDEX.md) for the mapping.
 
 ---
 
 ## 1. Overview
 
-This system provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events.  
-It is built on Next.js with NextAuth and a MySQL database, and is intended as a reusable base for solutions that need login and audit trails.
+**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), and **Income & Expense** tracking with multi-account and credit card support.
+
+It is built on Next.js with NextAuth and a MySQL database, and is intended for general users and teams who need personal finance management with login and audit trails.
 
 ---
 
@@ -60,6 +61,10 @@ Records critical system events for auditing and tracking purposes. See [activity
 - User registered / logged in
 - User logged out / session revoked
 - Profile or password updated
+
+### 7.2 Public Landing Page
+
+The home page (`/`) serves as the public entry point. It introduces the product (Judtang Financial Engine), explains core capabilities, and provides entry points to sign in or register. Includes navbar (theme switcher, language switcher, Releases, Login, Get Started), Hero, Core Value, Feature Grid, Engine section, CTA, and Footer. The public releases page (`/releases`) shows the changelog without login. See [feature/public-landing-page.md](feature/public-landing-page.md) for full spec.
 
 ---
 
@@ -138,7 +143,6 @@ Records critical system events for auditing and tracking purposes. See [activity
 
 ## 12. Open Questions / To Be Defined
 
-- Dashboard overview layout (post-login)
 - Future integration with external tools (if any)
 
 ---

@@ -189,3 +189,21 @@ Format: `# vMAJOR.MINOR.PATCH - YYYY-MM-DD` then `## Section` (Added, Changed, F
 - Breadcrumb labels for settings and patch-note.
 
 ---
+
+# v1.1.0 - 2026-03-02
+
+## Added
+
+- Public Product Landing Page at `/`: Navbar, Hero, Core Value, Feature Grid, Engine section, CTA, Footer.
+- Public Releases page at `/releases` (changelog for unauthenticated users).
+- Theme switcher in navbar (Light / Dark / System).
+- Language switcher in navbar (ไทย / English).
+- Landing components: landing-navbar, landing-hero, landing-core-value, landing-feature-grid, landing-engine, landing-cta, landing-footer.
+- i18n: home.nav, home.hero, home.coreValue, home.features, home.engine, home.cta, home.footer (theme, language, user-friendly content).
+
+## Changed
+
+- Home page refactored from simple card to full landing page.
+- All landing content translated to user-friendly language (no technical jargon) for general users.
+
+---

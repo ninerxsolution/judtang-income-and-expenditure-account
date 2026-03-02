@@ -5,6 +5,29 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Documentation update — full sync)
+
+- docs/feature/public-landing-page.md — New: full spec for Public Product Landing Page (structure, navbar, hero, core value, feature grid, engine, CTA, footer, theme/language switchers, i18n, components, releases page).
+- docs/INDEX.md — Added public-landing-page.md and transfers.md to feature list.
+- docs/structure/product-overview.md — Updated: Judtang Financial Engine branding; overview now includes Public Landing Page, Releases page, theme/language switchers; target users updated.
+- docs/structure/technical-stack.md — Added next-themes, i18n (custom dictionary).
+- docs/structure/mvp-boundary.md — Added Implemented section: Public Landing, Releases, Income & Expense, Financial Accounts, Credit Card Engine.
+- docs/structure/open-questions.md — Removed resolved dashboard layout question.
+- docs/PRD.md — §1 Overview: Judtang Financial Engine branding, landing page, releases; §7.2: Public Landing Page; §12: Removed resolved dashboard layout question.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 02/03/2026 (Public Product Landing Page)
+
+- app/page.tsx — Refactored into full product landing page: Navbar, Hero, Core Value, Feature Grid, Engine, CTA, Footer.
+- app/releases/page.tsx — New: public releases page (changelog) for unauthenticated users.
+- components/landing/* — New: landing-navbar, landing-hero, landing-core-value, landing-feature-grid, landing-engine, landing-cta, landing-footer.
+- i18n/dictionaries/en.ts, i18n/dictionaries/th.ts — home.nav, home.hero, home.coreValue, home.features, home.engine, home.cta, home.footer.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Release Notes / Patch Note page)
 
 - CHANGELOG.md — New: single source of truth for release notes (format: # vX.Y.Z - date, ## Added/Changed/etc.).
