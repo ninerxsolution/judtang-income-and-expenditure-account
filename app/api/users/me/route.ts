@@ -108,6 +108,7 @@ export async function PATCH(request: Request) {
       });
     }
     revalidateTag("users-me", "max");
+    revalidateTag("dashboard-init", "max");
   }
 
   return NextResponse.json({ ok: true });

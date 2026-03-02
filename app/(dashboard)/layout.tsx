@@ -8,6 +8,7 @@ import { AppSidebarLayout } from "@/components/dashboard/app-sidebar";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { DashboardPageTitle } from "@/components/dashboard/dashboard-page-title";
+import { DashboardDataProvider } from "@/components/dashboard/dashboard-data-context";
 import { FullscreenProvider } from "@/components/dashboard/fullscreen-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
@@ -23,17 +24,19 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen">
       <SessionTouch />
-      <FullscreenProvider>
-        <SidebarProvider className="h-svh overflow-hidden">
-          <AppSidebarLayout>
-            <DashboardBreadcrumb className="px-4 py-4" />
-            <DashboardContent>
-              <DashboardPageTitle />
-              {children}
-            </DashboardContent>
-          </AppSidebarLayout>
-        </SidebarProvider>
-      </FullscreenProvider>
+      <DashboardDataProvider>
+        <FullscreenProvider>
+          <SidebarProvider className="h-svh overflow-hidden">
+            <AppSidebarLayout>
+              <DashboardBreadcrumb className="px-4 py-4" />
+              <DashboardContent>
+                <DashboardPageTitle />
+                {children}
+              </DashboardContent>
+            </AppSidebarLayout>
+          </SidebarProvider>
+        </FullscreenProvider>
+      </DashboardDataProvider>
     </div>
   );
 }

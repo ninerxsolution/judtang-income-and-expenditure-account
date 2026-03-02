@@ -207,3 +207,22 @@ Format: `# vMAJOR.MINOR.PATCH - YYYY-MM-DD` then `## Section` (Added, Changed, F
 - All landing content translated to user-friendly language (no technical jargon) for general users.
 
 ---
+
+# v1.2.0 - 2026-03-02
+
+## Added
+
+- Dashboard Performance Optimization: reduces HTTP requests on Dashboard page load.
+- GET /api/dashboard/init: Batch API returning user, summary, appInfo, and recentTransactions in a single response.
+- DashboardDataContext + DashboardDataProvider: share data between sidebar and dashboard page.
+- TransactionsList supports `initialData` prop to use context data without duplicate fetch.
+
+## Changed
+
+- AppSidebar uses useDashboardData() instead of separate fetches (users/me, summary, app-info).
+- Dashboard page uses useDashboardData() instead of fetching summary itself.
+- revalidateTag("dashboard-init") in mutation routes (transactions, financial-accounts, credit-card payment, users/me).
+- TransactionsCalendar calls refreshDashboard() after create/update/delete transaction.
+- docs/core/caching-strategy.md: added dashboard-init route and tag.
+
+---

@@ -194,6 +194,7 @@ export async function PATCH(
       transferAccount?: { id: string; name: string } | null;
     };
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
@@ -244,6 +245,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
     }
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

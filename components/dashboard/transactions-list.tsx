@@ -31,14 +31,26 @@ function formatDate(iso: string, locale: string) {
   });
 }
 
-export function TransactionsList() {
+type TransactionsListProps = {
+  initialData?: Transaction[] | null;
+};
+
+export function TransactionsList({ initialData }: TransactionsListProps = {}) {
   const { t, locale, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
-  const [items, setItems] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Transaction[]>(
+    Array.isArray(initialData) ? initialData : []
+  );
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialData !== undefined && initialData !== null) {
+      setItems(Array.isArray(initialData) ? initialData : []);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -71,7 +83,7 @@ export function TransactionsList() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [initialData]);
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">

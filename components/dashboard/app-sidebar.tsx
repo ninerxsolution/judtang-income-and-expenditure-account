@@ -2,18 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 import {
-  LayoutDashboard,
   User,
-  Monitor,
   Wallet,
   Landmark,
-  Wrench,
   CalendarRange,
-  Bell,
   Settings,
   LogOut,
   Maximize2,
@@ -51,15 +46,10 @@ import {
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { useFullscreen } from "@/components/dashboard/fullscreen-context";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useI18n } from "@/hooks/use-i18n";
 import { formatAmount } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-type HeaderProfile = {
-  name: string | null;
-  email: string | null;
-  image: string | null;
-};
 
 function getInitials(name: string | null | undefined, email: string | null | undefined) {
   if (name && name.trim().length > 0) {
@@ -78,101 +68,6 @@ function getInitials(name: string | null | undefined, email: string | null | und
     }
   }
   return "?";
-}
-
-type Summary = { income: number; expense: number; totalBalance?: number } | null;
-
-function useHeaderProfile() {
-  const [profile, setProfile] = useState<HeaderProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch("/api/users/me");
-        if (!res.ok) {
-          return;
-        }
-        const data = (await res.json()) as {
-          name?: string | null;
-          email?: string | null;
-          image?: string | null;
-        };
-        if (!cancelled) {
-          setProfile({
-            name: data.name ?? null,
-            email: data.email ?? null,
-            image: data.image ?? null,
-          });
-        }
-      } catch {
-        // ignore header profile errors
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return { profile, loading };
-}
-
-function useHeaderSummary() {
-  const [summary, setSummary] = useState<Summary>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch("/api/transactions/summary?all=1");
-        if (!res.ok) return;
-        const data = (await res.json()) as Summary;
-        if (!cancelled && data) setSummary(data);
-      } catch {
-        // ignore
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const balance =
-    summary?.totalBalance ?? (summary ? summary.income - summary.expense : null);
-  return { balance };
-}
-
-type AppInfoResponse = {
-  appName: string;
-  appVersion: string;
-  patchVersion: string;
-  fullVersion: string;
-};
-
-function useAppInfo() {
-  const [appInfo, setAppInfo] = useState<AppInfoResponse | null>(null);
-
-  useEffect(() => {
-    fetch("/api/app-info")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: AppInfoResponse | null) => data && setAppInfo(data))
-      .catch(() => {});
-  }, []);
-
-  return { appInfo };
 }
 
 const navItems = [
@@ -204,9 +99,9 @@ export function AppSidebarLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { profile } = useHeaderProfile();
-  const { balance } = useHeaderSummary();
-  const { appInfo } = useAppInfo();
+  const { user: profile, summary, appInfo } = useDashboardData();
+  const balance =
+    summary?.totalBalance ?? (summary ? summary.income - summary.expense : null);
   const { t } = useI18n();
   const { fullscreen, toggleFullscreen } = useFullscreen();
   const { theme, resolvedTheme, setTheme } = useTheme();

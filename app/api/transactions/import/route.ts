@@ -408,6 +408,7 @@ export async function POST(request: Request) {
     });
 
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({
       createdCount: result.createdCount,
       updatedCount: result.updatedCount,

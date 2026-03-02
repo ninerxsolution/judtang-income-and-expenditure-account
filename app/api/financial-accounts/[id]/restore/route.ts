@@ -48,6 +48,7 @@ export async function PATCH(
 
     revalidateTag("financial-accounts", "max");
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

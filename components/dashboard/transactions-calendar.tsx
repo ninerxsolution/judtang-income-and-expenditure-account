@@ -22,6 +22,7 @@ import {
 import { formatAmount } from "@/lib/format";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 
@@ -651,9 +652,12 @@ export function TransactionsCalendar() {
     }
   }
 
+  const { refresh: refreshDashboard } = useDashboardData();
+
   function refreshCalendar() {
     setRefreshKey((k) => k + 1);
     refreshDailyItems();
+    refreshDashboard();
   }
 
   const selectedDateLabel = useMemo(() => {

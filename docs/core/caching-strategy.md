@@ -31,6 +31,7 @@ Application-level cache is implemented using Next.js `unstable_cache` in API rou
 
 **Cached GET routes:**
 
+- `GET /api/dashboard/init` — batch API for dashboard initial load (user, summary, appInfo, recentTransactions)
 - `GET /api/transactions/summary` — summary + total balance
 - `GET /api/transactions` — transaction list (with filters)
 - `GET /api/transactions/calendar-summary` — calendar day summary
@@ -62,8 +63,8 @@ This ensures data remains reasonably fresh while significantly reducing redundan
 
 - Cached data is automatically invalidated based on the configured revalidation interval (45 seconds)
 - **On-demand invalidation:** Each cached route uses a `tags` option. When mutations occur, the corresponding route calls `revalidateTag(tag)` so the next request fetches fresh data
-- **Tags:** `transactions` (summary, list, calendar, month, year), `financial-accounts`, `categories`, `users-me`
-- **Mutation points:** Transaction create/update/delete/import, financial account create/update/delete/disable/restore, credit card payment, category create/update/delete, user profile update
+- **Tags:** `dashboard-init`, `transactions` (summary, list, calendar, month, year), `financial-accounts`, `categories`, `users-me`
+- **Mutation points:** Transaction create/update/delete/import, financial account create/update/delete/disable/restore, credit card payment, category create/update/delete, user profile update. Each mutation invalidates `dashboard-init` when it affects dashboard data.
 
 ## Non-Goals
 

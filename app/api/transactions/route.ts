@@ -175,6 +175,7 @@ export async function POST(request: Request) {
           note: body.note ?? undefined,
         });
         revalidateTag("transactions", "max");
+        revalidateTag("dashboard-init", "max");
         return NextResponse.json({
           id: transaction.id,
           type: transaction.type,
@@ -230,6 +231,7 @@ export async function POST(request: Request) {
       if (toAcc) transferAccount = toAcc;
     }
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,

@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Dashboard performance optimization)
+
+- docs/core/caching-strategy.md — Added `GET /api/dashboard/init` batch API; added `dashboard-init` tag and mutation invalidation.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Documentation update — full sync)
 
 - docs/feature/public-landing-page.md — New: full spec for Public Product Landing Page (structure, navbar, hero, core value, feature grid, engine, CTA, footer, theme/language switchers, i18n, components, releases page).

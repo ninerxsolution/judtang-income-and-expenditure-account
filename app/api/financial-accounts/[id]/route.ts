@@ -315,6 +315,7 @@ export async function PATCH(
 
     revalidateTag("financial-accounts", "max");
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({
       id: updated.id,
       name: updated.name,
@@ -400,6 +401,7 @@ export async function DELETE(
     }
     revalidateTag("financial-accounts", "max");
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json(

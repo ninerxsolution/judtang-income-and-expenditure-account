@@ -4,44 +4,23 @@
  * Dashboard home: summary cards + calendar.
  * Protected by proxy — requires login. URL: /dashboard
  */
-import { useEffect, useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
-import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 
-type Summary = { income: number; expense: number; totalBalance?: number } | null;
-
 export default function DashboardPage() {
-  const { t, locale } = useI18n();
-  const [summary, setSummary] = useState<Summary>(null);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSummaryLoading(true);
-    fetch("/api/transactions/summary")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: Summary) => {
-        if (!cancelled && data) setSummary(data);
-      })
-      .finally(() => {
-        if (!cancelled) setSummaryLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+  const { t } = useI18n();
+  const { summary, recentTransactions, loading: summaryLoading } = useDashboardData();
   const balance =
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
 
@@ -108,7 +87,17 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-       <TransactionsList />
+       {summaryLoading ? (
+         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+           <div className="space-y-2">
+             {[1, 2, 3, 4].map((i) => (
+               <Skeleton key={i} className="h-12 w-full rounded-md" />
+             ))}
+           </div>
+         </div>
+       ) : (
+         <TransactionsList initialData={recentTransactions} />
+       )}
        </div>
       </div>
     </div>

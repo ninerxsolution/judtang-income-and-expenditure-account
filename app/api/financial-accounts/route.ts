@@ -253,6 +253,7 @@ export async function POST(request: Request) {
 
     revalidateTag("financial-accounts", "max");
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({
       id: account.id,
       name: account.name,

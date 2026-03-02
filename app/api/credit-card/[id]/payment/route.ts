@@ -66,6 +66,7 @@ export async function POST(
     });
 
     revalidateTag("transactions", "max");
+    revalidateTag("dashboard-init", "max");
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,

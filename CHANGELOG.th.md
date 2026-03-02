@@ -207,3 +207,22 @@
 - เนื้อหา landing ทั้งหมดแปลเป็นภาษาที่เข้าใจง่าย (ไม่ใช้ศัพท์เทคนิค) สำหรับผู้ใช้ทั่วไป.
 
 ---
+
+# v1.2.0 - 2026-03-02
+
+## Added
+
+- Dashboard Performance Optimization: ลดจำนวน HTTP requests บนหน้า Dashboard.
+- GET /api/dashboard/init: Batch API รวม user, summary, appInfo, recentTransactions ใน response เดียว.
+- DashboardDataContext + DashboardDataProvider: share ข้อมูลระหว่าง sidebar กับหน้า dashboard.
+- TransactionsList รองรับ prop `initialData` เพื่อใช้ข้อมูลจาก context โดยไม่ fetch ซ้ำ.
+
+## Changed
+
+- AppSidebar ใช้ useDashboardData() แทน fetch แยก (users/me, summary, app-info).
+- Dashboard page ใช้ useDashboardData() แทน fetch summary เอง.
+- revalidateTag("dashboard-init") ใน mutation routes (transactions, financial-accounts, credit-card payment, users/me).
+- TransactionsCalendar เรียก refreshDashboard() หลัง create/update/delete transaction.
+- docs/core/caching-strategy.md: เพิ่ม dashboard-init route และ tag.
+
+---
