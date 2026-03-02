@@ -73,6 +73,7 @@ export function FinancialAccountFormDialog({
   const [bankId, setBankId] = useState<string>("");
   const [customBankName, setCustomBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
+  const [accountNumberMode, setAccountNumberMode] = useState<"FULL" | "LAST_4_ONLY">("FULL");
   const [interestRate, setInterestRate] = useState("");
   const [cardType, setCardType] = useState<string>("");
   const [pending, setPending] = useState(false);
@@ -93,6 +94,7 @@ export function FinancialAccountFormDialog({
       setBankId("");
       setCustomBankName("");
       setAccountNumber("");
+      setAccountNumberMode("FULL");
       setInterestRate("");
       setCardType("");
       setLoadState("idle");
@@ -122,6 +124,7 @@ export function FinancialAccountFormDialog({
           dueDay?: number | null;
           bankName?: string | null;
           accountNumber?: string | null;
+          accountNumberMode?: string | null;
           interestRate?: number | null;
           cardType?: string | null;
         } | undefined) => {
@@ -133,6 +136,9 @@ export function FinancialAccountFormDialog({
           setStatementClosingDay(data.statementClosingDay != null ? String(data.statementClosingDay) : "");
           setDueDay(data.dueDay != null ? String(data.dueDay) : "");
           setAccountNumber(data.accountNumber ?? "");
+          setAccountNumberMode(
+            data.accountNumberMode === "LAST_4_ONLY" ? "LAST_4_ONLY" : "FULL"
+          );
           setInterestRate(
             data.interestRate != null ? String(data.interestRate) : ""
           );
@@ -172,7 +178,36 @@ export function FinancialAccountFormDialog({
       return;
     }
 
+    if ((type === "BANK" || type === "WALLET") && bankId) {
+      const accNum = accountNumber.replace(/\D/g, "");
+      if (accountNumberMode === "FULL" && accNum.length < 4) {
+        setError(
+          localeKey === "th"
+            ? "กรุณากรอกเลขบัญชีอย่างน้อย 4 หลัก"
+            : "Please enter at least 4 digits for account number"
+        );
+        return;
+      }
+      if (accountNumberMode === "LAST_4_ONLY" && accNum.length !== 4) {
+        setError(
+          localeKey === "th"
+            ? "กรุณากรอกเลข 4 ตัวท้าย"
+            : "Please enter exactly 4 digits"
+        );
+        return;
+      }
+    }
+
     if (type === "CREDIT_CARD") {
+      const accNum = accountNumber.replace(/\D/g, "");
+      if (accNum.length !== 4) {
+        setError(
+          localeKey === "th"
+            ? "กรุณากรอกเลข 4 ตัวท้ายของบัตร"
+            : "Please enter exactly 4 digits (last 4 of card)"
+        );
+        return;
+      }
       const closingDay = statementClosingDay
         ? Number.parseInt(statementClosingDay, 10)
         : 0;
@@ -249,6 +284,9 @@ export function FinancialAccountFormDialog({
     }
     const accNum = accountNumber.replace(/\D/g, "");
     payload.accountNumber = accNum || null;
+    if (type === "BANK" || type === "WALLET") {
+      payload.accountNumberMode = accountNumberMode;
+    }
 
     setPending(true);
     try {
@@ -358,32 +396,75 @@ export function FinancialAccountFormDialog({
                   )}
                 </>
               )}
-              {(type === "BANK" || type === "CREDIT_CARD") && (
-                <FormField
-                  id="account-form-account-number"
-                  label={
-                    type === "BANK"
-                      ? t("accounts.accountNumberLabel")
-                      : t("accounts.cardNumberLabel")
-                  }
-                  type="text"
-                  value={
-                    type === "CREDIT_CARD"
-                      ? formatCardNumber(accountNumber)
-                      : type === "BANK"
+              {(type === "BANK" || type === "WALLET") && (
+                <>
+                  <div>
+                    <p className="mb-2 text-sm font-medium">
+                      {localeKey === "th" ? "โหมดเก็บเลขบัญชี" : "Account number storage"}
+                    </p>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="accountNumberMode"
+                          checked={accountNumberMode === "FULL"}
+                          onChange={() => setAccountNumberMode("FULL")}
+                          className="rounded-full"
+                        />
+                        <span className="text-sm">
+                          {t("accounts.accountNumberModeFull")}
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="accountNumberMode"
+                          checked={accountNumberMode === "LAST_4_ONLY"}
+                          onChange={() => setAccountNumberMode("LAST_4_ONLY")}
+                          className="rounded-full"
+                        />
+                        <span className="text-sm">
+                          {t("accounts.accountNumberModeLast4")}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <FormField
+                    id="account-form-account-number"
+                    label={t("accounts.accountNumberLabel")}
+                    type="text"
+                    value={
+                      accountNumberMode === "FULL"
                         ? formatBankAccountNumber(accountNumber)
                         : accountNumber
-                  }
+                    }
+                    onChange={(v) =>
+                      setAccountNumber(
+                        sanitizeNumericInput(
+                          v,
+                          accountNumberMode === "FULL" ? 12 : 4
+                        )
+                      )
+                    }
+                    placeholder={
+                      accountNumberMode === "FULL"
+                        ? t("accounts.accountNumberPlaceholder")
+                        : t("accounts.cardNumberPlaceholder")
+                    }
+                    inputMode="numeric"
+                  />
+                </>
+              )}
+              {type === "CREDIT_CARD" && (
+                <FormField
+                  id="account-form-account-number"
+                  label={t("accounts.cardNumberLabel")}
+                  type="text"
+                  value={accountNumber}
                   onChange={(v) =>
-                    setAccountNumber(
-                      sanitizeNumericInput(v, type === "CREDIT_CARD" ? 16 : 12)
-                    )
+                    setAccountNumber(sanitizeNumericInput(v, 4))
                   }
-                  placeholder={
-                    type === "BANK"
-                      ? t("accounts.accountNumberPlaceholder")
-                      : t("accounts.cardNumberPlaceholder")
-                  }
+                  placeholder={t("accounts.cardNumberPlaceholder")}
                   inputMode="numeric"
                 />
               )}

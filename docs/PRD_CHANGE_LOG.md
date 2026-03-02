@@ -5,6 +5,14 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 02/03/2026 (Financial account encryption & storage modes)
+
+- docs/feature/financial-accounts.md — Added encryption (AES-256-GCM), accountNumberMode (FULL/LAST_4_ONLY), credit card last-4-only, delete confirmation flow; updated Data Model and UI sections.
+- docs/core/environment-config-strategy.md — Added ENCRYPTION_KEY to environment variables examples.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Dashboard real-time refresh fix)
 
 - app/api/dashboard/init/route.ts — Removed `unstable_cache`; route now queries DB directly on every request and returns `Cache-Control: no-store`. This fixes stale summary cards and recent transactions on dashboard after mutation.

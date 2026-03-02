@@ -1,6 +1,6 @@
 {
-  "name": "personal-workflow-pipeline",
-  "version": "0.1.0",
+  "name": "judtang-income-and-expenditure-account",
+  "version": "0.9.7",
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
