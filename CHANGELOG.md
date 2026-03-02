@@ -2,6 +2,15 @@
 
 ---
 
+# v0.9.4 - 2026-03-02
+
+## Added
+
+- A public **Privacy Policy** page is now available at `/privacy` — no login required. It covers what data is collected, how it's used, third-party services (including Cloudflare Turnstile), data retention, user rights, and account deletion.
+- The footer on the landing page now includes a link to the Privacy Policy.
+
+---
+
 # v0.9.3 - 2026-03-02
 
 ## Added
