@@ -1,3 +1,3 @@
 -- AlterTable
-ALTER TABLE `financialaccount` ADD COLUMN `accountNumberMode` VARCHAR(191) NULL,
+ALTER TABLE `FinancialAccount` ADD COLUMN `accountNumberMode` VARCHAR(191) NULL,
     MODIFY `accountNumber` TEXT NULL;
