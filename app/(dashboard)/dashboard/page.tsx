@@ -146,7 +146,7 @@ export default function DashboardPage() {
                 accountItems.map(({ account, txType }, i) => (
                   <Link
                     key={`${account.id}-${i}`}
-                    href="/dashboard/accounts"
+                    href={`/dashboard/accounts/${account.id}`}
                     className="flex items-center gap-2 rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-200 dark:hover:bg-stone-800"
                   >
                     <AccountIcon account={account} size="sm" />

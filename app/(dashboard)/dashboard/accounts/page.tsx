@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Landmark,
-  Plus,
+  CirclePlus,
   Pencil,
   AlertTriangle,
   Wallet,
@@ -131,6 +131,7 @@ export default function AccountsPage() {
   const [error, setError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
+  const [formDefaultType, setFormDefaultType] = useState<string | undefined>(undefined);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentAccount, setPaymentAccount] = useState<FinancialAccount | null>(null);
   const [revealedAccountIds, setRevealedAccountIds] = useState<Set<string>>(new Set());
@@ -171,13 +172,15 @@ export default function AccountsPage() {
     void fetchAccounts();
   }, []);
 
-  function openCreateModal() {
+  function openCreateModal(defaultType?: string) {
     setFormEditId(null);
+    setFormDefaultType(defaultType);
     setFormOpen(true);
   }
 
   function openEditModal(acc: FinancialAccount) {
     setFormEditId(acc.id);
+    setFormDefaultType(undefined);
     setFormOpen(true);
   }
 
@@ -409,18 +412,12 @@ export default function AccountsPage() {
             {t("accounts.subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/accounts/trash" className="gap-2">
-              <Trash2 className="h-4 w-4" />
-              {t("accounts.viewTrash")}
-            </Link>
-          </Button>
-          <Button onClick={openCreateModal} className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t("accounts.newAccount")}
-          </Button>
-        </div>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/accounts/trash" className="gap-2">
+            <Trash2 className="h-4 w-4" />
+            {t("accounts.viewTrash")}
+          </Link>
+        </Button>
       </div>
 
       {loading && (
@@ -436,17 +433,27 @@ export default function AccountsPage() {
       )}
 
       {!loading && !error && accounts.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Landmark className="mb-3 h-12 w-12 text-zinc-400" />
-            <p className="text-sm text-[#A09080] dark:text-stone-400">
-              {t("accounts.empty")}
-            </p>
-            <Button onClick={openCreateModal} className="mt-4">
-              {t("accounts.newAccount")}
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => openCreateModal()}
+            className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50"
+          >
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5"
+            >
+              <CirclePlus className="h-[22px] w-[22px] text-[#C8B890]" strokeWidth={2} />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-[#6B5E4E] dark:text-stone-500">
+                {t("accounts.addAccountPlaceholder")}
+              </p>
+              <p className="mt-0.5 text-xs text-[#A09080] dark:text-stone-400">
+                {t("accounts.addAccountSubtext")}
+              </p>
+            </div>
+          </button>
+        </div>
       )}
 
       {!loading && !error && accounts.length > 0 && (
@@ -847,11 +854,30 @@ export default function AccountsPage() {
                     {regularAccounts.length > 0 && (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {regularAccounts.map((acc) => renderCard(acc))}
+                        <button
+                          type="button"
+                          onClick={() => openCreateModal()}
+                          className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50"
+                        >
+                          <div
+                            className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5"
+                          >
+                            <CirclePlus className="h-[22px] w-[22px] text-[#C8B890]" strokeWidth={2} />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-[#6B5E4E] dark:text-stone-500">
+                              {t("accounts.addAccountPlaceholder")}
+                            </p>
+                            <p className="mt-0.5 text-xs text-[#A09080] dark:text-stone-400">
+                              {t("accounts.addAccountSubtext")}
+                            </p>
+                          </div>
+                        </button>
                       </div>
                     )}
                   </section>
                 )}
-                {creditCards.length > 0 && (
+                {(creditCards.length > 0 || regularAccounts.length > 0 || hiddenDefault) && (
                   <section>
                     <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                       <CreditCard className="h-5 w-5 text-[#A09080]" />
@@ -859,6 +885,25 @@ export default function AccountsPage() {
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {creditCards.map((acc) => renderCard(acc))}
+                      <button
+                        type="button"
+                        onClick={() => openCreateModal("CREDIT_CARD")}
+                        className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50"
+                      >
+                        <div
+                          className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5"
+                        >
+                          <CirclePlus className="h-[22px] w-[22px] text-[#C8B890]" strokeWidth={2} />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-[#6B5E4E] dark:text-stone-500">
+                            {t("accounts.addAccountPlaceholder")}
+                          </p>
+                          <p className="mt-0.5 text-xs text-[#A09080] dark:text-stone-400">
+                            {t("accounts.addAccountSubtext")}
+                          </p>
+                        </div>
+                      </button>
                     </div>
                   </section>
                 )}
@@ -872,6 +917,7 @@ export default function AccountsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         editId={formEditId}
+        defaultType={formDefaultType}
         onSuccess={fetchAccounts}
       />
       {paymentAccount && (

@@ -205,6 +205,8 @@ export const enDictionary = {
     loadFailed: "Failed to load accounts.",
     empty: "No accounts yet. Create your first account to start logging transactions.",
     newAccount: "New account",
+    addAccountPlaceholder: "Add account",
+    addAccountSubtext: "Connect bank or new account",
     createTitle: "Create account",
     editTitle: "Edit account",
     nameLabel: "Account name",

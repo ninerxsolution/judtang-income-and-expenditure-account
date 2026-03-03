@@ -205,6 +205,8 @@ export const thDictionary = {
     loadFailed: "โหลดบัญชีไม่สำเร็จ",
     empty: "ยังไม่มีบัญชี สร้างบัญชีแรกเพื่อเริ่มบันทึกรายการ",
     newAccount: "สร้างบัญชี",
+    addAccountPlaceholder: "เพิ่มบัญชี",
+    addAccountSubtext: "เชื่อมต่อธนาคารหรือบัญชีใหม่",
     createTitle: "สร้างบัญชีใหม่",
     editTitle: "แก้ไขบัญชี",
     nameLabel: "ชื่อบัญชี",
