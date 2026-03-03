@@ -101,14 +101,14 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <div className="grid w-full grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2">
                     <Button
                       variant="outline"
                       className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-0 bg-emerald-500/10 py-3 text-emerald-600 hover:bg-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25"
                       onClick={() => openQuickAdd("INCOME")}
                     >
                       <Plus className="h-4 w-4 shrink-0" />
-                      <span className="text-xs font-medium">{t("dashboard.summary.recordIncome")}</span>
+                      <span className="text-xs font-medium text-wrap">{t("dashboard.summary.recordIncome")}</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                       onClick={() => openQuickAdd("EXPENSE")}
                     >
                       <Minus className="h-4 w-4 shrink-0" />
-                      <span className="text-xs font-medium">{t("dashboard.summary.recordExpense")}</span>
+                      <span className="text-xs font-medium text-wrap">{t("dashboard.summary.recordExpense")}</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                       onClick={() => openQuickAdd("TRANSFER")}
                     >
                       <ArrowLeftRight className="h-4 w-4 shrink-0" />
-                      <span className="text-xs font-medium">{t("dashboard.summary.transferBetweenAccounts")}</span>
+                      <span className="text-xs font-medium text-wrap">{t("dashboard.summary.transferBetweenAccounts")}</span>
                     </Button>
                   </div>
                 </CardContent>
