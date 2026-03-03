@@ -94,7 +94,7 @@ function CardDropdown({
   renderIcon,
   allowEmpty = false,
   emptyLabel = "—",
-}: SelectProps<T>) {
+}: SelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
