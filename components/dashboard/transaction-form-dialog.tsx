@@ -287,6 +287,24 @@ export function TransactionFormDialog({
     const selectedAccount = accounts.find((a) => a.id === financialAccountId);
     const isCreditCard = selectedAccount?.type === "CREDIT_CARD";
 
+    // Combine selected date with current time so occurredAt reflects when user clicked save
+    const occurredAtValue = occurredAt
+      ? (() => {
+          const [y, m, day] = occurredAt.split("-").map(Number);
+          const now = new Date();
+          const combined = new Date(
+            y,
+            m - 1,
+            day,
+            now.getHours(),
+            now.getMinutes(),
+            now.getSeconds(),
+            now.getMilliseconds()
+          );
+          return combined.toISOString();
+        })()
+      : undefined;
+
     const body: Record<string, unknown> = {
       type,
       amount: value,
@@ -294,7 +312,7 @@ export function TransactionFormDialog({
       categoryId: type !== "TRANSFER" ? (categoryId.trim() || undefined) : undefined,
       category: type !== "TRANSFER" ? (category.trim() || undefined) : undefined,
       note: note.trim() || undefined,
-      occurredAt: occurredAt || undefined,
+      occurredAt: occurredAtValue,
     };
     if (type === "TRANSFER") {
       body.transferAccountId = transferAccountId || undefined;
