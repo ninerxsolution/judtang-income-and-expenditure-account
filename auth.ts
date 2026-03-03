@@ -40,38 +40,33 @@ export const authOptions: AuthOptions = {
         rememberMe: { label: "Remember Me", type: "text" },
       },
       async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) return null;
 
-          if (!shouldSkipTurnstileVerification()) {
-            if (!credentials.turnstileToken) return null;
-            const result = await verifyTurnstileToken(
-              String(credentials.turnstileToken)
-            );
-            if (!result.success) return null;
-          }
-
-          const user = await prisma.user.findUnique({
-            where: { email: String(credentials.email) },
-          });
-          if (!user?.password) return null;
-          const ok = await bcrypt.compare(
-            String(credentials.password),
-            user.password
+        if (!shouldSkipTurnstileVerification()) {
+          if (!credentials.turnstileToken) return null;
+          const result = await verifyTurnstileToken(
+            String(credentials.turnstileToken)
           );
-          if (!ok) return null;
-          return {
-            id: user.id,
-            email: user.email ?? undefined,
-            name: user.name ?? undefined,
-            image: user.image ?? undefined,
-            rememberMe: credentials.rememberMe === "true",
-            role: user.role,
-          };
-        } catch (err) {
-          console.error("[auth] authorize error:", err);
-          throw err;
+          if (!result.success) return null;
         }
+
+        const user = await prisma.user.findUnique({
+          where: { email: String(credentials.email) },
+        });
+        if (!user?.password) return null;
+        const ok = await bcrypt.compare(
+          String(credentials.password),
+          user.password
+        );
+        if (!ok) return null;
+        return {
+          id: user.id,
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+          rememberMe: credentials.rememberMe === "true",
+          role: user.role,
+        };
       },
     }),
     GoogleProvider({
@@ -82,23 +77,17 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      try {
-        if (account?.provider === "google" && user?.email) {
-          await prisma.user.update({
-            where: { email: user.email },
-            data: { emailVerified: new Date() },
-          });
-        }
-        return true;
-      } catch (err) {
-        console.error("[auth] signIn callback error:", err);
-        throw err;
+      if (account?.provider === "google" && user?.email) {
+        await prisma.user.update({
+          where: { email: user.email },
+          data: { emailVerified: new Date() },
+        });
       }
+      return true;
     },
     async jwt({ token, user, account }) {
       const t = token as JWTWithId;
-      try {
-        if (user?.id) {
+      if (user?.id) {
           t.id = user.id;
           t.role = (user as { role?: string }).role;
           if (!t.role) {
@@ -130,40 +119,36 @@ export const authOptions: AuthOptions = {
             entityId: user.id,
           });
           return t as typeof token;
-        }
-        if (t.sessionId) {
-          const row = await prisma.userSession.findFirst({
-            where: { sessionId: t.sessionId, revokedAt: null },
-          });
-          if (!row) {
-            delete t.sub;
-            delete t.id;
-            delete t.sessionId;
-            delete t.role;
-            return t as typeof token;
-          }
-          if (row.expiresAt < new Date()) {
-            await prisma.userSession.update({
-              where: { sessionId: t.sessionId },
-              data: { revokedAt: new Date() },
-            });
-            delete t.sub;
-            delete t.id;
-            delete t.sessionId;
-            delete t.role;
-            return t as typeof token;
-          }
-          const dbUser = await prisma.user.findUnique({
-            where: { id: row.userId },
-            select: { role: true },
-          });
-          t.role = dbUser?.role ?? "USER";
-        }
-        return token as typeof token;
-      } catch (err) {
-        console.error("[auth] jwt callback error:", err);
-        throw err;
       }
+      if (t.sessionId) {
+        const row = await prisma.userSession.findFirst({
+          where: { sessionId: t.sessionId, revokedAt: null },
+        });
+        if (!row) {
+          delete t.sub;
+          delete t.id;
+          delete t.sessionId;
+          delete t.role;
+          return t as typeof token;
+        }
+        if (row.expiresAt < new Date()) {
+          await prisma.userSession.update({
+            where: { sessionId: t.sessionId },
+            data: { revokedAt: new Date() },
+          });
+          delete t.sub;
+          delete t.id;
+          delete t.sessionId;
+          delete t.role;
+          return t as typeof token;
+        }
+        const dbUser = await prisma.user.findUnique({
+          where: { id: row.userId },
+          select: { role: true },
+        });
+        t.role = dbUser?.role ?? "USER";
+      }
+      return token as typeof token;
     },
     async session({ session, token }) {
       const t = token as JWTWithId;
