@@ -9,6 +9,8 @@ import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTransactionsSummary, listTransactionsByUser } from "@/lib/transactions";
 import { getTotalBalance } from "@/lib/balance";
+import { maskAccountNumber } from "@/lib/format";
+import { getAccountNumberForMasking } from "@/lib/account-number";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -53,7 +55,7 @@ function getCurrentMonthRange(timezone: string): { from: Date; to: Date } {
 async function fetchDashboardInit(userId: string) {
   const monthRange = getCurrentMonthRange(DASHBOARD_TIMEZONE);
 
-  const [user, summaryResult, transactions] = await Promise.all([
+  const [user, summaryResult, transactions, accountCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true, image: true },
@@ -66,6 +68,7 @@ async function fetchDashboardInit(userId: string) {
       return { ...summary, totalBalance };
     })(),
     listTransactionsByUser(userId, { limit: 8, offset: 0 }),
+    prisma.financialAccount.count({ where: { userId, isActive: true } }),
   ]);
 
   const appName = process.env.APP_NAME ?? "Judtang";
@@ -78,11 +81,26 @@ async function fetchDashboardInit(userId: string) {
     fullVersion: patchVersion ? `${appVersion} (${patchVersion})` : appVersion,
   };
 
+  function mapAccount(acc: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null) {
+    if (!acc) return null;
+    const accountNumberMasked = maskAccountNumber(
+      getAccountNumberForMasking(acc.accountNumber, acc.accountNumberMode)
+    );
+    return {
+      id: acc.id,
+      name: acc.name,
+      type: acc.type,
+      bankName: acc.bankName ?? null,
+      cardNetwork: acc.cardNetwork ?? null,
+      accountNumberMasked: accountNumberMasked || null,
+    };
+  }
+
   type TxItem = (typeof transactions)[number];
   const recentTransactions = transactions.map((tx: TxItem) => {
     const t = tx as TxItem & {
-      financialAccount?: { id: string; name: string } | null;
-      transferAccount?: { id: string; name: string } | null;
+      financialAccount?: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
+      transferAccount?: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
       categoryRef?: { id: string; name: string } | null;
     };
     return {
@@ -92,7 +110,8 @@ async function fetchDashboardInit(userId: string) {
         typeof t.amount === "object" && t.amount != null && "toNumber" in t.amount
           ? (t.amount as { toNumber: () => number }).toNumber()
           : Number(t.amount),
-      financialAccount: t.financialAccount ?? null,
+      financialAccount: mapAccount(t.financialAccount ?? null),
+      transferAccount: mapAccount(t.transferAccount ?? null),
       categoryRef: t.categoryRef ?? null,
       category: t.category,
       note: t.note,
@@ -111,6 +130,7 @@ async function fetchDashboardInit(userId: string) {
     summary: summaryResult,
     appInfo,
     recentTransactions,
+    accountCount,
   };
 }
 

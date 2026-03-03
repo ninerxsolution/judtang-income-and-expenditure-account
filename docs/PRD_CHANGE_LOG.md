@@ -5,6 +5,17 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 04/03/2026 (Account Detail Page)
+
+- app/(dashboard)/dashboard/accounts/[id]/page.tsx — New: Account detail page with header, info card, quick actions, summary stats, transaction list.
+- app/(dashboard)/dashboard/accounts/page.tsx — Account name links to detail page.
+- app/api/financial-accounts/[id]/route.ts — GET now returns `isIncomplete`.
+- i18n/dictionaries/th.ts, en.ts — Added `accounts.detail.*` keys.
+- docs/feature/financial-accounts.md — Added §4.4 Account Detail Page; updated API table.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 03/03/2026 (Docs sync: v0.9.8, Remember Me, Terms & Conditions, MVP boundary)
 
 - docs/core/authentication-authorization.md — Added Remember Me section (Credentials only, TTL, env vars).

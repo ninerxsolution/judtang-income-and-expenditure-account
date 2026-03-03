@@ -29,11 +29,11 @@ type AccountComboboxProps = {
   className?: string;
 };
 
-function AccountIcon({
+export function AccountIcon({
   account,
   size = "md",
 }: {
-  account: AccountOption;
+  account: Pick<AccountOption, "id" | "name" | "type" | "bankName" | "cardNetwork">;
   size?: "sm" | "md";
 }) {
   const boxClass = size === "sm" ? "h-7 w-7" : "h-8 w-8";

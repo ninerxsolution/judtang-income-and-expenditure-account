@@ -10,6 +10,7 @@ import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { DashboardPageTitle } from "@/components/dashboard/dashboard-page-title";
 import { DashboardDataProvider } from "@/components/dashboard/dashboard-data-context";
 import { FullscreenProvider } from "@/components/dashboard/fullscreen-context";
+import { AccountDetailBreadcrumbProvider } from "@/components/dashboard/account-detail-breadcrumb-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
@@ -26,15 +27,17 @@ export default function DashboardLayout({
       <SessionTouch />
       <DashboardDataProvider>
         <FullscreenProvider>
-          <SidebarProvider className="h-svh overflow-hidden">
-            <AppSidebarLayout>
-              <DashboardBreadcrumb className="px-4 py-4" />
-              <DashboardContent>
-                <DashboardPageTitle />
-                {children}
-              </DashboardContent>
-            </AppSidebarLayout>
-          </SidebarProvider>
+          <AccountDetailBreadcrumbProvider>
+            <SidebarProvider className="h-svh overflow-hidden">
+              <AppSidebarLayout>
+                <DashboardBreadcrumb className="px-4 py-4" />
+                <DashboardContent>
+                  <DashboardPageTitle />
+                  {children}
+                </DashboardContent>
+              </AppSidebarLayout>
+            </SidebarProvider>
+          </AccountDetailBreadcrumbProvider>
         </FullscreenProvider>
       </DashboardDataProvider>
     </div>

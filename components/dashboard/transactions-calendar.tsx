@@ -248,7 +248,7 @@ function formatYearForDisplay(year: number, locale: string): string {
   return String(year);
 }
 
-export function TransactionsCalendar() {
+export function TransactionsCalendar({ showNewTransactionButton = true }: { showNewTransactionButton?: boolean }) {
   const { t, locale, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
 
@@ -751,7 +751,8 @@ export function TransactionsCalendar() {
           {t("calendar.today")}
         </button>
         </div>
-        <button
+        {showNewTransactionButton && (
+          <button
             type="button"
             onClick={() => {
               setFormEditId(null);
@@ -759,10 +760,11 @@ export function TransactionsCalendar() {
               setFormOpen(true);
             }}
             className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
-        >
-          <Plus className="h-4 w-4" />
-          {t("calendar.newTransaction")}
-        </button>
+          >
+            <Plus className="h-4 w-4" />
+            {t("calendar.newTransaction")}
+          </button>
+        )}
       </div>
 
       <div className="mt-6 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-2 sm:p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">

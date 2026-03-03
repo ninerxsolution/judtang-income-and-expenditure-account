@@ -14,6 +14,8 @@ import {
 } from "@/lib/financial-accounts";
 import { recordPayment } from "@/lib/credit-card";
 import { prisma } from "@/lib/prisma";
+import { maskAccountNumber } from "@/lib/format";
+import { getAccountNumberForMasking } from "@/lib/account-number";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -329,11 +331,26 @@ async function fetchTransactionsList(
     offset,
   });
 
+  function mapAccount(acc: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null) {
+    if (!acc) return null;
+    const accountNumberMasked = maskAccountNumber(
+      getAccountNumberForMasking(acc.accountNumber, acc.accountNumberMode)
+    );
+    return {
+      id: acc.id,
+      name: acc.name,
+      type: acc.type ?? "OTHER",
+      bankName: acc.bankName ?? null,
+      cardNetwork: acc.cardNetwork ?? null,
+      accountNumberMasked: accountNumberMasked || null,
+    };
+  }
+
   type TxItem = (typeof transactions)[number];
   return transactions.map((t: TxItem) => {
     const tx = t as TxItem & {
-      financialAccount?: { id: string; name: string } | null;
-      transferAccount?: { id: string; name: string } | null;
+      financialAccount?: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
+      transferAccount?: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
       categoryRef?: { id: string; name: string } | null;
     };
     return {
@@ -345,9 +362,9 @@ async function fetchTransactionsList(
           ? (tx.amount as { toNumber: () => number }).toNumber()
           : Number(tx.amount),
       financialAccountId: tx.financialAccountId,
-      financialAccount: tx.financialAccount ?? null,
+      financialAccount: mapAccount(tx.financialAccount ?? null),
       transferAccountId: tx.transferAccountId ?? null,
-      transferAccount: tx.transferAccount ?? null,
+      transferAccount: mapAccount(tx.transferAccount ?? null),
       categoryId: tx.categoryId,
       categoryRef: tx.categoryRef ?? null,
       category: tx.category,

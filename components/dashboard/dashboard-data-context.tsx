@@ -28,11 +28,21 @@ export type DashboardAppInfo = {
   fullVersion: string;
 } | null;
 
+export type DashboardTransactionAccount = {
+  id: string;
+  name: string;
+  type: string;
+  bankName?: string | null;
+  cardNetwork?: string | null;
+  accountNumberMasked?: string | null;
+};
+
 export type DashboardTransaction = {
   id: string;
   type: "INCOME" | "EXPENSE" | string;
   amount: number;
-  financialAccount?: { id: string; name: string } | null;
+  financialAccount?: DashboardTransactionAccount | null;
+  transferAccount?: DashboardTransactionAccount | null;
   categoryRef?: { id: string; name: string } | null;
   category: string | null;
   note: string | null;
@@ -44,6 +54,7 @@ export type DashboardData = {
   summary: DashboardSummary;
   appInfo: DashboardAppInfo;
   recentTransactions: DashboardTransaction[];
+  accountCount: number;
   loading: boolean;
   refresh: () => void;
 };
@@ -69,6 +80,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
   const [recentTransactions, setRecentTransactions] = useState<
     DashboardTransaction[]
   >([]);
+  const [accountCount, setAccountCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -78,15 +90,17 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
       if (!res.ok) {
         setUser(null);
         setSummary(null);
-        setAppInfo(null);
-        setRecentTransactions([]);
-        return;
+      setAppInfo(null);
+      setRecentTransactions([]);
+      setAccountCount(0);
+      return;
       }
       const data = (await res.json()) as {
         user?: { name?: string | null; email?: string | null; image?: string | null } | null;
         summary?: { income?: number; expense?: number; totalBalance?: number } | null;
         appInfo?: DashboardAppInfo;
         recentTransactions?: DashboardTransaction[] | unknown;
+        accountCount?: number;
       };
       setUser(
         data.user
@@ -110,11 +124,13 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
       setRecentTransactions(
         Array.isArray(data.recentTransactions) ? data.recentTransactions : []
       );
+      setAccountCount(typeof data.accountCount === "number" ? data.accountCount : 0);
     } catch {
       setUser(null);
       setSummary(null);
       setAppInfo(null);
       setRecentTransactions([]);
+      setAccountCount(0);
     } finally {
       setLoading(false);
     }
@@ -129,6 +145,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     summary,
     appInfo,
     recentTransactions,
+    accountCount,
     loading,
     refresh: load,
   };

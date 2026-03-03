@@ -290,8 +290,28 @@ export async function listTransactionsByUser(
     take: safeLimit,
     skip: safeOffset,
     include: {
-      financialAccount: { select: { id: true, name: true } },
-      transferAccount: { select: { id: true, name: true } },
+      financialAccount: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          bankName: true,
+          cardNetwork: true,
+          accountNumber: true,
+          accountNumberMode: true,
+        },
+      },
+      transferAccount: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          bankName: true,
+          cardNetwork: true,
+          accountNumber: true,
+          accountNumberMode: true,
+        },
+      },
       categoryRef: { select: { id: true, name: true } },
     },
   });

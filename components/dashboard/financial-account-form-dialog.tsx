@@ -66,6 +66,7 @@ type FinancialAccountFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editId?: string | null;
+  defaultType?: string;
   onSuccess?: () => void;
 };
 
@@ -73,6 +74,7 @@ export function FinancialAccountFormDialog({
   open,
   onOpenChange,
   editId,
+  defaultType,
   onSuccess,
 }: FinancialAccountFormDialogProps) {
   const { t, locale } = useI18n();
@@ -100,7 +102,11 @@ export function FinancialAccountFormDialog({
     if (!open) return;
     if (!editId) {
       setName("");
-      setType("CASH");
+      setType(
+        defaultType && ACCOUNT_TYPES.includes(defaultType as (typeof ACCOUNT_TYPES)[number])
+          ? defaultType
+          : "CASH"
+      );
       setInitialBalance("0");
       setCreditLimit("");
       setStatementClosingDay("");
@@ -183,7 +189,7 @@ export function FinancialAccountFormDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, editId, t]);
+  }, [open, editId, defaultType, t]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
