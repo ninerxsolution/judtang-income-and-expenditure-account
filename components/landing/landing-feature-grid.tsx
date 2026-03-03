@@ -36,7 +36,7 @@ export function LandingFeatureGrid({ language }: LandingFeatureGridProps) {
   const features = dict.home.features;
 
   return (
-    <section className="py-12">
+    <section className="py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-8 sm:grid-cols-2">
           {FEATURES.map(({ key, Icon }) => {
@@ -45,20 +45,20 @@ export function LandingFeatureGrid({ language }: LandingFeatureGridProps) {
             return (
               <div
                 key={key}
-                className="flex flex-col space-y-4   p-6 dark:bg-zinc-900"
+                className="flex flex-col space-y-4 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-6 dark:border-stone-800 dark:bg-stone-900"
               >
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-indigo-100 p-2 dark:bg-indigo-950/50">
-                    <Icon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <div className="rounded-md bg-[#EBF4E3] p-2 dark:bg-amber-950/50">
+                    <Icon className="h-5 w-5 text-[#5C6B52] dark:text-amber-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  <h3 className="text-lg font-semibold text-[#3D3020] dark:text-stone-100">
                     {feature.title}
                   </h3>
                 </div>
-                <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
+                <ul className="space-y-2 text-sm text-[#A09080] dark:text-stone-400">
                   {items.map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-indigo-500" />
+                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#6B9E5E]" />
                       {item}
                     </li>
                   ))}

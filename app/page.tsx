@@ -14,8 +14,6 @@ import { LandingNavbar } from "@/components/landing/landing-navbar";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingCoreValue } from "@/components/landing/landing-core-value";
 import { LandingFeatureGrid } from "@/components/landing/landing-feature-grid";
-import { LandingEngine } from "@/components/landing/landing-engine";
-import { LandingCta } from "@/components/landing/landing-cta";
 import { LandingFooter } from "@/components/landing/landing-footer";
 
 async function getLanguage(): Promise<Language> {
@@ -38,13 +36,13 @@ export default async function Home() {
   const latestVersion = versions[0]?.version ?? "0.0.0";
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
       <LandingNavbar language={language} />
       <main>
         <LandingHero language={language} />
         <LandingCoreValue language={language} />
         <LandingFeatureGrid language={language} />
-        <LandingEngine language={language} />
+        
         <LandingFooter language={language} version={latestVersion} />
       </main>
     </div>

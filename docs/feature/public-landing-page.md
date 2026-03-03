@@ -134,10 +134,10 @@ All landing content under `home.*`:
 
 ## 11. Visual Guidelines
 
-- **Background:** `bg-zinc-50` / `dark:bg-zinc-950`
-- **Accent:** `indigo-600` for primary CTAs
+- **Background:** `bg-stone-50` / `dark:bg-stone-950` (Earth tone)
+- **Accent:** `amber-600` for primary CTAs; `emerald-500` for bullets/dots
 - **Typography:** Large headline, generous line height
-- **Spacing:** `py-24` between sections
+- **Spacing:** `py-16` to `py-20` between sections
 - **Avoid:** Heavy gradients, buzzwords, excessive animations
 
 ---

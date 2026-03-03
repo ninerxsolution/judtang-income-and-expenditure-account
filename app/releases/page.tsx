@@ -74,12 +74,12 @@ function SectionBlock({
             ? "mb-2 text-sm font-semibold text-red-700 dark:text-red-400"
             : isMigration
               ? "mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300"
-              : "mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+              : "mb-2 text-sm font-semibold text-[#3D3020] dark:text-stone-200"
         }
       >
         {headingLabel}
       </h3>
-      <div className="changelog-body text-sm text-zinc-700 dark:text-zinc-300 [&_ul]:list-inside [&_ul]:list-disc [&_ol]:list-inside [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-zinc-200 [&_pre]:p-2 [&_code]:rounded [&_code]:bg-zinc-200 [&_code]:px-1 [&_code]:py-0.5 [&_hr]:my-10 [&_hr]:border-zinc-200 dark:[&_pre]:bg-zinc-800 dark:[&_code]:bg-zinc-800 dark:[&_hr]:border-zinc-700">
+      <div className="changelog-body text-sm text-[#3D3020] dark:text-stone-300 [&_ul]:list-inside [&_ul]:list-disc [&_ol]:list-inside [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-[#E8E0C8] [&_pre]:p-2 [&_code]:rounded [&_code]:bg-[#E8E0C8] [&_code]:px-1 [&_code]:py-0.5 [&_hr]:my-10 [&_hr]:border-[#D4C9B0] dark:[&_pre]:bg-stone-800 dark:[&_code]:bg-stone-800 dark:[&_hr]:border-stone-700">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body}</ReactMarkdown>
       </div>
     </div>
@@ -102,13 +102,13 @@ function VersionBlock({
       <div className="flex flex-wrap items-center gap-3">
         <span
           id={`version-${version.version}`}
-          className="inline-flex items-center rounded-md bg-zinc-900 px-2.5 py-0.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+          className="inline-flex items-center rounded-md bg-[#5C6B52] px-2.5 py-0.5 text-sm font-medium text-white dark:bg-stone-100 dark:text-stone-900"
         >
           v{version.version}
         </span>
         <time
           dateTime={version.releaseDate}
-          className="text-sm text-zinc-500 dark:text-zinc-400"
+          className="text-sm text-[#A09080] dark:text-stone-400"
         >
           {version.releaseDate}
         </time>
@@ -133,16 +133,16 @@ export default async function ReleasesPage() {
   const versions = await getChangelogVersions(language);
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur supports-backdrop-filter:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/95 dark:supports-backdrop-filter:bg-zinc-950/80">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
+      <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
+        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/" className="gap-2">
+            <Link href="/" className="gap-2 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100">
               <ArrowLeft className="h-4 w-4" />
               {translate(language, "home.nav.backToHome")}
             </Link>
           </Button>
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
             {translate(language, "settings.patchNote.title")}
           </span>
         </div>
@@ -150,11 +150,11 @@ export default async function ReleasesPage() {
       <main className="mx-auto max-w-4xl px-6 py-12">
         {versions.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 p-12">
-            <AlertTriangle className="h-10 w-10 text-zinc-400 dark:text-zinc-500" />
-            <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+            <AlertTriangle className="h-10 w-10 text-[#A09080] dark:text-stone-500" />
+            <p className="text-center text-sm text-[#6B5E4E] dark:text-stone-400">
               {translate(language, "settings.patchNote.empty")}
             </p>
-            <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
+            <p className="text-center text-xs text-[#A09080] dark:text-stone-500">
               {translate(language, "settings.patchNote.noReleases")}
             </p>
           </div>

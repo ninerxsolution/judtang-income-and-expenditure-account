@@ -5,6 +5,15 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 03/03/2026 (Landing page Earth tone revamp)
+
+- app/page.tsx — Changed background to stone-50/950; added LandingCta section.
+- components/landing/* — Revamped all landing components: stone/amber/emerald Earth tone palette; added Hero dashboard mock preview; improved section spacing; fixed FeatureGrid missing light-mode bg.
+- docs/feature/public-landing-page.md — §11 Visual Guidelines: updated to stone/amber/emerald.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 03/03/2026 (Testing strategy update)
 
 - docs/structure/testing-strategy.md — Updated: reflect implemented test suite (lib unit tests, API integration tests); direct handler import; list of test files and deferred items.
