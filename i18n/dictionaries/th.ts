@@ -310,6 +310,18 @@ export const thDictionary = {
     restoreFailed: "กู้คืนบัญชีไม่สำเร็จ",
     backToAccounts: "กลับไปบัญชี",
     transactionCountLabel: "{count} รายการ",
+    detail: {
+      title: "รายละเอียดบัญชี",
+      backToAccounts: "กลับไปรายการบัญชี",
+      summary: "สรุป",
+      transactions: "รายการธุรกรรม",
+      periodThisMonth: "เดือนนี้",
+      periodLastMonth: "เดือนที่แล้ว",
+      notFound: "ไม่พบบัญชี",
+      incomeTotal: "รับมาแล้วทั้งสิ้น",
+      expenseTotal: "จ่ายไปแล้วทั้งสิ้น",
+      transactionCount: "รายการ",
+    },
   },
   profile: {
     emailVerified: "ยืนยันแล้ว",

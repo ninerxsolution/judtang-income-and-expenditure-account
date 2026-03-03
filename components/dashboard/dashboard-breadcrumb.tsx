@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
 
 export function getSegmentLabel(segment: string, _allSegments?: string[]): string {
   const map: Record<string, string> = {
@@ -20,6 +21,7 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
     tools: "Tools",
     calendar: "Calendar",
     "activity-log": "Activity log",
+    accounts: "Accounts",
   };
 
   if (map[segment]) return map[segment];
@@ -31,8 +33,18 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
   return segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
 }
 
+function isAccountDetailPath(segments: string[]): boolean {
+  return (
+    segments.length >= 3 &&
+    segments[0] === "dashboard" &&
+    segments[1] === "accounts" &&
+    /^[a-z0-9]{20,}$/i.test(segments[2] ?? "")
+  );
+}
+
 export function DashboardBreadcrumb({ className }: { className?: string }) {
   const pathname = usePathname();
+  const { accountName } = useAccountDetailBreadcrumb() ?? { accountName: null };
 
   if (!pathname) return null;
 
@@ -49,10 +61,16 @@ export function DashboardBreadcrumb({ className }: { className?: string }) {
   const items = segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
     const isLast = index === segments.length - 1;
+    let label: string;
+    if (isAccountDetailPath(segments) && index === 2 && isLast) {
+      label = accountName ?? "...";
+    } else {
+      label = getSegmentLabel(segment, segments);
+    }
 
     return {
       href,
-      label: getSegmentLabel(segment, segments),
+      label,
       isLast,
     };
   });

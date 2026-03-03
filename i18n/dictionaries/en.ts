@@ -310,6 +310,18 @@ export const enDictionary = {
     restoreFailed: "Failed to restore account.",
     backToAccounts: "Back to accounts",
     transactionCountLabel: "{count} transactions",
+    detail: {
+      title: "Account details",
+      backToAccounts: "Back to accounts",
+      summary: "Summary",
+      transactions: "Transactions",
+      periodThisMonth: "This month",
+      periodLastMonth: "Last month",
+      notFound: "Account not found",
+      incomeTotal: "Total received",
+      expenseTotal: "Total paid",
+      transactionCount: "Transactions",
+    },
   },
   profile: {
     emailVerified: "Verified",

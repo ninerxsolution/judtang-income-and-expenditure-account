@@ -498,7 +498,14 @@ export default function AccountsPage() {
                       ) : (
                         <TypeIcon className="h-5 w-5 text-[#A09080]" />
                       )}
-                      <CardTitle className="text-base">{acc.name}</CardTitle>
+                      <CardTitle className="text-base">
+                        <Link
+                          href={`/dashboard/accounts/${acc.id}`}
+                          className="hover:underline focus:underline"
+                        >
+                          {acc.name}
+                        </Link>
+                      </CardTitle>
                       {acc.type === "CREDIT_CARD" && acc.cardNetwork && (
                         <div
                           className="flex shrink-0 items-center"

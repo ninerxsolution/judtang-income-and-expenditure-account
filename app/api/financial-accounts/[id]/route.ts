@@ -11,6 +11,7 @@ import {
   getFullAccountNumber,
   processAccountNumberForStorage,
 } from "@/lib/account-number";
+import { isAccountIncomplete } from "@/lib/financial-accounts";
 import type { AccountType } from "@prisma/client";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
@@ -38,16 +39,33 @@ export async function GET(
 
   const balance = await getAccountBalance(account.id);
 
-  const lastTx = await prisma.transaction.findFirst({
-    where: { financialAccountId: account.id },
-    orderBy: { occurredAt: "desc" },
-    select: { occurredAt: true },
-  });
+  const [lastTx, transactionCount] = await Promise.all([
+    prisma.transaction.findFirst({
+      where: {
+        OR: [
+          { financialAccountId: account.id },
+          { transferAccountId: account.id },
+        ],
+      },
+      orderBy: { occurredAt: "desc" },
+      select: { occurredAt: true },
+    }),
+    prisma.transaction.count({
+      where: {
+        OR: [
+          { financialAccountId: account.id },
+          { transferAccountId: account.id },
+        ],
+      },
+    }),
+  ]);
 
   const accountNumberForForm =
     getFullAccountNumber(account.accountNumber, account.accountNumberMode) ??
     account.accountNumber ??
     null;
+
+  const isIncomplete = isAccountIncomplete(account);
 
   const base = {
     id: account.id,
@@ -63,6 +81,8 @@ export async function GET(
     bankName: account.bankName ?? null,
     accountNumber: accountNumberForForm,
     accountNumberMode: account.accountNumberMode ?? null,
+    isIncomplete,
+    transactionCount,
   };
 
   if (account.type === "CREDIT_CARD") {
