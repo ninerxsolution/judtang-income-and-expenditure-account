@@ -144,21 +144,21 @@ export default function FeedbackPage() {
         <h1 className="text-xl font-semibold">
           {t("settings.feedback.title")}
         </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
           {t("settings.feedback.description")}
         </p>
       </header>
 
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30">
+      <div className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-7 w-7 items-center justify-center">
             <HelpCircle className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
               {t("settings.feedback.formTitle")}
             </h2>
-            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
               {t("settings.feedback.formDescription")}
             </p>
           </div>
@@ -172,7 +172,7 @@ export default function FeedbackPage() {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
-              className="h-9 w-full rounded-md border border-zinc-300 bg-white px-3 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="h-9 w-full rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-1 text-sm dark:border-stone-700 dark:bg-stone-900"
             >
               <option value="">{t("settings.feedback.categoryPlaceholder")}</option>
               {CATEGORIES.map((c) => (
@@ -204,13 +204,13 @@ export default function FeedbackPage() {
               rows={5}
               maxLength={DESC_MAX}
               placeholder={t("settings.feedback.descriptionPlaceholder")}
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="w-full rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
             />
           </div>
 
           <div className="space-y-2">
             <Label>{t("settings.feedback.screenshotsLabel")}</Label>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-[#A09080] dark:text-stone-400">
               {t("settings.feedback.screenshotsHint")}
             </p>
             <input
@@ -219,14 +219,14 @@ export default function FeedbackPage() {
               accept="image/jpeg,image/png,image/webp"
               multiple
               onChange={handleFileChange}
-              className="max-w-xs rounded-md border border-zinc-300 bg-white px-3 py-1 text-sm file:mr-2 file:rounded file:border-0 file:bg-zinc-100 file:px-3 file:py-1 file:text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:file:bg-zinc-800"
+              className="max-w-xs rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-1 text-sm file:mr-2 file:rounded file:border-0 file:bg-[#F5F0E8] file:px-3 file:py-1 file:text-sm dark:border-stone-700 dark:bg-stone-900 dark:file:bg-stone-800"
             />
             {imageFiles.length > 0 && (
               <ul className="flex flex-wrap gap-2">
                 {imageFiles.map((f, i) => (
                   <li
                     key={i}
-                    className="flex items-center gap-2 rounded border border-zinc-200 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+                    className="flex items-center gap-2 rounded border border-[#D4C9B0] bg-[#FDFAF4] px-2 py-1 text-xs dark:border-stone-700 dark:bg-stone-900"
                   >
                     <span className="truncate max-w-[120px]">{f.name}</span>
                     <button

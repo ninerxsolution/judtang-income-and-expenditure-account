@@ -192,14 +192,14 @@ export default function TransactionsPage() {
             <List className="h-5 w-5" />
             {t("dashboard.pageTitle.transactionsList")}
           </h1> */}
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
             {t("transactions.list.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => openCreateModal()}
-            className="inline-flex gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="inline-flex gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
           >
             <Plus className="h-4 w-4" />
             {t("transactions.list.newTransaction")}
@@ -207,8 +207,8 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+      <div className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-4 dark:border-stone-700 dark:bg-stone-900/40">
+        <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-200">
           {t("transactions.list.filters")}
         </h2>
         <div className="flex flex-wrap items-end gap-3">
@@ -227,14 +227,14 @@ export default function TransactionsPage() {
             className="min-w-[180px]"
           />
           <div>
-            <label htmlFor="list-type" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <label htmlFor="list-type" className="mb-1 block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">
               {t("dataTools.export.type")}
             </label>
             <select
               id="list-type"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
-              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="rounded-md border border-[#D4C9B0] px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
             >
               <option value="all">{t("dataTools.export.typeAll")}</option>
               <option value="INCOME">{t("transactions.common.income")}</option>
@@ -243,14 +243,14 @@ export default function TransactionsPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="list-account" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            <label htmlFor="list-account" className="mb-1 block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">
               {t("transactions.new.accountLabel")}
             </label>
             <select
               id="list-account"
               value={filterAccountId}
               onChange={(e) => setFilterAccountId(e.target.value)}
-              className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 min-w-[160px]"
+              className="rounded-md border border-[#D4C9B0] px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 min-w-[160px]"
             >
               <option value="">{t("dataTools.export.typeAll")}</option>
               {accounts.map((acc) => (
@@ -282,36 +282,36 @@ export default function TransactionsPage() {
       )}
 
       {!loading && !error && items.length === 0 && (
-        <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-6 text-sm text-[#A09080] dark:text-stone-400">
           {t("transactions.list.empty")}
         </p>
       )}
 
       {!loading && !error && items.length > 0 && (
         <>
-          <div className="mt-6 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/60">
+          <div className="mt-6 overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
             <table className="min-w-full text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-800/80">
+              <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.date")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.account")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.type")}
                   </th>
-                  <th className="px-4 py-2 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.amount")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.category")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.note")}
                   </th>
-                  <th className="w-0 px-2 py-2 text-right font-medium text-zinc-500 dark:text-zinc-400">
+                  <th className="w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
                     {t("common.actions.edit")} / {t("common.actions.delete")}
                   </th>
                 </tr>
@@ -328,12 +328,12 @@ export default function TransactionsPage() {
                   return (
                     <tr
                       key={tx.id}
-                      className="border-t border-zinc-100 dark:border-zinc-800"
+                      className="border-t border-[#D4C9B0] dark:border-stone-800"
                     >
-                      <td className="px-4 py-2 align-top text-zinc-800 dark:text-zinc-100">
+                      <td className="px-4 py-2 align-top text-[#3D3020] dark:text-stone-100">
                         {formatDateTime(tx.occurredAt, locale)}
                       </td>
-                      <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
+                      <td className="px-4 py-2 align-top text-[#3D3020] dark:text-stone-200">
                         {isTransfer ? (
                           <>
                             {tx.financialAccount?.name ?? "—"} {accountDisplay}
@@ -369,13 +369,13 @@ export default function TransactionsPage() {
                       <td className="px-4 py-2 align-top text-right tabular-nums text-zinc-900 dark:text-zinc-50">
                         {formatAmount(tx.amount)}
                       </td>
-                      <td className="px-4 py-2 align-top text-zinc-700 dark:text-zinc-200">
+                      <td className="px-4 py-2 align-top text-[#3D3020] dark:text-stone-200">
                         {getCategoryDisplayName(
                           tx.categoryRef?.name ?? tx.category ?? "",
                           localeKey
                         ) || "—"}
                       </td>
-                      <td className="px-4 py-2 align-top text-zinc-600 dark:text-zinc-300">
+                      <td className="px-4 py-2 align-top text-[#6B5E4E] dark:text-stone-300">
                         {tx.note
                           ? tx.note.length > 60
                             ? `${tx.note.slice(0, 57)}…`
@@ -410,7 +410,7 @@ export default function TransactionsPage() {
             </table>
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-[#A09080] dark:text-stone-400">
               {t("transactions.list.pageInfo", {
                 from: offset + 1,
                 to: offset + items.length,

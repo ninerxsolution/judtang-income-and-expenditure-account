@@ -382,7 +382,7 @@ export function TransactionFormDialog({
         </DialogHeader>
 
         {loadState === "loading" && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-[#A09080] dark:text-stone-400">
             {t("transactions.edit.loading")}
           </p>
         )}
@@ -399,14 +399,14 @@ export function TransactionFormDialog({
             <span className="mb-1 block text-sm font-medium">
               {t("transactions.new.typeLabel")}
             </span>
-            <div className="inline-flex rounded-md border overflow-hidden border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="inline-flex rounded-md border overflow-hidden border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
               <button
                 type="button"
                 onClick={() => setType("INCOME")}
                 className={`inline-flex items-center gap-1 px-3 py-1.5 transition-all ${
                   type === "INCOME"
                     ? "bg-emerald-500 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                 }`}
               >
                 <ArrowDownCircle className="h-4 w-4" />
@@ -415,10 +415,10 @@ export function TransactionFormDialog({
               <button
                 type="button"
                 onClick={() => setType("EXPENSE")}
-                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                className={`inline-flex items-center gap-1 border-l border-[#D4C9B0] px-3 py-1.5 dark:border-stone-700 transition-all ${
                   type === "EXPENSE"
                     ? "bg-red-500 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                 }`}
               >
                 <ArrowUpCircle className="h-4 w-4" />
@@ -427,10 +427,10 @@ export function TransactionFormDialog({
               <button
                 type="button"
                 onClick={() => setType("TRANSFER")}
-                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                className={`inline-flex items-center gap-1 border-l border-[#D4C9B0] px-3 py-1.5 dark:border-stone-700 transition-all ${
                   type === "TRANSFER"
                     ? "bg-blue-500 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                 }`}
               >
                 <ArrowLeftRight className="h-4 w-4" />
@@ -449,7 +449,7 @@ export function TransactionFormDialog({
                   id="transaction-modal-from-account"
                   value={financialAccountId}
                   onChange={(e) => setFinancialAccountId(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                 >
                   {accounts
                     .filter((acc) => acc.type !== "CREDIT_CARD")
@@ -468,7 +468,7 @@ export function TransactionFormDialog({
                   id="transaction-modal-to-account"
                   value={transferAccountId}
                   onChange={(e) => setTransferAccountId(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                 >
                   <option value="">—</option>
                   {accounts
@@ -490,7 +490,7 @@ export function TransactionFormDialog({
                 id="transaction-modal-account"
                 value={financialAccountId}
                 onChange={(e) => setFinancialAccountId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               >
                 {accounts.map((acc) => (
                   <option key={acc.id} value={acc.id}>
@@ -509,14 +509,14 @@ export function TransactionFormDialog({
                 <span className="mb-1 block text-sm font-medium">
                   {t("transactions.new.statusLabel")}
                 </span>
-                <div className="inline-flex rounded-md border overflow-hidden border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="inline-flex rounded-md border overflow-hidden border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
                   <button
                     type="button"
                     onClick={() => setStatus("PENDING")}
                     className={`inline-flex items-center gap-1 px-3 py-1.5 transition-all ${
                       status === "PENDING"
                         ? "bg-amber-500 text-white"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                     }`}
                   >
                     {t("transactions.new.statusPending")}
@@ -524,10 +524,10 @@ export function TransactionFormDialog({
                   <button
                     type="button"
                     onClick={() => setStatus("POSTED")}
-                    className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                    className={`inline-flex items-center gap-1 border-l border-[#D4C9B0] px-3 py-1.5 dark:border-stone-700 transition-all ${
                       status === "POSTED"
                         ? "bg-emerald-500 text-white"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                     }`}
                   >
                     {t("transactions.new.statusPosted")}
@@ -562,7 +562,7 @@ export function TransactionFormDialog({
                 placeholder={t("transactions.new.categorySearchPlaceholder")}
                 noResultsText={t("transactions.new.categoryNoResults")}
                 noneLabel="—"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               />
             </div>
           )}
@@ -588,7 +588,7 @@ export function TransactionFormDialog({
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               maxLength={MAX_NOTE_LENGTH}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm text-[#3D3020] focus:border-[#5C6B52] focus:outline-none focus:ring-1 focus:ring-[#5C6B52] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
             />
           </div>
 

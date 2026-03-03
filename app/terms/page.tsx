@@ -52,7 +52,7 @@ export default async function TermsPage() {
           key={item}
           className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
         >
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6B9E5E]" />
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
           {item}
         </li>
       ))}
@@ -156,7 +156,7 @@ export default async function TermsPage() {
                   key={item}
                   className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                 >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6B9E5E]" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {item}
                 </li>
               ))}

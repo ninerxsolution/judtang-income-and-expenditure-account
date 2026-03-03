@@ -147,7 +147,7 @@ export default function SettingsPage() {
         className="sticky top-24 self-start hidden w-44 shrink-0 lg:block"
       >
         <div className="space-y-1">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-[#A09080] dark:text-stone-400">
             {t("settings.contents")}
           </p>
           {tocItems.map((item) => (
@@ -155,7 +155,7 @@ export default function SettingsPage() {
               key={item.id}
               type="button"
               onClick={() => scrollToSection(item.id)}
-              className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+              className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-[#6B5E4E] hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
             >
               {item.label}
             </button>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
       <div className="min-w-0 flex-1 space-y-8">
         <header className="space-y-1">
           <h1 className="text-xl font-semibold">{t("settings.title")}</h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
             {t("settings.description")}
           </p>
         </header>
@@ -175,7 +175,7 @@ export default function SettingsPage() {
         {/* Project information */}
         <section
           id="information"
-          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
         >
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-3">
@@ -183,10 +183,10 @@ export default function SettingsPage() {
                 <Info className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {t("settings.information.title")}
                 </h2>
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
                   {t("settings.information.description")}
                 </p>
               </div>
@@ -196,25 +196,25 @@ export default function SettingsPage() {
           {appInfo && (
             <dl className="grid gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <dt className="text-xs font-medium text-[#A09080] dark:text-stone-400">
                   {t("settings.information.appName")}
                 </dt>
-                <dd className="mt-0.5 font-medium text-zinc-800 dark:text-zinc-100">
+                <dd className="mt-0.5 font-medium text-[#3D3020] dark:text-stone-100">
                   {appInfo.appName}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <dt className="text-xs font-medium text-[#A09080] dark:text-stone-400">
                   {t("settings.information.version")}
                 </dt>
-                <dd className="mt-0.5 font-medium text-zinc-800 dark:text-zinc-100">
+                <dd className="mt-0.5 font-medium text-[#3D3020] dark:text-stone-100">
                   {appInfo.fullVersion}
                 </dd>
               </div>
             </dl>
           )}
 
-          <Link href="/dashboard/settings/patch-note" className="mt-3 inline-flex items-center text-sm font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 underline-offset-4 hover:underline">
+          <Link href="/dashboard/settings/patch-note" className="mt-3 inline-flex items-center text-sm font-medium text-[#3D3020] hover:text-[#6B5E4E] dark:text-stone-100 dark:hover:text-stone-300 underline-offset-4 hover:underline">
             {t("settings.information.patchNote")}
           </Link>
         </section>
@@ -222,7 +222,7 @@ export default function SettingsPage() {
         {/* Language selection */}
         <section
           id="language"
-          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
         >
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-3">
@@ -230,24 +230,24 @@ export default function SettingsPage() {
                 <Languages className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {t("settings.language.titleWithNative")}
                 </h2>
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
                   {t("settings.language.description")}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="inline-flex gap-1 rounded-md border border-zinc-300 bg-white p-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="inline-flex gap-1 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-0.5 text-xs dark:border-stone-700 dark:bg-stone-900">
             <button
               type="button"
               onClick={() => {
                 if (language !== "th") setPendingLanguage("th");
               }}
               className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${language === "th"
-                  ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 }`}
             >
@@ -260,7 +260,7 @@ export default function SettingsPage() {
                 if (language !== "en") setPendingLanguage("en");
               }}
               className={`inline-flex items-center gap-1 rounded-sm px-3 py-1.5 transition ${language === "en"
-                  ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
                   : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 }`}
             >
@@ -303,7 +303,7 @@ export default function SettingsPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-3 text-xs text-[#A09080] dark:text-stone-400">
             {t("settings.language.helper")}
           </p>
         </section>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
         {/* Activity Log link-out */}
         <section
           id="activity-log"
-          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
         >
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-3">
@@ -319,10 +319,10 @@ export default function SettingsPage() {
                 <Bell className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {t("settings.activityLog.title")}
                 </h2>
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
                   {t("settings.activityLog.description")}
                 </p>
               </div>
@@ -331,7 +331,7 @@ export default function SettingsPage() {
 
           <Link
             href="/dashboard/settings/activity-log"
-            className="inline-flex items-center text-sm font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 underline-offset-4 hover:underline"
+            className="inline-flex items-center text-sm font-medium text-[#3D3020] hover:text-[#6B5E4E] dark:text-stone-100 dark:hover:text-stone-300 underline-offset-4 hover:underline"
           >
             {t("settings.activityLog.open")}
           </Link>
@@ -345,7 +345,7 @@ export default function SettingsPage() {
         {/* Help & Feedback */}
         <section
           id="feedback"
-          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
         >
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-3">
@@ -353,10 +353,10 @@ export default function SettingsPage() {
                 <HelpCircle className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {t("settings.feedback.title")}
                 </h2>
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
                   {t("settings.feedback.description")}
                 </p>
               </div>
@@ -365,7 +365,7 @@ export default function SettingsPage() {
 
           <Link
             href="/dashboard/settings/feedback"
-            className="inline-flex items-center text-sm font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 underline-offset-4 hover:underline"
+            className="inline-flex items-center text-sm font-medium text-[#3D3020] hover:text-[#6B5E4E] dark:text-stone-100 dark:hover:text-stone-300 underline-offset-4 hover:underline"
           >
             {t("settings.feedback.open")}
           </Link>
@@ -374,7 +374,7 @@ export default function SettingsPage() {
         {/* Tools inline section (full tools UI embedded) */}
         <section
           id="data-tools"
-          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
         >
           <DataTools />
         </section>
@@ -382,7 +382,7 @@ export default function SettingsPage() {
         {/* Sessions inline section */}
         <section
           id="sessions"
-          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
         >
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="flex items-center gap-3">
@@ -390,10 +390,10 @@ export default function SettingsPage() {
                 <Monitor className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {t("settings.sessions.title")}
                 </h2>
-                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
                   {t("settings.sessions.description")}
                 </p>
               </div>
@@ -405,7 +405,7 @@ export default function SettingsPage() {
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-14 w-full rounded-md" />
               ))}
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#A09080] dark:text-stone-400">
                 {t("settings.sessions.loading")}
               </p>
             </div>
@@ -414,7 +414,7 @@ export default function SettingsPage() {
               {t("settings.sessions.error")}
             </p>
           ) : sessions.length === 0 ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-[#A09080] dark:text-stone-400">
               {t("settings.sessions.empty")}
             </p>
           ) : (
@@ -422,20 +422,20 @@ export default function SettingsPage() {
               {sessions.slice(0, 5).map((s) => (
                 <li
                   key={s.sessionId}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900/60"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900/60"
                 >
                   <div className="flex items-center gap-3">
-                    <Monitor className="h-4 w-4 text-zinc-500" />
+                    <Monitor className="h-4 w-4 text-[#A09080]" />
                     <div>
                       <p className="font-medium">
                         {deviceLabel(s.userAgent)}
                         {s.isCurrent && (
-                          <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                          <span className="ml-2 text-xs font-normal text-[#A09080] dark:text-stone-400">
                             {t("settings.sessions.thisDevice")}
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs text-[#A09080] dark:text-stone-400">
                         {t(
                           "settings.sessions.lastActivePrefix",
                           formatRelative(s.lastActiveAt).key === "justNow"
@@ -456,7 +456,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => revokeOne(s.sessionId)}
                     disabled={!!revoking}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#D4C9B0] px-2 py-1 text-xs text-[#3D3020] hover:bg-[#F5F0E8] disabled:opacity-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
                   >
                     <Trash2 className="h-3 w-3" />
                     {t("settings.sessions.revoke")}
@@ -468,7 +468,7 @@ export default function SettingsPage() {
 
           {otherSessions.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#A09080] dark:text-stone-400">
                 {otherSessions.length === 1
                   ? t("settings.sessions.otherDevicesSummarySingular", {
                     count: otherSessions.length,
@@ -479,7 +479,7 @@ export default function SettingsPage() {
               </p>
               <Link
                 href="/dashboard/settings/sessions"
-                className="text-xs font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
+                className="text-xs font-medium text-[#3D3020] hover:text-[#3D3020] dark:text-stone-300 dark:hover:text-stone-100 underline-offset-4 hover:underline"
               >
                 {t("settings.sessions.manageAll")}
               </Link>

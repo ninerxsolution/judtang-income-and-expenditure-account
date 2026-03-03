@@ -107,11 +107,11 @@ export function CategoryCombobox({
       </button>
       {open && (
         <div
-          className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-md border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900"
           role="listbox"
         >
           {filteredCategories.length === 0 && !showNone ? (
-            <p className="px-2 py-4 text-center text-sm text-zinc-500">
+            <p className="px-2 py-4 text-center text-sm text-[#A09080]">
               {noResultsText}
             </p>
           ) : (
@@ -121,8 +121,8 @@ export function CategoryCombobox({
                   type="button"
                   role="option"
                   className={cn(
-                    "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                    !value && "bg-zinc-100 dark:bg-zinc-800"
+                    "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
+                    !value && "bg-[#EBF4E3] dark:bg-stone-800"
                   )}
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -140,8 +140,8 @@ export function CategoryCombobox({
                     type="button"
                     role="option"
                     className={cn(
-                      "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                      isSelected && "bg-zinc-100 dark:bg-zinc-800"
+                      "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
+                      isSelected && "bg-[#EBF4E3] dark:bg-stone-800"
                     )}
                     onMouseDown={(e) => {
                       e.preventDefault();

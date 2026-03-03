@@ -697,14 +697,14 @@ export function TransactionsCalendar() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-        <div className="inline-flex rounded-md border border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
             <button
               type="button"
               onClick={() => setViewMode("day")}
               className={`px-3 py-2 transition-colors duration-150 ease-out ${
                 viewMode === "day"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
               } rounded-l-md font-medium`}
             >
               {t("calendar.view.day")}
@@ -712,10 +712,10 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("week")}
-              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium transition-colors duration-150 ease-out ${
+              className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${
                 viewMode === "week"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
               }`}
             >
               {t("calendar.view.week")}
@@ -723,10 +723,10 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("month")}
-              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 font-medium transition-colors duration-150 ease-out ${
+              className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${
                 viewMode === "month"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
               }`}
             >
               {t("calendar.view.month")}
@@ -734,10 +734,10 @@ export function TransactionsCalendar() {
             <button
               type="button"
               onClick={() => setViewMode("year")}
-              className={`border-l border-zinc-300 px-3 py-2 dark:border-zinc-700 rounded-r-md font-medium transition-colors duration-150 ease-out ${
+              className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 rounded-r-md font-medium transition-colors duration-150 ease-out ${
                 viewMode === "year"
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
               }`}
             >
               {t("calendar.view.year")}
@@ -746,7 +746,7 @@ export function TransactionsCalendar() {
         <button
             type="button"
             onClick={goToToday}
-            className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
         >
           {t("calendar.today")}
         </button>
@@ -758,14 +758,14 @@ export function TransactionsCalendar() {
               setFormInitialDate(null);
               setFormOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
         >
           <Plus className="h-4 w-4" />
           {t("calendar.newTransaction")}
         </button>
       </div>
 
-      <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-2 sm:p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+      <div className="mt-6 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-2 sm:p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">
         {/* Header & content depend on view mode */}
         {viewMode === "day" && (
           <>
@@ -774,23 +774,23 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={goPrevMonth}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={goNextMonth}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {getMonthLabel(year, monthIndex, locale)}
                 </div>
               </div>
               {summaryLoading && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
                   {t("calendar.loading.calendar")}
                 </p>
               )}
@@ -801,7 +801,7 @@ export function TransactionsCalendar() {
               )}
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-[#A09080]">
               {WEEKDAY_LABEL_KEYS.map((key) => (
                 <div key={key} className="py-1">
                   {t(`calendar.weekdays.${key}`)}
@@ -821,12 +821,12 @@ export function TransactionsCalendar() {
                     onClick={() => openDay(day.iso)}
                     className={[
                       "flex h-16 flex-col rounded-md border px-1.5 py-1 text-left transition-colors duration-150 ease-out",
-                      "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
+                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                       isMuted
-                        ? "text-zinc-400 dark:text-zinc-500"
-                        : "text-zinc-800 dark:text-zinc-100",
+                        ? "text-[#A09080] dark:text-stone-500"
+                        : "text-[#3D3020] dark:text-stone-100",
                       day.isToday
-                        ? "border-zinc-900 border-offset-1 border-offset-white dark:border-zinc-100 dark:border-offset-zinc-900"
+                        ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
                         : "",
                     ]
                       .filter(Boolean)
@@ -837,7 +837,7 @@ export function TransactionsCalendar() {
                         {day.date.getDate()}
                       </span>
                       {day.isToday && (
-                        <span className="rounded-full hidden sm:block bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        <span className="rounded-full hidden sm:block bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
                           {t("calendar.today")}
                         </span>
                       )}
@@ -855,7 +855,7 @@ export function TransactionsCalendar() {
                         )}
                       </div>
                       {hasData && (
-                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                        <span className="text-[10px] text-[#A09080] dark:text-[#A09080]">
                           {day.count}
                         </span>
                       )}
@@ -865,7 +865,7 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -886,23 +886,23 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={goPrevWeek}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={goNextWeek}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {getWeekRangeLabel(weekStartIso, locale)}
                 </div>
               </div>
               {summaryLoading && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
                   {t("calendar.loading.calendar")}
                 </p>
               )}
@@ -924,17 +924,17 @@ export function TransactionsCalendar() {
                     onClick={() => openDay(day.iso)}
                     className={[
                       "flex w-full flex-row items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors duration-150 ease-out",
-                      "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
-                      "text-zinc-800 dark:text-zinc-100",
+                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
+                      "text-[#3D3020] dark:text-stone-100",
                       day.isToday
-                        ? "border-zinc-900 border-offset-1 border-offset-white dark:border-zinc-100 dark:border-offset-zinc-900"
+                        ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
                         : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
                     <div className="flex min-w-14 flex-col sm:min-w-16">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
                         {t(`calendar.weekdays.${weekdayKey}`)}
                       </span>
                       <span className="text-sm font-semibold tabular-nums">
@@ -957,12 +957,12 @@ export function TransactionsCalendar() {
                         )}
                       </div>
                       {hasData && (
-                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        <span className="text-[11px] text-[#A09080] dark:text-[#A09080]">
                           {day.count}
                         </span>
                       )}
                       {day.isToday && (
-                        <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        <span className="rounded-full bg-[#5C6B52] px-2 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
                           {t("calendar.today")}
                         </span>
                       )}
@@ -972,7 +972,7 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -998,7 +998,7 @@ export function TransactionsCalendar() {
                       monthIndex,
                     }))
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -1010,16 +1010,16 @@ export function TransactionsCalendar() {
                       monthIndex,
                     }))
                   }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {formatYearForDisplay(year, locale)}
                 </div>
               </div>
               {monthSummaryLoading && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
                   {t("calendar.loading.months")}
                 </p>
               )}
@@ -1050,12 +1050,12 @@ export function TransactionsCalendar() {
                     }}
                     className={[
                       "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
-                      "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
+                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                       hasData
-                        ? "text-zinc-900 dark:text-zinc-50"
-                        : "text-zinc-500 dark:text-zinc-400",
+                        ? "text-[#3D3020] dark:text-stone-100"
+                        : "text-[#A09080] dark:text-[#A09080]",
                       isCurrentMonth
-                        ? "border-zinc-900 dark:border-zinc-100"
+                        ? "border-[#5C6B52] dark:border-stone-100"
                         : "",
                     ]
                       .filter(Boolean)
@@ -1077,7 +1077,7 @@ export function TransactionsCalendar() {
                         )}
                       </div>
                       {hasData && (
-                        <span className="text-zinc-500 dark:text-zinc-400">
+                        <span className="text-[#A09080] dark:text-[#A09080]">
                           {count}
                         </span>
                       )}
@@ -1087,7 +1087,7 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1108,23 +1108,23 @@ export function TransactionsCalendar() {
                 <button
                   type="button"
                   onClick={() => setYearRangeStart((y) => y - 12)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setYearRangeStart((y) => y + 12)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-300 text-zinc-700 transition-colors duration-150 ease-out hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <div className="ml-2 text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
                   {formatYearForDisplay(yearRangeStart, locale)}–{formatYearForDisplay(yearRangeEnd, locale)}
                 </div>
               </div>
               {yearSummaryLoading && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
                   {t("calendar.loading.years")}
                 </p>
               )}
@@ -1160,12 +1160,12 @@ export function TransactionsCalendar() {
                     }}
                     className={[
                       "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
-                      "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800",
+                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                       hasData
-                        ? "text-zinc-900 dark:text-zinc-50"
-                        : "text-zinc-500 dark:text-zinc-400",
+                        ? "text-[#3D3020] dark:text-stone-100"
+                        : "text-[#A09080] dark:text-[#A09080]",
                       isCurrentYear
-                        ? "border-zinc-900 dark:border-zinc-100"
+                        ? "border-[#5C6B52] dark:border-stone-100"
                         : "",
                     ]
                       .filter(Boolean)
@@ -1185,7 +1185,7 @@ export function TransactionsCalendar() {
                         )}
                       </div>
                       {hasData && (
-                        <span className="text-zinc-500 dark:text-zinc-400">
+                        <span className="text-[#A09080] dark:text-[#A09080]">
                           {count}
                         </span>
                       )}
@@ -1195,7 +1195,7 @@ export function TransactionsCalendar() {
               })}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1215,13 +1215,13 @@ export function TransactionsCalendar() {
           showCloseButton={false}
           className="max-w-md overflow-hidden rounded-xl p-0 gap-0 transition-[min-height] duration-200 ease-out sm:max-w-md"
         >
-          <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700 transition-all duration-200 ease-out">
+          <div className="flex items-center justify-between border-b border-[#D4C9B0] px-4 py-3 dark:border-stone-700 transition-all duration-200 ease-out">
             <DialogTitle asChild>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
                   {t("calendar.modal.title")}
                 </p>
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-semibold text-[#3D3020] dark:text-stone-100">
                   {selectedDateLabel}
                 </p>
               </div>
@@ -1230,7 +1230,7 @@ export function TransactionsCalendar() {
               <Button
                 type="button"
                 onClick={() => selectedDate && handleAddForDay(selectedDate)}
-                className="inline-flex gap-2 rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="inline-flex gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
               >
                 <Plus className="h-4 w-4" />
                 {t("calendar.modal.add")}
@@ -1253,8 +1253,8 @@ export function TransactionsCalendar() {
           >
               {dailyLoading && (
                 <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-zinc-400 dark:text-zinc-500" />
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#A09080] dark:text-stone-500" />
+                  <p className="text-xs text-[#6B5E4E] dark:text-[#A09080]">
                     {t("calendar.loading.transactions")}
                   </p>
                 </div>
@@ -1268,7 +1268,7 @@ export function TransactionsCalendar() {
                 !dailyError &&
                 dailyItems.length === 0 && (
                   <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-[#A09080] dark:text-[#A09080]">
                       {t("calendar.modal.empty")}
                     </p>
                   </div>
@@ -1292,7 +1292,7 @@ export function TransactionsCalendar() {
                     return (
                       <li
                         key={tx.id}
-                        className="flex items-start justify-between gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                        className="flex items-start justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#F5F0E8] px-2.5 py-2 dark:border-stone-700 dark:bg-stone-900"
                       >
                         <div className="flex min-w-0 flex-1 items-start gap-2">
                           <span
@@ -1308,24 +1308,24 @@ export function TransactionsCalendar() {
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-1">
                               {tx.category && (
-                                <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
+                                <span className="text-xs font-medium text-[#3D3020] dark:text-stone-100">
                                   {getCategoryDisplayName(tx.category, localeKey)}
                                 </span>
                               )}
                               {isTransfer && tx.transferAccount && (
-                                <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
+                                <span className="text-xs font-medium text-[#3D3020] dark:text-stone-100">
                                   {t("transactions.list.transferTo", {
                                     account: tx.transferAccount.name,
                                   })}
                                 </span>
                               )}
                               {tx.note && (
-                                <span className="text-xs text-zinc-600 dark:text-zinc-300">
+                                <span className="text-xs text-[#6B5E4E] dark:text-stone-400">
                                   {tx.note}
                                 </span>
                               )}
                             </div>
-                            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                            <p className="mt-0.5 text-[11px] text-[#A09080] dark:text-[#A09080]">
                               {new Date(tx.occurredAt).toLocaleTimeString(locale, {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -1334,7 +1334,7 @@ export function TransactionsCalendar() {
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-0.5 text-right">
-                          <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                          <span className="text-sm font-semibold tabular-nums text-[#3D3020] dark:text-stone-100">
                             {formatAmount(tx.amount)}
                           </span>
                           <Button

@@ -22,7 +22,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen">
+    <div className="dashboard-page min-h-screen">
       <SessionTouch />
       <DashboardDataProvider>
         <FullscreenProvider>

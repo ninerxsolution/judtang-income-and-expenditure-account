@@ -330,7 +330,7 @@ export function FinancialAccountFormDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {loadState === "loading" && (
-            <p className="text-sm text-zinc-500">{t("transactions.edit.loading")}</p>
+            <p className="text-sm text-[#A09080]">{t("transactions.edit.loading")}</p>
           )}
           {loadState === "error" && error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -352,7 +352,7 @@ export function FinancialAccountFormDialog({
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                 >
                   {ACCOUNT_TYPES.map((tpe) => (
                     <option key={tpe} value={tpe}>
@@ -381,7 +381,7 @@ export function FinancialAccountFormDialog({
                       noResultsText={t("accounts.bankNoResults")}
                       noneLabel={t("accounts.bankNone")}
                       localeKey={localeKey}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     />
                   </div>
                   {bankId === BANK_OTHER && (
@@ -491,7 +491,7 @@ export function FinancialAccountFormDialog({
                       value={cardType}
                       onChange={(e) => setCardType(e.target.value)}
                       required={type === "CREDIT_CARD"}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     >
                       <option value="">—</option>
                       {CARD_TYPES.map((c) => (
@@ -529,7 +529,7 @@ export function FinancialAccountFormDialog({
                       id="account-form-closing-day"
                       value={statementClosingDay}
                       onChange={(e) => setStatementClosingDay(e.target.value)}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     >
                       <option value="">—</option>
                       {DAY_OPTIONS.map((d) => (
@@ -550,7 +550,7 @@ export function FinancialAccountFormDialog({
                       id="account-form-due-day"
                       value={dueDay}
                       onChange={(e) => setDueDay(e.target.value)}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     >
                       <option value="">—</option>
                       {DAY_OPTIONS.map((d) => (

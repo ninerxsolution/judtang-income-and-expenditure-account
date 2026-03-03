@@ -201,9 +201,9 @@ export function AppSidebarLayout({
           <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
             <span
               className={cn(
-                "text-sm font-semibold tabular-nums bg-gray-100 dark:bg-gray-800 text-primary rounded-full px-3 py-1",
+                "text-sm font-semibold tabular-nums bg-[#EBF4E3] dark:bg-stone-800 rounded-full px-3 py-1",
                 balance !== null && balance < 0
-                  ? "text-red-700 dark:text-red-300"
+                  ? "text-red-600 dark:text-red-300"
                   : "text-foreground"
               )}
             >

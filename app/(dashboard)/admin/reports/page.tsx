@@ -80,7 +80,7 @@ export default function AdminReportsPage() {
     <div className="space-y-6 p-4 md:p-6">
       <header>
         <h1 className="text-xl font-semibold">Reports</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
           Manage user feedback and bug reports
         </p>
       </header>
@@ -95,7 +95,7 @@ export default function AdminReportsPage() {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className="h-9 rounded-md border border-zinc-300 bg-white px-3 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="h-9 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-1 text-sm dark:border-stone-700 dark:bg-stone-900"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value || "all"} value={o.value}>
@@ -143,15 +143,15 @@ export default function AdminReportsPage() {
           ))}
         </div>
       ) : reports.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-[#A09080] dark:text-stone-400">
           No reports found.
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/50">
+                <tr className="border-b border-[#D4C9B0] bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/50">
                   <th className="px-4 py-3 text-left font-medium">Date</th>
                   <th className="px-4 py-3 text-left font-medium">Category</th>
                   <th className="px-4 py-3 text-left font-medium">Title</th>
@@ -164,9 +164,9 @@ export default function AdminReportsPage() {
                 {reports.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/30"
+                    className="border-b border-[#D4C9B0] dark:border-stone-800 hover:bg-[#F5F0E8] dark:hover:bg-stone-900/30"
                   >
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-[#6B5E4E] dark:text-stone-400">
                       {new Date(r.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
@@ -175,7 +175,7 @@ export default function AdminReportsPage() {
                     <td className="px-4 py-3 max-w-[200px] truncate">
                       {r.title}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-[#6B5E4E] dark:text-stone-400">
                       {r.user?.email ?? "—"}
                     </td>
                     <td className="px-4 py-3">
@@ -187,7 +187,7 @@ export default function AdminReportsPage() {
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
                             : r.status === "RESOLVED"
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                            : "bg-[#EBF4E3] text-[#6B5E4E] dark:bg-stone-800 dark:text-stone-400"
                         }`}
                       >
                         {r.status}
@@ -209,7 +209,7 @@ export default function AdminReportsPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-[#A09080] dark:text-stone-400">
                 Page {page} of {totalPages} ({total} total)
               </p>
               <div className="flex gap-2">

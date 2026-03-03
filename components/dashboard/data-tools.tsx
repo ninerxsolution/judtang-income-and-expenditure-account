@@ -141,10 +141,10 @@ export function DataTools() {
             <Wrench className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
               {t("dataTools.title")}
             </h2>
-            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
               {t("dataTools.description")}
             </p>
           </div>
@@ -153,10 +153,10 @@ export function DataTools() {
 
       <div className="space-y-8">
         <div>
-          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          <h3 className="text-sm font-medium text-[#3D3020] dark:text-stone-200">
             {t("dataTools.export.title")}
           </h3>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
             {t("dataTools.export.description")}
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
@@ -175,14 +175,14 @@ export function DataTools() {
               className="min-w-[180px]"
             />
             <div>
-              <label htmlFor="export-type" className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+              <label htmlFor="export-type" className="mb-1 block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">
                 {t("dataTools.export.type")}
               </label>
               <select
                 id="export-type"
                 value={exportType}
                 onChange={(e) => setExportType(e.target.value as "all" | "INCOME" | "EXPENSE")}
-                className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="rounded-md border border-[#D4C9B0] px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               >
                 <option value="all">{t("dataTools.export.typeAll")}</option>
                 <option value="INCOME">{t("transactions.common.income")}</option>
@@ -195,7 +195,7 @@ export function DataTools() {
               type="button"
               onClick={handleExportClick}
               disabled={exporting}
-              className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-4 py-2 text-sm font-medium text-white hover:bg-[#4A5E40] disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
             >
               <Download className="h-4 w-4" />
               {exporting ? t("dataTools.export.pending") : t("dataTools.export.button")}
@@ -206,21 +206,21 @@ export function DataTools() {
               </p>
             )}
           </div>
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-2 text-xs text-[#A09080] dark:text-stone-400">
             {t("dataTools.export.columns")}
           </p>
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          <h3 className="text-sm font-medium text-[#3D3020] dark:text-stone-200">
             {t("dataTools.import.title")}
           </h3>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
             {t("dataTools.import.description")}
           </p>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-dashed border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-dashed border-[#D4C9B0] bg-[#FDFAF4] px-4 py-3 text-sm font-medium text-[#3D3020] hover:bg-[#F5F0E8] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800">
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -231,9 +231,9 @@ export function DataTools() {
               {file ? t("dataTools.import.changeFile") : t("dataTools.import.chooseFile")}
             </label>
             {file && (
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              <p className="text-xs text-[#6B5E4E] dark:text-stone-400">
                 {t("dataTools.import.selected")}:{" "}
-                <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                <span className="font-medium text-[#3D3020] dark:text-stone-100">
                   {file.name}
                 </span>
               </p>
@@ -298,7 +298,7 @@ export function DataTools() {
             </div>
           )}
 
-          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-3 text-xs text-[#A09080] dark:text-stone-400">
             {t("dataTools.import.note")}
           </p>
         </div>

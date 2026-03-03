@@ -58,7 +58,7 @@ export function LandingFeatureGrid({ language }: LandingFeatureGridProps) {
                 <ul className="space-y-2 text-sm text-[#A09080] dark:text-stone-400">
                   {items.map((item, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#6B9E5E]" />
+                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-emerald-500" />
                       {item}
                     </li>
                   ))}

@@ -30,11 +30,11 @@ export default function DashboardPage() {
       <TransactionsCalendar />
        <div className="space-y-6">
        <div>
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-300">
           {t("dashboard.summary.title")}
         </h2>
         {summaryLoading ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-[#A09080] dark:text-stone-400">
             {t("dashboard.summary.loading")}
           </p>
         ) : (
@@ -47,7 +47,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                <p className="text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-300">
                   {summary ? formatAmount(summary.income) : "0.00"}
                 </p>
               </CardContent>
@@ -60,14 +60,14 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
+                <p className="text-xl font-semibold tabular-nums text-red-600 dark:text-red-300">
                   {summary ? formatAmount(summary.expense) : "0.00"}
                 </p>
               </CardContent>
             </Card>
             <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
               <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Wallet className="min-w-4 min-h-4 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+                <Wallet className="min-w-4 min-h-4 w-4 h-4 text-[#5C6B52] dark:text-stone-400" />
                 <CardTitle className="text-sm font-medium text-nowrap">
                   {t("dashboard.summary.balance")}
                 </CardTitle>
@@ -76,8 +76,8 @@ export default function DashboardPage() {
                 <p
                   className={`text-xl font-semibold tabular-nums ${
                     balance >= 0
-                      ? "text-zinc-900 dark:text-zinc-50"
-                      : "text-red-700 dark:text-red-300"
+                      ? "text-[#3D3020] dark:text-stone-50"
+                      : "text-red-600 dark:text-red-300"
                   }`}
                 >
                   {summary ? formatAmount(balance) : "0.00"}
@@ -88,7 +88,7 @@ export default function DashboardPage() {
         )}
       </div>
        {summaryLoading ? (
-         <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+         <div className="rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">
            <div className="space-y-2">
              {[1, 2, 3, 4].map((i) => (
                <Skeleton key={i} className="h-12 w-full rounded-md" />

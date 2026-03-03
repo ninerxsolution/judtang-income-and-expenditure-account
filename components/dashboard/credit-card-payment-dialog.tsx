@@ -171,7 +171,7 @@ export function CreditCardPaymentDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("accounts.paymentDialogTitle")}</DialogTitle>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{accountName}</p>
+          <p className="text-sm text-[#A09080] dark:text-stone-400">{accountName}</p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <FormField
@@ -185,7 +185,7 @@ export function CreditCardPaymentDialog({
           />
           {maxAmount != null && (
             <div className="space-y-1">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-[#A09080] dark:text-stone-400">
                 {t("accounts.currentOutstanding")}:{" "}
                 {Number(roundAmountForDisplay(maxAmount)).toLocaleString()}
               </p>
@@ -216,7 +216,7 @@ export function CreditCardPaymentDialog({
                 id="payment-from-account"
                 value={fromAccountId}
                 onChange={(e) => setFromAccountId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               >
                 <option value="">—</option>
                 {accounts.map((acc) => {

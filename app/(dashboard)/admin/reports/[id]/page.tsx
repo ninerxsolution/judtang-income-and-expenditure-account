@@ -103,7 +103,7 @@ export default function AdminReportDetailPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/reports"
-          className="inline-flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="inline-flex items-center gap-1 text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to reports
@@ -112,7 +112,7 @@ export default function AdminReportDetailPage() {
 
       <header>
         <h1 className="text-xl font-semibold">{report.title}</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
           {formatCategory(report.category)} • {report.user?.email ?? "—"}
         </p>
       </header>
@@ -120,17 +120,17 @@ export default function AdminReportDetailPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <div>
-            <Label className="text-zinc-500 dark:text-zinc-400">
+            <Label className="text-[#A09080] dark:text-stone-400">
               Description
             </Label>
-            <p className="mt-1 whitespace-pre-wrap rounded-md border border-zinc-200 bg-zinc-50/50 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-900/30">
+            <p className="mt-1 whitespace-pre-wrap rounded-md border border-[#D4C9B0] bg-[#F5F0E8]/50 p-4 text-sm dark:border-stone-700 dark:bg-stone-900/30">
               {report.description}
             </p>
           </div>
 
           {report.imagePaths.length > 0 && (
             <div>
-              <Label className="text-zinc-500 dark:text-zinc-400">
+              <Label className="text-[#A09080] dark:text-stone-400">
                 Screenshots
               </Label>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -148,7 +148,7 @@ export default function AdminReportDetailPage() {
                       <img
                         src={imgUrl}
                         alt={`Screenshot ${i + 1}`}
-                        className="h-24 w-auto rounded border border-zinc-200 object-cover dark:border-zinc-700"
+                        className="h-24 w-auto rounded border border-[#D4C9B0] object-cover dark:border-stone-700"
                       />
                     </a>
                   );
@@ -166,7 +166,7 @@ export default function AdminReportDetailPage() {
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="h-9 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                className="h-9 flex-1 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-1 text-sm dark:border-stone-700 dark:bg-stone-900"
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -184,11 +184,11 @@ export default function AdminReportDetailPage() {
             </div>
           </div>
 
-          <div className="rounded-md border border-zinc-200 bg-zinc-50/50 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-900/30">
-            <h3 className="font-medium text-zinc-800 dark:text-zinc-100">
+          <div className="rounded-md border border-[#D4C9B0] bg-[#F5F0E8]/50 p-4 text-sm dark:border-stone-700 dark:bg-stone-900/30">
+            <h3 className="font-medium text-[#3D3020] dark:text-stone-100">
               Metadata
             </h3>
-            <dl className="mt-2 space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+            <dl className="mt-2 space-y-1 text-xs text-[#6B5E4E] dark:text-stone-400">
               <div>
                 <dt className="inline font-medium">Route:</dt>{" "}
                 <dd className="inline">{report.route ?? "—"}</dd>
