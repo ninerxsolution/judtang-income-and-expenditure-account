@@ -3,6 +3,43 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+  }
+  .dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  }
+}
+
+/* Chrome, Safari, Edge - webkit scrollbar */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -105,6 +142,96 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Earth Tone - สำหรับ landing page */
+.landing-page {
+  --landing-bg: #F5F0E8;
+  --landing-surface: #FDFAF4;
+  --landing-primary: #5C6B52;
+  --landing-primary-light: #B8D4A8;
+  --landing-border: #D4C9B0;
+  --landing-text: #3D3020;
+  --landing-muted: #A09080;
+  --landing-income: #6B9E5E;
+  --landing-expense: #8B5E3C;
+}
+
+/* Earth Tone - สำหรับ auth pages (sign-in, register, forgot-password) */
+.auth-page {
+  --background: #F5F0E8;
+  --foreground: #3D3020;
+  --card: #FDFAF4;
+  --card-foreground: #3D3020;
+  --muted-foreground: #A09080;
+  --primary: #5C6B52;
+  --primary-foreground: #ffffff;
+  --border: #D4C9B0;
+  --input: #E8E0C8;
+  --ring: #5C6B52;
+  --destructive: #ef4444;
+}
+.dark .auth-page {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+}
+
+/* Earth Tone - สำหรับ dashboard */
+.dashboard-page {
+  --background: #F5F0E8;
+  --foreground: #3D3020;
+  --card: #FDFAF4;
+  --card-foreground: #3D3020;
+  --muted-foreground: #A09080;
+  --primary: #5C6B52;
+  --primary-foreground: #ffffff;
+  --border: #D4C9B0;
+  --input: #E8E0C8;
+  --ring: #5C6B52;
+  --destructive: #ef4444;
+  --sidebar: #FDFAF4;
+  --sidebar-foreground: #3D3020;
+  --sidebar-primary: #5C6B52;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #EBF4E3;
+  --sidebar-accent-foreground: #3D3020;
+  --sidebar-border: #D4C9B0;
+  --sidebar-ring: #5C6B52;
+  --chart-1: #10b981;
+  --chart-2: #ef4444;
+  --chart-3: #5C6B52;
+  --chart-4: #B8D4A8;
+  --chart-5: #C49A3C;
+}
+.dark .dashboard-page {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);

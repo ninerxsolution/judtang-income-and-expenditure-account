@@ -7,15 +7,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
+import { Landmark, CreditCard, Wallet, Banknote, PiggyBank } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
 import { THAI_BANKS, BANK_OTHER } from "@/lib/thai-banks";
-import { CARD_TYPES } from "@/lib/card-types";
+import {
+  CardAccountTypeSelect,
+  CardNetworkSelect,
+} from "@/components/dashboard/card-type-select";
 import { BankCombobox } from "@/components/dashboard/bank-combobox";
 
 const ACCOUNT_TYPES = ["BANK", "CREDIT_CARD", "WALLET", "CASH", "OTHER"] as const;
+
+const ACCOUNT_TYPE_ICONS: Record<(typeof ACCOUNT_TYPES)[number], React.ComponentType<{ className?: string }>> = {
+  BANK: Landmark,
+  CREDIT_CARD: CreditCard,
+  WALLET: Wallet,
+  CASH: Banknote,
+  OTHER: PiggyBank,
+};
 const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1);
 
 function sanitizeNumericInput(value: string, maxLength: number): string {
@@ -75,7 +88,8 @@ export function FinancialAccountFormDialog({
   const [accountNumber, setAccountNumber] = useState("");
   const [accountNumberMode, setAccountNumberMode] = useState<"FULL" | "LAST_4_ONLY">("FULL");
   const [interestRate, setInterestRate] = useState("");
-  const [cardType, setCardType] = useState<string>("");
+  const [cardAccountType, setCardAccountType] = useState<string>("");
+  const [cardNetwork, setCardNetwork] = useState<string>("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<"idle" | "loading" | "done" | "error">(
@@ -96,7 +110,8 @@ export function FinancialAccountFormDialog({
       setAccountNumber("");
       setAccountNumberMode("FULL");
       setInterestRate("");
-      setCardType("");
+      setCardAccountType("");
+      setCardNetwork("");
       setLoadState("idle");
       setError(null);
       return;
@@ -126,7 +141,8 @@ export function FinancialAccountFormDialog({
           accountNumber?: string | null;
           accountNumberMode?: string | null;
           interestRate?: number | null;
-          cardType?: string | null;
+          cardAccountType?: string | null;
+          cardNetwork?: string | null;
         } | undefined) => {
           if (cancelled || !data) return;
           setName(data.name ?? "");
@@ -142,7 +158,8 @@ export function FinancialAccountFormDialog({
           setInterestRate(
             data.interestRate != null ? String(data.interestRate) : ""
           );
-          setCardType(data.cardType ?? "");
+          setCardAccountType(data.cardAccountType ?? "");
+          setCardNetwork(data.cardNetwork ?? "");
           const bn = data.bankName?.trim() ?? "";
           if (bn && THAI_BANKS.some((b) => b.id === bn)) {
             setBankId(bn);
@@ -242,10 +259,10 @@ export function FinancialAccountFormDialog({
         );
         return;
       }
-      if (!cardType?.trim()) {
+      if (!cardAccountType?.trim()) {
         setError(
-          t("accounts.cardTypeRequired") ??
-            "Please select card type."
+          t("accounts.cardAccountTypeRequired") ??
+            "Please select card type (credit/debit/prepaid)."
         );
         return;
       }
@@ -273,7 +290,8 @@ export function FinancialAccountFormDialog({
         interestRateNum != null && Number.isFinite(interestRateNum) && interestRateNum >= 0
           ? interestRateNum
           : null;
-      payload.cardType = cardType || null;
+      payload.cardAccountType = cardAccountType || null;
+      payload.cardNetwork = cardNetwork?.trim() || null;
     }
     if (bankId === BANK_OTHER) {
       payload.bankName = customBankName.trim() || null;
@@ -322,20 +340,21 @@ export function FinancialAccountFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {editId ? t("accounts.editTitle") : t("accounts.createTitle")}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {loadState === "loading" && (
-            <p className="text-sm text-zinc-500">{t("transactions.edit.loading")}</p>
-          )}
-          {loadState === "error" && error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-          {(loadState === "idle" || loadState === "done") && (
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          <DialogBody className="space-y-4 pl-1">
+            {loadState === "loading" && (
+              <p className="text-sm text-[#A09080]">{t("transactions.edit.loading")}</p>
+            )}
+            {loadState === "error" && error && (
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            )}
+            {(loadState === "idle" || loadState === "done") && (
             <>
               <FormField
                 id="account-form-name"
@@ -346,20 +365,46 @@ export function FinancialAccountFormDialog({
                 required
               />
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label className="mb-2 block text-sm font-medium">
                   {t("accounts.typeLabel")}
                 </label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-                >
-                  {ACCOUNT_TYPES.map((tpe) => (
-                    <option key={tpe} value={tpe}>
-                      {t(`accounts.type.${tpe}`)}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {ACCOUNT_TYPES.map((tpe) => {
+                    const Icon = ACCOUNT_TYPE_ICONS[tpe];
+                    const isSelected = type === tpe;
+                    return (
+                      <button
+                        key={tpe}
+                        type="button"
+                        onClick={() => setType(tpe)}
+                        className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all hover:border-[#5C6B52] dark:hover:border-stone-500 ${
+                          isSelected
+                            ? "border-[#5C6B52] bg-[#EBF4E3] dark:border-stone-500 dark:bg-[#5C6B52]/20"
+                            : "border-[#D4C9B0] bg-[#FDFAF4] dark:border-stone-600 dark:bg-stone-900"
+                        }`}
+                      >
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                            isSelected
+                              ? "bg-[#5C6B52]/20 text-[#5C6B52] dark:bg-[#5C6B52]/40 dark:text-emerald-300"
+                              : "bg-[#E8E0C8] text-[#6B5E4E] dark:bg-stone-800 dark:text-stone-400"
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <span
+                          className={`text-sm font-medium ${
+                            isSelected
+                              ? "text-[#3D3020] dark:text-stone-100"
+                              : "text-[#6B5E4E] dark:text-stone-400"
+                          }`}
+                        >
+                          {t(`accounts.type.${tpe}`)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               {(type === "BANK" || type === "CREDIT_CARD" || type === "WALLET") && (
                 <>
@@ -381,7 +426,7 @@ export function FinancialAccountFormDialog({
                       noResultsText={t("accounts.bankNoResults")}
                       noneLabel={t("accounts.bankNone")}
                       localeKey={localeKey}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     />
                   </div>
                   {bankId === BANK_OTHER && (
@@ -402,31 +447,33 @@ export function FinancialAccountFormDialog({
                     <p className="mb-2 text-sm font-medium">
                       {localeKey === "th" ? "โหมดเก็บเลขบัญชี" : "Account number storage"}
                     </p>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="accountNumberMode"
-                          checked={accountNumberMode === "FULL"}
-                          onChange={() => setAccountNumberMode("FULL")}
-                          className="rounded-full"
-                        />
-                        <span className="text-sm">
-                          {t("accounts.accountNumberModeFull")}
-                        </span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="accountNumberMode"
-                          checked={accountNumberMode === "LAST_4_ONLY"}
-                          onChange={() => setAccountNumberMode("LAST_4_ONLY")}
-                          className="rounded-full"
-                        />
-                        <span className="text-sm">
-                          {t("accounts.accountNumberModeLast4")}
-                        </span>
-                      </label>
+                    <div className="inline-flex rounded-xl gap-1 border border-[#D4C9B0] bg-[#FDFAF4] p-1 dark:border-stone-600 dark:bg-stone-900">
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={accountNumberMode === "FULL"}
+                        onClick={() => setAccountNumberMode("FULL")}
+                        className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                          accountNumberMode === "FULL"
+                            ? "bg-[#5C6B52] text-white shadow-sm dark:bg-stone-100 dark:text-stone-900"
+                            : "text-[#6B5E4E] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800"
+                        }`}
+                      >
+                        {t("accounts.accountNumberModeFull")}
+                      </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={accountNumberMode === "LAST_4_ONLY"}
+                        onClick={() => setAccountNumberMode("LAST_4_ONLY")}
+                        className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                          accountNumberMode === "LAST_4_ONLY"
+                            ? "bg-[#5C6B52] text-white shadow-sm dark:bg-stone-100 dark:text-stone-900"
+                            : "text-[#6B5E4E] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800"
+                        }`}
+                      >
+                        {t("accounts.accountNumberModeLast4")}
+                      </button>
                     </div>
                   </div>
                   <FormField
@@ -481,25 +528,32 @@ export function FinancialAccountFormDialog({
                 <>
                   <div>
                     <label
-                      htmlFor="account-form-card-type"
+                      htmlFor="account-form-card-account-type"
                       className="mb-1 block text-sm font-medium"
                     >
-                      {t("accounts.cardTypeLabel")}
+                      {t("accounts.cardAccountTypeLabel")}
                     </label>
-                    <select
-                      id="account-form-card-type"
-                      value={cardType}
-                      onChange={(e) => setCardType(e.target.value)}
+                    <CardAccountTypeSelect
+                      id="account-form-card-account-type"
+                      value={cardAccountType}
+                      onChange={setCardAccountType}
+                      localeKey={localeKey}
                       required={type === "CREDIT_CARD"}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="account-form-card-network"
+                      className="mb-1 block text-sm font-medium"
                     >
-                      <option value="">—</option>
-                      {CARD_TYPES.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {localeKey === "th" ? c.nameTh : c.nameEn}
-                        </option>
-                      ))}
-                    </select>
+                      {t("accounts.cardNetworkLabel")}
+                    </label>
+                    <CardNetworkSelect
+                      id="account-form-card-network"
+                      value={cardNetwork}
+                      onChange={setCardNetwork}
+                      localeKey={localeKey}
+                    />
                   </div>
                   <FormField
                     id="account-form-credit-limit"
@@ -529,7 +583,7 @@ export function FinancialAccountFormDialog({
                       id="account-form-closing-day"
                       value={statementClosingDay}
                       onChange={(e) => setStatementClosingDay(e.target.value)}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     >
                       <option value="">—</option>
                       {DAY_OPTIONS.map((d) => (
@@ -550,7 +604,7 @@ export function FinancialAccountFormDialog({
                       id="account-form-due-day"
                       value={dueDay}
                       onChange={(e) => setDueDay(e.target.value)}
-                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     >
                       <option value="">—</option>
                       {DAY_OPTIONS.map((d) => (
@@ -564,10 +618,11 @@ export function FinancialAccountFormDialog({
               )}
             </>
           )}
-          {error && (loadState === "idle" || loadState === "done") && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-          <DialogFooter>
+            {error && (loadState === "idle" || loadState === "done") && (
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            )}
+          </DialogBody>
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"

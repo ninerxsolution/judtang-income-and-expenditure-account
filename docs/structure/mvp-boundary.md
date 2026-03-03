@@ -1,6 +1,6 @@
 # MVP Boundary
 
-**Updated:** mvp-boundary (02/03/2026)
+**Updated:** 03/03/2026
 
 **Source:** PRD §13
 
@@ -17,6 +17,8 @@
 - **Public Landing Page** (`/`) — Product overview, theme/language switchers, entry points (PRD §7.2)
 - **Public Releases Page** (`/releases`) — Changelog for unauthenticated users
 - **Privacy Policy** (`/privacy`) — Public policy page, PDPA/GDPR-ready, 10 sections, footer link (PRD §7.3)
+- **Terms & Conditions** (`/terms`) — Public service terms, footer link (PRD §7.5)
+- **Help & Feedback** (`/dashboard/settings/feedback`, `/admin/reports`) — User report submission, admin backoffice (PRD §7.4)
 - **Income & Expense** — Transactions, calendar, Data Tools for CSV import/export (PRD §18)
 - **Financial Accounts** — Bank, wallet, cash, credit card (PRD §18)
 - **Credit Card Engine** — Statement cycle, payment allocation (PRD §18)

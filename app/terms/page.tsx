@@ -40,7 +40,7 @@ export default async function TermsPage() {
 
   const bodyLines = (text: string) =>
     text.split("\n\n").map((paragraph, i) => (
-      <p key={i} className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+      <p key={i} className="text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
         {paragraph}
       </p>
     ));
@@ -50,9 +50,9 @@ export default async function TermsPage() {
       {items.map((item) => (
         <li
           key={item}
-          className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+          className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
         >
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
           {item}
         </li>
       ))}
@@ -60,17 +60,17 @@ export default async function TermsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur supports-backdrop-filter:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/95 dark:supports-backdrop-filter:bg-zinc-950/80">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+      <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
+        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/" className="gap-2">
+            <Link href="/" className="gap-2 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100">
               <ArrowLeft className="h-4 w-4" />
               {t.backToHome}
             </Link>
           </Button>
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
             {t.title}
           </span>
         </div>
@@ -80,13 +80,13 @@ export default async function TermsPage() {
         {/* Page title & version */}
         <div className="mb-10 space-y-2">
           <div className="flex items-center gap-3">
-            <FileText className="h-6 w-6 text-zinc-700 dark:text-zinc-300" />
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <FileText className="h-6 w-6 text-[#5C6B52] dark:text-stone-300" />
+            <h1 className="text-2xl font-bold text-[#3D3020] dark:text-stone-100">
               {t.title}
             </h1>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-            <span className="inline-flex items-center rounded-md bg-zinc-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[#A09080] dark:text-stone-400">
+            <span className="inline-flex items-center rounded-md bg-[#5C6B52] px-2.5 py-0.5 text-xs font-medium text-white dark:bg-stone-100 dark:text-stone-900">
               {translate(language, "terms.version", { version: TERMS_VERSION })}
             </span>
             <span>{t.effectiveDate}</span>
@@ -99,7 +99,7 @@ export default async function TermsPage() {
             <SectionAnchor id="acceptance" />
             <h2
               id="s-acceptance"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.acceptance.title}
             </h2>
@@ -113,11 +113,11 @@ export default async function TermsPage() {
             <SectionAnchor id="service" />
             <h2
               id="s-service"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.serviceDescription.title}
             </h2>
-            <p className="mb-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-4 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {t.sections.serviceDescription.body}
             </p>
             <BulletList items={t.sections.serviceDescription.clarifications} />
@@ -128,11 +128,11 @@ export default async function TermsPage() {
             <SectionAnchor id="responsibilities" />
             <h2
               id="s-responsibilities"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.userResponsibilities.title}
             </h2>
-            <p className="mb-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {t.sections.userResponsibilities.intro}
             </p>
             <BulletList items={t.sections.userResponsibilities.items} />
@@ -143,28 +143,28 @@ export default async function TermsPage() {
             <SectionAnchor id="liability" />
             <h2
               id="s-liability"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.liability.title}
             </h2>
-            <p className="mb-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {t.sections.liability.intro}
             </p>
             <ul className="mb-4 space-y-1.5 pl-4">
               {t.sections.liability.items.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+                  className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                 >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {item}
                 </li>
               ))}
             </ul>
-            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <div className="rounded-lg border border-[#C49A3C]/40 bg-[#C49A3C]/10 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-sm leading-relaxed text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#C49A3C] dark:text-amber-400" />
+                <p className="text-sm leading-relaxed text-[#8B7355] dark:text-amber-400">
                   {t.sections.liability.note}
                 </p>
               </div>
@@ -176,19 +176,19 @@ export default async function TermsPage() {
             <SectionAnchor id="termination" />
             <h2
               id="s-termination"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.termination.title}
             </h2>
             <div className="space-y-4">
               <div>
-                <h3 className="mb-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                <h3 className="mb-2 text-sm font-medium text-[#3D3020] dark:text-stone-200">
                   {t.sections.termination.providerRights.title}
                 </h3>
                 <BulletList items={t.sections.termination.providerRights.items} />
               </div>
               <div>
-                <h3 className="mb-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                <h3 className="mb-2 text-sm font-medium text-[#3D3020] dark:text-stone-200">
                   {t.sections.termination.userRights.title}
                 </h3>
                 <BulletList items={t.sections.termination.userRights.items} />
@@ -201,7 +201,7 @@ export default async function TermsPage() {
             <SectionAnchor id="intellectual-property" />
             <h2
               id="s-ip"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.intellectualProperty.title}
             </h2>
@@ -215,7 +215,7 @@ export default async function TermsPage() {
             <SectionAnchor id="changes" />
             <h2
               id="s-changes"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {t.sections.changes.title}
             </h2>
@@ -224,8 +224,8 @@ export default async function TermsPage() {
         </div>
 
         {/* Footer note */}
-        <div className="mt-14 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-          <p className="text-xs text-zinc-400 dark:text-zinc-600">
+        <div className="mt-14 border-t border-[#D4C9B0] pt-6 dark:border-stone-800">
+          <p className="text-xs text-[#A09080] dark:text-stone-600">
             {t.lastUpdated}
           </p>
         </div>

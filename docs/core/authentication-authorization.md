@@ -1,6 +1,6 @@
 # Authentication & Authorization
 
-**Updated:** 26/02/2026
+**Updated:** 03/03/2026
 
 **Source:** PRD §8
 
@@ -12,6 +12,13 @@
 - Supports:
   - Email + Password (Credentials)
   - Google OAuth
+
+## Remember Me (Credentials only)
+
+- **Sign-in form:** Optional "Remember me" checkbox. When checked, session TTL is extended (default 30 days via `REMEMBER_ME_TTL_DAYS`). When unchecked, session expires in 24 hours (via `DEFAULT_SESSION_TTL_HOURS`).
+- **Storage:** `UserSession.rememberMe` stored on session creation; used for session expiry calculation.
+- **OAuth:** Google sign-in always uses extended TTL (no checkbox).
+- **Environment:** `REMEMBER_ME_TTL_DAYS` (default 30), `DEFAULT_SESSION_TTL_HOURS` (default 24).
 
 ## User Master
 

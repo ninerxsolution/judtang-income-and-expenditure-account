@@ -4,7 +4,7 @@ import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
 import { TransactionType, TransactionStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { THAI_BANKS, BANK_OTHER } from "../lib/thai-banks";
-import { CARD_TYPES } from "../lib/card-types";
+import { CARD_NETWORKS } from "../lib/card-types";
 import {
   closeStatement,
   recordPayment,
@@ -234,9 +234,12 @@ async function seedFinancialAccounts(
     { closing: 15, due: 5 },
     { closing: 25, due: 10 },
   ];
+  // Credit card: cardAccountType (credit/debit/prepaid) + cardNetwork (visa/master/jcb etc.)
+  const paymentNetworks = CARD_NETWORKS.filter((c) => ["visa", "master", "jcb"].includes(c.id));
+  const defaultNetwork = paymentNetworks[0] ?? CARD_NETWORKS[0];
   for (let i = creditCards.length; i < 2; i++) {
     const bank = THAI_BANKS[i + 3] ?? pick(THAI_BANKS);
-    const cardType = pick(CARD_TYPES.filter((c) => ["visa", "master", "jcb"].includes(c.id)));
+    const cardNetwork = paymentNetworks.length > 0 ? pick(paymentNetworks) : defaultNetwork;
     const config = cardConfigs[i]!;
     const acc = await prisma.financialAccount.create({
       data: {
@@ -250,7 +253,8 @@ async function seedFinancialAccounts(
         isDefault: false,
         creditLimit: randomAmount(30000, 80000),
         interestRate: randomAmount(15, 20),
-        cardType: cardType.id,
+        cardAccountType: "credit",
+        cardNetwork: cardNetwork.id,
         statementClosingDay: config.closing,
         dueDay: config.due,
       },

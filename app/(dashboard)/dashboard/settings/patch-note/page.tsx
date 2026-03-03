@@ -62,12 +62,12 @@ function SectionBlock({
             ? "mb-2 text-sm font-semibold text-red-700 dark:text-red-400"
             : isMigration
               ? "mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300"
-              : "mb-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+              : "mb-2 text-sm font-semibold text-[#3D3020] dark:text-stone-200"
         }
       >
         {headingLabel}
       </h3>
-      <div className="changelog-body text-sm text-zinc-700 dark:text-zinc-300 [&_ul]:list-inside [&_ul]:list-disc [&_ol]:list-inside [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-zinc-200 [&_pre]:p-2 [&_code]:rounded [&_code]:bg-zinc-200 [&_code]:px-1 [&_code]:py-0.5 [&_hr]:my-10 [&_hr]:border-zinc-200 dark:[&_pre]:bg-zinc-800 dark:[&_code]:bg-zinc-800 dark:[&_hr]:border-zinc-700">
+      <div className="changelog-body text-sm text-[#3D3020] dark:text-stone-300 [&_ul]:list-inside [&_ul]:list-disc [&_ol]:list-inside [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-[#D4C9B0] [&_pre]:p-2 [&_code]:rounded [&_code]:bg-[#D4C9B0] [&_code]:px-1 [&_code]:py-0.5 [&_hr]:my-10 [&_hr]:border-[#D4C9B0] dark:[&_pre]:bg-stone-800 dark:[&_code]:bg-stone-800 dark:[&_hr]:border-stone-700">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.body}</ReactMarkdown>
       </div>
     </div>
@@ -84,13 +84,13 @@ function VersionBlock({ version, language }: { version: ChangelogVersion; langua
       <div className="flex flex-wrap items-center gap-3">
         <span
           id={`version-${version.version}`}
-          className="inline-flex items-center rounded-md bg-zinc-900 px-2.5 py-0.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+          className="inline-flex items-center rounded-md bg-[#5C6B52] px-2.5 py-0.5 text-sm font-medium text-white dark:bg-stone-100 dark:text-stone-900"
         >
           v{version.version}
         </span>
         <time
           dateTime={version.releaseDate}
-          className="text-sm text-zinc-500 dark:text-zinc-400"
+          className="text-sm text-[#A09080] dark:text-stone-400"
         >
           {version.releaseDate}
         </time>
@@ -135,7 +135,7 @@ export default async function PatchNotePage() {
           className="sticky top-24 space-y-1"
           aria-label={translate(language, "settings.contents")}
         >
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#A09080] dark:text-stone-400">
             {translate(language, "settings.contents")}
           </h2>
           <ul className="space-y-1">

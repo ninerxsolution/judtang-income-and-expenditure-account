@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -121,9 +122,13 @@ export function AppSidebarLayout({
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <Link href="/dashboard" className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0 transition-all">
-            <div className="bg-primary text-primary-foreground flex h-8 w-8 min-w-8 min-h-8 items-center justify-center rounded-lg text-xs font-semibold">
-              JT
-            </div>
+            <Image
+              src="/judtang-logo-temp.png"
+              alt={t("common.appName")}
+              width={32}
+              height={32}
+              className="h-8 w-8 min-w-8 min-h-8 shrink-0 rounded-lg object-cover"
+            />
             <div className="flex flex-col leading-tight group-data-[collapsible=icon]:max-w-0 max-w-full overflow-hidden transition-all">
               <span className="text-sm font-semibold">
                 {t("common.appName")}
@@ -196,9 +201,9 @@ export function AppSidebarLayout({
           <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
             <span
               className={cn(
-                "text-sm font-semibold tabular-nums bg-gray-100 dark:bg-gray-800 text-primary rounded-full px-3 py-1",
+                "text-sm font-semibold tabular-nums bg-[#EBF4E3] dark:bg-stone-800 rounded-full px-3 py-1",
                 balance !== null && balance < 0
-                  ? "text-red-700 dark:text-red-300"
+                  ? "text-red-600 dark:text-red-300"
                   : "text-foreground"
               )}
             >

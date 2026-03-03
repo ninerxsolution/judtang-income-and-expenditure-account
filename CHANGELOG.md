@@ -2,6 +2,41 @@
 
 ---
 
+# v0.9.9 - 2026-03-03
+
+## Added
+
+- **Dashboard quick actions** — Balance and Quick Add cards now sit above the calendar in the left column. Quick Add provides one-tap buttons for Record Income, Record Expense, and Transfer between accounts — each opens the transaction form with the correct type pre-selected.
+- **Manage accounts link** — Quick Add card includes a link to the Accounts page for quick access.
+
+## Changed
+
+- **Dashboard layout revamp** — Summary cards redesigned: Balance card uses a prominent dark olive green style; Income and Expense cards use light green and amber backgrounds with circular accents. Layout reorganized into two columns: left (Balance + Quick Actions + Calendar), right (Income + Expense + Recent transactions).
+
+---
+
+# v0.9.8 - 2026-03-03
+
+## Added
+
+- **Remember Me** — Sign-in with optional "Remember me" for extended session (default 30 days when checked; 24 hours when unchecked)
+- **Terms & Conditions** — Public page at `/terms` covering service terms, acceptable use, and user obligations; linked in footer
+- **Help & Feedback** — Submit bug reports and feature requests at Settings → Help & Feedback; admin backoffice at `/admin/reports` for reviewing submissions
+- **Card type refactor** — Replaced `cardType` with `cardAccountType` (credit/debit/prepaid/other) and `cardNetwork` (visa/master/jcb/amex/unionpay/truemoney/other) for clearer categorization
+- **Bank logos & card network icons** — Accounts page and forms now display bank logos and card network icons for better visual identification
+- **AccountCombobox & CardTypeSelect** — New components for improved account selection and card type management in forms
+
+## Changed
+
+- **Earth tone design** — Landing page, auth pages, and dashboard updated with stone/amber/emerald palette for a cohesive look
+- Form dropdowns and financial account forms aligned with the new design system
+
+## Migration
+
+- Added `cardAccountType` and `cardNetwork` fields to FinancialAccount; `cardType` deprecated
+
+---
+
 # v0.9.7 - 2026-03-02
 
 ## Added

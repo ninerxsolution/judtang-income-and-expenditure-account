@@ -20,7 +20,7 @@ type CalendarSummaryItem = {
 };
 
 const LEVEL_CLASSES = [
-  "bg-zinc-200 dark:bg-zinc-800", // 0
+  "bg-[#D4C9B0] dark:bg-stone-800", // 0
   "bg-emerald-200 dark:bg-emerald-900", // 1
   "bg-emerald-400 dark:bg-emerald-700", // 2
   "bg-emerald-500 dark:bg-emerald-600", // 3
@@ -177,8 +177,8 @@ export function ActivityHeatmap() {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8] p-4 dark:border-stone-700 dark:bg-stone-900">
+        <p className="text-sm text-[#A09080] dark:text-stone-400">
           {t("dashboard.activityHeatmap.loading")}
         </p>
       </div>
@@ -187,7 +187,7 @@ export function ActivityHeatmap() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8] p-4 dark:border-stone-700 dark:bg-stone-900">
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
@@ -195,7 +195,7 @@ export function ActivityHeatmap() {
 
   return (
     <div className="min-w-0 space-y-2">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
         {t("dashboard.activityHeatmap.totalContributions", {
           count: String(computedTotal),
         })}
@@ -215,7 +215,7 @@ export function ActivityHeatmap() {
                 return (
                   <div
                     key={`month-${col}`}
-                    className="text-[10px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap"
+                    className="text-[10px] text-[#A09080] dark:text-stone-400 whitespace-nowrap"
                   >
                     {labelForCol?.label ?? ""}
                   </div>
@@ -228,7 +228,7 @@ export function ActivityHeatmap() {
                 {WEEKDAY_LABELS.map((label) => (
                   <span
                     key={label}
-                    className="text-[10px] text-zinc-500 dark:text-zinc-400"
+                    className="text-[10px] text-[#A09080] dark:text-stone-400"
                   >
                     {label}
                   </span>
@@ -288,7 +288,7 @@ export function ActivityHeatmap() {
               </div>
             </div>
             {/* Legend */}
-            <div className="flex items-center gap-1 pt-1 pl-10 text-[10px] text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-1 pt-1 pl-10 text-[10px] text-[#A09080] dark:text-stone-400">
               <span>{t("dashboard.activityHeatmap.less")}</span>
               {LEVEL_CLASSES.map((cls, i) => (
                 <div

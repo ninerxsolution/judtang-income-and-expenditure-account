@@ -36,7 +36,8 @@ export async function recordPayment(params: RecordPaymentParams) {
       accountNumber: true,
       creditLimit: true,
       interestRate: true,
-      cardType: true,
+      cardAccountType: true,
+      cardNetwork: true,
     },
   });
 

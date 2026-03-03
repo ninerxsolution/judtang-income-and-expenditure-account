@@ -86,15 +86,15 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
   }, [initialData]);
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+    <div className="rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <h2 className="flex items-center gap-2 text-sm font-medium text-[#3D3020] dark:text-stone-300">
           <List className="h-4 w-4" />
           {t("dashboard.recentTransactions")}
         </h2>
         <Link
           href="/dashboard/transactions"
-          className="inline-flex items-center gap-1 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="inline-flex items-center gap-1 text-xs font-medium text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
         >
           {t("transactions.new.viewAll")}
           <ChevronRight className="h-3.5 w-3.5" />
@@ -114,7 +114,7 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
       )}
 
       {!loading && !error && items.length === 0 && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-[#A09080] dark:text-stone-400">
           {t("transactions.list.empty")}
         </p>
       )}
@@ -126,7 +126,7 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
             return (
               <li
                 key={tx.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-zinc-100 px-3 py-2 text-sm dark:border-zinc-800"
+                className="flex items-center justify-between gap-3 rounded-md border border-[#E8E0C8] px-3 py-2 text-sm dark:border-stone-800"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <span
@@ -146,16 +146,16 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
                       : t("transactions.common.expense")}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <span className="text-zinc-500 dark:text-zinc-400">
+                    <span className="text-[#A09080] dark:text-stone-400">
                       {formatDate(tx.occurredAt, locale)}
                     </span>
                     {(tx.categoryRef?.name ?? tx.category) && (
-                      <span className="ml-2 text-zinc-700 dark:text-zinc-200">
+                      <span className="ml-2 text-[#3D3020] dark:text-stone-200">
                         · {getCategoryDisplayName(tx.categoryRef?.name ?? tx.category ?? "", localeKey)}
                       </span>
                     )}
                     {tx.financialAccount && (
-                      <span className="ml-2 text-zinc-500 dark:text-zinc-400 text-xs">
+                      <span className="ml-2 text-[#A09080] dark:text-stone-400 text-xs">
                         ({tx.financialAccount.name})
                       </span>
                     )}
@@ -164,8 +164,8 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
                 <span
                   className={`shrink-0 tabular-nums font-medium ${
                     isIncome
-                      ? "text-emerald-700 dark:text-emerald-300"
-                      : "text-red-700 dark:text-red-300"
+                      ? "text-emerald-600 dark:text-emerald-300"
+                      : "text-red-600 dark:text-red-300"
                   }`}
                 >
                   {isIncome ? "+" : "-"}

@@ -95,7 +95,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: 50000,
           interestRate: 15,
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(true);
       expect(
@@ -105,7 +105,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "123",
           creditLimit: 50000,
           interestRate: 15,
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(true);
     });
@@ -117,7 +117,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: null,
           interestRate: 15,
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(true);
       expect(
@@ -127,7 +127,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: undefined,
           interestRate: 15,
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(true);
     });
@@ -139,11 +139,11 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: 50000,
           interestRate: null,
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(true);
     });
-    it("returns true when cardType is missing or empty", () => {
+    it("returns true when cardAccountType is missing or empty", () => {
       expect(
         isAccountIncomplete({
           type: "CREDIT_CARD",
@@ -151,7 +151,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: 50000,
           interestRate: 15,
-          cardType: null,
+          cardAccountType: null,
         })
       ).toBe(true);
       expect(
@@ -161,7 +161,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: 50000,
           interestRate: 15,
-          cardType: "   ",
+          cardAccountType: "   ",
         })
       ).toBe(true);
     });
@@ -173,7 +173,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: 50000,
           interestRate: 15,
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(false);
       expect(
@@ -183,7 +183,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234",
           creditLimit: 0,
           interestRate: 0,
-          cardType: "debit",
+          cardAccountType: "debit",
         })
       ).toBe(false);
     });
@@ -195,7 +195,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: { toNumber: () => 50000 },
           interestRate: { toNumber: () => 15 },
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(false);
     });
@@ -207,7 +207,7 @@ describe("isAccountIncomplete", () => {
           accountNumber: "1234567890123456",
           creditLimit: { toString: () => "50000" } as { toNumber?: () => number },
           interestRate: { toString: () => "15" } as { toNumber?: () => number },
-          cardType: "credit",
+          cardAccountType: "credit",
         })
       ).toBe(false);
     });

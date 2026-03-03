@@ -1,4 +1,4 @@
-import { TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
+import { Prisma, TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { recomputeOutstanding } from "@/lib/credit-card";
@@ -40,6 +40,8 @@ export type ListTransactionsOptions = {
   to?: Date;
   type?: TransactionType;
   financialAccountId?: string;
+  categoryId?: string;
+  search?: string;
   limit?: number;
   offset?: number;
 };
@@ -204,14 +206,16 @@ export async function listTransactionsByUser(
     throw new Error("userId is required");
   }
 
-  const { from, to, type, financialAccountId, limit = 50, offset = 0 } = options;
+  const { from, to, type, financialAccountId, categoryId, search, limit = 50, offset = 0 } = options;
 
   const where: {
     userId: string;
     type?: PrismaTransactionType;
     financialAccountId?: string;
+    categoryId?: string;
     OR?: Array<{ financialAccountId?: string; transferAccountId?: string }>;
     occurredAt?: { gte?: Date; lte?: Date };
+    AND?: Prisma.TransactionWhereInput[];
   } = { userId };
 
   const filterTypes = [
@@ -224,6 +228,10 @@ export async function listTransactionsByUser(
   ];
   if (type && filterTypes.includes(type)) {
     where.type = type as PrismaTransactionType;
+  }
+
+  if (categoryId && categoryId.trim()) {
+    where.categoryId = categoryId.trim();
   }
 
   if (financialAccountId) {
@@ -248,6 +256,29 @@ export async function listTransactionsByUser(
     ) {
       delete where.occurredAt;
     }
+  }
+
+  const q = typeof search === "string" ? search.trim() : "";
+  if (q) {
+    const searchOr: Prisma.TransactionWhereInput[] = [];
+    searchOr.push({ note: { contains: q } });
+    searchOr.push({ category: { contains: q } });
+    searchOr.push({ financialAccount: { name: { contains: q } } });
+    searchOr.push({ transferAccount: { name: { contains: q } } });
+    searchOr.push({ categoryRef: { name: { contains: q } } });
+    const num = Number.parseFloat(q);
+    if (Number.isFinite(num) && num > 0) {
+      searchOr.push({ amount: { equals: new Prisma.Decimal(num) } });
+    }
+    const upperQ = q.toUpperCase();
+    if (filterTypes.includes(upperQ as TransactionType)) {
+      searchOr.push({ type: upperQ as PrismaTransactionType });
+    }
+    const cuidLike = /^[c][a-z0-9]{24}$/i.test(q);
+    if (cuidLike) {
+      searchOr.push({ id: q });
+    }
+    where.AND = [{ OR: searchOr }];
   }
 
   const safeLimit = Math.min(Math.max(limit, 1), 200);

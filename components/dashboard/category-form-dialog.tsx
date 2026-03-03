@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
@@ -87,13 +88,14 @@ export function CategoryFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {editId ? t("settings.categories.editTitle") : t("settings.categories.addTitle")}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          <DialogBody className="space-y-4 pl-1">
           <FormField
             id="category-form-name"
             label={t("settings.categories.addPlaceholder")}
@@ -105,7 +107,8 @@ export function CategoryFormDialog({
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           )}
-          <DialogFooter>
+          </DialogBody>
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"

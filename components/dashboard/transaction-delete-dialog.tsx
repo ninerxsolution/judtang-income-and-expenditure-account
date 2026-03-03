@@ -76,7 +76,7 @@ export function TransactionDeleteDialog({
             {transaction ? (
               <>
                 {t("transactions.delete.message")}{" "}
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="font-medium text-[#3D3020] dark:text-stone-100">
                   {isIncome
                     ? t("transactions.common.income")
                     : t("transactions.common.expense")}{" "}

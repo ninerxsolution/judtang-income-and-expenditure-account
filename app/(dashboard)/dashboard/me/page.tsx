@@ -24,6 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { FormField } from "@/components/auth/form-field";
 import {
@@ -459,22 +460,24 @@ export default function UserPage() {
 
       {/* Edit name dialog */}
       <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{t("profile.editNameDialogTitle")}</DialogTitle>
             <DialogDescription>
               {t("profile.editNameDialogDescription")}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleUpdateName} className="space-y-4">
-            <FormField
-              id="profile-name"
-              label={t("profile.displayName")}
-              value={nameValue}
-              onChange={setNameValue}
-              maxLength={MAX_NAME_LENGTH}
-            />
-            <DialogFooter>
+          <form onSubmit={handleUpdateName} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+            <DialogBody className="space-y-4 pl-1">
+              <FormField
+                id="profile-name"
+                label={t("profile.displayName")}
+                value={nameValue}
+                onChange={setNameValue}
+                maxLength={MAX_NAME_LENGTH}
+              />
+            </DialogBody>
+            <DialogFooter className="shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -492,42 +495,44 @@ export default function UserPage() {
 
       {/* Change password dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{t("profile.changePasswordDialogTitle")}</DialogTitle>
             <DialogDescription>
               {t("profile.changePasswordDialogDescription")}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <FormField
-              id="current-password"
-              label={t("profile.currentPassword")}
-              type="password"
-              value={currentPassword}
-              onChange={setCurrentPassword}
-              autoComplete="current-password"
-              maxLength={MAX_PASSWORD_LENGTH}
-            />
-            <FormField
-              id="new-password"
-              label={t("profile.newPassword")}
-              type="password"
-              value={newPassword}
-              onChange={setNewPassword}
-              autoComplete="new-password"
-              maxLength={MAX_PASSWORD_LENGTH}
-            />
-            <FormField
-              id="confirm-password"
-              label={t("profile.confirmPassword")}
-              type="password"
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              autoComplete="new-password"
-              maxLength={MAX_PASSWORD_LENGTH}
-            />
-            <DialogFooter>
+          <form onSubmit={handleChangePassword} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+            <DialogBody className="space-y-4 pl-1">
+              <FormField
+                id="current-password"
+                label={t("profile.currentPassword")}
+                type="password"
+                value={currentPassword}
+                onChange={setCurrentPassword}
+                autoComplete="current-password"
+                maxLength={MAX_PASSWORD_LENGTH}
+              />
+              <FormField
+                id="new-password"
+                label={t("profile.newPassword")}
+                type="password"
+                value={newPassword}
+                onChange={setNewPassword}
+                autoComplete="new-password"
+                maxLength={MAX_PASSWORD_LENGTH}
+              />
+              <FormField
+                id="confirm-password"
+                label={t("profile.confirmPassword")}
+                type="password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                autoComplete="new-password"
+                maxLength={MAX_PASSWORD_LENGTH}
+              />
+            </DialogBody>
+            <DialogFooter className="shrink-0">
               <Button
                 type="button"
                 variant="outline"

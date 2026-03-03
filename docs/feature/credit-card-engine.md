@@ -35,7 +35,8 @@ Fields เพิ่มเติมสำหรับ CREDIT_CARD:
 - `availableCredit` — วงเงินคงเหลือ
 - `interestRate` — อัตราดอกเบี้ย (%) (ใช้แล้ว)
 - `interestCalculatedUntil` — สำหรับ v1.1
-- `cardType` — ประเภทบัตร (credit, debit, visa, master, jcb, amex, etc.)
+- `cardAccountType` — ประเภทบัตร (credit, debit, prepaid, other)
+- `cardNetwork` — เครือข่ายชำระ (visa, master, jcb, amex, unionpay, truemoney, other)
 - `bankName` — ชื่อธนาคาร (จาก Thai banks dropdown)
 - `accountNumber` — เลขบัตรเครดิต (masked เมื่อแสดง)
 

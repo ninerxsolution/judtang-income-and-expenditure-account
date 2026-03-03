@@ -39,23 +39,23 @@ export default async function PrivacyPage() {
 
   const bodyLines = (text: string) =>
     text.split("\n\n").map((paragraph, i) => (
-      <p key={i} className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+      <p key={i} className="text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
         {paragraph}
       </p>
     ));
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur supports-backdrop-filter:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/95 dark:supports-backdrop-filter:bg-zinc-950/80">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+      <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
+        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/" className="gap-2">
+            <Link href="/" className="gap-2 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100">
               <ArrowLeft className="h-4 w-4" />
               {p.backToHome}
             </Link>
           </Button>
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <span className="text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
             {p.title}
           </span>
         </div>
@@ -64,11 +64,11 @@ export default async function PrivacyPage() {
       <main className="mx-auto max-w-4xl px-6 py-12">
         {/* Page title & version */}
         <div className="mb-10 space-y-2">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl font-bold text-[#3D3020] dark:text-stone-100">
             {p.title}
           </h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-            <span className="inline-flex items-center rounded-md bg-zinc-900 px-2.5 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[#A09080] dark:text-stone-400">
+            <span className="inline-flex items-center rounded-md bg-[#5C6B52] px-2.5 py-0.5 text-xs font-medium text-white dark:bg-stone-100 dark:text-stone-900">
               {p.version}
             </span>
             <span>{p.effectiveDate}</span>
@@ -81,7 +81,7 @@ export default async function PrivacyPage() {
             <SectionAnchor id="introduction" />
             <h2
               id="s-introduction"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.introduction.title}
             </h2>
@@ -95,26 +95,26 @@ export default async function PrivacyPage() {
             <SectionAnchor id="data-collected" />
             <h2
               id="s-data-collected"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.dataCollected.title}
             </h2>
-            <p className="mb-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-4 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.dataCollected.intro}
             </p>
             <div className="space-y-4">
               {p.sections.dataCollected.categories.map((cat) => (
                 <div key={cat.heading}>
-                  <h3 className="mb-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  <h3 className="mb-1.5 text-sm font-medium text-[#3D3020] dark:text-stone-200">
                     {cat.heading}
                   </h3>
                   <ul className="space-y-1 pl-4">
                     {cat.items.map((item) => (
                       <li
                         key={item}
-                        className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+                        className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                       >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                         {item}
                       </li>
                     ))}
@@ -153,20 +153,20 @@ export default async function PrivacyPage() {
             <SectionAnchor id="data-use" />
             <h2
               id="s-data-use"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.dataUse.title}
             </h2>
-            <p className="mb-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.dataUse.intro}
             </p>
             <ul className="space-y-1.5 pl-4">
               {p.sections.dataUse.items.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+                  className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                 >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {item}
                 </li>
               ))}
@@ -178,25 +178,25 @@ export default async function PrivacyPage() {
             <SectionAnchor id="security" />
             <h2
               id="s-security"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.security.title}
             </h2>
-            <p className="mb-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.security.intro}
             </p>
             <ul className="mb-4 space-y-1.5 pl-4">
               {p.sections.security.items.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+                  className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                 >
-                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5C6B52] dark:text-stone-500" />
                   {item}
                 </li>
               ))}
             </ul>
-            <p className="text-sm italic leading-relaxed text-zinc-500 dark:text-zinc-500">
+            <p className="text-sm italic leading-relaxed text-[#A09080] dark:text-stone-500">
               {p.sections.security.note}
             </p>
           </section>
@@ -206,14 +206,14 @@ export default async function PrivacyPage() {
             <SectionAnchor id="third-party" />
             <h2
               id="s-third-party"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.thirdParty.title}
             </h2>
-            <p className="mb-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-4 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.thirdParty.intro}
             </p>
-            <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <div className="overflow-hidden rounded-lg border border-[#D4C9B0] dark:border-stone-800">
               <table className="w-full text-sm">
                 <tbody>
                   {p.sections.thirdParty.providers.map((provider, index) => (
@@ -221,14 +221,14 @@ export default async function PrivacyPage() {
                       key={provider.name}
                       className={
                         index < p.sections.thirdParty.providers.length - 1
-                          ? "border-b border-zinc-200 dark:border-zinc-800"
+                          ? "border-b border-[#D4C9B0] dark:border-stone-800"
                           : ""
                       }
                     >
-                      <td className="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-200">
+                      <td className="px-4 py-3 font-medium text-[#3D3020] dark:text-stone-200">
                         {provider.name}
                       </td>
-                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                      <td className="px-4 py-3 text-[#6B5E4E] dark:text-stone-400">
                         {provider.purpose}
                       </td>
                     </tr>
@@ -236,7 +236,7 @@ export default async function PrivacyPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm italic leading-relaxed text-zinc-500 dark:text-zinc-500">
+            <p className="mt-4 text-sm italic leading-relaxed text-[#A09080] dark:text-stone-500">
               {p.sections.thirdParty.note}
             </p>
           </section>
@@ -246,7 +246,7 @@ export default async function PrivacyPage() {
             <SectionAnchor id="retention" />
             <h2
               id="s-retention"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.retention.title}
             </h2>
@@ -260,25 +260,25 @@ export default async function PrivacyPage() {
             <SectionAnchor id="rights" />
             <h2
               id="s-rights"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.rights.title}
             </h2>
-            <p className="mb-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.rights.intro}
             </p>
             <ul className="mb-4 space-y-1.5 pl-4">
               {p.sections.rights.items.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+                  className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                 >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {item}
                 </li>
               ))}
             </ul>
-            <p className="text-sm italic leading-relaxed text-zinc-500 dark:text-zinc-500">
+            <p className="text-sm italic leading-relaxed text-[#A09080] dark:text-stone-500">
               {p.sections.rights.note}
             </p>
           </section>
@@ -288,28 +288,28 @@ export default async function PrivacyPage() {
             <SectionAnchor id="deletion" />
             <h2
               id="s-deletion"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.deletion.title}
             </h2>
-            <p className="mb-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mb-4 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.deletion.body}
             </p>
-            <h3 className="mb-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <h3 className="mb-2 text-sm font-medium text-[#3D3020] dark:text-stone-200">
               {p.sections.deletion.removesTitle}
             </h3>
             <ul className="mb-3 space-y-1.5 pl-4">
               {p.sections.deletion.removes.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400"
+                  className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
                 >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400 dark:bg-zinc-500" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                   {item}
                 </li>
               ))}
             </ul>
-            <p className="text-sm italic leading-relaxed text-zinc-500 dark:text-zinc-500">
+            <p className="text-sm italic leading-relaxed text-[#A09080] dark:text-stone-500">
               {p.sections.deletion.backupNote}
             </p>
           </section>
@@ -319,7 +319,7 @@ export default async function PrivacyPage() {
             <SectionAnchor id="changes" />
             <h2
               id="s-changes"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.changes.title}
             </h2>
@@ -331,19 +331,19 @@ export default async function PrivacyPage() {
             <SectionAnchor id="contact" />
             <h2
               id="s-contact"
-              className="mb-3 text-base font-semibold text-zinc-900 dark:text-zinc-100"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
             >
               {p.sections.contact.title}
             </h2>
-            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {p.sections.contact.body}
             </p>
           </section>
         </div>
 
         {/* Footer note */}
-        <div className="mt-14 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-          <p className="text-xs text-zinc-400 dark:text-zinc-600">
+        <div className="mt-14 border-t border-[#D4C9B0] pt-6 dark:border-stone-800">
+          <p className="text-xs text-[#A09080] dark:text-stone-600">
             {p.lastUpdated}
           </p>
         </div>

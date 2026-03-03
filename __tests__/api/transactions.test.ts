@@ -102,7 +102,8 @@ beforeEach(() => {
     accountNumber: null,
     creditLimit: null,
     interestRate: null,
-    cardType: null,
+    cardAccountType: null,
+    cardNetwork: null,
   });
   mockFindMany.mockResolvedValue([]);
   mockGetTransactionById.mockResolvedValue(null);

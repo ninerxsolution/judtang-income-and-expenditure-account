@@ -146,6 +146,11 @@ export const enDictionary = {
       expense: "Expense",
       balance: "Balance",
       loading: "Loading…",
+      quickAddTitle: "Quick Add",
+      recordIncome: "Record Income",
+      recordExpense: "Record Expense",
+      transferBetweenAccounts: "Transfer between accounts",
+      manageAccounts: "Manage accounts",
     },
     recentTransactions: "Recent transactions",
     activityHeatmap: {
@@ -258,6 +263,9 @@ export const enDictionary = {
     interestRateRequired: "Please enter interest rate (%)",
     cardTypeLabel: "Card type",
     cardTypeRequired: "Please select card type",
+    cardAccountTypeLabel: "Card type (credit/debit/prepaid)",
+    cardAccountTypeRequired: "Please select card type",
+    cardNetworkLabel: "Card network (Visa/Mastercard etc.)",
     creditLimitRequired: "Please enter credit limit",
     showAccountNumber: "Show full account number",
     hideAccountNumber: "Hide account number",
@@ -270,7 +278,7 @@ export const enDictionary = {
     incompleteAccountWarning:
       "Please add bank and account/card number before using.",
     incompleteCreditCardWarning:
-      "Please add bank, card number, credit limit, interest rate, and card type before using.",
+      "Please add bank, card number, credit limit, interest rate, and card type (credit/debit) before using.",
     incompleteAccountCannotUse:
       "Please complete bank and account number before using.",
     hideDefaultAccount: "Hide default account",
@@ -678,6 +686,8 @@ export const enDictionary = {
       deleteConfirm: "Are you sure you want to delete this transaction?",
       deleteFailed: "Failed to delete transaction.",
       filters: "Filters",
+      searchLabel: "Search",
+      searchPlaceholder: "Search by note, category, account, amount…",
       applyFilters: "Apply",
       pageInfo: "Showing {from}–{to}",
       prev: "Previous",
@@ -781,6 +791,8 @@ export const enDictionary = {
       accountChangeFieldDueDay: "Due day",
       accountChangeFieldInterestRate: "Interest rate",
       accountChangeFieldCardType: "Card type",
+      accountChangeFieldCardAccountType: "Card type (credit/debit)",
+      accountChangeFieldCardNetwork: "Card network",
       accountChangeFieldLastCheckedAt: "Last checked",
       accountChangeFieldIsHidden: "Hidden from list",
       yes: "Yes",

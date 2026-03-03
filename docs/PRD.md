@@ -7,7 +7,7 @@
 
 ## 1. Overview
 
-**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), a **Public Privacy Policy** (`/privacy`), and **Income & Expense** tracking with multi-account and credit card support.
+**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), a **Public Privacy Policy** (`/privacy`), a **Public Terms & Conditions** (`/terms`), and **Income & Expense** tracking with multi-account and credit card support.
 
 It is built on Next.js with NextAuth and a MySQL database, and is intended for general users and teams who need personal finance management with login and audit trails.
 
@@ -73,6 +73,10 @@ A public Privacy Policy page at `/privacy` (no login required) that reflects act
 ### 7.4 Help & Feedback
 
 User-facing report submission at Settings → Help & Feedback (`/dashboard/settings/feedback`). Users can submit bug reports, feature requests, or other feedback with optional screenshots. Admin backoffice at `/admin/reports` for reviewing and managing submissions. Root admin seeder for initial setup. See [feature/help-feedback.md](feature/help-feedback.md) for full spec.
+
+### 7.5 Terms & Conditions
+
+A public Terms & Conditions page at `/terms` (no login required) that defines the service agreement, acceptable use, and user obligations. Linked in the landing page footer. See [feature/terms-and-conditions.md](feature/terms-and-conditions.md) for full spec.
 
 ---
 

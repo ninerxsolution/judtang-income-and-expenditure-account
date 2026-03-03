@@ -53,8 +53,10 @@ import {
   formatCardNumber,
   formatBankAccountNumber,
 } from "@/lib/format";
-import { getBankDisplayName } from "@/lib/thai-banks";
-import { getCardTypeDisplayName } from "@/lib/card-types";
+import Image from "next/image";
+import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
+import { getFullCardTypeDisplayName, getCardNetworkDisplayName } from "@/lib/card-types";
+import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { useI18n } from "@/hooks/use-i18n";
 import {
   Tooltip,
@@ -98,7 +100,8 @@ type FinancialAccount = {
   accountNumberMasked?: string;
   accountNumberMode?: string | null;
   interestRate?: number | null;
-  cardType?: string | null;
+  cardAccountType?: string | null;
+  cardNetwork?: string | null;
   isIncomplete?: boolean;
 };
 
@@ -402,7 +405,7 @@ export default function AccountsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
             {t("accounts.subtitle")}
           </p>
         </div>
@@ -436,7 +439,7 @@ export default function AccountsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Landmark className="mb-3 h-12 w-12 text-zinc-400" />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-[#A09080] dark:text-stone-400">
               {t("accounts.empty")}
             </p>
             <Button onClick={openCreateModal} className="mt-4">
@@ -458,6 +461,7 @@ export default function AccountsPage() {
             );
             const renderCard = (acc: FinancialAccount) => {
               const TypeIcon = ACCOUNT_TYPE_ICONS[acc.type] ?? PiggyBank;
+              const bankLogoUrl = acc.bankName ? getBankLogoUrl(acc.bankName) : null;
               return (
               <Card
                 key={acc.id}
@@ -481,18 +485,50 @@ export default function AccountsPage() {
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <TypeIcon className="h-5 w-5 text-zinc-500" />
+                      {bankLogoUrl ? (
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[#E8E0C8] p-1 dark:bg-stone-700">
+                          <Image
+                            src={bankLogoUrl}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <TypeIcon className="h-5 w-5 text-[#A09080]" />
+                      )}
                       <CardTitle className="text-base">{acc.name}</CardTitle>
+                      {acc.type === "CREDIT_CARD" && acc.cardNetwork && (
+                        <div
+                          className="flex shrink-0 items-center"
+                          title={
+                            getCardNetworkDisplayName(
+                              acc.cardNetwork,
+                              locale?.startsWith("th") ? "th" : "en"
+                            ) ?? undefined
+                          }
+                        >
+                          <CardNetworkIcon id={acc.cardNetwork} size={18} />
+                        </div>
+                      )}
                     </div>
                     {(acc.bankName || acc.accountNumberMasked) && (
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <p className="text-xs text-[#A09080] dark:text-stone-400">
                           {(() => {
                             const bankLabel =
                               getBankDisplayName(
                                 acc.bankName ?? undefined,
                                 locale?.startsWith("th") ? "th" : "en"
                               ) ?? acc.bankName;
+                            const networkLabel =
+                              acc.type === "CREDIT_CARD" && acc.cardNetwork
+                                ? getCardNetworkDisplayName(
+                                    acc.cardNetwork,
+                                    locale?.startsWith("th") ? "th" : "en"
+                                  )
+                                : null;
                             const isRevealed =
                               revealedAccountIds.has(acc.id) && fullAccountNumbers[acc.id];
                             const numberDisplay = isRevealed ? (
@@ -548,7 +584,9 @@ export default function AccountsPage() {
                             return (
                               <>
                                 {bankLabel}
-                                {bankLabel && numberDisplay && " · "}
+                                {bankLabel && networkLabel && " · "}
+                                {networkLabel}
+                                {(bankLabel || networkLabel) && numberDisplay && " · "}
                                 {numberDisplay}
                               </>
                             );
@@ -559,7 +597,7 @@ export default function AccountsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 shrink-0 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                              className="h-6 w-6 shrink-0 text-[#A09080] hover:text-[#3D3020] dark:hover:text-stone-300"
                               onClick={() => toggleRevealAccountNumber(acc)}
                               title={
                                 revealedAccountIds.has(acc.id)
@@ -652,13 +690,13 @@ export default function AccountsPage() {
                       <p className="text-2xl font-bold tabular-nums text-red-700 dark:text-red-300">
                         {formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1 text-xs text-[#A09080] dark:text-stone-400">
                         {t("accounts.currentOutstanding")}
                       </p>
                       <button
                         type="button"
                         onClick={() => toggleCreditCardDetails(acc.id)}
-                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-xs text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-xs text-[#A09080] transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
                         title={
                           expandedCreditCardIds.has(acc.id)
                             ? t("accounts.hideDetails")
@@ -723,13 +761,14 @@ export default function AccountsPage() {
                                 {t("accounts.interestRateLabel")}: {acc.interestRate}%
                               </p>
                             )}
-                            {acc.cardType && (
+                            {(acc.cardAccountType || acc.cardNetwork) && (
                               <p>
                                 {t("accounts.cardTypeLabel")}:{" "}
-                                {getCardTypeDisplayName(
-                                  acc.cardType,
+                                {getFullCardTypeDisplayName(
+                                  acc.cardAccountType,
+                                  acc.cardNetwork,
                                   locale?.startsWith("th") ? "th" : "en"
-                                ) ?? acc.cardType}
+                                ) ?? "—"}
                               </p>
                             )}
                           </div>
@@ -761,7 +800,7 @@ export default function AccountsPage() {
                         </CardDescription>
                       )}
                       {acc.isDefault && (
-                        <span className="mt-2 inline-block rounded-full bg-zinc-200 px-2 py-0.5 text-xs dark:bg-zinc-700">
+                        <span className="mt-2 inline-block rounded-full bg-[#D4C9B0] px-2 py-0.5 text-xs dark:bg-stone-700">
                           {t("accounts.default")}
                         </span>
                       )}
@@ -777,7 +816,7 @@ export default function AccountsPage() {
                   <section>
                     <div className="mb-4 flex items-center justify-between gap-2">
                       <h2 className="flex items-center gap-2 text-lg font-semibold">
-                        <Landmark className="h-5 w-5 text-zinc-500" />
+                        <Landmark className="h-5 w-5 text-[#A09080]" />
                         {t("accounts.sectionAccounts")}
                       </h2>
                       {hiddenDefault && (
@@ -808,7 +847,7 @@ export default function AccountsPage() {
                 {creditCards.length > 0 && (
                   <section>
                     <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                      <CreditCard className="h-5 w-5 text-zinc-500" />
+                      <CreditCard className="h-5 w-5 text-[#A09080]" />
                       {t("accounts.sectionCreditCards")}
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -871,7 +910,7 @@ export default function AccountsPage() {
                   ? (locale?.startsWith("th") ? "กรอกรหัสด้านล่างเพื่อยืนยันการลบ" : "Enter the code below to confirm deletion")
                   : t("accounts.deleteConfirmRandomCodeLabel")}
               </Label>
-              <p className="select-none rounded-md bg-zinc-100 px-3 py-2 font-mono text-sm dark:bg-zinc-800">
+              <p className="select-none rounded-md bg-[#F5F0E8] px-3 py-2 font-mono text-sm dark:bg-stone-800">
                 {deleteExpectedValue}
               </p>
               <Input

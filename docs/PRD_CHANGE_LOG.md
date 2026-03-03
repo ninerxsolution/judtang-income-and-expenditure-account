@@ -5,6 +5,35 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 03/03/2026 (Docs sync: v0.9.8, Remember Me, Terms & Conditions, MVP boundary)
+
+- docs/core/authentication-authorization.md — Added Remember Me section (Credentials only, TTL, env vars).
+- docs/feature/terms-and-conditions.md — New: Terms & Conditions feature doc (route, content, footer link).
+- docs/PRD.md — §1 Overview: added Terms & Conditions; §7.5: new Terms & Conditions section.
+- docs/INDEX.md — Added terms-and-conditions.md to feature list.
+- docs/feature/public-landing-page.md — Footer: added Terms & Conditions link; i18n keys.
+- docs/structure/mvp-boundary.md — Added Terms & Conditions, Help & Feedback to Implemented; updated date.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 03/03/2026 (Card type refactor: cardAccountType + cardNetwork)
+
+- docs/feature/financial-accounts.md — Replaced `cardType` with `cardAccountType` (credit/debit/prepaid/other) and `cardNetwork` (visa/master/jcb etc.); updated incomplete validation.
+- docs/feature/credit-card-engine.md — Updated card fields to cardAccountType and cardNetwork.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 03/03/2026 (Landing page Earth tone revamp)
+
+- app/page.tsx — Changed background to stone-50/950; added LandingCta section.
+- components/landing/* — Revamped all landing components: stone/amber/emerald Earth tone palette; added Hero dashboard mock preview; improved section spacing; fixed FeatureGrid missing light-mode bg.
+- docs/feature/public-landing-page.md — §11 Visual Guidelines: updated to stone/amber/emerald.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 03/03/2026 (Testing strategy update)
 
 - docs/structure/testing-strategy.md — Updated: reflect implemented test suite (lib unit tests, API integration tests); direct handler import; list of test files and deferred items.

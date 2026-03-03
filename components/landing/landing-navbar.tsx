@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { ChevronDown, Globe, Monitor, Moon, Sun } from "lucide-react";
@@ -43,12 +44,19 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
   const ThemeIcon = currentTheme === "light" ? Sun : currentTheme === "dark" ? Moon : Monitor;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur supports-backdrop-filter:bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/95 dark:supports-backdrop-filter:bg-zinc-950/80">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <header className="sticky top-0 z-50 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
+      <nav className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="text-lg font-semibold text-zinc-900 dark:text-zinc-100"
+          className="flex items-center gap-2 text-lg font-semibold text-[#3D3020] dark:text-stone-100"
         >
+          <Image
+            src="/judtang-logo-temp.png"
+            alt="Judtang"
+            width={36}
+            height={36}
+            className="rounded-full"
+          />
           Judtang
         </Link>
         <div className="flex items-center gap-4">
@@ -57,7 +65,7 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="gap-1.5 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
               >
                 <ThemeIcon className="h-4 w-4" />
                 {themeLabel}
@@ -93,7 +101,7 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="gap-1.5 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
               >
                 <Globe className="h-4 w-4" />
                 {language === "th"
@@ -117,32 +125,27 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link
-            href="/releases"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            {translate(language, "home.nav.releases")}
-          </Link>
+          
           {githubUrl && (
             <a
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
             >
               GitHub
             </a>
           )}
           <Link
             href="/sign-in"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
           >
             {translate(language, "home.nav.login")}
           </Link>
           <Button
             asChild
             size="sm"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-[#5C6B52] hover:bg-[#4A5E40] text-white"
           >
             <Link href="/register">
               {translate(language, "home.nav.getStarted")}

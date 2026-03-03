@@ -48,7 +48,8 @@ const validCreditCard = {
   accountNumber: "1234567890123456",
   creditLimit: 50000,
   interestRate: 15,
-  cardType: "credit",
+  cardAccountType: "credit",
+  cardNetwork: "visa",
 };
 
 const validFromAccount = {

@@ -8,11 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { CategoryCombobox } from "@/components/dashboard/category-combobox";
+import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -49,6 +51,7 @@ type TransactionFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   editId?: string | null;
   initialDate?: string | null;
+  initialType?: "INCOME" | "EXPENSE" | "TRANSFER";
   onSuccess?: () => void;
 };
 
@@ -57,6 +60,7 @@ export function TransactionFormDialog({
   onOpenChange,
   editId,
   initialDate,
+  initialType,
   onSuccess,
 }: TransactionFormDialogProps) {
   const { t, language } = useI18n();
@@ -82,7 +86,14 @@ export function TransactionFormDialog({
   >(editId ? "loading" : "idle");
 
   const [accounts, setAccounts] = useState<
-    { id: string; name: string; isDefault: boolean; type: string }[]
+    {
+      id: string;
+      name: string;
+      isDefault: boolean;
+      type: string;
+      bankName?: string | null;
+      cardNetwork?: string | null;
+    }[]
   >([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
@@ -125,7 +136,7 @@ export function TransactionFormDialog({
         : formatTodayAsInputDate(),
     );
     if (!editId) {
-      setType("EXPENSE");
+      setType(initialType ?? "EXPENSE");
       setAmount("");
       setFinancialAccountId("");
       setTransferAccountId("");
@@ -218,11 +229,20 @@ export function TransactionFormDialog({
         : [];
       setAccounts(
         accs.map(
-          (a: { id: string; name: string; isDefault?: boolean; type?: string }) => ({
+          (a: {
+            id: string;
+            name: string;
+            isDefault?: boolean;
+            type?: string;
+            bankName?: string | null;
+            cardNetwork?: string | null;
+          }) => ({
             id: a.id,
             name: a.name,
             isDefault: a.isDefault ?? false,
             type: a.type ?? "CASH",
+            bankName: a.bankName ?? null,
+            cardNetwork: a.cardNetwork ?? null,
           })
         )
       );
@@ -372,8 +392,8 @@ export function TransactionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEdit
               ? t("transactions.edit.title")
@@ -381,32 +401,33 @@ export function TransactionFormDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {loadState === "loading" && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {t("transactions.edit.loading")}
-          </p>
-        )}
-        {loadState === "error" && error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
-
         <form
           onSubmit={handleSubmit}
-          className="space-y-4"
-          style={{ display: loadState === "loading" ? "none" : undefined }}
+          className="flex flex-1 flex-col min-h-0 overflow-hidden"
         >
-          <div>
+          <DialogBody className="space-y-4 pl-1">
+            {loadState === "loading" && (
+              <p className="text-sm text-[#A09080] dark:text-stone-400">
+                {t("transactions.edit.loading")}
+              </p>
+            )}
+            {loadState === "error" && error && (
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            )}
+            {(loadState === "idle" || loadState === "done") && (
+              <>
+                <div>
             <span className="mb-1 block text-sm font-medium">
               {t("transactions.new.typeLabel")}
             </span>
-            <div className="inline-flex rounded-md border overflow-hidden border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="inline-flex rounded-md border overflow-hidden border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
               <button
                 type="button"
                 onClick={() => setType("INCOME")}
                 className={`inline-flex items-center gap-1 px-3 py-1.5 transition-all ${
                   type === "INCOME"
                     ? "bg-emerald-500 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                 }`}
               >
                 <ArrowDownCircle className="h-4 w-4" />
@@ -415,10 +436,10 @@ export function TransactionFormDialog({
               <button
                 type="button"
                 onClick={() => setType("EXPENSE")}
-                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                className={`inline-flex items-center gap-1 border-l border-[#D4C9B0] px-3 py-1.5 dark:border-stone-700 transition-all ${
                   type === "EXPENSE"
                     ? "bg-red-500 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                 }`}
               >
                 <ArrowUpCircle className="h-4 w-4" />
@@ -427,10 +448,10 @@ export function TransactionFormDialog({
               <button
                 type="button"
                 onClick={() => setType("TRANSFER")}
-                className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                className={`inline-flex items-center gap-1 border-l border-[#D4C9B0] px-3 py-1.5 dark:border-stone-700 transition-all ${
                   type === "TRANSFER"
                     ? "bg-blue-500 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                 }`}
               >
                 <ArrowLeftRight className="h-4 w-4" />
@@ -445,40 +466,32 @@ export function TransactionFormDialog({
                 <label htmlFor="transaction-modal-from-account" className="mb-1 block text-sm font-medium">
                   {t("transactions.new.fromAccount")}
                 </label>
-                <select
+                <AccountCombobox
                   id="transaction-modal-from-account"
                   value={financialAccountId}
-                  onChange={(e) => setFinancialAccountId(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-                >
-                  {accounts
-                    .filter((acc) => acc.type !== "CREDIT_CARD")
-                    .map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                      </option>
-                    ))}
-                </select>
+                  onChange={setFinancialAccountId}
+                  accounts={accounts}
+                  filterByType={(accType) => accType !== "CREDIT_CARD"}
+                  defaultLabel={t("accounts.default")}
+                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                />
               </div>
               <div>
                 <label htmlFor="transaction-modal-to-account" className="mb-1 block text-sm font-medium">
                   {t("transactions.new.toAccount")}
                 </label>
-                <select
+                <AccountCombobox
                   id="transaction-modal-to-account"
                   value={transferAccountId}
-                  onChange={(e) => setTransferAccountId(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-                >
-                  <option value="">—</option>
-                  {accounts
-                    .filter((acc) => acc.type !== "CREDIT_CARD" && acc.id !== financialAccountId)
-                    .map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                      </option>
-                    ))}
-                </select>
+                  onChange={setTransferAccountId}
+                  accounts={accounts}
+                  excludeIds={[financialAccountId]}
+                  filterByType={(accType) => accType !== "CREDIT_CARD"}
+                  allowEmpty
+                  emptyLabel="—"
+                  defaultLabel={t("accounts.default")}
+                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                />
               </div>
             </>
           ) : (
@@ -486,18 +499,14 @@ export function TransactionFormDialog({
               <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
                 {t("transactions.new.accountLabel")}
               </label>
-              <select
+              <AccountCombobox
                 id="transaction-modal-account"
                 value={financialAccountId}
-                onChange={(e) => setFinancialAccountId(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-              >
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                  </option>
-                ))}
-              </select>
+                onChange={setFinancialAccountId}
+                accounts={accounts}
+                defaultLabel={t("accounts.default")}
+                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+              />
             </div>
           )}
 
@@ -509,14 +518,14 @@ export function TransactionFormDialog({
                 <span className="mb-1 block text-sm font-medium">
                   {t("transactions.new.statusLabel")}
                 </span>
-                <div className="inline-flex rounded-md border overflow-hidden border-zinc-300 bg-white text-sm dark:border-zinc-700 dark:bg-zinc-900">
+                <div className="inline-flex rounded-md border overflow-hidden border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
                   <button
                     type="button"
                     onClick={() => setStatus("PENDING")}
                     className={`inline-flex items-center gap-1 px-3 py-1.5 transition-all ${
                       status === "PENDING"
                         ? "bg-amber-500 text-white"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                     }`}
                   >
                     {t("transactions.new.statusPending")}
@@ -524,10 +533,10 @@ export function TransactionFormDialog({
                   <button
                     type="button"
                     onClick={() => setStatus("POSTED")}
-                    className={`inline-flex items-center gap-1 border-l border-zinc-300 px-3 py-1.5 dark:border-zinc-700 transition-all ${
+                    className={`inline-flex items-center gap-1 border-l border-[#D4C9B0] px-3 py-1.5 dark:border-stone-700 transition-all ${
                       status === "POSTED"
                         ? "bg-emerald-500 text-white"
-                        : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-300 dark:hover:bg-stone-800"
                     }`}
                   >
                     {t("transactions.new.statusPosted")}
@@ -562,7 +571,7 @@ export function TransactionFormDialog({
                 placeholder={t("transactions.new.categorySearchPlaceholder")}
                 noResultsText={t("transactions.new.categoryNoResults")}
                 noneLabel="—"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               />
             </div>
           )}
@@ -588,15 +597,17 @@ export function TransactionFormDialog({
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               maxLength={MAX_NOTE_LENGTH}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm text-[#3D3020] focus:border-[#5C6B52] focus:outline-none focus:ring-1 focus:ring-[#5C6B52] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-
-          <DialogFooter>
+                {error && (
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                )}
+              </>
+            )}
+          </DialogBody>
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"
