@@ -52,7 +52,7 @@ export default function DashboardPage() {
           ) : (
             <>
               {/* Balance card - dark olive green, prominent */}
-              <Card className="relative overflow-hidden bg-[#4A5E40] dark:bg-[#3D4F33] border-0 text-white">
+              <Card className="relative overflow-hidden space-y-0 gap-1 bg-[#4A5E40] dark:bg-[#3D4F33] border-0 text-white">
                 <div className="absolute right-0 top-0 h-24 w-24 -translate-y-1/2 translate-x-1/2 rounded-full bg-white/10" />
                 <div className="absolute right-8 top-4 h-16 w-16 rounded-full bg-white/5" />
                 <CardHeader className="relative pb-1">
@@ -147,7 +147,7 @@ export default function DashboardPage() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {/* Income card - light green */}
-                <Card className="relative overflow-hidden border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
                   <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
                   <CardHeader className="flex flex-row items-center gap-2 pb-1">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
@@ -165,7 +165,7 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* Expense card - light brown/pink */}
-                <Card className="relative overflow-hidden border-[#D4C9B0] bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30">
+                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30">
                   <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-amber-200/30 dark:bg-amber-800/20" />
                   <CardHeader className="flex flex-row items-center gap-2 pb-1">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200/60 dark:bg-amber-800/40">
