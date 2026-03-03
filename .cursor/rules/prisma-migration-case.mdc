@@ -1,0 +1,38 @@
+---
+description: ตรวจ case ชื่อ table/column ใน Prisma migration ให้ตรงกับ schema / Check table/column case in migrations
+globs: prisma/migrations/**/*.sql
+alwaysApply: false
+---
+
+# Prisma Migration: Table & Column Case
+
+**ต้องตรวจสอบ case ของชื่อ table และ column ใน migration SQL เสมอ**
+
+**Always verify table and column name casing in migration SQL.**
+
+## Convention
+
+- **Table names:** ใช้ **PascalCase** ตรงกับชื่อ model ใน schema (เช่น `FinancialAccount`, `User`, `Transaction`)
+- **Column names:** ใช้ **camelCase** ตรงกับชื่อ field ใน schema (เช่น `userId`, `financialAccountId`, `cardType`)
+
+## Do
+
+- ตรวจ migration ก่อน commit — เปรียบเทียบกับ schema และ migration ก่อนหน้า
+- ใช้ backticks และรักษา case: `` `FinancialAccount` `` ไม่ใช่ `` `financialaccount` ``
+- อ้างอิง migration ที่สร้าง table เดิม (เช่น `20260301062353_financial_account` สร้าง `FinancialAccount`)
+
+## Don't
+
+- อย่าใช้ lowercase สำหรับ table ที่สร้างด้วย PascalCase (เช่น `financialaccount` → ผิด)
+- อย่าสับสนกับ MySQL ที่อาจ lowercase บางระบบ — โปรเจกต์นี้ใช้ PascalCase สม่ำเสมอ
+
+## Example
+
+```sql
+-- ✅ Correct
+ALTER TABLE `FinancialAccount` DROP COLUMN `cardType`,
+    ADD COLUMN `cardAccountType` VARCHAR(191) NULL;
+
+-- ❌ Wrong (lowercase table)
+ALTER TABLE `financialaccount` DROP COLUMN `cardType` ...
+```

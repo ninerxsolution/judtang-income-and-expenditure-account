@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  List,
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
   Plus,
-  CalendarRange,
   Pencil,
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
@@ -66,8 +66,11 @@ export default function TransactionsPage() {
   const [filterTo, setFilterTo] = useState("");
   const [filterType, setFilterType] = useState<"all" | "INCOME" | "EXPENSE" | "TRANSFER">("all");
   const [filterAccountId, setFilterAccountId] = useState("");
+  const [filterCategoryId, setFilterCategoryId] = useState("");
+  const [filterSearch, setFilterSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -91,6 +94,8 @@ export default function TransactionsPage() {
       }
       if (filterType !== "all") params.set("type", filterType);
       if (filterAccountId) params.set("financialAccountId", filterAccountId);
+      if (filterCategoryId) params.set("categoryId", filterCategoryId);
+      if (filterSearch.trim()) params.set("search", filterSearch.trim());
       const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) {
         if (res.status === 401) {
@@ -144,6 +149,15 @@ export default function TransactionsPage() {
         );
       })
       .catch(() => setAccounts([]));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: { id: string; name: string }[]) => {
+        setCategories(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setCategories([]));
   }, []);
 
   useEffect(() => {
@@ -207,11 +221,31 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-4 dark:border-stone-700 dark:bg-stone-900/40">
+      <div className="rounded-lg border space-y-4 border-[#D4C9B0] bg-[#F5F0E8]/50 p-4 dark:border-stone-700 dark:bg-stone-900/40">
         <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-200">
           {t("transactions.list.filters")}
         </h2>
+        <div className="min-w-[180px] space-y-2">
+            <label htmlFor="list-search" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
+              {t("transactions.list.searchLabel")}
+            </label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A09080] dark:text-stone-500" />
+              <Input
+                id="list-search"
+                type="text"
+                placeholder={t("transactions.list.searchPlaceholder")}
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyFilters();
+                }}
+                className="h-9 w-full pl-9"
+              />
+            </div>
+          </div>
         <div className="flex flex-wrap items-end gap-3">
+          
           <DatePicker
             id="list-from"
             label={t("dataTools.export.fromDate")}
@@ -226,15 +260,15 @@ export default function TransactionsPage() {
             onChange={setFilterTo}
             className="min-w-[180px]"
           />
-          <div>
-            <label htmlFor="list-type" className="mb-1 block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">
+          <div className="min-w-[180px] space-y-2">
+            <label htmlFor="list-type" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
               {t("dataTools.export.type")}
             </label>
             <select
               id="list-type"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
-              className="rounded-md border border-[#D4C9B0] px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+              className="h-9 w-full rounded-md border border-[#D4C9B0] px-3 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
             >
               <option value="all">{t("dataTools.export.typeAll")}</option>
               <option value="INCOME">{t("transactions.common.income")}</option>
@@ -242,15 +276,15 @@ export default function TransactionsPage() {
               <option value="TRANSFER">{t("transactions.common.transfer")}</option>
             </select>
           </div>
-          <div>
-            <label htmlFor="list-account" className="mb-1 block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">
+          <div className="min-w-[180px] space-y-2">
+            <label htmlFor="list-account" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
               {t("transactions.new.accountLabel")}
             </label>
             <select
               id="list-account"
               value={filterAccountId}
               onChange={(e) => setFilterAccountId(e.target.value)}
-              className="rounded-md border border-[#D4C9B0] px-2 py-1.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 min-w-[160px]"
+              className="h-9 w-full rounded-md border border-[#D4C9B0] px-3 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
             >
               <option value="">{t("dataTools.export.typeAll")}</option>
               {accounts.map((acc) => (
@@ -260,7 +294,25 @@ export default function TransactionsPage() {
               ))}
             </select>
           </div>
-          <Button onClick={applyFilters} variant="secondary" size="sm">
+          <div className="min-w-[180px] space-y-2">
+            <label htmlFor="list-category" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
+              {t("transactions.new.categoryLabel")}
+            </label>
+            <select
+              id="list-category"
+              value={filterCategoryId}
+              onChange={(e) => setFilterCategoryId(e.target.value)}
+              className="h-9 w-full rounded-md border border-[#D4C9B0] px-3 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+            >
+              <option value="">{t("dataTools.export.typeAll")}</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={applyFilters} size="sm" className="h-9">
             {t("transactions.list.applyFilters")}
           </Button>
         </div>

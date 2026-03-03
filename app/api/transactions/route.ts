@@ -285,6 +285,8 @@ async function fetchTransactionsList(
   timezone: string,
   typeParam: string | undefined,
   financialAccountId: string | undefined,
+  categoryId: string | undefined,
+  searchParam: string | undefined,
   limit: number,
   offset: number,
 ): Promise<SerializableTransaction[]> {
@@ -321,6 +323,8 @@ async function fetchTransactionsList(
     to: toDate,
     type: typeFilter,
     financialAccountId,
+    categoryId,
+    search: searchParam,
     limit,
     offset,
   });
@@ -370,6 +374,8 @@ export async function GET(request: Request) {
   const timezoneParam = searchParams.get("timezone") ?? "Asia/Bangkok";
   const typeParam = searchParams.get("type") ?? undefined;
   const financialAccountIdParam = searchParams.get("financialAccountId") ?? undefined;
+  const categoryIdParam = searchParams.get("categoryId") ?? undefined;
+  const searchParam = searchParams.get("search") ?? undefined;
   const limitParam = searchParams.get("limit");
   const offsetParam = searchParams.get("offset");
 
@@ -389,9 +395,11 @@ export async function GET(request: Request) {
         tz: string,
         type: string | undefined,
         accId: string | undefined,
+        catId: string | undefined,
+        search: string | undefined,
         lim: number,
         off: number,
-      ) => fetchTransactionsList(uid, from, to, date, tz, type, accId, lim, off),
+      ) => fetchTransactionsList(uid, from, to, date, tz, type, accId, catId, search, lim, off),
       cacheKey(
         "transactions-list",
         userId,
@@ -401,6 +409,8 @@ export async function GET(request: Request) {
         timezoneParam,
         typeParam ?? "",
         financialAccountIdParam ?? "",
+        categoryIdParam ?? "",
+        searchParam ?? "",
         String(limit),
         String(offset),
       ),
@@ -414,6 +424,8 @@ export async function GET(request: Request) {
       timezoneParam,
       typeParam,
       financialAccountIdParam,
+      categoryIdParam,
+      searchParam,
       limit,
       offset,
     );

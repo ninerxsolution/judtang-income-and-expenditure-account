@@ -342,35 +342,6 @@ export default function SettingsPage() {
           <CategorySettings />
         </div>
 
-        {/* Help & Feedback */}
-        <section
-          id="feedback"
-          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
-        >
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center">
-                <HelpCircle className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                  {t("settings.feedback.title")}
-                </h2>
-                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
-                  {t("settings.feedback.description")}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Link
-            href="/dashboard/settings/feedback"
-            className="inline-flex items-center text-sm font-medium text-[#3D3020] hover:text-[#6B5E4E] dark:text-stone-100 dark:hover:text-stone-300 underline-offset-4 hover:underline"
-          >
-            {t("settings.feedback.open")}
-          </Link>
-        </section>
-
         {/* Tools inline section (full tools UI embedded) */}
         <section
           id="data-tools"
@@ -485,6 +456,35 @@ export default function SettingsPage() {
               </Link>
             </div>
           )}
+        </section>
+
+        {/* Help & Feedback */}
+        <section
+          id="feedback"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
+        >
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center">
+                <HelpCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                  {t("settings.feedback.title")}
+                </h2>
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
+                  {t("settings.feedback.description")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Link
+            href="/dashboard/settings/feedback"
+            className="inline-flex items-center text-sm font-medium text-[#3D3020] hover:text-[#6B5E4E] dark:text-stone-100 dark:hover:text-stone-300 underline-offset-4 hover:underline"
+          >
+            {t("settings.feedback.open")}
+          </Link>
         </section>
       </div>
     </div>

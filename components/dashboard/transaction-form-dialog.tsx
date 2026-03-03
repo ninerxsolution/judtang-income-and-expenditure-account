@@ -51,6 +51,7 @@ type TransactionFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   editId?: string | null;
   initialDate?: string | null;
+  initialType?: "INCOME" | "EXPENSE" | "TRANSFER";
   onSuccess?: () => void;
 };
 
@@ -59,6 +60,7 @@ export function TransactionFormDialog({
   onOpenChange,
   editId,
   initialDate,
+  initialType,
   onSuccess,
 }: TransactionFormDialogProps) {
   const { t, language } = useI18n();
@@ -134,7 +136,7 @@ export function TransactionFormDialog({
         : formatTodayAsInputDate(),
     );
     if (!editId) {
-      setType("EXPENSE");
+      setType(initialType ?? "EXPENSE");
       setAmount("");
       setFinancialAccountId("");
       setTransferAccountId("");

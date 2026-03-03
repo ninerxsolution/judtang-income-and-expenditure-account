@@ -5,6 +5,18 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 03/03/2026 (Docs sync: v0.9.8, Remember Me, Terms & Conditions, MVP boundary)
+
+- docs/core/authentication-authorization.md — Added Remember Me section (Credentials only, TTL, env vars).
+- docs/feature/terms-and-conditions.md — New: Terms & Conditions feature doc (route, content, footer link).
+- docs/PRD.md — §1 Overview: added Terms & Conditions; §7.5: new Terms & Conditions section.
+- docs/INDEX.md — Added terms-and-conditions.md to feature list.
+- docs/feature/public-landing-page.md — Footer: added Terms & Conditions link; i18n keys.
+- docs/structure/mvp-boundary.md — Added Terms & Conditions, Help & Feedback to Implemented; updated date.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 03/03/2026 (Card type refactor: cardAccountType + cardNetwork)
 
 - docs/feature/financial-accounts.md — Replaced `cardType` with `cardAccountType` (credit/debit/prepaid/other) and `cardNetwork` (visa/master/jcb etc.); updated incomplete validation.
