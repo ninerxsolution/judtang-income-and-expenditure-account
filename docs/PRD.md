@@ -70,6 +70,10 @@ The home page (`/`) serves as the public entry point. It introduces the product 
 
 A public Privacy Policy page at `/privacy` (no login required) that reflects actual system behavior and satisfies PDPA / GDPR-ready transparency requirements. Covers data collected, data not collected, usage purposes, security practices, third-party services (Cloudflare Turnstile, hosting, email), data retention, user rights, account deletion, and contact information. Version 1.0, effective 2 March 2026. Linked in the landing page footer. See [feature/privacy-policy.md](feature/privacy-policy.md) for full spec.
 
+### 7.4 Help & Feedback
+
+User-facing report submission at Settings → Help & Feedback (`/dashboard/settings/feedback`). Users can submit bug reports, feature requests, or other feedback with optional screenshots. Admin backoffice at `/admin/reports` for reviewing and managing submissions. Root admin seeder for initial setup. See [feature/help-feedback.md](feature/help-feedback.md) for full spec.
+
 ---
 
 ## 8. Authentication & Authorization

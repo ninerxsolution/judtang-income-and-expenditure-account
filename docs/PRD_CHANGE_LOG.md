@@ -5,6 +5,16 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 03/03/2026 (Help & Feedback feature)
+
+- docs/feature/help-feedback.md — New: full spec for Help & Feedback (report form, admin backoffice, RBAC, seeder, email, storage, APIs).
+- docs/INDEX.md — Added help-feedback.md to feature list.
+- docs/PRD.md — §7.4: new Help & Feedback section.
+- docs/feature/privacy-policy.md — §4.1: added User Feedback & Reports to data classification.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 02/03/2026 (Financial account encryption & storage modes)
 
 - docs/feature/financial-accounts.md — Added encryption (AES-256-GCM), accountNumberMode (FULL/LAST_4_ONLY), credit card last-4-only, delete confirmation flow; updated Data Model and UI sections.

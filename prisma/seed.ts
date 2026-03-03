@@ -75,6 +75,43 @@ function randomLast4(): string {
   return randomAccountNumber(4);
 }
 
+async function seedRootAdmin(): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    console.log("Skipping root admin seed (ADMIN_EMAIL or ADMIN_PASSWORD not set).");
+    return;
+  }
+  const existingAdmin = await prisma.user.findFirst({
+    where: { role: "ADMIN" },
+  });
+  if (existingAdmin) {
+    console.log("Root admin already exists:", existingAdmin.email);
+    return;
+  }
+  const existingByEmail = await prisma.user.findUnique({
+    where: { email: adminEmail.toLowerCase() },
+  });
+  if (existingByEmail) {
+    await prisma.user.update({
+      where: { id: existingByEmail.id },
+      data: { role: "ADMIN" },
+    });
+    console.log("Updated existing user to ADMIN:", adminEmail);
+    return;
+  }
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  await prisma.user.create({
+    data: {
+      email: adminEmail.toLowerCase(),
+      name: "Admin",
+      password: hashedPassword,
+      role: "ADMIN",
+    },
+  });
+  console.log("Created root admin:", adminEmail);
+}
+
 async function seedUsers(): Promise<{ id: string; email: string | null; name: string | null }> {
   let user = await prisma.user.findUnique({
     where: { email: DEFAULT_USER.email },
@@ -678,6 +715,7 @@ async function resetSeedData(userId: string): Promise<void> {
 }
 
 async function main() {
+  await seedRootAdmin();
   const user = await seedUsers();
   const userId = user.id;
 

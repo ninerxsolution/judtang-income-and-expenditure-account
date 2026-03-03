@@ -16,7 +16,7 @@ export function DashboardPageTitle() {
   if (segments.length === 0) return null;
 
   const lastSegment = segments[segments.length - 1];
-  const title = getSegmentLabel(lastSegment);
+  const title = getSegmentLabel(lastSegment, segments);
 
   return (
     <h1 className="text-2xl font-semibold">

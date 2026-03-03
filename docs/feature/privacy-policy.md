@@ -54,6 +54,7 @@ The page is accessible without authentication and is linked in the landing page 
 | Account Information | Email, username, hashed password |
 | Financial Metadata | Account name, account type, credit limit, statement cycle, due date, last 4 digits of card (if provided) |
 | Usage & Technical | IP address, device/browser info, login timestamps, basic audit logs |
+| User Feedback & Reports | Report content (category, title, description), optional screenshots, submission metadata (route, app version, browser, timestamp) |
 
 ### 4.2 Explicitly NOT Collected
 

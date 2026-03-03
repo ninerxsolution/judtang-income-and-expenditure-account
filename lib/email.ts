@@ -59,3 +59,51 @@ export async function sendEmailVerification(
     `.trim(),
   });
 }
+
+type ReportNotificationPayload = {
+  id: string;
+  category: string;
+  title: string;
+  userEmail: string;
+  description: string;
+};
+
+/**
+ * Sends a report notification email to admin.
+ * @throws If SMTP send fails
+ */
+export async function sendReportNotificationEmail(
+  to: string,
+  report: ReportNotificationPayload,
+  adminDetailUrl: string
+): Promise<void> {
+  const from = process.env.SMTP_USER ?? "noreply@example.com";
+  const descTruncated =
+    report.description.length > 500
+      ? report.description.slice(0, 500) + "..."
+      : report.description;
+  const escapedDesc = descTruncated
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  await transporter.sendMail({
+    from,
+    to,
+    subject: `[Report] ${report.category}: ${report.title}`,
+    html: `
+      <p>A new report has been submitted.</p>
+      <dl>
+        <dt>Category</dt>
+        <dd>${report.category}</dd>
+        <dt>Title</dt>
+        <dd>${report.title}</dd>
+        <dt>User</dt>
+        <dd>${report.userEmail}</dd>
+        <dt>Description</dt>
+        <dd><pre style="white-space:pre-wrap;font-family:inherit;">${escapedDesc}</pre></dd>
+      </dl>
+      <p><a href="${adminDetailUrl}">View in Admin</a></p>
+    `.trim(),
+  });
+}

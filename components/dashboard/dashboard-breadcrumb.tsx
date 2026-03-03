@@ -5,13 +5,16 @@ import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function getSegmentLabel(segment: string): string {
+export function getSegmentLabel(segment: string, _allSegments?: string[]): string {
   const map: Record<string, string> = {
     dashboard: "Dashboard",
+    admin: "Admin",
+    reports: "Reports",
     user: "User profile",
     me: "User profile",
     sessions: "Sessions",
     settings: "Settings",
+    feedback: "Help & Feedback",
     "patch-note": "Patch note",
     transactions: "Transactions",
     tools: "Tools",
@@ -20,6 +23,10 @@ export function getSegmentLabel(segment: string): string {
   };
 
   if (map[segment]) return map[segment];
+
+  if (/^[a-z0-9]{20,}$/i.test(segment) && _allSegments?.includes("reports")) {
+    return "Report";
+  }
 
   return segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
 }
@@ -42,7 +49,7 @@ export function DashboardBreadcrumb({ className }: { className?: string }) {
 
     return {
       href,
-      label: getSegmentLabel(segment),
+      label: getSegmentLabel(segment, segments),
       isLast,
     };
   });

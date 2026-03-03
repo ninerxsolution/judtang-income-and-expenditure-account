@@ -16,7 +16,7 @@ import {
   shouldSkipTurnstileVerification,
 } from "@/lib/turnstile";
 
-type JWTWithId = { id?: string; sessionId?: string; sub?: string; rememberMe?: boolean };
+type JWTWithId = { id?: string; sessionId?: string; sub?: string; rememberMe?: boolean; role?: string };
 
 const isSecure = process.env.NEXTAUTH_URL?.startsWith("https://");
 
@@ -65,6 +65,7 @@ export const authOptions: AuthOptions = {
           name: user.name ?? undefined,
           image: user.image ?? undefined,
           rememberMe: credentials.rememberMe === "true",
+          role: user.role,
         };
       },
     }),
@@ -88,6 +89,14 @@ export const authOptions: AuthOptions = {
       const t = token as JWTWithId;
       if (user?.id) {
         t.id = user.id;
+        t.role = (user as { role?: string }).role;
+        if (!t.role) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { role: true },
+          });
+          t.role = dbUser?.role ?? "USER";
+        }
         const sessionId = randomUUID();
         const isCredentials = !account || account.provider === "credentials";
         // rememberMe only applies to credentials sign-in; OAuth always gets long TTL
@@ -109,7 +118,7 @@ export const authOptions: AuthOptions = {
           entityType: "user",
           entityId: user.id,
         });
-        return t;
+        return t as typeof token;
       }
       if (t.sessionId) {
         const row = await prisma.userSession.findFirst({
@@ -119,7 +128,8 @@ export const authOptions: AuthOptions = {
           delete t.sub;
           delete t.id;
           delete t.sessionId;
-          return t;
+          delete t.role;
+          return t as typeof token;
         }
         if (row.expiresAt < new Date()) {
           await prisma.userSession.update({
@@ -129,15 +139,22 @@ export const authOptions: AuthOptions = {
           delete t.sub;
           delete t.id;
           delete t.sessionId;
-          return t;
+          delete t.role;
+          return t as typeof token;
         }
+        const dbUser = await prisma.user.findUnique({
+          where: { id: row.userId },
+          select: { role: true },
+        });
+        t.role = dbUser?.role ?? "USER";
       }
-      return token;
+      return token as typeof token;
     },
     async session({ session, token }) {
       const t = token as JWTWithId;
       if (session.user) {
         (session.user as { id?: string }).id = t.id ?? t.sub ?? undefined;
+        (session.user as { role?: string }).role = t.role as "USER" | "ADMIN" | undefined;
       }
       (session as { sessionId?: string }).sessionId = t.sessionId;
       return session;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   User,
@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   BarChart3,
+  FileText,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -99,6 +100,8 @@ export function AppSidebarLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
   const { user: profile, summary, appInfo } = useDashboardData();
   const balance =
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : null);
@@ -161,6 +164,20 @@ export function AppSidebarLayout({
                     </SidebarMenuItem>
                   );
                 })}
+                {isAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname?.startsWith("/admin")}
+                      tooltip={t("dashboard.sidebar.reports")}
+                    >
+                      <Link href="/admin/reports">
+                        <FileText />
+                        <span>{t("dashboard.sidebar.reports")}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

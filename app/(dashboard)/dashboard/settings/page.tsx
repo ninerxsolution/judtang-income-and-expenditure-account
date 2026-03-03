@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Bell, Monitor, Trash2, LogOut, Languages, Info } from "lucide-react";
+import { Bell, Monitor, Trash2, LogOut, Languages, Info, HelpCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,6 +136,7 @@ export default function SettingsPage() {
     { id: "categories", label: t("settings.categories.title") },
     { id: "data-tools", label: t("dataTools.title") },
     { id: "sessions", label: t("settings.sessions.title") },
+    { id: "feedback", label: t("settings.feedback.title") },
   ];
 
   return (
@@ -340,6 +341,35 @@ export default function SettingsPage() {
         <div id="categories" className="scroll-mt-6">
           <CategorySettings />
         </div>
+
+        {/* Help & Feedback */}
+        <section
+          id="feedback"
+          className="scroll-mt-6 rounded-lg border border-zinc-200 bg-zinc-50/50 p-6 dark:border-zinc-700 dark:bg-zinc-900/30"
+        >
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center">
+                <HelpCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                  {t("settings.feedback.title")}
+                </h2>
+                <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                  {t("settings.feedback.description")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Link
+            href="/dashboard/settings/feedback"
+            className="inline-flex items-center text-sm font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 underline-offset-4 hover:underline"
+          >
+            {t("settings.feedback.open")}
+          </Link>
+        </section>
 
         {/* Tools inline section (full tools UI embedded) */}
         <section
