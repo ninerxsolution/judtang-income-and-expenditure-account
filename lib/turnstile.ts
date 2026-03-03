@@ -17,9 +17,6 @@ export function shouldSkipTurnstileVerification(request?: Request): boolean {
       request.headers.get("x-forwarded-host") ??
       "";
     if (host.includes("localhost") || host.includes("127.0.0.1")) return true;
-    // Skip Turnstile on staging (e.g. staging.judtang.com) so registration works
-    // before Cloudflare Turnstile domain allowlist is configured
-    if (host.includes("staging.")) return true;
   }
   return false;
 }

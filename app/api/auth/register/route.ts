@@ -155,7 +155,13 @@ export async function POST(request: Request) {
 
     const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
     const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
-    await sendEmailVerification(normalizedEmail, verifyUrl);
+    try {
+      await sendEmailVerification(normalizedEmail, verifyUrl);
+    } catch (emailErr) {
+      // User is created; do not fail registration if SMTP fails (e.g. staging).
+      // User can sign in and resend verification from profile.
+      console.error("[register] Failed to send verification email:", emailErr);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

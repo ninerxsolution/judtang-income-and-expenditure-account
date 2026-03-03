@@ -3,20 +3,15 @@
 import { useEffect, useState } from "react";
 
 /**
- * Returns true when Turnstile verification should be skipped (localhost or staging).
- * Used to skip Turnstile on local dev and staging (avoids "Unable to connect" or
- * domain allowlist issues before production).
+ * Returns true when Turnstile verification should be skipped (localhost only).
+ * Staging uses Turnstile; add staging domain to Cloudflare Turnstile allowlist.
  */
 export function useIsLocalhost(): boolean {
   const [skipTurnstile, setSkipTurnstile] = useState(false);
 
   useEffect(() => {
     const host = typeof window !== "undefined" ? window.location.hostname : "";
-    setSkipTurnstile(
-      host === "localhost" ||
-        host === "127.0.0.1" ||
-        host.includes("staging.")
-    );
+    setSkipTurnstile(host === "localhost" || host === "127.0.0.1");
   }, []);
 
   return skipTurnstile;
