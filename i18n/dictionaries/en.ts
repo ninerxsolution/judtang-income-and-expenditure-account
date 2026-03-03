@@ -151,6 +151,9 @@ export const enDictionary = {
       recordExpense: "Record Expense",
       transferBetweenAccounts: "Transfer between accounts",
       manageAccounts: "Manage accounts",
+      fromAllAccounts: "From all {count} accounts",
+      recentAccountActivity: "Recent account activity",
+      recentAccountActivityEmpty: "No transactions yet",
     },
     recentTransactions: "Recent transactions",
     activityHeatmap: {

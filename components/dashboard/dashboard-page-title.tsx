@@ -8,6 +8,9 @@ export function DashboardPageTitle() {
 
   if (!pathname) return null;
 
+  // หน้าแรก (/dashboard) ไม่แสดง title
+  if (pathname === "/dashboard" || pathname === "/dashboard/") return null;
+
   const segments = pathname
     .split("/")
     .filter(Boolean)

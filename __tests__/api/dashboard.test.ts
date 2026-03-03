@@ -17,6 +17,9 @@ jest.mock("@/lib/prisma", () => ({
     user: {
       findUnique: (...args: unknown[]) => mockFindUnique(...args),
     },
+    financialAccount: {
+      count: jest.fn().mockResolvedValue(1),
+    },
   },
 }));
 
@@ -70,5 +73,7 @@ describe("GET /api/dashboard/init", () => {
     expect(data).toHaveProperty("summary");
     expect(data).toHaveProperty("appInfo");
     expect(data).toHaveProperty("recentTransactions");
+    expect(data).toHaveProperty("accountCount");
+    expect(data.accountCount).toBe(1);
   });
 });

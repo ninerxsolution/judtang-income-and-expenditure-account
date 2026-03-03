@@ -151,6 +151,9 @@ export const thDictionary = {
       recordExpense: "บันทึกรายจ่าย",
       transferBetweenAccounts: "โอนระหว่างบัญชี",
       manageAccounts: "จัดการบัญชี",
+      fromAllAccounts: "จากทั้งหมด {count} บัญชี",
+      recentAccountActivity: "บัญชีที่มีการดำเนินการล่าสุด",
+      recentAccountActivityEmpty: "ยังไม่มีธุรกรรม",
     },
     recentTransactions: "รายการล่าสุด",
     activityHeatmap: {
