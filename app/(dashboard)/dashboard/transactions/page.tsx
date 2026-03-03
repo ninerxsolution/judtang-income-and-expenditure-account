@@ -330,10 +330,10 @@ export default function TransactionsPage() {
                       key={tx.id}
                       className="border-t border-[#D4C9B0] dark:border-stone-800"
                     >
-                      <td className="px-4 py-2 align-top text-[#3D3020] dark:text-stone-100">
+                      <td className="px-4 py-2 text-[#3D3020] dark:text-stone-100">
                         {formatDateTime(tx.occurredAt, locale)}
                       </td>
-                      <td className="px-4 py-2 align-top text-[#3D3020] dark:text-stone-200">
+                      <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
                         {isTransfer ? (
                           <>
                             {tx.financialAccount?.name ?? "—"} {accountDisplay}
@@ -342,7 +342,7 @@ export default function TransactionsPage() {
                           accountDisplay
                         )}
                       </td>
-                      <td className="px-4 py-2 align-top">
+                      <td className="px-4 py-2">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                             isIncome
@@ -366,23 +366,23 @@ export default function TransactionsPage() {
                               : t("transactions.common.expense")}
                         </span>
                       </td>
-                      <td className="px-4 py-2 align-top text-right tabular-nums text-zinc-900 dark:text-zinc-50">
+                      <td className="px-4 py-2 text-right tabular-nums text-zinc-900 dark:text-zinc-50">
                         {formatAmount(tx.amount)}
                       </td>
-                      <td className="px-4 py-2 align-top text-[#3D3020] dark:text-stone-200">
+                      <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
                         {getCategoryDisplayName(
                           tx.categoryRef?.name ?? tx.category ?? "",
                           localeKey
                         ) || "—"}
                       </td>
-                      <td className="px-4 py-2 align-top text-[#6B5E4E] dark:text-stone-300">
+                      <td className="px-4 py-2 text-[#6B5E4E] dark:text-stone-300">
                         {tx.note
                           ? tx.note.length > 60
                             ? `${tx.note.slice(0, 57)}…`
                             : tx.note
                           : "—"}
                       </td>
-                      <td className="px-2 py-2 align-top text-right">
+                      <td className="px-2 py-2 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"

@@ -103,7 +103,8 @@ async function fetchFinancialAccountsList(
           statementClosingDay: acc.statementClosingDay,
           dueDay: acc.dueDay,
           interestRate: acc.interestRate != null ? Number(acc.interestRate) : null,
-          cardType: acc.cardType ?? null,
+          cardAccountType: acc.cardAccountType ?? null,
+          cardNetwork: acc.cardNetwork ?? null,
           currentOutstanding,
           availableCredit,
           latestStatement: latestStatement
@@ -173,7 +174,8 @@ export async function POST(request: Request) {
     statementClosingDay?: number;
     dueDay?: number;
     interestRate?: number | null;
-    cardType?: string | null;
+    cardAccountType?: string | null;
+    cardNetwork?: string | null;
     bankName?: string | null;
     accountNumber?: string | null;
     accountNumberMode?: string | null;
@@ -227,10 +229,16 @@ export async function POST(request: Request) {
           ? body.interestRate
           : null;
     }
-    if (body.cardType !== undefined) {
-      createData.cardType =
-        typeof body.cardType === "string" && body.cardType.trim()
-          ? body.cardType.trim()
+    if (body.cardAccountType !== undefined) {
+      createData.cardAccountType =
+        typeof body.cardAccountType === "string" && body.cardAccountType.trim()
+          ? body.cardAccountType.trim()
+          : null;
+    }
+    if (body.cardNetwork !== undefined) {
+      createData.cardNetwork =
+        typeof body.cardNetwork === "string" && body.cardNetwork.trim()
+          ? body.cardNetwork.trim()
           : null;
     }
   }
@@ -278,7 +286,8 @@ export async function POST(request: Request) {
       statementClosingDay: account.statementClosingDay,
       dueDay: account.dueDay,
       interestRate: account.interestRate != null ? Number(account.interestRate) : null,
-      cardType: account.cardType ?? null,
+      cardAccountType: account.cardAccountType ?? null,
+      cardNetwork: account.cardNetwork ?? null,
       bankName: account.bankName ?? null,
       accountNumber: null,
       accountNumberMode: account.accountNumberMode ?? null,

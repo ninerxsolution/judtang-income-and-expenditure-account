@@ -255,7 +255,8 @@ describe("PATCH /api/financial-accounts/[id]", () => {
       statementClosingDay: null,
       dueDay: null,
       interestRate: null,
-      cardType: null,
+      cardAccountType: null,
+      cardNetwork: null,
     };
     mockFindFirst.mockResolvedValue({
       id: "acc-1",

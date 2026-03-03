@@ -168,7 +168,8 @@ model FinancialAccount {
   availableCredit       Decimal?  @db.Decimal(15, 2)
   interestRate          Decimal?  @db.Decimal(8, 4)
   interestCalculatedUntil DateTime?
-  cardType              String?
+  cardAccountType        String?   // credit | debit | prepaid | other
+  cardNetwork            String?   // visa | master | jcb | amex | unionpay | truemoney | other
 
   // Bank/account identification (optional)
   bankName           String?

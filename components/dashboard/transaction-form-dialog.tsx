@@ -8,11 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { CategoryCombobox } from "@/components/dashboard/category-combobox";
+import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -82,7 +84,14 @@ export function TransactionFormDialog({
   >(editId ? "loading" : "idle");
 
   const [accounts, setAccounts] = useState<
-    { id: string; name: string; isDefault: boolean; type: string }[]
+    {
+      id: string;
+      name: string;
+      isDefault: boolean;
+      type: string;
+      bankName?: string | null;
+      cardNetwork?: string | null;
+    }[]
   >([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
@@ -218,11 +227,20 @@ export function TransactionFormDialog({
         : [];
       setAccounts(
         accs.map(
-          (a: { id: string; name: string; isDefault?: boolean; type?: string }) => ({
+          (a: {
+            id: string;
+            name: string;
+            isDefault?: boolean;
+            type?: string;
+            bankName?: string | null;
+            cardNetwork?: string | null;
+          }) => ({
             id: a.id,
             name: a.name,
             isDefault: a.isDefault ?? false,
             type: a.type ?? "CASH",
+            bankName: a.bankName ?? null,
+            cardNetwork: a.cardNetwork ?? null,
           })
         )
       );
@@ -372,8 +390,8 @@ export function TransactionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEdit
               ? t("transactions.edit.title")
@@ -381,21 +399,22 @@ export function TransactionFormDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {loadState === "loading" && (
-          <p className="text-sm text-[#A09080] dark:text-stone-400">
-            {t("transactions.edit.loading")}
-          </p>
-        )}
-        {loadState === "error" && error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
-
         <form
           onSubmit={handleSubmit}
-          className="space-y-4"
-          style={{ display: loadState === "loading" ? "none" : undefined }}
+          className="flex flex-1 flex-col min-h-0 overflow-hidden"
         >
-          <div>
+          <DialogBody className="space-y-4 pl-1">
+            {loadState === "loading" && (
+              <p className="text-sm text-[#A09080] dark:text-stone-400">
+                {t("transactions.edit.loading")}
+              </p>
+            )}
+            {loadState === "error" && error && (
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            )}
+            {(loadState === "idle" || loadState === "done") && (
+              <>
+                <div>
             <span className="mb-1 block text-sm font-medium">
               {t("transactions.new.typeLabel")}
             </span>
@@ -445,40 +464,32 @@ export function TransactionFormDialog({
                 <label htmlFor="transaction-modal-from-account" className="mb-1 block text-sm font-medium">
                   {t("transactions.new.fromAccount")}
                 </label>
-                <select
+                <AccountCombobox
                   id="transaction-modal-from-account"
                   value={financialAccountId}
-                  onChange={(e) => setFinancialAccountId(e.target.value)}
+                  onChange={setFinancialAccountId}
+                  accounts={accounts}
+                  filterByType={(accType) => accType !== "CREDIT_CARD"}
+                  defaultLabel={t("accounts.default")}
                   className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                >
-                  {accounts
-                    .filter((acc) => acc.type !== "CREDIT_CARD")
-                    .map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                      </option>
-                    ))}
-                </select>
+                />
               </div>
               <div>
                 <label htmlFor="transaction-modal-to-account" className="mb-1 block text-sm font-medium">
                   {t("transactions.new.toAccount")}
                 </label>
-                <select
+                <AccountCombobox
                   id="transaction-modal-to-account"
                   value={transferAccountId}
-                  onChange={(e) => setTransferAccountId(e.target.value)}
+                  onChange={setTransferAccountId}
+                  accounts={accounts}
+                  excludeIds={[financialAccountId]}
+                  filterByType={(accType) => accType !== "CREDIT_CARD"}
+                  allowEmpty
+                  emptyLabel="—"
+                  defaultLabel={t("accounts.default")}
                   className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                >
-                  <option value="">—</option>
-                  {accounts
-                    .filter((acc) => acc.type !== "CREDIT_CARD" && acc.id !== financialAccountId)
-                    .map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                      </option>
-                    ))}
-                </select>
+                />
               </div>
             </>
           ) : (
@@ -486,18 +497,14 @@ export function TransactionFormDialog({
               <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
                 {t("transactions.new.accountLabel")}
               </label>
-              <select
+              <AccountCombobox
                 id="transaction-modal-account"
                 value={financialAccountId}
-                onChange={(e) => setFinancialAccountId(e.target.value)}
+                onChange={setFinancialAccountId}
+                accounts={accounts}
+                defaultLabel={t("accounts.default")}
                 className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-              >
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name} {acc.isDefault ? `(${t("accounts.default")})` : ""}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           )}
 
@@ -592,11 +599,13 @@ export function TransactionFormDialog({
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-
-          <DialogFooter>
+                {error && (
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                )}
+              </>
+            )}
+          </DialogBody>
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"

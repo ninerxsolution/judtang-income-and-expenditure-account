@@ -258,6 +258,9 @@ export const enDictionary = {
     interestRateRequired: "Please enter interest rate (%)",
     cardTypeLabel: "Card type",
     cardTypeRequired: "Please select card type",
+    cardAccountTypeLabel: "Card type (credit/debit/prepaid)",
+    cardAccountTypeRequired: "Please select card type",
+    cardNetworkLabel: "Card network (Visa/Mastercard etc.)",
     creditLimitRequired: "Please enter credit limit",
     showAccountNumber: "Show full account number",
     hideAccountNumber: "Hide account number",
@@ -270,7 +273,7 @@ export const enDictionary = {
     incompleteAccountWarning:
       "Please add bank and account/card number before using.",
     incompleteCreditCardWarning:
-      "Please add bank, card number, credit limit, interest rate, and card type before using.",
+      "Please add bank, card number, credit limit, interest rate, and card type (credit/debit) before using.",
     incompleteAccountCannotUse:
       "Please complete bank and account number before using.",
     hideDefaultAccount: "Hide default account",
@@ -781,6 +784,8 @@ export const enDictionary = {
       accountChangeFieldDueDay: "Due day",
       accountChangeFieldInterestRate: "Interest rate",
       accountChangeFieldCardType: "Card type",
+      accountChangeFieldCardAccountType: "Card type (credit/debit)",
+      accountChangeFieldCardNetwork: "Card network",
       accountChangeFieldLastCheckedAt: "Last checked",
       accountChangeFieldIsHidden: "Hidden from list",
       yes: "Yes",

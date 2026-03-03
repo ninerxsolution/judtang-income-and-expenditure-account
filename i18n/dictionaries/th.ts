@@ -258,6 +258,9 @@ export const thDictionary = {
     interestRateRequired: "กรุณากรอกอัตราดอกเบี้ย (%)",
     cardTypeLabel: "ประเภทบัตร",
     cardTypeRequired: "กรุณาเลือกประเภทบัตร",
+    cardAccountTypeLabel: "ประเภทบัตร (เครดิต/เดบิต/เติมเงิน)",
+    cardAccountTypeRequired: "กรุณาเลือกประเภทบัตร",
+    cardNetworkLabel: "เครือข่ายชำระ (วีซ่า/มาสเตอร์การ์ด ฯลฯ)",
     creditLimitRequired: "กรุณากรอกวงเงินเครดิต",
     showAccountNumber: "แสดงเลขบัญชีเต็ม",
     hideAccountNumber: "ซ่อนเลขบัญชี",
@@ -270,7 +273,7 @@ export const thDictionary = {
     incompleteAccountWarning:
       "กรุณาระบุธนาคารและเลขบัญชี/เลขบัตรก่อนใช้งาน",
     incompleteCreditCardWarning:
-      "กรุณาระบุธนาคาร เลขบัตร วงเงิน ดอกเบี้ย และประเภทบัตรให้ครบก่อนใช้งาน",
+      "กรุณาระบุธนาคาร เลขบัตร วงเงิน ดอกเบี้ย และประเภทบัตร (เครดิต/เดบิต) ให้ครบก่อนใช้งาน",
     incompleteAccountCannotUse:
       "กรุณาเติมข้อมูลธนาคารและเลขบัญชีให้ครบก่อนใช้งาน",
     hideDefaultAccount: "ซ่อนบัญชีหลัก",
@@ -777,6 +780,8 @@ export const thDictionary = {
       accountChangeFieldDueDay: "วันครบกำหนดชำระ",
       accountChangeFieldInterestRate: "อัตราดอกเบี้ย",
       accountChangeFieldCardType: "ประเภทบัตร",
+      accountChangeFieldCardAccountType: "ประเภทบัตร (เครดิต/เดบิต)",
+      accountChangeFieldCardNetwork: "เครือข่ายชำระ",
       accountChangeFieldLastCheckedAt: "ตรวจสอบล่าสุด",
       accountChangeFieldIsHidden: "ซ่อนจากรายการ",
       yes: "ใช่",

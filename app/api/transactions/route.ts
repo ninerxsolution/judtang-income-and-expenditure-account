@@ -103,7 +103,8 @@ export async function POST(request: Request) {
       accountNumber: true,
       creditLimit: true,
       interestRate: true,
-      cardType: true,
+      cardAccountType: true,
+      cardNetwork: true,
     },
   });
   if (!accountForTx) {

@@ -76,9 +76,18 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-2",
         className
       )}
+      {...props}
+    />
+  )
+}
+
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn("flex-1 min-h-0 overflow-y-auto pr-4", className)}
       {...props}
     />
   )
@@ -114,6 +123,7 @@ export {
   DialogContent,
   DialogHeader,
   DialogFooter,
+  DialogBody,
   DialogTitle,
   DialogDescription,
   DialogClose,

@@ -7,12 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useI18n } from "@/hooks/use-i18n";
-import { getBankDisplayName } from "@/lib/thai-banks";
+import { AccountCombobox } from "@/components/dashboard/account-combobox";
 
 function sanitizeAmountInput(value: string): string {
   const noComma = value.replace(/,/g, "");
@@ -53,13 +54,19 @@ export function CreditCardPaymentDialog({
   maxAmount,
   onSuccess,
 }: CreditCardPaymentDialogProps) {
-  const { t, locale } = useI18n();
-  const localeKey = locale?.startsWith("th") ? "th" : "en";
+  const { t } = useI18n();
   const [amount, setAmount] = useState("");
   const [occurredAt, setOccurredAt] = useState(formatTodayAsInputDate());
   const [fromAccountId, setFromAccountId] = useState("");
   const [accounts, setAccounts] = useState<
-    { id: string; name: string; bankName?: string | null; accountNumberMasked?: string }[]
+    {
+      id: string;
+      name: string;
+      type: string;
+      bankName?: string | null;
+      cardNetwork?: string | null;
+      isDefault?: boolean;
+    }[]
   >([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,8 +101,10 @@ export function CreditCardPaymentDialog({
             nonCreditCard.map((a) => ({
               id: a.id,
               name: a.name,
+              type: a.type ?? "CASH",
               bankName: a.bankName ?? null,
-              accountNumberMasked: a.accountNumberMasked ?? "",
+              cardNetwork: (a as { cardNetwork?: string | null }).cardNetwork ?? null,
+              isDefault: (a as { isDefault?: boolean }).isDefault ?? false,
             }))
           );
           setFromAccountId(nonCreditCard[0]?.id ?? "");
@@ -168,12 +177,13 @@ export function CreditCardPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{t("accounts.paymentDialogTitle")}</DialogTitle>
           <p className="text-sm text-[#A09080] dark:text-stone-400">{accountName}</p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          <DialogBody className="space-y-4 pl-1">
           <FormField
             id="payment-amount"
             label={t("accounts.paymentAmountLabel")}
@@ -212,30 +222,23 @@ export function CreditCardPaymentDialog({
               <label htmlFor="payment-from-account" className="mb-1 block text-sm font-medium">
                 {t("accounts.paymentFromAccountLabel")}
               </label>
-              <select
+              <AccountCombobox
                 id="payment-from-account"
                 value={fromAccountId}
-                onChange={(e) => setFromAccountId(e.target.value)}
+                onChange={setFromAccountId}
+                accounts={accounts}
+                allowEmpty
+                emptyLabel="—"
+                defaultLabel={t("accounts.default")}
                 className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-              >
-                <option value="">—</option>
-                {accounts.map((acc) => {
-                  const bankLabel =
-                    getBankDisplayName(acc.bankName ?? undefined, localeKey) ?? acc.bankName ?? "";
-                  const suffix = [bankLabel, acc.accountNumberMasked].filter(Boolean).join(" · ");
-                  return (
-                    <option key={acc.id} value={acc.id}>
-                      {suffix ? `${acc.name} (${suffix})` : acc.name}
-                    </option>
-                  );
-                })}
-              </select>
+              />
             </div>
           )}
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           )}
-          <DialogFooter>
+          </DialogBody>
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"

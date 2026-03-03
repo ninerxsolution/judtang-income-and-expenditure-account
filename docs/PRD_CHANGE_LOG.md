@@ -5,6 +5,14 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 03/03/2026 (Card type refactor: cardAccountType + cardNetwork)
+
+- docs/feature/financial-accounts.md — Replaced `cardType` with `cardAccountType` (credit/debit/prepaid/other) and `cardNetwork` (visa/master/jcb etc.); updated incomplete validation.
+- docs/feature/credit-card-engine.md — Updated card fields to cardAccountType and cardNetwork.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 03/03/2026 (Landing page Earth tone revamp)
 
 - app/page.tsx — Changed background to stone-50/950; added LandingCta section.

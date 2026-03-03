@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import Image from "next/image";
+import { ChevronDown, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { THAI_BANKS, BANK_OTHER } from "@/lib/thai-banks";
+import { THAI_BANKS, BANK_OTHER, getBankIconColor, getBankLogoUrl } from "@/lib/thai-banks";
 import { cn } from "@/lib/utils";
 
 type BankComboboxProps = {
@@ -24,9 +25,11 @@ function getBankLabel(bankId: string, localeKey: "th" | "en"): string {
   return bank ? (localeKey === "th" ? bank.nameTh : bank.nameEn) : bankId;
 }
 
-function filterBanks(query: string, localeKey: "th" | "en") {
+type ThaiBank = (typeof THAI_BANKS)[number];
+
+function filterBanks(query: string, localeKey: "th" | "en"): ThaiBank[] {
   const q = query.trim().toLowerCase();
-  if (!q) return THAI_BANKS;
+  if (!q) return [...THAI_BANKS];
   return THAI_BANKS.filter(
     (b) =>
       (localeKey === "th" ? b.nameTh : b.nameEn).toLowerCase().includes(q) ||
@@ -86,25 +89,70 @@ export function BankCombobox({
     }
   }, [open]);
 
+  const selectedBank = value && value !== BANK_OTHER ? THAI_BANKS.find((b) => b.id === value) : null;
+  const showInputIcon = value && !open && (selectedBank || value === BANK_OTHER);
+  const selectedBankLogoUrl = selectedBank ? getBankLogoUrl(value) : null;
+
   return (
     <div ref={containerRef} className="relative">
-      <Input
-        id={id}
-        type="text"
-        value={displayValue}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        placeholder={placeholder}
-        className={cn("pr-9", className)}
-        autoComplete="off"
-      />
+      <div className="relative flex items-center">
+        {showInputIcon && (
+          <div
+            className={cn(
+              "absolute left-3 z-10 flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md",
+              selectedBank
+                ? (selectedBankLogoUrl
+                    ? "bg-white dark:bg-stone-800 p-0.5"
+                    : cn(
+                        "text-xs font-semibold text-white",
+                        getBankIconColor(THAI_BANKS.findIndex((b) => b.id === value))
+                      ))
+                : "bg-[#D4C9B0] dark:bg-stone-700"
+            )}
+          >
+            {selectedBank ? (
+              selectedBankLogoUrl ? (
+                <Image
+                  src={selectedBankLogoUrl}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                (() => {
+                  const b: { id: string; abbr?: string } = selectedBank;
+                  const a = b.abbr ?? b.id.slice(0, 2).toUpperCase();
+                  return a.length > 2 ? a.slice(0, 2) : a;
+                })()
+              )
+            ) : (
+              <Building2 className="h-4 w-4 text-[#6B5E4E] dark:text-stone-400" />
+            )}
+          </div>
+        )}
+        <Input
+          id={id}
+          type="text"
+          value={displayValue}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder}
+          className={cn(
+            "pr-9",
+            className,
+            showInputIcon && "pl-12"
+          )}
+          autoComplete="off"
+        />
+      </div>
       <button
         type="button"
         tabIndex={-1}
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 opacity-50 hover:opacity-100"
+        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded p-1 opacity-50 hover:opacity-100"
         onClick={() => setOpen((o) => !o)}
         aria-label="Toggle dropdown"
       >
@@ -126,7 +174,7 @@ export function BankCombobox({
                   type="button"
                   role="option"
                   className={cn(
-                    "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                    "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                     !value && "bg-[#EBF4E3] dark:bg-stone-800"
                   )}
                   onMouseDown={(e) => {
@@ -134,19 +182,26 @@ export function BankCombobox({
                     handleSelect("");
                   }}
                 >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E8E0C8] dark:bg-stone-700">
+                    <span className="text-xs font-medium text-[#A09080] dark:text-stone-400">—</span>
+                  </div>
                   {noneLabel}
                 </button>
               )}
               {filteredBanks.map((bank) => {
                 const label = localeKey === "th" ? bank.nameTh : bank.nameEn;
                 const isSelected = value === bank.id;
+                const abbr = bank.abbr.length > 2 ? bank.abbr.slice(0, 2) : bank.abbr;
+                const fullIndex = THAI_BANKS.findIndex((b) => b.id === bank.id);
+                const iconColor = getBankIconColor(fullIndex >= 0 ? fullIndex : 0);
+                const logoUrl = getBankLogoUrl(bank.id);
                 return (
                   <button
                     key={bank.id}
                     type="button"
                     role="option"
                     className={cn(
-                      "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                      "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                       isSelected && "bg-[#EBF4E3] dark:bg-stone-800"
                     )}
                     onMouseDown={(e) => {
@@ -154,6 +209,26 @@ export function BankCombobox({
                       handleSelect(bank.id);
                     }}
                   >
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg",
+                        logoUrl
+                          ? "bg-white p-1 dark:bg-stone-800"
+                          : cn("text-xs font-semibold text-white", iconColor)
+                      )}
+                    >
+                      {logoUrl ? (
+                        <Image
+                          src={logoUrl}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        abbr
+                      )}
+                    </div>
                     {label}
                   </button>
                 );
@@ -163,7 +238,7 @@ export function BankCombobox({
                   type="button"
                   role="option"
                   className={cn(
-                    "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                    "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                     value === BANK_OTHER && "bg-[#EBF4E3] dark:bg-stone-800"
                   )}
                   onMouseDown={(e) => {
@@ -171,6 +246,9 @@ export function BankCombobox({
                     handleSelect(BANK_OTHER);
                   }}
                 >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#D4C9B0] dark:bg-stone-700">
+                    <Building2 className="h-4 w-4 text-[#6B5E4E] dark:text-stone-400" />
+                  </div>
                   {otherLabel}
                 </button>
               )}

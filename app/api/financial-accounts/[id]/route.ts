@@ -77,7 +77,8 @@ export async function GET(
       statementClosingDay: account.statementClosingDay,
       dueDay: account.dueDay,
       interestRate: account.interestRate != null ? Number(account.interestRate) : null,
-      cardType: account.cardType ?? null,
+      cardAccountType: account.cardAccountType ?? null,
+      cardNetwork: account.cardNetwork ?? null,
       currentOutstanding,
       availableCredit,
       latestStatement: latestStatement
@@ -128,7 +129,8 @@ export async function PATCH(
     statementClosingDay?: number;
     dueDay?: number;
     interestRate?: number | null;
-    cardType?: string | null;
+    cardAccountType?: string | null;
+    cardNetwork?: string | null;
     bankName?: string | null;
     accountNumber?: string | null;
     accountNumberMode?: string | null;
@@ -151,7 +153,8 @@ export async function PATCH(
     statementClosingDay?: number;
     dueDay?: number;
     interestRate?: number | null;
-    cardType?: string | null;
+    cardAccountType?: string | null;
+    cardNetwork?: string | null;
     bankName?: string | null;
     accountNumber?: string | null;
     accountNumberMode?: string | null;
@@ -202,10 +205,16 @@ export async function PATCH(
           ? body.interestRate
           : null;
     }
-    if (body.cardType !== undefined) {
-      data.cardType =
-        typeof body.cardType === "string" && body.cardType.trim()
-          ? body.cardType.trim()
+    if (body.cardAccountType !== undefined) {
+      data.cardAccountType =
+        typeof body.cardAccountType === "string" && body.cardAccountType.trim()
+          ? body.cardAccountType.trim()
+          : null;
+    }
+    if (body.cardNetwork !== undefined) {
+      data.cardNetwork =
+        typeof body.cardNetwork === "string" && body.cardNetwork.trim()
+          ? body.cardNetwork.trim()
           : null;
     }
   }
@@ -305,11 +314,18 @@ export async function PATCH(
           to: updated.interestRate != null ? String(updated.interestRate) : "—",
         });
       }
-      if (data.cardType !== undefined && (account.cardType ?? "") !== (updated.cardType ?? "")) {
+      if (data.cardAccountType !== undefined && (account.cardAccountType ?? "") !== (updated.cardAccountType ?? "")) {
         changes.push({
-          field: "cardType",
-          from: account.cardType ?? "—",
-          to: updated.cardType ?? "—",
+          field: "cardAccountType",
+          from: account.cardAccountType ?? "—",
+          to: updated.cardAccountType ?? "—",
+        });
+      }
+      if (data.cardNetwork !== undefined && (account.cardNetwork ?? "") !== (updated.cardNetwork ?? "")) {
+        changes.push({
+          field: "cardNetwork",
+          from: account.cardNetwork ?? "—",
+          to: updated.cardNetwork ?? "—",
         });
       }
     }
@@ -353,7 +369,8 @@ export async function PATCH(
       statementClosingDay: updated.statementClosingDay,
       dueDay: updated.dueDay,
       interestRate: updated.interestRate != null ? Number(updated.interestRate) : null,
-      cardType: updated.cardType ?? null,
+      cardAccountType: updated.cardAccountType ?? null,
+      cardNetwork: updated.cardNetwork ?? null,
       bankName: updated.bankName ?? null,
       accountNumber: accountNumberForForm,
       accountNumberMode: updated.accountNumberMode ?? null,

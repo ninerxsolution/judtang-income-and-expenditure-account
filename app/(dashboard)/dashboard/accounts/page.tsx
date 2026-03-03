@@ -53,8 +53,10 @@ import {
   formatCardNumber,
   formatBankAccountNumber,
 } from "@/lib/format";
-import { getBankDisplayName } from "@/lib/thai-banks";
-import { getCardTypeDisplayName } from "@/lib/card-types";
+import Image from "next/image";
+import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
+import { getFullCardTypeDisplayName, getCardNetworkDisplayName } from "@/lib/card-types";
+import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { useI18n } from "@/hooks/use-i18n";
 import {
   Tooltip,
@@ -98,7 +100,8 @@ type FinancialAccount = {
   accountNumberMasked?: string;
   accountNumberMode?: string | null;
   interestRate?: number | null;
-  cardType?: string | null;
+  cardAccountType?: string | null;
+  cardNetwork?: string | null;
   isIncomplete?: boolean;
 };
 
@@ -458,6 +461,7 @@ export default function AccountsPage() {
             );
             const renderCard = (acc: FinancialAccount) => {
               const TypeIcon = ACCOUNT_TYPE_ICONS[acc.type] ?? PiggyBank;
+              const bankLogoUrl = acc.bankName ? getBankLogoUrl(acc.bankName) : null;
               return (
               <Card
                 key={acc.id}
@@ -481,8 +485,33 @@ export default function AccountsPage() {
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
-                      <TypeIcon className="h-5 w-5 text-[#A09080]" />
+                      {bankLogoUrl ? (
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[#E8E0C8] p-1 dark:bg-stone-700">
+                          <Image
+                            src={bankLogoUrl}
+                            alt=""
+                            width={28}
+                            height={28}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <TypeIcon className="h-5 w-5 text-[#A09080]" />
+                      )}
                       <CardTitle className="text-base">{acc.name}</CardTitle>
+                      {acc.type === "CREDIT_CARD" && acc.cardNetwork && (
+                        <div
+                          className="flex shrink-0 items-center"
+                          title={
+                            getCardNetworkDisplayName(
+                              acc.cardNetwork,
+                              locale?.startsWith("th") ? "th" : "en"
+                            ) ?? undefined
+                          }
+                        >
+                          <CardNetworkIcon id={acc.cardNetwork} size={18} />
+                        </div>
+                      )}
                     </div>
                     {(acc.bankName || acc.accountNumberMasked) && (
                       <div className="flex items-center gap-1.5">
@@ -493,6 +522,13 @@ export default function AccountsPage() {
                                 acc.bankName ?? undefined,
                                 locale?.startsWith("th") ? "th" : "en"
                               ) ?? acc.bankName;
+                            const networkLabel =
+                              acc.type === "CREDIT_CARD" && acc.cardNetwork
+                                ? getCardNetworkDisplayName(
+                                    acc.cardNetwork,
+                                    locale?.startsWith("th") ? "th" : "en"
+                                  )
+                                : null;
                             const isRevealed =
                               revealedAccountIds.has(acc.id) && fullAccountNumbers[acc.id];
                             const numberDisplay = isRevealed ? (
@@ -548,7 +584,9 @@ export default function AccountsPage() {
                             return (
                               <>
                                 {bankLabel}
-                                {bankLabel && numberDisplay && " · "}
+                                {bankLabel && networkLabel && " · "}
+                                {networkLabel}
+                                {(bankLabel || networkLabel) && numberDisplay && " · "}
                                 {numberDisplay}
                               </>
                             );
@@ -723,13 +761,14 @@ export default function AccountsPage() {
                                 {t("accounts.interestRateLabel")}: {acc.interestRate}%
                               </p>
                             )}
-                            {acc.cardType && (
+                            {(acc.cardAccountType || acc.cardNetwork) && (
                               <p>
                                 {t("accounts.cardTypeLabel")}:{" "}
-                                {getCardTypeDisplayName(
-                                  acc.cardType,
+                                {getFullCardTypeDisplayName(
+                                  acc.cardAccountType,
+                                  acc.cardNetwork,
                                   locale?.startsWith("th") ? "th" : "en"
-                                ) ?? acc.cardType}
+                                ) ?? "—"}
                               </p>
                             )}
                           </div>
