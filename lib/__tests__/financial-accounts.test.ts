@@ -205,8 +205,8 @@ describe("isAccountIncomplete", () => {
           type: "CREDIT_CARD",
           bankName: "bangkok",
           accountNumber: "1234567890123456",
-          creditLimit: { toString: () => "50000" },
-          interestRate: { toString: () => "15" },
+          creditLimit: { toString: () => "50000" } as { toNumber?: () => number },
+          interestRate: { toString: () => "15" } as { toNumber?: () => number },
           cardType: "credit",
         })
       ).toBe(false);

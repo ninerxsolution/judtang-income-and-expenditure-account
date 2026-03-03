@@ -5,6 +5,12 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 03/03/2026 (Testing strategy update)
+
+- docs/structure/testing-strategy.md — Updated: reflect implemented test suite (lib unit tests, API integration tests); direct handler import; list of test files and deferred items.
+
+---
+
 ## 03/03/2026 (Help & Feedback feature)
 
 - docs/feature/help-feedback.md — New: full spec for Help & Feedback (report form, admin backoffice, RBAC, seeder, email, storage, APIs).
