@@ -436,9 +436,32 @@ export function TransactionFormDialog({
         >
           <DialogBody className="space-y-4 pl-1">
             {loadState === "loading" && (
-              <p className="text-sm text-[#A09080] dark:text-stone-400">
-                {t("transactions.edit.loading")}
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="mb-1 h-4 w-16" />
+                  <Skeleton className="h-9 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-20" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-24" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-16" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-12" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-16" />
+                  <Skeleton className="h-20 w-full rounded-md" />
+                </div>
+              </div>
             )}
             {loadState === "error" && error && (
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -626,6 +649,7 @@ export function TransactionFormDialog({
                   placeholder={t("transactions.new.categorySearchPlaceholder")}
                   noResultsText={t("transactions.new.categoryNoResults")}
                   noneLabel="—"
+                  ariaLabel={t("common.aria.toggleDropdown")}
                   className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                 />
               </div>

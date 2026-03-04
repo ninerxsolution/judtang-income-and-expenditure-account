@@ -28,6 +28,12 @@ export const enDictionary = {
       hoursAgo: "{count}h ago",
       daysAgo: "{count}d ago",
     },
+    aria: {
+      toggleDropdown: "Toggle dropdown",
+      toggleSidebar: "Toggle sidebar",
+      toggleTheme: "Toggle theme",
+      breadcrumb: "Breadcrumb",
+    },
   },
   auth: {
     signIn: {
@@ -261,6 +267,10 @@ export const enDictionary = {
     accountNumberPlaceholder: "e.g. 123-4-56789-0",
     accountNumberModeFull: "Store full number (encrypted)",
     accountNumberModeLast4: "Store last 4 digits only",
+    accountNumberMin4Digits: "Please enter at least 4 digits for account number",
+    accountNumberExact4Digits: "Please enter exactly 4 digits",
+    cardNumberExact4Digits: "Please enter exactly 4 digits (last 4 of card)",
+    accountNumberModeLabel: "Account number storage",
     cardNumberLabel: "Last 4 digits",
     cardNumberPlaceholder: "e.g. 1234",
     interestRateLabel: "Interest rate (%)",
@@ -496,11 +506,11 @@ export const enDictionary = {
   home: {
     title: "Judtang",
     subtitle:
-      "Income & expense management system and a base for teams that need login and activity logging.",
+      "Track income & expenses, see all account balances, never lose track of your money.",
     body:
-      "This project provides Authentication (register/sign in with email or Google) and an Activity Log to track important events like login, logout, and profile changes. Built with Next.js, NextAuth, and MySQL.",
+      "Sign in with email or Google and start tracking. View your history, change password, or manage sessions in one place.",
     signInCta: "Sign in",
-    dashboardCta: "Dashboard (protected)",
+    dashboardCta: "Go to dashboard",
     nav: {
       releases: "Releases",
       login: "Login",
@@ -511,11 +521,11 @@ export const enDictionary = {
       themeSystem: "System",
     },
     hero: {
-      headline: "Control all your accounts systematically",
+      headline: "Know where your money goes — every account, every card",
       subheadline:
-        "Multi-account income & expense management with billing cycles, credit card payments, and accurate balance calculation.",
+        "Track income & expenses, transfer between accounts, and manage credit cards with billing cycles — all in one place.",
       primaryCta: "Get Started",
-      secondaryCta: "See what it can do",
+      secondaryCta: "See all features",
       previewLabel: "Dashboard preview",
     },
     coreValue: {
@@ -1063,6 +1073,27 @@ export const enDictionary = {
         title: "7. Changes to Terms",
         body: "We may update these Terms & Conditions from time to time. When material changes are made, the version number and effective date will be updated on this page.\n\nContinued use of the service after changes are posted constitutes acceptance of the updated terms.",
       },
+    },
+  },
+  admin: {
+    reports: {
+      title: "Reports",
+      subtitle: "Manage user feedback and bug reports",
+      status: "Status",
+      search: "Search",
+      searchPlaceholder: "Title or email…",
+      statusAll: "All",
+      statusOpen: "Open",
+      statusInReview: "In Review",
+      statusResolved: "Resolved",
+      statusClosed: "Closed",
+      date: "Date",
+      category: "Category",
+      titleLabel: "Title",
+      user: "User",
+      view: "View",
+      empty: "No reports found.",
+      pageInfo: "Page {page} of {totalPages} ({total} total)",
     },
   },
 };

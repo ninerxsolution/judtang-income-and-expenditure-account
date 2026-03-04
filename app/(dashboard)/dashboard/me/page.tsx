@@ -282,7 +282,6 @@ export default function UserPage() {
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-24" />
         </section>
-        <p className="text-muted-foreground text-sm">Loading…</p>
       </div>
     );
   }

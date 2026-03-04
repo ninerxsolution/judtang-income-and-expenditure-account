@@ -376,9 +376,6 @@ export default function SettingsPage() {
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-14 w-full rounded-md" />
               ))}
-              <p className="text-xs text-[#A09080] dark:text-stone-400">
-                {t("settings.sessions.loading")}
-              </p>
             </div>
           ) : sessionsError ? (
             <p className="text-sm text-red-600 dark:text-red-400">

@@ -60,9 +60,39 @@ export default function DashboardPage() {
         {/* Left column: Balance + Quick Actions + Calendar */}
         <div className="space-y-6">
           {summaryLoading ? (
-            <p className="text-sm text-[#A09080] dark:text-stone-400">
-              {t("dashboard.summary.loading")}
-            </p>
+            <>
+              {/* Balance card skeleton */}
+              <Card className="relative overflow-hidden space-y-0 gap-1 bg-[#4A5E40] dark:bg-[#3D4F33] border-0 text-white">
+                <div className="absolute right-0 top-0 h-24 w-24 -translate-y-1/2 translate-x-1/2 rounded-full bg-white/10" />
+                <div className="absolute right-8 top-4 h-16 w-16 rounded-full bg-white/5" />
+                <CardHeader className="relative pb-1">
+                  <CardTitle className="text-sm font-medium justify-between flex items-center text-white/90">
+                    <Skeleton className="h-4 w-20 bg-white/20" />
+                    <Skeleton className="h-3 w-24 bg-white/10" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative">
+                  <Skeleton className="h-10 w-40 bg-white/20 rounded-md" />
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions card skeleton */}
+              <Card className="border-[#D4C9B0] bg-[#FDFAF4] dark:border-stone-700 dark:bg-stone-900/60">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex justify-between gap-2 text-sm font-medium text-[#5C6B52] dark:text-stone-300">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-24" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2">
+                    <Skeleton className="h-[72px] w-full rounded-2xl" />
+                    <Skeleton className="h-[72px] w-full rounded-2xl" />
+                    <Skeleton className="h-[72px] w-full rounded-2xl" />
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           ) : (
             <>
               {/* Balance card - dark olive green, prominent */}
@@ -120,7 +150,7 @@ export default function DashboardPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-amber-500/40 bg-amber-500/15 py-3 text-amber-700 shadow-sm transition-all hover:border-amber-500/70 hover:bg-amber-500/25 hover:shadow-md active:scale-[0.98] dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:border-amber-500/60 dark:hover:bg-amber-500/30"
+                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-blue-500/40 bg-blue-500/15 py-3 text-blue-700 shadow-sm transition-all hover:border-blue-500/70 hover:bg-blue-500/25 hover:shadow-md active:scale-[0.98] dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:border-blue-500/60 dark:hover:bg-blue-500/30"
                       onClick={() => openQuickAdd("TRANSFER")}
                     >
                       <ArrowLeftRight className="h-4 w-4 shrink-0" />
@@ -138,7 +168,13 @@ export default function DashboardPage() {
               {t("dashboard.summary.recentAccountActivity")}
             </p>
             <div className="flex flex-wrap gap-2">
-              {accountItems.length === 0 ? (
+              {summaryLoading ? (
+                <>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Skeleton key={i} className="h-12 w-28 rounded-lg" />
+                  ))}
+                </>
+              ) : accountItems.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-2">
                   {t("dashboard.summary.recentAccountActivityEmpty")}
                 </p>
@@ -200,9 +236,31 @@ export default function DashboardPage() {
               {t("dashboard.summary.title")}
             </h2> */}
             {summaryLoading ? (
-              <p className="text-sm text-[#A09080] dark:text-stone-400">
-                {t("dashboard.summary.loading")}
-              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {/* Income card skeleton */}
+                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
+                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
+                    <Skeleton className="h-8 w-8 rounded-full bg-emerald-200/60 dark:bg-emerald-800/40" />
+                    <Skeleton className="h-4 w-32" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-7 w-24" />
+                  </CardContent>
+                </Card>
+
+                {/* Expense card skeleton */}
+                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-amber-200/30 dark:bg-amber-800/20" />
+                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
+                    <Skeleton className="h-8 w-8 rounded-full bg-amber-200/60 dark:bg-amber-800/40" />
+                    <Skeleton className="h-4 w-32" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-7 w-24" />
+                  </CardContent>
+                </Card>
+              </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {/* Income card - light green */}
@@ -224,18 +282,18 @@ export default function DashboardPage() {
                 </Card>
 
                 {/* Expense card - light brown/pink */}
-                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-amber-200/30 dark:bg-amber-800/20" />
+                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
                   <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-200/60 dark:bg-amber-800/40">
-                      <ArrowUpCircle className="h-4 w-4 text-amber-700 dark:text-amber-300" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
+                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
                     </div>
-                    <CardTitle className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
                       {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xl font-semibold tabular-nums text-amber-800 dark:text-amber-200">
+                    <p className="text-xl font-semibold tabular-nums text-red-800 dark:text-red-200">
                       {summary ? formatAmount(summary.expense) : "0.00"}
                     </p>
                   </CardContent>

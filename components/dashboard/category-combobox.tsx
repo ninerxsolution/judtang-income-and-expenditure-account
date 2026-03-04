@@ -17,6 +17,7 @@ type CategoryComboboxProps = {
   placeholder?: string;
   noResultsText?: string;
   noneLabel?: string;
+  ariaLabel?: string;
   className?: string;
 };
 
@@ -44,6 +45,7 @@ export function CategoryCombobox({
   placeholder,
   noResultsText = "No category found",
   noneLabel = "—",
+  ariaLabel,
   className,
 }: CategoryComboboxProps) {
   const [open, setOpen] = useState(false);
@@ -100,7 +102,7 @@ export function CategoryCombobox({
         tabIndex={-1}
         className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 opacity-50 hover:opacity-100"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Toggle dropdown"
+        aria-label={ariaLabel ?? "Toggle dropdown"}
       >
         <ChevronDown className="h-4 w-4" />
       </button>

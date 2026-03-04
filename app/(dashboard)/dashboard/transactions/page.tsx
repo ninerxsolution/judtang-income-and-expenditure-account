@@ -322,9 +322,6 @@ export default function TransactionsPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="h-12 w-full rounded-md" />
           ))}
-          <p className="text-muted-foreground text-sm">
-            {t("transactions.list.loading")}
-          </p>
         </div>
       )}
 

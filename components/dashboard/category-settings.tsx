@@ -143,9 +143,6 @@ export function CategorySettings() {
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-10 w-full rounded-md" />
           ))}
-          <p className="text-xs text-[#A09080] dark:text-stone-400">
-            {t("settings.categories.loading")}
-          </p>
         </div>
       ) : error ? (
         <p className="text-sm text-red-600 dark:text-red-400">

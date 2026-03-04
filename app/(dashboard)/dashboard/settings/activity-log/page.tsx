@@ -453,9 +453,6 @@ export default function ActivityLogPage() {
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))}
-          <p className="text-muted-foreground text-sm">
-            {t("activityLog.loading")}
-          </p>
         </div>
       ) : error ? (
         <p className="text-red-600 dark:text-red-400">{error}</p>
