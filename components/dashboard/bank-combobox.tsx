@@ -15,6 +15,8 @@ type BankComboboxProps = {
   placeholder?: string;
   noResultsText?: string;
   noneLabel?: string;
+  otherLabel?: string;
+  ariaLabel?: string;
   localeKey: "th" | "en";
   className?: string;
 };
@@ -45,6 +47,8 @@ export function BankCombobox({
   placeholder,
   noResultsText = "No bank found",
   noneLabel = "—",
+  otherLabel: otherLabelProp,
+  ariaLabel,
   localeKey,
   className,
 }: BankComboboxProps) {
@@ -52,16 +56,14 @@ export function BankCombobox({
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const otherLabel = otherLabelProp ?? (localeKey === "th" ? "อื่นๆ" : "Other");
   const filteredBanks = filterBanks(searchQuery, localeKey);
   const showOther =
     !searchQuery.trim() ||
-    (localeKey === "th" ? "อื่นๆ" : "Other")
-      .toLowerCase()
-      .includes(searchQuery.trim().toLowerCase());
+    otherLabel.toLowerCase().includes(searchQuery.trim().toLowerCase());
   const showNone = !searchQuery.trim();
 
   const displayValue = open ? searchQuery : getBankLabel(value, localeKey);
-  const otherLabel = localeKey === "th" ? "อื่นๆ" : "Other";
 
   function closeDropdown() {
     setSearchQuery("");
@@ -153,7 +155,7 @@ export function BankCombobox({
         tabIndex={-1}
         className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded p-1 opacity-50 hover:opacity-100"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Toggle dropdown"
+        aria-label={ariaLabel ?? "Toggle dropdown"}
       >
         <ChevronDown className="h-4 w-4" />
       </button>

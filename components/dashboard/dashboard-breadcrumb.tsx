@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/hooks/use-i18n";
 import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
 
 export function getSegmentLabel(segment: string, _allSegments?: string[]): string {
@@ -44,6 +45,7 @@ function isAccountDetailPath(segments: string[]): boolean {
 
 export function DashboardBreadcrumb({ className }: { className?: string }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const { accountName } = useAccountDetailBreadcrumb() ?? { accountName: null };
 
   if (!pathname) return null;
@@ -76,7 +78,7 @@ export function DashboardBreadcrumb({ className }: { className?: string }) {
   });
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("text-sm text-muted-foreground", className)}>
+    <nav aria-label={t("common.aria.breadcrumb")} className={cn("text-sm text-muted-foreground", className)}>
       <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, index) => (
           <li key={item.href} className="flex items-center gap-1">

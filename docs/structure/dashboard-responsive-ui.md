@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The dashboard layout adapts to different screen sizes with a responsive sidebar, mobile bottom navigation, and layout adjustments. On small screens (< 640px), the sidebar is replaced by a dialog-based navigation; on mobile (< 768px), a bottom nav bar provides quick access to main sections.
+The dashboard layout adapts to different screen sizes with a responsive sidebar, mobile bottom navigation, and layout adjustments. On small screens (< 640px), the sidebar is replaced by a dialog-based navigation; on mobile (< 768px), a bottom nav bar provides quick access to main sections. The Transactions table uses a compact layout and tap-to-menu on tablet/mobile (< 1024px).
 
 ---
 
@@ -18,6 +18,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 |------------|-------|-------|
 | **sm** | 640px | `useIsSmallScreen()` — sidebar becomes dialog trigger |
 | **md** | 768px | `useIsMobile()` — mobile bottom nav shown; sidebar hidden |
+| **lg** | 1024px | `useIsDesktopOrLarger()` — desktop table layout (Edit/Delete buttons); compact layout below |
 
 ---
 
@@ -34,6 +35,12 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 - **File:** `hooks/use-mobile.ts`
 - **Returns:** `boolean` — `true` when viewport width < 768px (Tailwind `md`)
 - **Use case:** Show/hide mobile bottom nav; full mobile layout
+
+### useIsDesktopOrLarger
+
+- **File:** `hooks/use-mobile.ts`
+- **Returns:** `boolean` — `true` when viewport width ≥ 1024px (Tailwind `lg`)
+- **Use case:** Desktop table layout (Edit/Delete buttons in table); compact layout and tap-to-menu below
 
 ---
 
@@ -60,9 +67,9 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 - **Component:** `components/dashboard/mobile-bottom-nav.tsx`
 - **Shown when:** `useIsMobile()` is true (< 768px)
 - **Position:** Fixed bottom, full width
-- **Items:** Dashboard, Accounts, Calendar (Transactions via Calendar or Dashboard)
-- **Styling:** `md:hidden`; safe-area-inset-bottom for notched devices
-- **Active state:** Amber background for current route
+- **Items:** Dashboard, Accounts, Transactions, Summary, Settings (5 items)
+- **Styling:** Cream background (`bg-stone-100`), icon + text label per item; `md:hidden`; safe-area-inset-bottom for notched devices
+- **Active state:** Amber indicator bar at top of active item (`border-t-2 border-amber-500`)
 
 ---
 
@@ -85,7 +92,22 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 ---
 
-## 8. Accessibility
+## 8. Transactions Table Responsive
+
+- **File:** `app/(dashboard)/dashboard/transactions/page.tsx`
+- **Desktop (≥ 1024px):** Full table with Date, Account, Category, Type, Amount, Note; Edit/Delete buttons per row
+- **Tablet/Mobile (< 1024px):** Compact layout:
+  - **First column:** Date + account + category combined (single cell)
+  - **Type column:** Hidden
+  - **Category column:** Hidden (merged into first column)
+  - **Amount:** Shown with color (green income, red expense, blue transfer)
+  - **Note:** Hidden
+  - **Actions:** Tap row to open action menu dialog (shows date, account, amount; Edit/Delete options)
+- **Dashboard recent transactions (mobile):** Icon only (no type label); date on separate row with `text-[10px]`
+
+---
+
+## 9. Accessibility
 
 - Nav items use `aria-label` from i18n
 - Dialog trigger has `aria-haspopup="dialog"`

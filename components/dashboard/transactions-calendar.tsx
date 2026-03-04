@@ -791,11 +791,6 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                   {getMonthLabel(year, monthIndex, locale)}
                 </div>
               </div>
-              {summaryLoading && (
-                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
-                  {t("calendar.loading.calendar")}
-                </p>
-              )}
               {summaryError && !summaryLoading && (
                 <p className="text-xs text-red-600 dark:text-red-400">
                   {summaryError}
@@ -911,11 +906,6 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                   {getWeekRangeLabel(weekStartIso, locale)}
                 </div>
               </div>
-              {summaryLoading && (
-                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
-                  {t("calendar.loading.calendar")}
-                </p>
-              )}
               {summaryError && !summaryLoading && (
                 <p className="text-xs text-red-600 dark:text-red-400">
                   {summaryError}
@@ -1149,11 +1139,6 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                   {formatYearForDisplay(yearRangeStart, locale)}–{formatYearForDisplay(yearRangeEnd, locale)}
                 </div>
               </div>
-              {yearSummaryLoading && (
-                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
-                  {t("calendar.loading.years")}
-                </p>
-              )}
               {yearSummaryError && !yearSummaryLoading && (
                 <p className="text-xs text-red-600 dark:text-red-400">
                   {yearSummaryError}

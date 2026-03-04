@@ -2,6 +2,23 @@
 
 ---
 
+# v0.9.11 - 2026-03-04
+
+## Added
+
+- **Mobile bottom nav redesign** — Cream background, icon + text label per item, active indicator bar; 5 items: Dashboard, Accounts, Transactions, Summary, Settings
+- **useIsDesktopOrLarger hook** — Detects viewport ≥ 1024px (Tailwind `lg`) for desktop layout
+- **Transactions table compact layout (tablet)** — On screens < 1024px: date + account + category combined in one column; type column hidden; amount shown with color (green/red/blue); tap row to open Edit/Delete menu
+- **Transaction action menu with details** — When tapping a transaction on tablet, the action dialog shows date, account, and amount before Edit/Delete options
+
+## Changed
+
+- **Dashboard recent transactions (mobile)** — Icon only (no income/expense label); date on separate row with `text-[10px]`
+- **Transactions table (desktop)** — Edit/Delete buttons remain in table; compact layout and tap-to-menu only on tablet/mobile
+- **Transactions list i18n** — Added `dateAndAccount`, `tapToEditOrDelete`, `selectAction` keys
+
+---
+
 # v0.9.10 - 2026-03-04
 
 ## Added

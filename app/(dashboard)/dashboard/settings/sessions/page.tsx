@@ -128,9 +128,6 @@ export default function SessionsPage() {
             <Skeleton key={i} className="h-16 w-full rounded-lg" />
           ))}
         </div>
-        <p className="text-muted-foreground text-sm">
-          {t("settings.sessions.loading")}
-        </p>
       </div>
     );
   }

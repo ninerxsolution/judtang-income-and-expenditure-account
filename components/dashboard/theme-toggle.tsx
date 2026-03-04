@@ -5,11 +5,14 @@ import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
+  const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
+  const ariaLabel = t("common.aria.toggleTheme");
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -21,7 +24,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         variant="ghost"
         size="icon"
         className={cn("h-8 w-8 rounded-full", className)}
-        aria-label="Toggle theme"
+        aria-label={ariaLabel}
       >
         <Sun className="h-4 w-4" />
       </Button>
@@ -40,7 +43,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       variant="ghost"
       size="icon"
       className={cn("h-8 w-8 rounded-full", className)}
-      aria-label="Toggle theme"
+      aria-label={ariaLabel}
       onClick={toggleTheme}
     >
       {isDark ? (

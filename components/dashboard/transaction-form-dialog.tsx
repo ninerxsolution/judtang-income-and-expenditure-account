@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
-import { CategoryCombobox } from "@/components/dashboard/category-combobox";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { cn } from "@/lib/utils";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
@@ -48,6 +48,53 @@ function formatDateToInput(iso: string): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+const RECENT_CATEGORIES_KEY = "judtang_recent_categories";
+const MAX_RECENT_CATEGORIES = 20;
+const INITIAL_CATEGORY_COUNT = 3;
+
+function getRecentCategoryIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_CATEGORIES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed)
+      ? parsed.filter((x): x is string => typeof x === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentCategoryId(id: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const recent = getRecentCategoryIds();
+    const filtered = recent.filter((x) => x !== id);
+    const updated = [id, ...filtered].slice(0, MAX_RECENT_CATEGORIES);
+    window.localStorage.setItem(RECENT_CATEGORIES_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+function sortCategoriesByRecent(
+  categories: { id: string; name: string }[],
+  recentIds: string[],
+): { id: string; name: string }[] {
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  const ordered: { id: string; name: string }[] = [];
+  for (const id of recentIds) {
+    const cat = byId.get(id);
+    if (cat) {
+      ordered.push(cat);
+      byId.delete(id);
+    }
+  }
+  const rest = Array.from(byId.values());
+  return [...ordered, ...rest];
 }
 
 type TransactionFormDialogProps = {
@@ -102,8 +149,29 @@ export function TransactionFormDialog({
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
   const [formDataLoading, setFormDataLoading] = useState(false);
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
+  const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>([]);
 
   const isMobile = useIsMobile();
+
+  const sortedCategories = useMemo(
+    () => sortCategoriesByRecent(categories, recentCategoryIds),
+    [categories, recentCategoryIds],
+  );
+
+  const visibleCategories = categoriesExpanded
+    ? sortedCategories
+    : sortedCategories.slice(0, INITIAL_CATEGORY_COUNT);
+  const hasMoreCategories = sortedCategories.length > INITIAL_CATEGORY_COUNT;
+
+  useEffect(() => {
+    if (open && typeof window !== "undefined") {
+      setRecentCategoryIds(getRecentCategoryIds());
+    }
+    if (!open) {
+      setCategoriesExpanded(false);
+    }
+  }, [open]);
   const viewport = useVisualViewport(open && isMobile);
 
   const amountError = useMemo(() => {
@@ -367,6 +435,9 @@ export function TransactionFormDialog({
           setError(data.error ?? t("transactions.new.saveFailed"));
           return;
         }
+        if (type !== "TRANSFER" && categoryId) {
+          saveRecentCategoryId(categoryId);
+        }
         onOpenChange(false);
         onSuccess?.();
       } else {
@@ -385,6 +456,9 @@ export function TransactionFormDialog({
               : t("transactions.new.saveFailed"),
           );
           return;
+        }
+        if (type !== "TRANSFER" && categoryId) {
+          saveRecentCategoryId(categoryId);
         }
         setAmount("");
         setCategoryId("");
@@ -436,15 +510,50 @@ export function TransactionFormDialog({
         >
           <DialogBody className="space-y-4 pl-1">
             {loadState === "loading" && (
-              <p className="text-sm text-[#A09080] dark:text-stone-400">
-                {t("transactions.edit.loading")}
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="mb-1 h-4 w-16" />
+                  <Skeleton className="h-9 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-20" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-24" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-16" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-12" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-16" />
+                  <Skeleton className="h-20 w-full rounded-md" />
+                </div>
+              </div>
             )}
             {loadState === "error" && error && (
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             )}
             {(loadState === "idle" || loadState === "done") && (
               <>
+                <div>
+                  <DatePicker
+                    id="transaction-modal-date"
+                    label={t("transactions.new.dateLabel")}
+                    value={occurredAt}
+                    onChange={setOccurredAt}
+                    required
+                    variant="inline"
+                    placeholder={t("transactions.new.dateSelectPlaceholder")}
+                  />
+                </div>
+
                 <div>
             <span className="mb-1 block text-sm font-medium">
               {t("transactions.new.typeLabel")}
@@ -614,30 +723,66 @@ export function TransactionFormDialog({
               </div>
             ) : (
               <div>
-                <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
+                <span className="mb-1 block text-sm font-medium">
                   {t("transactions.new.categoryLabel")}
-                </label>
-                <CategoryCombobox
+                </span>
+                <div
                   id="transaction-modal-category"
-                  value={categoryId}
-                  onChange={setCategoryId}
-                  categories={categories}
-                  localeKey={localeKey}
-                  placeholder={t("transactions.new.categorySearchPlaceholder")}
-                  noResultsText={t("transactions.new.categoryNoResults")}
-                  noneLabel="—"
-                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                />
+                  className="flex flex-wrap gap-2"
+                  role="group"
+                  aria-label={t("transactions.new.categoryLabel")}
+                >
+                  {visibleCategories.map((cat) => {
+                    const isSelected = categoryId === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setCategoryId("");
+                            setCategory("");
+                          } else {
+                            setCategoryId(cat.id);
+                            setCategory(getCategoryDisplayName(cat.name, localeKey));
+                          }
+                        }}
+                        className={cn(
+                          "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-all",
+                          "border-[#D4C9B0] dark:border-stone-700",
+                          isSelected
+                            ? "bg-[#5C6B52] text-white border-[#5C6B52] dark:bg-stone-600 dark:border-stone-600"
+                            : "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
+                        )}
+                      >
+                        {getCategoryDisplayName(cat.name, localeKey)}
+                      </button>
+                    );
+                  })}
+                  {hasMoreCategories && (
+                    <button
+                      type="button"
+                      onClick={() => setCategoriesExpanded((e) => !e)}
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-all",
+                        "border-[#D4C9B0] dark:border-stone-700",
+                        "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
+                      )}
+                      aria-expanded={categoriesExpanded}
+                      aria-label={
+                        categoriesExpanded
+                          ? t("transactions.new.categoryShowLess")
+                          : t("transactions.new.categoryShowMore")
+                      }
+                    >
+                      {categoriesExpanded
+                        ? t("transactions.new.categoryShowLess")
+                        : t("transactions.new.categoryShowMore")}
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
-
-          <DatePicker
-            id="transaction-modal-date"
-            label={t("transactions.new.dateLabel")}
-            value={occurredAt}
-            onChange={setOccurredAt}
-            required
-          />
 
           <div>
             <label

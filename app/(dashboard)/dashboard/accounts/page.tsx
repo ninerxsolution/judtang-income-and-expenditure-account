@@ -959,9 +959,7 @@ export default function AccountsPage() {
           {deleteAccount && deleteExpectedValue && (
             <div className="space-y-2">
               <Label htmlFor="delete-confirm-input">
-                {t("accounts.deleteConfirmRandomCodeLabel").startsWith("accounts.")
-                  ? (locale?.startsWith("th") ? "กรอกรหัสด้านล่างเพื่อยืนยันการลบ" : "Enter the code below to confirm deletion")
-                  : t("accounts.deleteConfirmRandomCodeLabel")}
+                {t("accounts.deleteConfirmRandomCodeLabel")}
               </Label>
               <p className="select-none rounded-md bg-[#F5F0E8] px-3 py-2 font-mono text-sm dark:bg-stone-800">
                 {deleteExpectedValue}
@@ -969,9 +967,7 @@ export default function AccountsPage() {
               <Input
                 id="delete-confirm-input"
                 type="text"
-                placeholder={t("accounts.deleteConfirmRandomCodePlaceholder").startsWith("accounts.")
-                  ? (locale?.startsWith("th") ? "กรอกรหัส" : "Enter code")
-                  : t("accounts.deleteConfirmRandomCodePlaceholder")}
+                placeholder={t("accounts.deleteConfirmRandomCodePlaceholder")}
                 value={deleteConfirmValue}
                 onChange={(e) => setDeleteConfirmValue(e.target.value)}
                 disabled={deletePending}

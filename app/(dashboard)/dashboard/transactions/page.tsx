@@ -20,6 +20,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 
@@ -57,6 +64,7 @@ export default function TransactionsPage() {
   const searchParams = useSearchParams();
   const { t, locale, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
+  const isDesktop = useIsDesktopOrLarger();
 
   const [items, setItems] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +85,8 @@ export default function TransactionsPage() {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTransaction, setDeleteTransaction] = useState<Transaction | null>(null);
+
+  const [actionMenuTx, setActionMenuTx] = useState<Transaction | null>(null);
 
   async function fetchTransactions(overrides?: { offset?: number }) {
     setLoading(true);
@@ -193,6 +203,24 @@ export default function TransactionsPage() {
     setDeleteOpen(true);
   }
 
+  function handleRowClick(tx: Transaction) {
+    setActionMenuTx(tx);
+  }
+
+  function handleActionEdit() {
+    if (actionMenuTx) {
+      openEditModal(actionMenuTx);
+      setActionMenuTx(null);
+    }
+  }
+
+  function handleActionDelete() {
+    if (actionMenuTx) {
+      openDeleteModal(actionMenuTx);
+      setActionMenuTx(null);
+    }
+  }
+
   function refreshList() {
     void fetchTransactions({ offset });
   }
@@ -220,100 +248,103 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border space-y-4 border-[#D4C9B0] bg-[#F5F0E8]/50 p-4 dark:border-stone-700 dark:bg-stone-900/40">
-        <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-200">
+      <div className="rounded-lg border space-y-3 border-[#D4C9B0] bg-[#F5F0E8]/50 p-3 md:p-4 dark:border-stone-700 dark:bg-stone-900/40">
+        <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-200">
           {t("transactions.list.filters")}
         </h2>
-        <div className="min-w-[180px] space-y-2">
-            <label htmlFor="list-search" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
-              {t("transactions.list.searchLabel")}
-            </label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A09080] dark:text-stone-500" />
-              <Input
-                id="list-search"
-                type="text"
-                placeholder={t("transactions.list.searchPlaceholder")}
-                value={filterSearch}
-                onChange={(e) => setFilterSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") applyFilters();
-                }}
-                className="h-9 w-full pl-9"
-              />
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-2">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <label htmlFor="list-search" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                {t("transactions.list.searchLabel")}
+              </label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 -translate-y-1/2 text-[#A09080] dark:text-stone-500" />
+                <Input
+                  id="list-search"
+                  type="text"
+                  placeholder={t("transactions.list.searchPlaceholder")}
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applyFilters();
+                  }}
+                  className="h-8 w-full pl-8 text-sm sm:h-9 sm:pl-9"
+                />
+              </div>
+            </div>
+            <Button onClick={applyFilters} size="sm" className="h-8 shrink-0 self-end sm:h-9 sm:self-auto">
+              {t("transactions.list.applyFilters")}
+            </Button>
+          </div>
+          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 items-end">
+            <DatePicker
+              id="list-from"
+              label={t("dataTools.export.fromDate")}
+              value={filterFrom}
+              onChange={setFilterFrom}
+              className="min-w-0 space-y-1.5"
+            />
+            <DatePicker
+              id="list-to"
+              label={t("dataTools.export.toDate")}
+              value={filterTo}
+              onChange={setFilterTo}
+              className="min-w-0 space-y-1.5"
+            />
+            <div className="min-w-0 space-y-1.5">
+              <label htmlFor="list-type" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                {t("dataTools.export.type")}
+              </label>
+              <select
+                id="list-type"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
+                className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+              >
+                <option value="all">{t("dataTools.export.typeAll")}</option>
+                <option value="INCOME">{t("transactions.common.income")}</option>
+                <option value="EXPENSE">{t("transactions.common.expense")}</option>
+                <option value="TRANSFER">{t("transactions.common.transfer")}</option>
+              </select>
+            </div>
+            <div className="min-w-0 space-y-1.5">
+              <label htmlFor="list-account" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                {t("transactions.new.accountLabel")}
+              </label>
+              <select
+                id="list-account"
+                value={filterAccountId}
+                onChange={(e) => setFilterAccountId(e.target.value)}
+                className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+              >
+                <option value="">{t("dataTools.export.typeAll")}</option>
+                {accounts.map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-0 space-y-1.5">
+              <label htmlFor="list-category" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                {t("transactions.new.categoryLabel")}
+              </label>
+              <select
+                id="list-category"
+                value={filterCategoryId}
+                onChange={(e) => setFilterCategoryId(e.target.value)}
+                className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+              >
+                <option value="">{t("dataTools.export.typeAll")}</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-        <div className="flex flex-wrap items-end gap-3">
-          
-          <DatePicker
-            id="list-from"
-            label={t("dataTools.export.fromDate")}
-            value={filterFrom}
-            onChange={setFilterFrom}
-            className="min-w-[180px]"
-          />
-          <DatePicker
-            id="list-to"
-            label={t("dataTools.export.toDate")}
-            value={filterTo}
-            onChange={setFilterTo}
-            className="min-w-[180px]"
-          />
-          <div className="min-w-[180px] space-y-2">
-            <label htmlFor="list-type" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
-              {t("dataTools.export.type")}
-            </label>
-            <select
-              id="list-type"
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
-              className="h-9 w-full rounded-md border border-[#D4C9B0] px-3 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-            >
-              <option value="all">{t("dataTools.export.typeAll")}</option>
-              <option value="INCOME">{t("transactions.common.income")}</option>
-              <option value="EXPENSE">{t("transactions.common.expense")}</option>
-              <option value="TRANSFER">{t("transactions.common.transfer")}</option>
-            </select>
-          </div>
-          <div className="min-w-[180px] space-y-2">
-            <label htmlFor="list-account" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
-              {t("transactions.new.accountLabel")}
-            </label>
-            <select
-              id="list-account"
-              value={filterAccountId}
-              onChange={(e) => setFilterAccountId(e.target.value)}
-              className="h-9 w-full rounded-md border border-[#D4C9B0] px-3 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-            >
-              <option value="">{t("dataTools.export.typeAll")}</option>
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="min-w-[180px] space-y-2">
-            <label htmlFor="list-category" className="block text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
-              {t("transactions.new.categoryLabel")}
-            </label>
-            <select
-              id="list-category"
-              value={filterCategoryId}
-              onChange={(e) => setFilterCategoryId(e.target.value)}
-              className="h-9 w-full rounded-md border border-[#D4C9B0] px-3 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-            >
-              <option value="">{t("dataTools.export.typeAll")}</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Button onClick={applyFilters} size="sm" className="h-9">
-            {t("transactions.list.applyFilters")}
-          </Button>
         </div>
       </div>
 
@@ -322,9 +353,6 @@ export default function TransactionsPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="h-12 w-full rounded-md" />
           ))}
-          <p className="text-muted-foreground text-sm">
-            {t("transactions.list.loading")}
-          </p>
         </div>
       )}
 
@@ -341,28 +369,29 @@ export default function TransactionsPage() {
       {!loading && !error && items.length > 0 && (
         <>
           <div className="mt-6 overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-xs lg:text-sm">
               <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
-                    {t("transactions.list.columns.date")}
+                  <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                    <span className="lg:hidden">{t("transactions.list.columns.dateAndAccount")}</span>
+                    <span className="hidden lg:inline">{t("transactions.list.columns.date")}</span>
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.account")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  <th className="hidden lg:table-cell w-0 px-1.5 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.type")}
                   </th>
-                  <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                  <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
                     {t("transactions.list.columns.amount")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.category")}
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                     {t("transactions.list.columns.note")}
                   </th>
-                  <th className="w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                  <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
                     {t("common.actions.edit")} / {t("common.actions.delete")}
                   </th>
                 </tr>
@@ -371,6 +400,10 @@ export default function TransactionsPage() {
                 {items.map((tx) => {
                   const isIncome = tx.type === "INCOME";
                   const isTransfer = tx.type === "TRANSFER";
+                  const categoryDisplay = getCategoryDisplayName(
+                    tx.categoryRef?.name ?? tx.category ?? "",
+                    localeKey
+                  ) || "";
                   const accountDisplay = isTransfer && tx.transferAccount
                     ? t("transactions.list.transferTo", {
                         account: tx.transferAccount.name,
@@ -379,12 +412,38 @@ export default function TransactionsPage() {
                   return (
                     <tr
                       key={tx.id}
-                      className="border-t border-[#D4C9B0] dark:border-stone-800"
+                      {...(!isDesktop && {
+                        role: "button" as const,
+                        tabIndex: 0,
+                        onClick: () => handleRowClick(tx),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleRowClick(tx);
+                          }
+                        },
+                        "aria-label": t("transactions.list.tapToEditOrDelete"),
+                      })}
+                      className={`border-t border-[#D4C9B0] dark:border-stone-800 ${
+                        !isDesktop ? "cursor-pointer transition-colors hover:bg-[#F5F0E8]/60 dark:hover:bg-stone-800/60" : ""
+                      }`}
                     >
-                      <td className="px-4 py-2 text-[#3D3020] dark:text-stone-100">
-                        {formatDateTime(tx.occurredAt, locale)}
+                      <td className="px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-100">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="whitespace-nowrap">{formatDateTime(tx.occurredAt, locale)}</span>
+                          <span className="text-[12px] text-[#A09080] dark:text-stone-400 lg:hidden max-w-[160px] truncate">
+                            {isTransfer ? (
+                              <>
+                                {tx.financialAccount?.name ?? "—"} {accountDisplay}
+                              </>
+                            ) : (
+                              accountDisplay
+                            )}
+                            {categoryDisplay ? ` · ${categoryDisplay}` : ""}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
+                      <td className="hidden lg:table-cell px-4 py-2 text-[#3D3020] dark:text-stone-200 max-w-[100px] truncate">
                         {isTransfer ? (
                           <>
                             {tx.financialAccount?.name ?? "—"} {accountDisplay}
@@ -393,51 +452,61 @@ export default function TransactionsPage() {
                           accountDisplay
                         )}
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="hidden lg:table-cell px-1.5 py-1.5 lg:px-4 lg:py-2">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          className={`inline-flex items-center justify-center gap-1 rounded-full p-0.5 lg:px-2 lg:py-0.5 text-xs font-medium ${
                             isIncome
                               ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                               : isTransfer
                                 ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                                 : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                           }`}
+                          title={isIncome ? t("transactions.common.income") : isTransfer ? t("transactions.common.transfer") : t("transactions.common.expense")}
                         >
                           {isIncome ? (
-                            <ArrowDownCircle className="h-3.5 w-3.5" />
+                            <ArrowDownCircle className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                           ) : isTransfer ? (
-                            <ArrowLeftRight className="h-3.5 w-3.5" />
+                            <ArrowLeftRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                           ) : (
-                            <ArrowUpCircle className="h-3.5 w-3.5" />
+                            <ArrowUpCircle className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                           )}
-                          {isIncome
-                            ? t("transactions.common.income")
-                            : isTransfer
-                              ? t("transactions.common.transfer")
-                              : t("transactions.common.expense")}
+                          <span className="hidden lg:inline">
+                            {isIncome
+                              ? t("transactions.common.income")
+                              : isTransfer
+                                ? t("transactions.common.transfer")
+                                : t("transactions.common.expense")}
+                          </span>
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right tabular-nums text-zinc-900 dark:text-zinc-50">
+                      <td
+                        className={`px-2 py-1.5 lg:px-4 lg:py-2 text-right tabular-nums whitespace-nowrap ${
+                          isIncome
+                            ? "text-emerald-600 dark:text-emerald-300 font-medium lg:text-zinc-900 lg:dark:text-zinc-50 lg:font-normal"
+                            : isTransfer
+                              ? "text-blue-600 dark:text-blue-300 font-medium lg:text-zinc-900 lg:dark:text-zinc-50 lg:font-normal"
+                              : "text-red-600 dark:text-red-300 font-medium lg:text-zinc-900 lg:dark:text-zinc-50 lg:font-normal"
+                        }`}
+                      >
+                        <span className="lg:hidden">{isIncome ? "+" : isTransfer ? "" : "-"}</span>
                         {formatAmount(tx.amount)}
                       </td>
-                      <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
-                        {getCategoryDisplayName(
-                          tx.categoryRef?.name ?? tx.category ?? "",
-                          localeKey
-                        ) || "—"}
+                      <td className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-200 max-w-[80px] truncate">
+                        {categoryDisplay || "—"}
                       </td>
-                      <td className="px-4 py-2 text-[#6B5E4E] dark:text-stone-300">
+                      <td className="hidden lg:table-cell px-4 py-2 text-[#6B5E4E] dark:text-stone-300 max-w-[140px] truncate">
                         {tx.note
                           ? tx.note.length > 60
                             ? `${tx.note.slice(0, 57)}…`
                             : tx.note
                           : "—"}
                       </td>
-                      <td className="px-2 py-2 text-right">
+                      <td className="hidden lg:table-cell px-2 py-2 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="size-9"
                             onClick={() => openEditModal(tx)}
                             aria-label={t("common.actions.edit")}
                           >
@@ -446,9 +515,9 @@ export default function TransactionsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="size-9 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                             onClick={() => openDeleteModal(tx)}
                             aria-label={t("common.actions.delete")}
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -492,6 +561,58 @@ export default function TransactionsPage() {
           </div>
         </>
       )}
+
+      <Dialog open={!!actionMenuTx} onOpenChange={(open) => !open && setActionMenuTx(null)}>
+        <DialogContent showCloseButton={true} className="max-w-xs gap-4 p-4">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              {t("transactions.list.selectAction")}
+            </DialogTitle>
+          </DialogHeader>
+          {actionMenuTx && (
+            <div className="rounded-lg border border-[#E8E0C8] dark:border-stone-700 bg-[#F5F0E8]/50 dark:bg-stone-800/50 px-3 py-2.5 text-sm space-y-1.5">
+              <p className="text-[#3D3020] dark:text-stone-100 font-medium">
+                {formatDateTime(actionMenuTx.occurredAt, locale)}
+              </p>
+              <p className="text-[#6B5E4E] dark:text-stone-300 truncate">
+                {actionMenuTx.type === "TRANSFER" && actionMenuTx.transferAccount
+                  ? `${actionMenuTx.financialAccount?.name ?? "—"} → ${actionMenuTx.transferAccount.name}`
+                  : actionMenuTx.financialAccount?.name ?? "—"}
+              </p>
+              <p
+                className={`tabular-nums font-medium ${
+                  actionMenuTx.type === "INCOME"
+                    ? "text-emerald-600 dark:text-emerald-300"
+                    : actionMenuTx.type === "TRANSFER"
+                      ? "text-blue-600 dark:text-blue-300"
+                      : "text-red-600 dark:text-red-300"
+                }`}
+              >
+                {actionMenuTx.type === "INCOME" ? "+" : actionMenuTx.type === "TRANSFER" ? "" : "-"}
+                {formatAmount(actionMenuTx.amount)}
+              </p>
+            </div>
+          )}
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              className="w-1/2 gap-2"
+              onClick={handleActionEdit}
+            >
+              <Pencil className="h-4 w-4" />
+              {t("common.actions.edit")}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-1/2 gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+              onClick={handleActionDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("common.actions.delete")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <TransactionFormDialog
         open={formOpen}

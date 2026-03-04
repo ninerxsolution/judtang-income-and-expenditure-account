@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/hooks/use-i18n";
 
 type ReportRow = {
   id: string;
@@ -25,11 +26,11 @@ type ListResponse = {
 };
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All" },
-  { value: "OPEN", label: "Open" },
-  { value: "IN_REVIEW", label: "In Review" },
-  { value: "RESOLVED", label: "Resolved" },
-  { value: "CLOSED", label: "Closed" },
+  { value: "", labelKey: "statusAll" as const },
+  { value: "OPEN", labelKey: "statusOpen" as const },
+  { value: "IN_REVIEW", labelKey: "statusInReview" as const },
+  { value: "RESOLVED", labelKey: "statusResolved" as const },
+  { value: "CLOSED", labelKey: "statusClosed" as const },
 ];
 
 function formatCategory(cat: string): string {
@@ -38,7 +39,23 @@ function formatCategory(cat: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function getStatusLabelKey(status: string): "statusOpen" | "statusInReview" | "statusResolved" | "statusClosed" {
+  switch (status) {
+    case "OPEN":
+      return "statusOpen";
+    case "IN_REVIEW":
+      return "statusInReview";
+    case "RESOLVED":
+      return "statusResolved";
+    case "CLOSED":
+      return "statusClosed";
+    default:
+      return "statusOpen";
+  }
+}
+
 export default function AdminReportsPage() {
+  const { t } = useI18n();
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -79,15 +96,15 @@ export default function AdminReportsPage() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <header>
-        <h1 className="text-xl font-semibold">Reports</h1>
+        <h1 className="text-xl font-semibold">{t("admin.reports.title")}</h1>
         <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
-          Manage user feedback and bug reports
+          {t("admin.reports.subtitle")}
         </p>
       </header>
 
       <div className="flex flex-wrap gap-4">
         <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
+          <Label htmlFor="status">{t("admin.reports.status")}</Label>
           <select
             id="status"
             value={status}
@@ -99,18 +116,18 @@ export default function AdminReportsPage() {
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value || "all"} value={o.value}>
-                {o.label}
+                {t(`admin.reports.${o.labelKey}`)}
               </option>
             ))}
           </select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="search">Search</Label>
+          <Label htmlFor="search">{t("admin.reports.search")}</Label>
           <div className="flex gap-2">
             <Input
               id="search"
               type="text"
-              placeholder="Title or email..."
+              placeholder={t("admin.reports.searchPlaceholder")}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -128,7 +145,7 @@ export default function AdminReportsPage() {
                 setSearch(searchInput);
                 setPage(1);
               }}
-              aria-label="Search"
+              aria-label={t("admin.reports.search")}
             >
               <Search className="h-4 w-4" />
             </Button>
@@ -144,7 +161,7 @@ export default function AdminReportsPage() {
         </div>
       ) : reports.length === 0 ? (
         <p className="text-sm text-[#A09080] dark:text-stone-400">
-          No reports found.
+          {t("admin.reports.empty")}
         </p>
       ) : (
         <>
@@ -152,11 +169,11 @@ export default function AdminReportsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#D4C9B0] bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/50">
-                  <th className="px-4 py-3 text-left font-medium">Date</th>
-                  <th className="px-4 py-3 text-left font-medium">Category</th>
-                  <th className="px-4 py-3 text-left font-medium">Title</th>
-                  <th className="px-4 py-3 text-left font-medium">User</th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("admin.reports.date")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("admin.reports.category")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("admin.reports.titleLabel")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("admin.reports.user")}</th>
+                  <th className="px-4 py-3 text-left font-medium">{t("admin.reports.status")}</th>
                   <th className="px-4 py-3 text-left font-medium"></th>
                 </tr>
               </thead>
@@ -190,7 +207,7 @@ export default function AdminReportsPage() {
                             : "bg-[#EBF4E3] text-[#6B5E4E] dark:bg-stone-800 dark:text-stone-400"
                         }`}
                       >
-                        {r.status}
+                        {t(`admin.reports.${getStatusLabelKey(r.status)}`)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -198,7 +215,7 @@ export default function AdminReportsPage() {
                         href={`/admin/reports/${r.id}`}
                         className="text-primary hover:underline"
                       >
-                        View
+                        {t("admin.reports.view")}
                       </Link>
                     </td>
                   </tr>
@@ -210,7 +227,11 @@ export default function AdminReportsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-[#A09080] dark:text-stone-400">
-                Page {page} of {totalPages} ({total} total)
+                {t("admin.reports.pageInfo", {
+                  page: String(page),
+                  totalPages: String(totalPages),
+                  total: String(total),
+                })}
               </p>
               <div className="flex gap-2">
                 <Button

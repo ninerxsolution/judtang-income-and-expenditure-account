@@ -19,6 +19,7 @@ import {
   CardNetworkSelect,
 } from "@/components/dashboard/card-type-select";
 import { BankCombobox } from "@/components/dashboard/bank-combobox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ACCOUNT_TYPES = ["BANK", "CREDIT_CARD", "WALLET", "CASH", "OTHER"] as const;
 
@@ -198,19 +199,11 @@ export function FinancialAccountFormDialog({
     if ((type === "BANK" || type === "WALLET") && bankId) {
       const accNum = accountNumber.replace(/\D/g, "");
       if (accountNumberMode === "FULL" && accNum.length < 4) {
-        setError(
-          localeKey === "th"
-            ? "กรุณากรอกเลขบัญชีอย่างน้อย 4 หลัก"
-            : "Please enter at least 4 digits for account number"
-        );
+        setError(t("accounts.accountNumberMin4Digits"));
         return;
       }
       if (accountNumberMode === "LAST_4_ONLY" && accNum.length !== 4) {
-        setError(
-          localeKey === "th"
-            ? "กรุณากรอกเลข 4 ตัวท้าย"
-            : "Please enter exactly 4 digits"
-        );
+        setError(t("accounts.accountNumberExact4Digits"));
         return;
       }
     }
@@ -218,11 +211,7 @@ export function FinancialAccountFormDialog({
     if (type === "CREDIT_CARD") {
       const accNum = accountNumber.replace(/\D/g, "");
       if (accNum.length !== 4) {
-        setError(
-          localeKey === "th"
-            ? "กรุณากรอกเลข 4 ตัวท้ายของบัตร"
-            : "Please enter exactly 4 digits (last 4 of card)"
-        );
+        setError(t("accounts.cardNumberExact4Digits"));
         return;
       }
       const closingDay = statementClosingDay
@@ -349,7 +338,28 @@ export function FinancialAccountFormDialog({
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
           <DialogBody className="space-y-4 pl-1">
             {loadState === "loading" && (
-              <p className="text-sm text-[#A09080]">{t("transactions.edit.loading")}</p>
+              <div className="space-y-4">
+                <div>
+                  <Skeleton className="mb-1 h-4 w-20" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-2 h-4 w-16" />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-24" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="mb-1 h-4 w-20" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+              </div>
             )}
             {loadState === "error" && error && (
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -425,6 +435,8 @@ export function FinancialAccountFormDialog({
                       placeholder={t("accounts.bankSearchPlaceholder")}
                       noResultsText={t("accounts.bankNoResults")}
                       noneLabel={t("accounts.bankNone")}
+                      otherLabel={t("accounts.bankOther")}
+                      ariaLabel={t("common.aria.toggleDropdown")}
                       localeKey={localeKey}
                       className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                     />
@@ -445,7 +457,7 @@ export function FinancialAccountFormDialog({
                 <>
                   <div>
                     <p className="mb-2 text-sm font-medium">
-                      {localeKey === "th" ? "โหมดเก็บเลขบัญชี" : "Account number storage"}
+                      {t("accounts.accountNumberModeLabel")}
                     </p>
                     <div className="inline-flex rounded-xl gap-1 border border-[#D4C9B0] bg-[#FDFAF4] p-1 dark:border-stone-600 dark:bg-stone-900">
                       <button
