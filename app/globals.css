@@ -164,6 +164,17 @@
   --landing-income: #6B9E5E;
   --landing-expense: #8B5E3C;
 }
+.dark .landing-page {
+  --landing-bg: oklch(0.145 0 0);
+  --landing-surface: oklch(0.205 0 0);
+  --landing-primary: oklch(0.488 0.243 264.376);
+  --landing-primary-light: oklch(0.6 0.15 150);
+  --landing-border: oklch(1 0 0 / 10%);
+  --landing-text: oklch(0.985 0 0);
+  --landing-muted: oklch(0.708 0 0);
+  --landing-income: oklch(0.696 0.17 162.48);
+  --landing-expense: oklch(0.627 0.265 303.9);
+}
 
 /* Earth Tone - สำหรับ auth pages (sign-in, register, forgot-password) */
 .auth-page {

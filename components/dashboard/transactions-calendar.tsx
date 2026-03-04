@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  type KeyboardEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   ArrowDownCircle,
   ArrowLeftRight,
   ArrowUpCircle,
+  Calendar,
   ChevronLeft,
   ChevronRight,
   Pencil,
@@ -16,14 +22,17 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { formatAmount } from "@/lib/format";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
+import { CalendarQuickActions } from "@/components/dashboard/calendar-quick-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type CalendarSummaryItem = {
@@ -91,6 +100,21 @@ function parseISODateOnly(value: string): Date | null {
   const date = new Date(y, m - 1, d);
   if (Number.isNaN(date.getTime())) return null;
   return date;
+}
+
+function formatDateTime(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dateStr = d.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const timeStr = d.toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${dateStr} ${timeStr}`;
 }
 
 function getMonthLabel(year: number, monthIndex: number, locale: string): string {
@@ -248,18 +272,37 @@ function formatYearForDisplay(year: number, locale: string): string {
   return String(year);
 }
 
-export function TransactionsCalendar({ showNewTransactionButton = true }: { showNewTransactionButton?: boolean }) {
+type TransactionsCalendarProps = {
+  showNewTransactionButton?: boolean;
+  /** แสดงปุ่ม quick action รับ/จ่าย/โอน ในปฏิทิน (default: false) */
+  showQuickActions?: boolean;
+  /** full = 2-col layout + inline day panel, embedded = modal (default) */
+  variant?: "full" | "embedded";
+};
+
+export function TransactionsCalendar({
+  showNewTransactionButton = true,
+  showQuickActions = false,
+  variant = "embedded",
+}: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
   const [formInitialDate, setFormInitialDate] = useState<string | null>(null);
+  const [formInitialType, setFormInitialType] = useState<
+    "INCOME" | "EXPENSE" | "TRANSFER" | undefined
+  >(undefined);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTransaction, setDeleteTransaction] =
     useState<DailyTransaction | null>(null);
 
+  const [actionMenuTx, setActionMenuTx] =
+    useState<DailyTransaction | null>(null);
+
+  const isDesktop = useIsDesktopOrLarger();
   const today = useMemo(() => new Date(), []);
   const initialYear = today.getFullYear();
 
@@ -366,17 +409,17 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                   : 0,
               incomeCount:
                 typeof item.incomeCount === "number" &&
-                Number.isFinite(item.incomeCount)
+                  Number.isFinite(item.incomeCount)
                   ? item.incomeCount
                   : 0,
               expenseCount:
                 typeof item.expenseCount === "number" &&
-                Number.isFinite(item.expenseCount)
+                  Number.isFinite(item.expenseCount)
                   ? item.expenseCount
                   : 0,
               transferCount:
                 typeof item.transferCount === "number" &&
-                Number.isFinite(item.transferCount)
+                  Number.isFinite(item.transferCount)
                   ? item.transferCount
                   : 0,
             })),
@@ -437,17 +480,17 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                   : 0,
               incomeCount:
                 typeof item.incomeCount === "number" &&
-                Number.isFinite(item.incomeCount)
+                  Number.isFinite(item.incomeCount)
                   ? item.incomeCount
                   : 0,
               expenseCount:
                 typeof item.expenseCount === "number" &&
-                Number.isFinite(item.expenseCount)
+                  Number.isFinite(item.expenseCount)
                   ? item.expenseCount
                   : 0,
               transferCount:
                 typeof item.transferCount === "number" &&
-                Number.isFinite(item.transferCount)
+                  Number.isFinite(item.transferCount)
                   ? item.transferCount
                   : 0,
             })),
@@ -514,17 +557,17 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                   : 0,
               incomeCount:
                 typeof item.incomeCount === "number" &&
-                Number.isFinite(item.incomeCount)
+                  Number.isFinite(item.incomeCount)
                   ? item.incomeCount
                   : 0,
               expenseCount:
                 typeof item.expenseCount === "number" &&
-                Number.isFinite(item.expenseCount)
+                  Number.isFinite(item.expenseCount)
                   ? item.expenseCount
                   : 0,
               transferCount:
                 typeof item.transferCount === "number" &&
-                Number.isFinite(item.transferCount)
+                  Number.isFinite(item.transferCount)
                   ? item.transferCount
                   : 0,
             })),
@@ -632,6 +675,21 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
   function handleAddForDay(dateIso: string) {
     setFormEditId(null);
     setFormInitialDate(dateIso);
+    setFormInitialType(undefined);
+    setFormOpen(true);
+  }
+
+  function openQuickAdd(type: "INCOME" | "EXPENSE" | "TRANSFER") {
+    setFormEditId(null);
+    setFormInitialDate(formatDateInput(new Date()));
+    setFormInitialType(type);
+    setFormOpen(true);
+  }
+
+  function openQuickAddForDate(dateIso: string, type: "INCOME" | "EXPENSE" | "TRANSFER") {
+    setFormEditId(null);
+    setFormInitialDate(dateIso);
+    setFormInitialType(type);
     setFormOpen(true);
   }
 
@@ -644,6 +702,24 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
   function handleDeleteInModal(tx: DailyTransaction) {
     setDeleteTransaction(tx);
     setDeleteOpen(true);
+  }
+
+  function handleRowClick(tx: DailyTransaction) {
+    setActionMenuTx(tx);
+  }
+
+  function handleActionEdit() {
+    if (actionMenuTx) {
+      setActionMenuTx(null);
+      handleEditInModal(actionMenuTx);
+    }
+  }
+
+  function handleActionDelete() {
+    if (actionMenuTx) {
+      setActionMenuTx(null);
+      handleDeleteInModal(actionMenuTx);
+    }
   }
 
   function refreshDailyItems() {
@@ -693,70 +769,242 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
     return d.toLocaleDateString(locale, { month: "short" });
   }
 
+  const monthCount = useMemo(() => {
+    if (viewMode !== "day") return 0;
+    return summary.reduce((acc, item) => {
+      const [y, m] = item.date.split("-").map(Number);
+      if (y === year && m === monthIndex + 1) return acc + (item.count ?? 0);
+      return acc;
+    }, 0);
+  }, [summary, year, monthIndex, viewMode]);
+
+  const dailyIncome = useMemo(
+    () =>
+      dailyItems.reduce(
+        (sum, tx) => sum + (tx.type === "INCOME" ? tx.amount : 0),
+        0,
+      ),
+    [dailyItems],
+  );
+  const dailyExpense = useMemo(
+    () =>
+      dailyItems.reduce(
+        (sum, tx) => sum + (tx.type === "EXPENSE" ? tx.amount : 0),
+        0,
+      ),
+    [dailyItems],
+  );
+
+  const selectedDateFullLabel = useMemo(() => {
+    if (!selectedDate) return "";
+    const parsed = parseISODateOnly(selectedDate);
+    if (!parsed) return selectedDate;
+    return parsed.toLocaleDateString(locale, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }, [selectedDate, locale]);
+
+  const isFullVariant = variant === "full";
+
+  const dayDetailContent = (
+    <>
+      {dailyLoading && (
+        <div className="animate-in fade-in-0 space-y-2 duration-200">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-md" />
+          ))}
+        </div>
+      )}
+      {dailyError && !dailyLoading && (
+        <p className="text-xs text-red-600 dark:text-red-400">{dailyError}</p>
+      )}
+      {!dailyLoading &&
+        !dailyError &&
+        dailyItems.length === 0 && (
+          <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
+            <p className="text-xs text-[#A09080] dark:text-stone-500">
+              {t("calendar.modal.empty")}
+            </p>
+          </div>
+        )}
+      {!dailyLoading && !dailyError && dailyItems.length > 0 && (
+        <ul className="animate-in fade-in-0 space-y-1.5 duration-200">
+          {dailyItems.map((tx) => {
+            const isIncome = tx.type === "INCOME";
+            const isTransfer = tx.type === "TRANSFER";
+            const iconStyle = isIncome
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+              : isTransfer
+                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+            const Icon = isIncome
+              ? ArrowDownCircle
+              : isTransfer
+                ? ArrowLeftRight
+                : ArrowUpCircle;
+            return (
+              <li
+                key={tx.id}
+                {...(!isDesktop && {
+                  role: "button" as const,
+                  tabIndex: 0,
+                  onClick: () => handleRowClick(tx),
+                  onKeyDown: (e: KeyboardEvent<HTMLLIElement>) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleRowClick(tx);
+                    }
+                  },
+                  "aria-label": t("transactions.list.tapToEditOrDelete"),
+                })}
+                className={[
+                  "flex items-start justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#F5F0E8] px-2 py-1.5 dark:border-stone-700 dark:bg-stone-900",
+                  !isDesktop &&
+                    "cursor-pointer transition-colors hover:bg-[#F5F0E8]/80 dark:hover:bg-stone-800/80",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <div className="flex min-w-0 flex-1 items-start gap-2">
+                  <span
+                    className={[
+                      "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                      iconStyle,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <Icon className="h-3 w-3" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1">
+                      {tx.category && (
+                        <span className="text-[11px] font-medium text-[#3D3020] dark:text-stone-100">
+                          {getCategoryDisplayName(tx.category, localeKey)}
+                        </span>
+                      )}
+                      {isTransfer && tx.transferAccount && (
+                        <span className="text-[11px] font-medium text-[#3D3020] dark:text-stone-100">
+                          {t("transactions.list.transferTo", {
+                            account: tx.transferAccount.name,
+                          })}
+                        </span>
+                      )}
+                      {tx.note && (
+                        <span className="text-[11px] text-[#6B5E4E] dark:text-stone-400">
+                          {tx.note}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[10px] text-[#A09080] dark:text-stone-500">
+                      {new Date(tx.occurredAt).toLocaleTimeString(locale, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5 text-right">
+                  <span className="text-xs font-semibold tabular-nums text-[#3D3020] dark:text-stone-100 lg:text-sm">
+                    {formatAmount(tx.amount)}
+                  </span>
+                  {isDesktop && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 lg:size-9"
+                        onClick={() => handleEditInModal(tx)}
+                        aria-label={t("common.actions.edit")}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300 lg:size-9"
+                        onClick={() => handleDeleteInModal(tx)}
+                        aria-label={t("common.actions.delete")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-        <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
-            <button
-              type="button"
-              onClick={() => setViewMode("day")}
-              className={`px-3 py-2 transition-colors duration-150 ease-out ${
-                viewMode === "day"
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
+              <button
+                type="button"
+                onClick={() => setViewMode("day")}
+                className={`px-3 py-2 transition-colors duration-150 ease-out ${viewMode === "day"
                   ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
                   : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
-              } rounded-l-md font-medium`}
-            >
-              {t("calendar.view.day")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("week")}
-              className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${
-                viewMode === "week"
+                  } rounded-l-md font-medium`}
+              >
+                {t("calendar.view.day")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("week")}
+                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${viewMode === "week"
                   ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
                   : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
-              }`}
-            >
-              {t("calendar.view.week")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("month")}
-              className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${
-                viewMode === "month"
+                  }`}
+              >
+                {t("calendar.view.week")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("month")}
+                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${viewMode === "month"
                   ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
                   : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
-              }`}
-            >
-              {t("calendar.view.month")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("year")}
-              className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 rounded-r-md font-medium transition-colors duration-150 ease-out ${
-                viewMode === "year"
+                  }`}
+              >
+                {t("calendar.view.month")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("year")}
+                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 rounded-r-md font-medium transition-colors duration-150 ease-out ${viewMode === "year"
                   ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
                   : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
-              }`}
+                  }`}
+              >
+                {t("calendar.view.year")}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={goToToday}
+              className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
             >
-              {t("calendar.view.year")}
+              {t("calendar.today")}
             </button>
+          </div>
         </div>
-        <button
-            type="button"
-            onClick={goToToday}
-            className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-        >
-          {t("calendar.today")}
-        </button>
-        </div>
-        {showNewTransactionButton && (
+        {/* {showNewTransactionButton && (
           <button
             type="button"
             onClick={() => {
               setFormEditId(null);
               setFormInitialDate(null);
+              setFormInitialType(undefined);
               setFormOpen(true);
             }}
             className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
@@ -764,41 +1012,66 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
             <Plus className="h-4 w-4" />
             {t("calendar.newTransaction")}
           </button>
-        )}
+        )} */}
       </div>
 
-      <div className="mt-6 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-2 sm:p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">
-        {/* Header & content depend on view mode */}
+      <div
+        className={`mt-6 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] shadow-sm dark:border-stone-700 dark:bg-stone-900/80 ${isFullVariant ? "overflow-hidden" : "p-2 sm:p-4"}`}
+      >
+        <div
+          className={
+            isFullVariant
+              ? "grid grid-cols-1 lg:grid-cols-12"
+              : ""
+          }
+        >
+          <div
+            className={
+              isFullVariant
+                ? "lg:col-span-7 border-r border-[#D4C9B0] dark:border-stone-700 p-2.5"
+                : ""
+            }
+          >
+            {/* Header & content depend on view mode */}
         {viewMode === "day" && (
           <>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={goPrevMonth}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={goNextMonth}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                  {getMonthLabel(year, monthIndex, locale)}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {isFullVariant && (
+                    <Calendar className="h-4 w-4 text-[#5C6B52] dark:text-stone-300" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={goPrevMonth}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goNextMonth}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                    {getMonthLabel(year, monthIndex, locale)}
+                  </div>
                 </div>
+                {summaryError && !summaryLoading && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {summaryError}
+                  </p>
+                )}
               </div>
-              {summaryError && !summaryLoading && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {summaryError}
-                </p>
+
+              {showQuickActions && (
+                <CalendarQuickActions onQuickAdd={openQuickAdd} />
               )}
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-[#A09080]">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-stone-500">
               {WEEKDAY_LABEL_KEYS.map((key) => (
                 <div key={key} className="py-1">
                   {t(`calendar.weekdays.${key}`)}
@@ -813,64 +1086,68 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 ))}
               </div>
             ) : (
-            <div className="mt-1 grid grid-cols-7 gap-1 text-xs">
-              {days.map((day) => {
-                const isMuted = !day.inCurrentMonth;
-                const hasData = day.hasTransactions;
+              <div className="mt-1 grid grid-cols-7 gap-1 text-xs">
+                {days.map((day) => {
+                  const isMuted = !day.inCurrentMonth;
+                  const hasData = day.hasTransactions;
+                  const isSelected = isFullVariant && selectedDate === day.iso;
 
-                return (
-                  <button
-                    key={day.iso}
-                    type="button"
-                    onClick={() => openDay(day.iso)}
-                    className={[
-                      "flex h-16 flex-col rounded-md border px-1.5 py-1 text-left transition-colors duration-150 ease-out",
-                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
-                      isMuted
-                        ? "text-[#A09080] dark:text-stone-500"
-                        : "text-[#3D3020] dark:text-stone-100",
-                      day.isToday
-                        ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-1">
-                      <span className="text-[11px] font-semibold">
-                        {day.date.getDate()}
-                      </span>
-                      {day.isToday && (
-                        <span className="rounded-full hidden sm:block bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
-                          {t("calendar.today")}
+                  return (
+                    <button
+                      key={day.iso}
+                      type="button"
+                      onClick={() => openDay(day.iso)}
+                      className={[
+                        "flex h-16 flex-col rounded-md border px-1.5 py-1 text-left transition-colors duration-150 ease-out",
+                        "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
+                        isMuted
+                          ? "text-[#A09080] dark:text-stone-500"
+                          : "text-[#3D3020] dark:text-stone-100",
+                        day.isToday
+                          ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
+                          : "",
+                        isSelected
+                          ? "border-stone-500 dark:border-stone-100"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <span className="text-[11px] font-semibold">
+                          {day.date.getDate()}
                         </span>
-                      )}
-                    </div>
-                    <div className="mt-auto flex items-center justify-between gap-1 pt-1">
-                      <div className="flex items-center gap-0.5">
-                        {day.incomeCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                        )}
-                        {day.expenseCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
-                        )}
-                        {day.transferCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        {day.isToday && (
+                          <span className="rounded-full hidden sm:block bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
+                            {t("calendar.today")}
+                          </span>
                         )}
                       </div>
-                      {hasData && (
-                        <span className="text-[10px] text-[#A09080] dark:text-[#A09080]">
-                          {day.count}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="mt-auto flex items-center justify-between gap-1 pt-1">
+                        <div className="flex items-center gap-0.5">
+                          {day.incomeCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                          )}
+                          {day.expenseCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                          )}
+                          {day.transferCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        {hasData && (
+                          <span className="text-[10px] text-[#A09080] dark:text-stone-500">
+                            {day.count}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between border-t border-[#D4C9B0] pt-3 dark:border-stone-700 text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -879,37 +1156,47 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
                 <span>{t("calendar.legend.transfer")}</span>
               </div>
-              <span>{t("calendar.legend.hintDayClick")}</span>
+              <span>
+                {isFullVariant
+                  ? t("calendar.recordsInMonth", { count: monthCount })
+                  : t("calendar.legend.hintDayClick")}
+              </span>
             </div>
           </>
         )}
 
         {viewMode === "week" && (
           <>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={goPrevWeek}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={goNextWeek}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                  {getWeekRangeLabel(weekStartIso, locale)}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={goPrevWeek}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goNextWeek}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                    {getWeekRangeLabel(weekStartIso, locale)}
+                  </div>
                 </div>
+                {summaryError && !summaryLoading && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {summaryError}
+                  </p>
+                )}
               </div>
-              {summaryError && !summaryLoading && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {summaryError}
-                </p>
+
+              {showQuickActions && (
+                <CalendarQuickActions onQuickAdd={openQuickAdd} />
               )}
             </div>
 
@@ -920,67 +1207,67 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 ))}
               </div>
             ) : (
-            <div className="mt-1 flex flex-col gap-1.5 text-xs">
-              {weekDays.map((day, idx) => {
-                const hasData = day.hasTransactions;
-                const weekdayKey = WEEKDAY_LABEL_KEYS[idx];
-                return (
-                  <button
-                    key={day.iso}
-                    type="button"
-                    onClick={() => openDay(day.iso)}
-                    className={[
-                      "flex w-full flex-row items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors duration-150 ease-out",
-                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
-                      "text-[#3D3020] dark:text-stone-100",
-                      day.isToday
-                        ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <div className="flex min-w-14 flex-col sm:min-w-16">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
-                        {t(`calendar.weekdays.${weekdayKey}`)}
-                      </span>
-                      <span className="text-sm font-semibold tabular-nums">
-                        {day.date.toLocaleDateString(locale, {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-                      <div className="flex items-center gap-1">
-                        {day.incomeCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <div className="mt-1 flex flex-col gap-1.5 text-xs">
+                {weekDays.map((day, idx) => {
+                  const hasData = day.hasTransactions;
+                  const weekdayKey = WEEKDAY_LABEL_KEYS[idx];
+                  return (
+                    <button
+                      key={day.iso}
+                      type="button"
+                      onClick={() => openDay(day.iso)}
+                      className={[
+                        "flex w-full flex-row items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors duration-150 ease-out",
+                        "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
+                        "text-[#3D3020] dark:text-stone-100",
+                        day.isToday
+                          ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <div className="flex min-w-14 flex-col sm:min-w-16">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
+                          {t(`calendar.weekdays.${weekdayKey}`)}
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums">
+                          {day.date.toLocaleDateString(locale, {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                        <div className="flex items-center gap-1">
+                          {day.incomeCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                          )}
+                          {day.expenseCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                          )}
+                          {day.transferCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        {hasData && (
+                          <span className="text-[11px] text-[#A09080] dark:text-stone-500">
+                            {day.count}
+                          </span>
                         )}
-                        {day.expenseCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
-                        )}
-                        {day.transferCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        {day.isToday && (
+                          <span className="rounded-full bg-[#5C6B52] px-2 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
+                            {t("calendar.today")}
+                          </span>
                         )}
                       </div>
-                      {hasData && (
-                        <span className="text-[11px] text-[#A09080] dark:text-[#A09080]">
-                          {day.count}
-                        </span>
-                      )}
-                      {day.isToday && (
-                        <span className="rounded-full bg-[#5C6B52] px-2 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
-                          {t("calendar.today")}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -996,45 +1283,51 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
 
         {viewMode === "month" && (
           <>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMonthYear(({ year: currentYear, monthIndex }) => ({
-                      year: currentYear - 1,
-                      monthIndex,
-                    }))
-                  }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMonthYear(({ year: currentYear, monthIndex }) => ({
-                      year: currentYear + 1,
-                      monthIndex,
-                    }))
-                  }
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                  {formatYearForDisplay(year, locale)}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMonthYear(({ year: currentYear, monthIndex }) => ({
+                        year: currentYear - 1,
+                        monthIndex,
+                      }))
+                    }
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMonthYear(({ year: currentYear, monthIndex }) => ({
+                        year: currentYear + 1,
+                        monthIndex,
+                      }))
+                    }
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                    {formatYearForDisplay(year, locale)}
+                  </div>
                 </div>
+                {monthSummaryLoading && (
+                  <p className="text-xs text-[#A09080] dark:text-stone-500">
+                    {t("calendar.loading.months")}
+                  </p>
+                )}
+                {monthSummaryError && !monthSummaryLoading && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {monthSummaryError}
+                  </p>
+                )}
               </div>
-              {monthSummaryLoading && (
-                <p className="text-xs text-[#A09080] dark:text-[#A09080]">
-                  {t("calendar.loading.months")}
-                </p>
-              )}
-              {monthSummaryError && !monthSummaryLoading && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {monthSummaryError}
-                </p>
+
+              {showQuickActions && (
+                <CalendarQuickActions onQuickAdd={openQuickAdd} />
               )}
             </div>
 
@@ -1045,65 +1338,65 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 ))}
               </div>
             ) : (
-            <div className="mt-1 grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
-              {Array.from({ length: 12 }, (_, idx) => {
-                const info = monthSummaryMap.get(idx);
-                const hasData = !!info?.hasTransactions;
-                const count = info?.count ?? 0;
-                const incomeCount = info?.incomeCount ?? 0;
-                const expenseCount = info?.expenseCount ?? 0;
-                const transferCount = info?.transferCount ?? 0;
-                const isCurrentMonth =
-                  idx === today.getMonth() && year === today.getFullYear();
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setMonthYear({ year, monthIndex: idx });
-                      setViewMode("day");
-                    }}
-                    className={[
-                      "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
-                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
-                      hasData
-                        ? "text-[#3D3020] dark:text-stone-100"
-                        : "text-[#A09080] dark:text-[#A09080]",
-                      isCurrentMonth
-                        ? "border-[#5C6B52] dark:border-stone-100"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <span className="text-sm font-medium">
-                      {getMonthShortLabel(idx)}
-                    </span>
-                    <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
-                      <div className="flex items-center gap-0.5">
-                        {incomeCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                        )}
-                        {expenseCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
-                        )}
-                        {transferCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+              <div className="mt-1 grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
+                {Array.from({ length: 12 }, (_, idx) => {
+                  const info = monthSummaryMap.get(idx);
+                  const hasData = !!info?.hasTransactions;
+                  const count = info?.count ?? 0;
+                  const incomeCount = info?.incomeCount ?? 0;
+                  const expenseCount = info?.expenseCount ?? 0;
+                  const transferCount = info?.transferCount ?? 0;
+                  const isCurrentMonth =
+                    idx === today.getMonth() && year === today.getFullYear();
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setMonthYear({ year, monthIndex: idx });
+                        setViewMode("day");
+                      }}
+                      className={[
+                        "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
+                        "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
+                        hasData
+                          ? "text-[#3D3020] dark:text-stone-100"
+                          : "text-[#A09080] dark:text-stone-500",
+                        isCurrentMonth
+                          ? "border-[#5C6B52] dark:border-stone-100"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <span className="text-sm font-medium">
+                        {getMonthShortLabel(idx)}
+                      </span>
+                      <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
+                        <div className="flex items-center gap-0.5">
+                          {incomeCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                          )}
+                          {expenseCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                          )}
+                          {transferCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        {hasData && (
+                          <span className="text-[#A09080] dark:text-stone-500">
+                            {count}
+                          </span>
                         )}
                       </div>
-                      {hasData && (
-                        <span className="text-[#A09080] dark:text-[#A09080]">
-                          {count}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1119,30 +1412,36 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
 
         {viewMode === "year" && (
           <>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setYearRangeStart((y) => y - 12)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setYearRangeStart((y) => y + 12)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                  {formatYearForDisplay(yearRangeStart, locale)}–{formatYearForDisplay(yearRangeEnd, locale)}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setYearRangeStart((y) => y - 12)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setYearRangeStart((y) => y + 12)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                    {formatYearForDisplay(yearRangeStart, locale)}–{formatYearForDisplay(yearRangeEnd, locale)}
+                  </div>
                 </div>
+                {yearSummaryError && !yearSummaryLoading && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {yearSummaryError}
+                  </p>
+                )}
               </div>
-              {yearSummaryError && !yearSummaryLoading && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {yearSummaryError}
-                </p>
+
+              {showQuickActions && (
+                <CalendarQuickActions onQuickAdd={openQuickAdd} />
               )}
             </div>
 
@@ -1153,68 +1452,68 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 ))}
               </div>
             ) : (
-            <div className="mt-1 grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
-              {Array.from(
-                { length: yearRangeEnd - yearRangeStart + 1 },
-                (_, idx) => yearRangeStart + idx,
-              ).map((y) => {
-                const info = yearSummaryMap.get(y);
-                const hasData = !!info?.hasTransactions;
-                const count = info?.count ?? 0;
-                const incomeCount = info?.incomeCount ?? 0;
-                const expenseCount = info?.expenseCount ?? 0;
-                const transferCount = info?.transferCount ?? 0;
-                const isCurrentYear = y === today.getFullYear();
-                return (
-                  <button
-                    key={y}
-                    type="button"
-                    onClick={() => {
-                      setMonthYear(({ monthIndex }) => ({
-                        year: y,
-                        monthIndex,
-                      }));
-                      setViewMode("month");
-                    }}
-                    className={[
-                      "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
-                      "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
-                      hasData
-                        ? "text-[#3D3020] dark:text-stone-100"
-                        : "text-[#A09080] dark:text-[#A09080]",
-                      isCurrentYear
-                        ? "border-[#5C6B52] dark:border-stone-100"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <span className="text-sm font-medium">{formatYearForDisplay(y, locale)}</span>
-                    <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
-                      <div className="flex items-center gap-0.5">
-                        {incomeCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                        )}
-                        {expenseCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
-                        )}
-                        {transferCount > 0 && (
-                          <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+              <div className="mt-1 grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
+                {Array.from(
+                  { length: yearRangeEnd - yearRangeStart + 1 },
+                  (_, idx) => yearRangeStart + idx,
+                ).map((y) => {
+                  const info = yearSummaryMap.get(y);
+                  const hasData = !!info?.hasTransactions;
+                  const count = info?.count ?? 0;
+                  const incomeCount = info?.incomeCount ?? 0;
+                  const expenseCount = info?.expenseCount ?? 0;
+                  const transferCount = info?.transferCount ?? 0;
+                  const isCurrentYear = y === today.getFullYear();
+                  return (
+                    <button
+                      key={y}
+                      type="button"
+                      onClick={() => {
+                        setMonthYear(({ monthIndex }) => ({
+                          year: y,
+                          monthIndex,
+                        }));
+                        setViewMode("month");
+                      }}
+                      className={[
+                        "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
+                        "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
+                        hasData
+                          ? "text-[#3D3020] dark:text-stone-100"
+                          : "text-[#A09080] dark:text-stone-500",
+                        isCurrentYear
+                          ? "border-[#5C6B52] dark:border-stone-100"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <span className="text-sm font-medium">{formatYearForDisplay(y, locale)}</span>
+                      <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
+                        <div className="flex items-center gap-0.5">
+                          {incomeCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                          )}
+                          {expenseCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-red-500" />
+                          )}
+                          {transferCount > 0 && (
+                            <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        {hasData && (
+                          <span className="text-[#A09080] dark:text-stone-500">
+                            {count}
+                          </span>
                         )}
                       </div>
-                      {hasData && (
-                        <span className="text-[#A09080] dark:text-[#A09080]">
-                          {count}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1227,8 +1526,75 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
             </div>
           </>
         )}
+          </div>
+
+          {isFullVariant && (
+            <div className="lg:col-span-5 flex flex-col min-h-[340px] border-t border-[#D4C9B0] lg:border-t-0 dark:border-stone-700">
+              {selectedDate ? (
+                <>
+                  <div className="flex items-center justify-between border-b border-[#D4C9B0] px-5 py-4 dark:border-stone-700">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
+                        {t("calendar.modal.title")}
+                      </p>
+                      <h2 className="text-sm font-semibold text-[#3D3020] dark:text-stone-100">
+                        {selectedDateFullLabel}
+                      </h2>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* {showQuickActions && selectedDate && (
+                        <CalendarQuickActions
+                          onQuickAdd={(type) =>
+                            openQuickAddForDate(selectedDate, type)
+                          }
+                        />
+                      )} */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full"
+                        onClick={closeDay}
+                        aria-label={t("common.actions.close")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 border-b border-[#D4C9B0] px-5 py-2.5 dark:border-stone-700 bg-[#F5F0E8]/50 dark:bg-stone-900/50">
+                    <div>
+                      <p className="text-xs text-[#A09080] dark:text-stone-500">
+                        {t("calendar.legend.income")}
+                      </p>
+                      <p className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                        +{formatAmount(dailyIncome)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#A09080] dark:text-stone-500">
+                        {t("calendar.legend.expense")}
+                      </p>
+                      <p className="text-sm font-semibold tabular-nums text-red-600 dark:text-red-400">
+                        −{formatAmount(dailyExpense)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-h-[120px] max-h-[50vh] overflow-y-auto px-3 sm:px-5 py-3 text-sm">
+                    {dayDetailContent}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-1 items-center justify-center p-8">
+                  <p className="text-sm text-[#A09080] dark:text-stone-500">
+                    {t("calendar.legend.hintDayClick")}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
+      {!isFullVariant && (
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && closeDay()}>
         <DialogContent
           showCloseButton={false}
@@ -1237,7 +1603,7 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
           <div className="flex items-center justify-between border-b border-[#D4C9B0] px-4 py-3 dark:border-stone-700 transition-all duration-200 ease-out">
             <DialogTitle asChild>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
+                <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
                   {t("calendar.modal.title")}
                 </p>
                 <p className="text-sm font-semibold text-[#3D3020] dark:text-stone-100">
@@ -1270,114 +1636,74 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
           <div
             className="min-h-[120px] max-h-[70vh] overflow-y-auto px-4 py-3 text-sm transition-all duration-200 ease-out"
           >
-              {dailyLoading && (
-                <div className="animate-in fade-in-0 space-y-2 duration-200">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-md" />
-                  ))}
-                </div>
-              )}
-              {dailyError && !dailyLoading && (
-                <p className="text-xs text-red-600 dark:text-red-400">
-                  {dailyError}
-                </p>
-              )}
-              {!dailyLoading &&
-                !dailyError &&
-                dailyItems.length === 0 && (
-                  <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
-                    <p className="text-xs text-[#A09080] dark:text-[#A09080]">
-                      {t("calendar.modal.empty")}
-                    </p>
-                  </div>
-                )}
+            {dayDetailContent}
+          </div>
+        </DialogContent>
+      </Dialog>
+      )}
 
-              {!dailyLoading && !dailyError && dailyItems.length > 0 && (
-                <ul className="animate-in fade-in-0 space-y-2 duration-200">
-                  {dailyItems.map((tx) => {
-                    const isIncome = tx.type === "INCOME";
-                    const isTransfer = tx.type === "TRANSFER";
-                    const iconStyle = isIncome
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                      : isTransfer
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
-                    const Icon = isIncome
-                      ? ArrowDownCircle
-                      : isTransfer
-                        ? ArrowLeftRight
-                        : ArrowUpCircle;
-                    return (
-                      <li
-                        key={tx.id}
-                        className="flex items-start justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#F5F0E8] px-2.5 py-2 dark:border-stone-700 dark:bg-stone-900"
-                      >
-                        <div className="flex min-w-0 flex-1 items-start gap-2">
-                          <span
-                            className={[
-                              "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                              iconStyle,
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                          >
-                            <Icon className="h-3.5 w-3.5" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-1">
-                              {tx.category && (
-                                <span className="text-xs font-medium text-[#3D3020] dark:text-stone-100">
-                                  {getCategoryDisplayName(tx.category, localeKey)}
-                                </span>
-                              )}
-                              {isTransfer && tx.transferAccount && (
-                                <span className="text-xs font-medium text-[#3D3020] dark:text-stone-100">
-                                  {t("transactions.list.transferTo", {
-                                    account: tx.transferAccount.name,
-                                  })}
-                                </span>
-                              )}
-                              {tx.note && (
-                                <span className="text-xs text-[#6B5E4E] dark:text-stone-400">
-                                  {tx.note}
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-0.5 text-[11px] text-[#A09080] dark:text-[#A09080]">
-                              {new Date(tx.occurredAt).toLocaleTimeString(locale, {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-0.5 text-right">
-                          <span className="text-sm font-semibold tabular-nums text-[#3D3020] dark:text-stone-100">
-                            {formatAmount(tx.amount)}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditInModal(tx)}
-                            aria-label={t("common.actions.edit")}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                            onClick={() => handleDeleteInModal(tx)}
-                            aria-label={t("common.actions.delete")}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+      <Dialog
+        open={!!actionMenuTx}
+        onOpenChange={(open) => !open && setActionMenuTx(null)}
+      >
+        <DialogContent showCloseButton={true} className="max-w-xs gap-4 p-4">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              {t("transactions.list.selectAction")}
+            </DialogTitle>
+          </DialogHeader>
+          {actionMenuTx && (
+            <div className="space-y-1.5 rounded-lg border border-[#E8E0C8] bg-[#F5F0E8]/50 px-3 py-2.5 text-sm dark:border-stone-700 dark:bg-stone-800/50">
+              <p className="font-medium text-[#3D3020] dark:text-stone-100">
+                {formatDateTime(actionMenuTx.occurredAt, locale)}
+              </p>
+              <p className="truncate text-[#6B5E4E] dark:text-stone-300">
+                {actionMenuTx.type === "TRANSFER" && actionMenuTx.transferAccount
+                  ? t("transactions.list.transferTo", {
+                      account: actionMenuTx.transferAccount.name,
+                    })
+                  : actionMenuTx.category
+                    ? getCategoryDisplayName(
+                        actionMenuTx.category,
+                        localeKey,
+                      )
+                    : actionMenuTx.note ?? "—"}
+              </p>
+              <p
+                className={`tabular-nums font-medium ${
+                  actionMenuTx.type === "INCOME"
+                    ? "text-emerald-600 dark:text-emerald-300"
+                    : actionMenuTx.type === "TRANSFER"
+                      ? "text-blue-600 dark:text-blue-300"
+                      : "text-red-600 dark:text-red-300"
+                }`}
+              >
+                {actionMenuTx.type === "INCOME"
+                  ? "+"
+                  : actionMenuTx.type === "TRANSFER"
+                    ? ""
+                    : "-"}
+                {formatAmount(actionMenuTx.amount)}
+              </p>
+            </div>
+          )}
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              className="w-1/2 gap-2"
+              onClick={handleActionEdit}
+            >
+              <Pencil className="h-4 w-4" />
+              {t("common.actions.edit")}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-1/2 gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+              onClick={handleActionDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("common.actions.delete")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1387,6 +1713,7 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
         onOpenChange={setFormOpen}
         editId={formEditId}
         initialDate={formInitialDate}
+        initialType={formInitialType}
         onSuccess={refreshCalendar}
       />
 

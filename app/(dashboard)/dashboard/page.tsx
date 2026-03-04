@@ -49,9 +49,9 @@ export default function DashboardPage() {
       const txType = txTypeMap[tx.type as keyof typeof txTypeMap] ?? "EXPENSE";
       if (tx.financialAccount) items.push({ account: tx.financialAccount, txType });
       if (tx.type === "TRANSFER" && tx.transferAccount) items.push({ account: tx.transferAccount, txType });
-      if (items.length >= 6) break;
+      if (items.length >= 4) break;
     }
-    return items.slice(0, 6);
+    return items.slice(0, 4);
   }, [recentTransactions]);
 
   return (
@@ -73,23 +73,6 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="relative">
                   <Skeleton className="h-10 w-40 bg-white/20 rounded-md" />
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions card skeleton */}
-              <Card className="border-[#D4C9B0] bg-[#FDFAF4] dark:border-stone-700 dark:bg-stone-900/60">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex justify-between gap-2 text-sm font-medium text-[#5C6B52] dark:text-stone-300">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-3 w-24" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2">
-                    <Skeleton className="h-[72px] w-full rounded-2xl" />
-                    <Skeleton className="h-[72px] w-full rounded-2xl" />
-                    <Skeleton className="h-[72px] w-full rounded-2xl" />
-                  </div>
                 </CardContent>
               </Card>
             </>
@@ -116,54 +99,11 @@ export default function DashboardPage() {
                   </p>
                 </CardContent>
               </Card>
-
-              {/* Quick actions card */}
-              <Card className="border-[#D4C9B0] bg-[#FDFAF4] dark:border-stone-700 dark:bg-stone-900/60">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex justify-between gap-2 text-sm font-medium text-[#5C6B52] dark:text-stone-300">
-                    {t("dashboard.summary.quickAddTitle")} 
-                    <Link
-                    href="/dashboard/accounts"
-                    className="flex justify-end text-xs text-[#6B5E4E] hover:text-[#5C6B52] dark:text-stone-400 dark:hover:text-stone-300"
-                  >
-                    {t("dashboard.summary.manageAccounts")} &rarr;
-                  </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/15 py-3 text-emerald-700 shadow-sm transition-all hover:border-emerald-500/70 hover:bg-emerald-500/25 hover:shadow-md active:scale-[0.98] dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:border-emerald-500/60 dark:hover:bg-emerald-500/30"
-                      onClick={() => openQuickAdd("INCOME")}
-                    >
-                      <Plus className="h-4 w-4 shrink-0" />
-                      <span className="text-xs font-medium text-wrap">{t("dashboard.summary.recordIncome")}</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-red-500/40 bg-red-500/15 py-3 text-red-700 shadow-sm transition-all hover:border-red-500/70 hover:bg-red-500/25 hover:shadow-md active:scale-[0.98] dark:border-red-500/30 dark:bg-red-500/20 dark:text-red-300 dark:hover:border-red-500/60 dark:hover:bg-red-500/30"
-                      onClick={() => openQuickAdd("EXPENSE")}
-                    >
-                      <Minus className="h-4 w-4 shrink-0" />
-                      <span className="text-xs font-medium text-wrap">{t("dashboard.summary.recordExpense")}</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-blue-500/40 bg-blue-500/15 py-3 text-blue-700 shadow-sm transition-all hover:border-blue-500/70 hover:bg-blue-500/25 hover:shadow-md active:scale-[0.98] dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:border-blue-500/60 dark:hover:bg-blue-500/30"
-                      onClick={() => openQuickAdd("TRANSFER")}
-                    >
-                      <ArrowLeftRight className="h-4 w-4 shrink-0" />
-                      <span className="text-xs font-medium text-wrap">{t("dashboard.summary.transferBetweenAccounts")}</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </>
           )}
 
           {/* Recent account activity */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <p className="text-sm font-medium text-[#5C6B52] dark:text-stone-300">
               {t("dashboard.summary.recentAccountActivity")}
             </p>
@@ -214,7 +154,7 @@ export default function DashboardPage() {
                 ))
               )}
             </div>
-          </div>
+          </div> */}
 
           {summaryLoading ? (
             <div className="rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">
@@ -301,7 +241,7 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <TransactionsCalendar showNewTransactionButton={false}/>
+          <TransactionsCalendar showNewTransactionButton={false} showQuickActions={true}/>
         </div>
       </div>
 

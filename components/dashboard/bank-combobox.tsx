@@ -165,7 +165,7 @@ export function BankCombobox({
           role="listbox"
         >
           {filteredBanks.length === 0 && !showOther && !showNone ? (
-            <p className="px-2 py-4 text-center text-sm text-[#A09080]">
+            <p className="px-2 py-4 text-center text-sm text-[#A09080] dark:text-stone-400">
               {noResultsText}
             </p>
           ) : (

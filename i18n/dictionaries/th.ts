@@ -115,6 +115,7 @@ export const thDictionary = {
   },
   dashboard: {
     sidebar: {
+      home: "หน้าแรก",
       navigation: "เมนูนำทาง",
       dashboard: "แดชบอร์ด",
       summary: "สรุป",
@@ -641,7 +642,11 @@ export const thDictionary = {
       hintMonthClick: "คลิกเดือนเพื่อดูวันที่ในมุมมอง Day",
       hintYearClick: "คลิกปีเพื่อดู 12 เดือนของปีนั้นในมุมมอง Month",
     },
+    quickActions: {
+      label: "เพิ่มด่วน",
+    },
     records: "{count} รายการ",
+    recordsInMonth: "{count} รายการในเดือนนี้",
     noRecords: "ไม่มีบันทึก",
     modal: {
       title: "รายการในวัน",

@@ -16,7 +16,7 @@ export default function TransactionsCalendarPage() {
         </div>
       </div>
 
-      <TransactionsCalendar />
+      <TransactionsCalendar variant="full" showQuickActions={true} />
     </div>
   );
 }

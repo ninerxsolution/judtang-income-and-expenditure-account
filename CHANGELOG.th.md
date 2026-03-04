@@ -2,6 +2,22 @@
 
 ---
 
+# v0.9.12 - 2026-03-05
+
+## Changed
+
+- **รองรับ Dark theme ครบถ้วน** — คอมโพเนนต์ องค์ประกอบ และหน้าต่างๆ รองรับโหมดมืดครบ:
+  - **เมนูล่างมือถือ** — สีปรับตาม theme (พื้นหลัง ขอบ สถานะเลือก/ไม่เลือก) ผ่าน `useTheme()`
+  - **หน้า Landing** — เพิ่ม CSS variables `.dark .landing-page` สำหรับโหมดมืด
+  - **ปุ่ม CTA หน้า Landing** — Dark variants สำหรับปุ่มเริ่มใช้งานและปุ่มหลัก
+  - **หน้ารายการบัญชี** — ปุ่มเพิ่มบัญชีและไอคอนมี dark variants
+  - **Card type select** — ไอคอนใช้ `dark:text-stone-400`
+  - **Dialog เมนู sidebar บนมือถือ** — รายการที่เลือกใช้ `dark:bg-amber-900/50 dark:text-amber-100`
+  - **ปฏิทินรายการ** — ข้อความจางใช้ `dark:text-stone-500` เพื่อ contrast ดีขึ้น
+  - **Bank combobox** — ข้อความไม่พบผลลัพธ์มี dark variant
+
+---
+
 # v0.9.11 - 2026-03-04
 
 ## Added

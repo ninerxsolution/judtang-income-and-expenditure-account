@@ -2,6 +2,22 @@
 
 ---
 
+# v0.9.12 - 2026-03-05
+
+## Changed
+
+- **Dark theme coverage** — Components, elements, and pages now fully support dark mode:
+  - **Mobile bottom nav** — Theme-aware colors (background, border, active/inactive states) via `useTheme()`
+  - **Landing page** — Added `.dark .landing-page` CSS variables for dark mode
+  - **Landing CTA buttons** — Dark variants for Get Started and primary CTAs
+  - **Accounts page** — Empty-state add-account buttons and icons with dark variants
+  - **Card type select** — Icons use `dark:text-stone-400`
+  - **App sidebar mobile dialog** — Active nav items use `dark:bg-amber-900/50 dark:text-amber-100`
+  - **Transactions calendar** — Muted text uses `dark:text-stone-500` for better contrast
+  - **Bank combobox** — No-results message has dark variant
+
+---
+
 # v0.9.11 - 2026-03-04
 
 ## Added

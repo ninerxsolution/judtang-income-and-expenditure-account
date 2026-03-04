@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
 import { Landmark, CreditCard, Wallet, Banknote, PiggyBank } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useVisualViewport } from "@/hooks/use-visual-viewport";
+import { cn } from "@/lib/utils";
 import { THAI_BANKS, BANK_OTHER } from "@/lib/thai-banks";
 import {
   CardAccountTypeSelect,
@@ -92,6 +95,9 @@ export function FinancialAccountFormDialog({
   const [loadState, setLoadState] = useState<"idle" | "loading" | "done" | "error">(
     editId ? "loading" : "idle"
   );
+
+  const isMobile = useIsMobile();
+  const viewport = useVisualViewport(open && isMobile);
 
   useEffect(() => {
     if (!open) return;
@@ -329,7 +335,23 @@ export function FinancialAccountFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+      <DialogContent
+        className={cn(
+          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
+          "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+        )}
+        style={
+          isMobile && viewport
+            ? {
+                height: viewport.height,
+                top: viewport.offsetTop,
+                left: 0,
+                width: "100%",
+                maxWidth: "100%",
+              }
+            : undefined
+        }
+      >
         <DialogHeader className="shrink-0">
           <DialogTitle>
             {editId ? t("accounts.editTitle") : t("accounts.createTitle")}

@@ -24,7 +24,7 @@ export function LandingHero({ language }: LandingHeroProps) {
               <Button
                 asChild
                 size="lg"
-                className="bg-[#5C6B52] hover:bg-[#4A5E40] text-white"
+                className="bg-[#5C6B52] hover:bg-[#4A5E40] text-white dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
               >
                 <Link href="/register">
                   {translate(language, "home.hero.primaryCta")}

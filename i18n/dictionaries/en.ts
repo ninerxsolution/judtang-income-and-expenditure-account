@@ -115,6 +115,7 @@ export const enDictionary = {
   },
   dashboard: {
     sidebar: {
+      home: "Home",
       navigation: "Navigation",
       dashboard: "Dashboard",
       summary: "Summary",
@@ -646,7 +647,11 @@ export const enDictionary = {
       hintMonthClick: "Click a month to drill down into Day view.",
       hintYearClick: "Click a year to see its 12 months in Month view.",
     },
+    quickActions: {
+      label: "Quick add",
+    },
     records: "{count} records",
+    recordsInMonth: "{count} records this month",
     noRecords: "No records",
     modal: {
       title: "Transactions on",
