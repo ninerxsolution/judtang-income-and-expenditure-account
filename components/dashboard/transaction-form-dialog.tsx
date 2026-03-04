@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
 import {
   Dialog,
@@ -396,12 +396,63 @@ export function TransactionFormDialog({
   }
 
   const isEdit = Boolean(editId);
+  const focusedElRef = useRef<HTMLElement | null>(null);
+
+  function findScrollParent(el: HTMLElement): HTMLElement | null {
+    let parent = el.parentElement;
+    while (parent) {
+      const { overflowY } = getComputedStyle(parent);
+      if (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  }
+
+  function scrollElIntoView(el: HTMLElement) {
+    const scrollParent = findScrollParent(el);
+    const vv = window.visualViewport;
+    const visibleBottom = vv ? vv.height + vv.offsetTop : window.innerHeight;
+    const elRect = el.getBoundingClientRect();
+    const padding = 24;
+    if (elRect.bottom > visibleBottom - padding) {
+      if (scrollParent) {
+        const scrollAmount = elRect.bottom - (visibleBottom - padding);
+        scrollParent.scrollTop += scrollAmount;
+      } else {
+        el.scrollIntoView({ block: "center", behavior: "auto" });
+      }
+    }
+  }
 
   const scrollFocusedIntoView = (e: React.FocusEvent<HTMLElement>) => {
-    requestAnimationFrame(() => {
-      e.target.scrollIntoView({ block: "center", behavior: "smooth" });
-    });
+    const el = e.target;
+    focusedElRef.current = el;
+    scrollElIntoView(el);
+    requestAnimationFrame(() => scrollElIntoView(el));
+    setTimeout(() => scrollElIntoView(el), 100);
+    setTimeout(() => scrollElIntoView(el), 400);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handleResize = () => {
+      const el = focusedElRef.current;
+      if (el && document.activeElement === el) {
+        scrollElIntoView(el);
+      }
+    };
+    vv.addEventListener("resize", handleResize);
+    vv.addEventListener("scroll", handleResize);
+    return () => {
+      vv.removeEventListener("resize", handleResize);
+      vv.removeEventListener("scroll", handleResize);
+      focusedElRef.current = null;
+    };
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
