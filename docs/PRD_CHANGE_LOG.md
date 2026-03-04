@@ -5,6 +5,15 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 04/03/2026 (Transactions table responsive + mobile bottom nav v2)
+
+- docs/structure/dashboard-responsive-ui.md — Added §9 Transactions Table Responsive; updated §5 Mobile Bottom Nav (cream bg, icon+label, active bar, 5 items); added useIsDesktopOrLarger hook.
+- CHANGELOG.md — Added v0.9.11: mobile bottom nav redesign, useIsDesktopOrLarger, transactions table compact layout, action menu with details.
+- CHANGELOG.th.md — Added v0.9.11 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 04/03/2026 (Dashboard responsive UI)
 
 - docs/structure/dashboard-responsive-ui.md — New: Responsive sidebar (dialog on small screens), mobile bottom nav, useIsSmallScreen/useIsMobile hooks, breakpoints, dashboard layout.
