@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
 import {
   Dialog,
@@ -396,67 +396,10 @@ export function TransactionFormDialog({
   }
 
   const isEdit = Boolean(editId);
-  const focusedElRef = useRef<HTMLElement | null>(null);
-
-  function findScrollParent(el: HTMLElement): HTMLElement | null {
-    let parent = el.parentElement;
-    while (parent) {
-      const { overflowY } = getComputedStyle(parent);
-      if (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") {
-        return parent;
-      }
-      parent = parent.parentElement;
-    }
-    return null;
-  }
-
-  function scrollElIntoView(el: HTMLElement) {
-    const scrollParent = findScrollParent(el);
-    const vv = window.visualViewport;
-    const visibleBottom = vv ? vv.height + vv.offsetTop : window.innerHeight;
-    const elRect = el.getBoundingClientRect();
-    const padding = 24;
-    if (elRect.bottom > visibleBottom - padding) {
-      if (scrollParent) {
-        const scrollAmount = elRect.bottom - (visibleBottom - padding);
-        scrollParent.scrollTop += scrollAmount;
-      } else {
-        el.scrollIntoView({ block: "center", behavior: "auto" });
-      }
-    }
-  }
-
-  const scrollFocusedIntoView = (e: React.FocusEvent<HTMLElement>) => {
-    const el = e.target;
-    focusedElRef.current = el;
-    scrollElIntoView(el);
-    requestAnimationFrame(() => scrollElIntoView(el));
-    setTimeout(() => scrollElIntoView(el), 100);
-    setTimeout(() => scrollElIntoView(el), 400);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const handleResize = () => {
-      const el = focusedElRef.current;
-      if (el && document.activeElement === el) {
-        scrollElIntoView(el);
-      }
-    };
-    vv.addEventListener("resize", handleResize);
-    vv.addEventListener("scroll", handleResize);
-    return () => {
-      vv.removeEventListener("resize", handleResize);
-      vv.removeEventListener("scroll", handleResize);
-      focusedElRef.current = null;
-    };
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] flex flex-col overflow-hidden sm:max-w-md max-sm:top-4 max-sm:translate-y-0">
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
         <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEdit
@@ -469,7 +412,7 @@ export function TransactionFormDialog({
           onSubmit={handleSubmit}
           className="flex flex-1 flex-col min-h-0 overflow-hidden"
         >
-          <DialogBody className="space-y-4 pl-1 [&_input]:scroll-m-8 [&_textarea]:scroll-m-8">
+          <DialogBody className="space-y-4 pl-1">
             {loadState === "loading" && (
               <p className="text-sm text-[#A09080] dark:text-stone-400">
                 {t("transactions.edit.loading")}
@@ -639,7 +582,6 @@ export function TransactionFormDialog({
             onChange={(v) => setAmount(sanitizeAmountInput(v))}
             error={amountError}
             inputMode="decimal"
-            onFocus={scrollFocusedIntoView}
           />
 
           {type !== "TRANSFER" &&
@@ -662,7 +604,6 @@ export function TransactionFormDialog({
                   placeholder={t("transactions.new.categorySearchPlaceholder")}
                   noResultsText={t("transactions.new.categoryNoResults")}
                   noneLabel="—"
-                  onInputFocus={scrollFocusedIntoView}
                   className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
                 />
               </div>
@@ -687,7 +628,6 @@ export function TransactionFormDialog({
               id="transaction-modal-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              onFocus={scrollFocusedIntoView}
               rows={3}
               maxLength={MAX_NOTE_LENGTH}
               className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm text-[#3D3020] focus:border-[#5C6B52] focus:outline-none focus:ring-1 focus:ring-[#5C6B52] dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"

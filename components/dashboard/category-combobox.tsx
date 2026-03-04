@@ -18,7 +18,6 @@ type CategoryComboboxProps = {
   noResultsText?: string;
   noneLabel?: string;
   className?: string;
-  onInputFocus?: React.FocusEventHandler<HTMLInputElement>;
 };
 
 function filterCategories(
@@ -46,7 +45,6 @@ export function CategoryCombobox({
   noResultsText = "No category found",
   noneLabel = "—",
   className,
-  onInputFocus,
 }: CategoryComboboxProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,10 +90,7 @@ export function CategoryCombobox({
           setSearchQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={(e) => {
-          setOpen(true);
-          onInputFocus?.(e);
-        }}
+        onFocus={() => setOpen(true)}
         placeholder={placeholder}
         className={cn("pr-9", className)}
         autoComplete="off"
