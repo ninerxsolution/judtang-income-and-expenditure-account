@@ -6,6 +6,7 @@
 
 ## Added
 
+- **Transaction form fullscreen on mobile** — On screens < 768px, the add/edit transaction dialog opens fullscreen so users can scroll when the mobile keyboard is visible
 - **Responsive sidebar navigation** — On small screens (< 640px), sidebar opens as a dialog with nav items in a 2×2 grid for easier touch access
 - **Mobile bottom navigation** — Fixed bottom nav bar on mobile (< 768px) with quick links to Dashboard, Accounts, and Calendar
 - **useIsSmallScreen hook** — Detects viewport below Tailwind sm (640px) for mobile-first UI adjustments

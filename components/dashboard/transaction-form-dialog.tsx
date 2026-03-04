@@ -15,6 +15,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { CategoryCombobox } from "@/components/dashboard/category-combobox";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import { cn } from "@/lib/utils";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -399,7 +400,12 @@ export function TransactionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+      <DialogContent
+        className={cn(
+          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
+          "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+        )}
+      >
         <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEdit
