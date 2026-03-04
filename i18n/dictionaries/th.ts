@@ -716,6 +716,7 @@ export const thDictionary = {
       next: "ถัดไป",
       columns: {
         date: "วันที่・เวลา",
+        dateAndAccount: "วันที่・บัญชี",
         account: "บัญชี",
         type: "ประเภท",
         amount: "จำนวนเงิน",
@@ -723,6 +724,8 @@ export const thDictionary = {
         note: "หมายเหตุ",
       },
       transferTo: "→ {account}",
+      tapToEditOrDelete: "แตะเพื่อแก้ไขหรือลบ",
+      selectAction: "เลือกการดำเนินการ",
     },
   },
   activityLog: {

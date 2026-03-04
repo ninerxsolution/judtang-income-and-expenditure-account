@@ -721,6 +721,7 @@ export const enDictionary = {
       next: "Next",
       columns: {
         date: "Date & time",
+        dateAndAccount: "Date & account",
         account: "Account",
         type: "Type",
         amount: "Amount",
@@ -728,6 +729,8 @@ export const enDictionary = {
         note: "Note",
       },
       transferTo: "→ {account}",
+      tapToEditOrDelete: "Tap to edit or delete",
+      selectAction: "Select action",
     },
   },
   activityLog: {

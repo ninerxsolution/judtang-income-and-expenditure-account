@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Transaction = {
   id: string;
@@ -38,6 +39,7 @@ type TransactionsListProps = {
 export function TransactionsList({ initialData }: TransactionsListProps = {}) {
   const { t, locale, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
+  const isMobile = useIsMobile();
   const [items, setItems] = useState<Transaction[]>(
     Array.isArray(initialData) ? initialData : []
   );
@@ -123,6 +125,71 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
         <ul className="space-y-1">
           {items.map((tx) => {
             const isIncome = tx.type === "INCOME";
+            const amountSpan = (
+              <span
+                className={`shrink-0 tabular-nums font-medium ${
+                  isIncome
+                    ? "text-emerald-600 dark:text-emerald-300"
+                    : "text-red-600 dark:text-red-300"
+                }`}
+              >
+                {isIncome ? "+" : "-"}
+                {formatAmount(tx.amount)}
+              </span>
+            );
+
+            if (isMobile) {
+              return (
+                <li
+                  key={tx.id}
+                  className="flex flex-col gap-1 rounded-md border border-[#E8E0C8] px-3 py-2 text-sm dark:border-stone-800"
+                >
+                  <div className="flex min-w-0 items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <span
+                        className={`inline-flex shrink-0 items-center justify-center rounded-full p-1 ${
+                          isIncome
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                            : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                        }`}
+                        aria-label={isIncome ? t("transactions.common.income") : t("transactions.common.expense")}
+                      >
+                        {isIncome ? (
+                          <ArrowDownCircle className="h-3.5 w-3.5" />
+                        ) : (
+                          <ArrowUpCircle className="h-3.5 w-3.5" />
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        {(tx.categoryRef?.name ?? tx.category) ? (
+                          <>
+                            <span className="text-[#3D3020] dark:text-stone-200">
+                              {getCategoryDisplayName(tx.categoryRef?.name ?? tx.category ?? "", localeKey)}
+                            </span>
+                            {tx.financialAccount && (
+                              <span className="ml-1.5 text-[#A09080] dark:text-stone-400 text-xs">
+                                ({tx.financialAccount.name})
+                              </span>
+                            )}
+                          </>
+                        ) : tx.financialAccount ? (
+                          <span className="text-[#A09080] dark:text-stone-400 text-xs">
+                            ({tx.financialAccount.name})
+                          </span>
+                        ) : (
+                          <span className="text-[#A09080] dark:text-stone-400">—</span>
+                        )}
+                      </div>
+                    </div>
+                    {amountSpan}
+                  </div>
+                  <span className="text-[10px] text-[#A09080] dark:text-stone-400">
+                    {formatDate(tx.occurredAt, locale)}
+                  </span>
+                </li>
+              );
+            }
+
             return (
               <li
                 key={tx.id}
@@ -161,16 +228,7 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
                     )}
                   </div>
                 </div>
-                <span
-                  className={`shrink-0 tabular-nums font-medium ${
-                    isIncome
-                      ? "text-emerald-600 dark:text-emerald-300"
-                      : "text-red-600 dark:text-red-300"
-                  }`}
-                >
-                  {isIncome ? "+" : "-"}
-                  {formatAmount(tx.amount)}
-                </span>
+                {amountSpan}
               </li>
             );
           })}
