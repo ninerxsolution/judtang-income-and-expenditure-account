@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,7 +20,6 @@ import {
   ArrowLeftRight,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,7 +156,7 @@ export default function AccountDetailPage() {
   const [txLoading, setTxLoading] = useState(false);
 
 
-  async function fetchAccount() {
+  const fetchAccount = useCallback(async () => {
     if (!accountId) return;
     setLoading(true);
     setError(null);
@@ -182,9 +180,9 @@ export default function AccountDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [accountId, t]);
 
-  async function fetchSummary() {
+  const fetchSummary = useCallback(async () => {
     if (!accountId) return;
     setSummaryLoading(true);
     try {
@@ -205,9 +203,9 @@ export default function AccountDetailPage() {
     } finally {
       setSummaryLoading(false);
     }
-  }
+  }, [accountId]);
 
-  async function fetchTransactions(overrides?: { offset?: number }) {
+  const fetchTransactions = useCallback(async (overrides?: { offset?: number }) => {
     if (!accountId) return;
     setTxLoading(true);
     const currentOffset = overrides?.offset ?? txOffset;
@@ -234,11 +232,11 @@ export default function AccountDetailPage() {
     } finally {
       setTxLoading(false);
     }
-  }
+  }, [accountId, txFilterFrom, txFilterTo, txFilterType, txOffset]);
 
   useEffect(() => {
     void fetchAccount();
-  }, [accountId]);
+  }, [fetchAccount]);
 
   useEffect(() => {
     if (account?.name && typeof document !== "undefined") {
@@ -255,11 +253,11 @@ export default function AccountDetailPage() {
 
   useEffect(() => {
     if (accountId) void fetchSummary();
-  }, [accountId]);
+  }, [accountId, fetchSummary]);
 
   useEffect(() => {
     if (accountId) void fetchTransactions();
-  }, [accountId, txFilterFrom, txFilterTo, txFilterType, txOffset]);
+  }, [accountId, fetchTransactions]);
 
   function openEditModal() {
     setFormOpen(true);
@@ -355,12 +353,6 @@ export default function AccountDetailPage() {
     } catch {
       toast.error(t("accounts.loadFailed"));
     }
-  }
-
-  function openTxCreate(initialDate?: string | null) {
-    setTxFormEditId(null);
-    setTxFormInitialDate(initialDate ?? null);
-    setTxFormOpen(true);
   }
 
   function openTxEdit(tx: Transaction) {

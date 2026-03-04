@@ -148,7 +148,7 @@ describe("DELETE /api/sessions", () => {
       { method: "DELETE" }
     ));
     const res = await DELETE(req);
-    const data = await res.json();
+    await res.json();
 
     expect(res.status).toBe(200);
     expect(mockUpdate).toHaveBeenCalled();

@@ -24,7 +24,6 @@ export async function GET() {
   };
 
   // Log to server console when this route is hit
-  // eslint-disable-next-line no-console
   console.log("[api/dev] GET", payload);
 
   return NextResponse.json(payload);

@@ -63,24 +63,23 @@ export function BankCombobox({
   const displayValue = open ? searchQuery : getBankLabel(value, localeKey);
   const otherLabel = localeKey === "th" ? "อื่นๆ" : "Other";
 
-  useEffect(() => {
-    if (!open) {
-      setSearchQuery("");
-    }
-  }, [open]);
+  function closeDropdown() {
+    setSearchQuery("");
+    setOpen(false);
+  }
 
   function handleSelect(bankId: string) {
     onChange(bankId);
     if (bankId === BANK_OTHER) {
       onOtherSelect?.();
     }
-    setOpen(false);
+    closeDropdown();
   }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeDropdown();
       }
     }
     if (open) {
@@ -173,6 +172,7 @@ export function BankCombobox({
                 <button
                   type="button"
                   role="option"
+                  aria-selected={!value}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                     !value && "bg-[#EBF4E3] dark:bg-stone-800"
@@ -200,6 +200,7 @@ export function BankCombobox({
                     key={bank.id}
                     type="button"
                     role="option"
+                    aria-selected={isSelected}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                       isSelected && "bg-[#EBF4E3] dark:bg-stone-800"
@@ -237,6 +238,7 @@ export function BankCombobox({
                 <button
                   type="button"
                   role="option"
+                  aria-selected={value === BANK_OTHER}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                     value === BANK_OTHER && "bg-[#EBF4E3] dark:bg-stone-800"

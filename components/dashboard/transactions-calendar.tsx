@@ -7,7 +7,6 @@ import {
   ArrowUpCircle,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -25,6 +24,7 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type CalendarSummaryItem = {
   date: string; // YYYY-MM-DD
@@ -811,6 +811,13 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
               ))}
             </div>
 
+            {summaryLoading ? (
+              <div className="mt-1 grid grid-cols-7 gap-1">
+                {[...Array(35)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-md" />
+                ))}
+              </div>
+            ) : (
             <div className="mt-1 grid grid-cols-7 gap-1 text-xs">
               {days.map((day) => {
                 const isMuted = !day.inCurrentMonth;
@@ -866,6 +873,7 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 );
               })}
             </div>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
@@ -915,6 +923,13 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
               )}
             </div>
 
+            {summaryLoading ? (
+              <div className="mt-1 flex flex-col gap-1.5">
+                {[...Array(7)].map((_, i) => (
+                  <Skeleton key={i} className="h-14 w-full rounded-md" />
+                ))}
+              </div>
+            ) : (
             <div className="mt-1 flex flex-col gap-1.5 text-xs">
               {weekDays.map((day, idx) => {
                 const hasData = day.hasTransactions;
@@ -973,6 +988,7 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 );
               })}
             </div>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
@@ -1032,6 +1048,13 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
               )}
             </div>
 
+            {monthSummaryLoading ? (
+              <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {[...Array(12)].map((_, i) => (
+                  <Skeleton key={i} className="h-20 w-full rounded-md" />
+                ))}
+              </div>
+            ) : (
             <div className="mt-1 grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
               {Array.from({ length: 12 }, (_, idx) => {
                 const info = monthSummaryMap.get(idx);
@@ -1088,6 +1111,7 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 );
               })}
             </div>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
@@ -1137,6 +1161,13 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
               )}
             </div>
 
+            {yearSummaryLoading ? (
+              <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {[...Array(12)].map((_, i) => (
+                  <Skeleton key={i} className="h-20 w-full rounded-md" />
+                ))}
+              </div>
+            ) : (
             <div className="mt-1 grid grid-cols-3 gap-2 text-xs sm:grid-cols-4">
               {Array.from(
                 { length: yearRangeEnd - yearRangeStart + 1 },
@@ -1196,6 +1227,7 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
                 );
               })}
             </div>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
               <div className="flex items-center gap-2">
@@ -1254,11 +1286,10 @@ export function TransactionsCalendar({ showNewTransactionButton = true }: { show
             className="min-h-[120px] max-h-[70vh] overflow-y-auto px-4 py-3 text-sm transition-all duration-200 ease-out"
           >
               {dailyLoading && (
-                <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#A09080] dark:text-stone-500" />
-                  <p className="text-xs text-[#6B5E4E] dark:text-[#A09080]">
-                    {t("calendar.loading.transactions")}
-                  </p>
+                <div className="animate-in fade-in-0 space-y-2 duration-200">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-md" />
+                  ))}
                 </div>
               )}
               {dailyError && !dailyLoading && (

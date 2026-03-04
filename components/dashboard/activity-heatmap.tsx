@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type CalendarSummaryItem = {
   date: string;
@@ -177,10 +178,31 @@ export function ActivityHeatmap() {
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8] p-4 dark:border-stone-700 dark:bg-stone-900">
-        <p className="text-sm text-[#A09080] dark:text-stone-400">
-          {t("dashboard.activityHeatmap.loading")}
-        </p>
+      <div className="min-w-0 space-y-2">
+        <Skeleton className="h-4 w-48" />
+        <div className="grid gap-[5px] pl-10" style={{ gridTemplateColumns: `repeat(${numWeeks}, minmax(10px, 12px))` }}>
+          {Array.from({ length: numWeeks }, (_, i) => (
+            <Skeleton key={i} className="h-3 w-3 min-w-[12px] min-h-[12px] rounded" />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <div className="flex flex-col justify-around gap-0.5 py-0.5">
+            {WEEKDAY_LABELS.map((label) => (
+              <Skeleton key={label} className="h-3 w-6" />
+            ))}
+          </div>
+          <div
+            className="grid gap-[5px]"
+            style={{
+              gridTemplateRows: "repeat(7, minmax(10px, 12px))",
+              gridTemplateColumns: `repeat(${numWeeks}, minmax(10px, 12px))`,
+            }}
+          >
+            {Array.from({ length: 7 * numWeeks }, (_, i) => (
+              <Skeleton key={i} className="h-[14px] w-[14px] min-w-[14px] min-h-[14px] rounded" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

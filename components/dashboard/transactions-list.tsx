@@ -46,14 +46,14 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
 
   useEffect(() => {
     if (initialData !== undefined && initialData !== null) {
-      setItems(Array.isArray(initialData) ? initialData : []);
-      setLoading(false);
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setLoading(true);
+      setError(null);
+    });
 
     const params = new URLSearchParams();
     params.set("limit", String(LIMIT));
@@ -83,7 +83,7 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
       });
 
     return () => { cancelled = true; };
-  }, [initialData]);
+  }, [initialData, t]);
 
   return (
     <div className="rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">

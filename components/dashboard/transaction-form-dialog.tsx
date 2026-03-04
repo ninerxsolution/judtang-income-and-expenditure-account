@@ -17,6 +17,7 @@ import { CategoryCombobox } from "@/components/dashboard/category-combobox";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -97,6 +98,7 @@ export function TransactionFormDialog({
   >([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
+  const [formDataLoading, setFormDataLoading] = useState(false);
 
   const amountError = useMemo(() => {
     if (!amount) return null;
@@ -205,69 +207,74 @@ export function TransactionFormDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, editId, initialDate, t]);
+  }, [open, editId, initialDate, initialType, t]);
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setFormDataLoading(true);
     Promise.all([
       fetch("/api/financial-accounts").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/categories").then((r) => (r.ok ? r.json() : [])),
-    ]).then(([accData, catData]) => {
-      if (cancelled) return;
-      const accs = Array.isArray(accData)
-        ? accData.filter(
+    ])
+      .then(([accData, catData]) => {
+        if (cancelled) return;
+        const accs = Array.isArray(accData)
+          ? accData.filter(
+              (a: {
+                isActive?: boolean;
+                isIncomplete?: boolean;
+                isHidden?: boolean;
+              }) =>
+                a.isActive !== false &&
+                !a.isIncomplete &&
+                (a.isHidden !== true)
+            )
+          : [];
+        setAccounts(
+          accs.map(
             (a: {
-              isActive?: boolean;
-              isIncomplete?: boolean;
-              isHidden?: boolean;
-            }) =>
-              a.isActive !== false &&
-              !a.isIncomplete &&
-              (a.isHidden !== true)
+              id: string;
+              name: string;
+              isDefault?: boolean;
+              type?: string;
+              bankName?: string | null;
+              cardNetwork?: string | null;
+            }) => ({
+              id: a.id,
+              name: a.name,
+              isDefault: a.isDefault ?? false,
+              type: a.type ?? "CASH",
+              bankName: a.bankName ?? null,
+              cardNetwork: a.cardNetwork ?? null,
+            })
           )
-        : [];
-      setAccounts(
-        accs.map(
-          (a: {
-            id: string;
-            name: string;
-            isDefault?: boolean;
-            type?: string;
-            bankName?: string | null;
-            cardNetwork?: string | null;
-          }) => ({
-            id: a.id,
-            name: a.name,
-            isDefault: a.isDefault ?? false,
-            type: a.type ?? "CASH",
-            bankName: a.bankName ?? null,
-            cardNetwork: a.cardNetwork ?? null,
-          })
-        )
-      );
-      setCategories(
-        Array.isArray(catData)
-          ? catData.map((c: { id: string; name: string }) => ({
-              id: c.id,
-              name: c.name,
-            }))
-          : []
-      );
-      if (!editId && accs.length > 0) {
-        const defaultAcc =
-          accs.find(
-            (a: { isDefault?: boolean; isHidden?: boolean }) =>
-              a.isDefault && a.isHidden !== true
-          ) ?? accs[0];
-        setFinancialAccountId(defaultAcc.id);
-        const transferable = accs.filter((a: { type?: string }) => a.type !== "CREDIT_CARD");
-        const secondTransferable = transferable.find(
-          (a: { id: string }) => a.id !== defaultAcc.id
         );
-        if (secondTransferable) setTransferAccountId(secondTransferable.id);
-      }
-    });
+        setCategories(
+          Array.isArray(catData)
+            ? catData.map((c: { id: string; name: string }) => ({
+                id: c.id,
+                name: c.name,
+              }))
+            : []
+        );
+        if (!editId && accs.length > 0) {
+          const defaultAcc =
+            accs.find(
+              (a: { isDefault?: boolean; isHidden?: boolean }) =>
+                a.isDefault && a.isHidden !== true
+            ) ?? accs[0];
+          setFinancialAccountId(defaultAcc.id);
+          const transferable = accs.filter((a: { type?: string }) => a.type !== "CREDIT_CARD");
+          const secondTransferable = transferable.find(
+            (a: { id: string }) => a.id !== defaultAcc.id
+          );
+          if (secondTransferable) setTransferAccountId(secondTransferable.id);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setFormDataLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -460,7 +467,27 @@ export function TransactionFormDialog({
             </div>
           </div>
 
-          {type === "TRANSFER" ? (
+          {formDataLoading ? (
+            <>
+              {type === "TRANSFER" ? (
+                <>
+                  <div>
+                    <Skeleton className="mb-1 h-4 w-24" />
+                    <Skeleton className="h-10 w-full rounded-md" />
+                  </div>
+                  <div>
+                    <Skeleton className="mb-1 h-4 w-24" />
+                    <Skeleton className="h-10 w-full rounded-md" />
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <Skeleton className="mb-1 h-4 w-24" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+              )}
+            </>
+          ) : type === "TRANSFER" ? (
             <>
               <div>
                 <label htmlFor="transaction-modal-from-account" className="mb-1 block text-sm font-medium">
@@ -557,24 +584,30 @@ export function TransactionFormDialog({
             inputMode="decimal"
           />
 
-          {type !== "TRANSFER" && (
-            <div>
-              <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
-                {t("transactions.new.categoryLabel")}
-              </label>
-              <CategoryCombobox
-                id="transaction-modal-category"
-                value={categoryId}
-                onChange={setCategoryId}
-                categories={categories}
-                localeKey={localeKey}
-                placeholder={t("transactions.new.categorySearchPlaceholder")}
-                noResultsText={t("transactions.new.categoryNoResults")}
-                noneLabel="—"
-                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-              />
-            </div>
-          )}
+          {type !== "TRANSFER" &&
+            (formDataLoading ? (
+              <div>
+                <Skeleton className="mb-1 h-4 w-20" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="transaction-modal-category" className="mb-1 block text-sm font-medium">
+                  {t("transactions.new.categoryLabel")}
+                </label>
+                <CategoryCombobox
+                  id="transaction-modal-category"
+                  value={categoryId}
+                  onChange={setCategoryId}
+                  categories={categories}
+                  localeKey={localeKey}
+                  placeholder={t("transactions.new.categorySearchPlaceholder")}
+                  noResultsText={t("transactions.new.categoryNoResults")}
+                  noneLabel="—"
+                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                />
+              </div>
+            ))}
 
           <DatePicker
             id="transaction-modal-date"
@@ -616,7 +649,7 @@ export function TransactionFormDialog({
             >
               {t("common.actions.cancel")}
             </Button>
-            <Button type="submit" disabled={pending || loadState === "loading"}>
+            <Button type="submit" disabled={pending || loadState === "loading" || formDataLoading}>
               {pending
                 ? t("transactions.new.pending")
                 : isEdit

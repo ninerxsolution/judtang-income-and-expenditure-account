@@ -13,7 +13,6 @@ type I18nContextValue = {
 export const I18nContext = createContext<I18nContextValue>({
   language: DEFAULT_LANGUAGE,
   locale: LANGUAGE_LOCALES[DEFAULT_LANGUAGE],
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   setLanguage: () => {},
   t: (key: string) => key,
 });
@@ -53,7 +52,7 @@ export function I18nProvider({ initialLanguage, children }: I18nProviderProps) {
     try {
       const stored = window.localStorage.getItem(LANG_LOCAL_STORAGE_KEY) as Language | null;
       if (stored && stored !== language) {
-        setLanguage(stored);
+        queueMicrotask(() => setLanguage(stored));
         return;
       }
     } catch {

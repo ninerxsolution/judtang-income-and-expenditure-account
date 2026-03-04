@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Bell, Monitor, Trash2, LogOut, Languages, Info, HelpCircle } from "lucide-react";
+import { Bell, Monitor, Trash2, Languages, Info, HelpCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,

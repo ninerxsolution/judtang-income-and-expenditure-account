@@ -55,7 +55,7 @@ export default function AdminReportsPage() {
     if (status) params.set("status", status);
     if (search) params.set("search", search);
 
-    setLoading(true);
+    queueMicrotask(() => setLoading(true));
     fetch(`/api/reports?${params}`)
       .then((res) => {
         if (res.status === 403) {

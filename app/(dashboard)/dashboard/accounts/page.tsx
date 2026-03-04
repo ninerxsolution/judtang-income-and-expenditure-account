@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Landmark,
@@ -144,7 +144,7 @@ export default function AccountsPage() {
   const [copiedAccountId, setCopiedAccountId] = useState<string | null>(null);
   const [hoveredAccountId, setHoveredAccountId] = useState<string | null>(null);
 
-  async function fetchAccounts() {
+  const fetchAccounts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -166,11 +166,11 @@ export default function AccountsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     void fetchAccounts();
-  }, []);
+  }, [fetchAccounts]);
 
   function openCreateModal(defaultType?: string) {
     setFormEditId(null);

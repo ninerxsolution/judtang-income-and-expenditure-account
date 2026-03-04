@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -36,11 +35,7 @@ function setStored(value: boolean) {
 }
 
 export function FullscreenProvider({ children }: { children: React.ReactNode }) {
-  const [fullscreen, setFullscreenState] = useState(false);
-
-  useEffect(() => {
-    setFullscreenState(getStored());
-  }, []);
+  const [fullscreen, setFullscreenState] = useState(getStored);
 
   const toggleFullscreen = useCallback(() => {
     setFullscreenState((prev) => {

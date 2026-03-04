@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import {
-  getCategoryById,
   updateCategory,
   deleteCategory,
 } from "@/lib/categories";

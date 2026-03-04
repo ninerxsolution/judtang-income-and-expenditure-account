@@ -6,7 +6,7 @@ import {
   FileSpreadsheet,
   GitBranch,
 } from "lucide-react";
-import { translate, getDictionary, type Language } from "@/i18n";
+import { getDictionary, type Language } from "@/i18n";
 
 type LandingFeatureGridProps = {
   language: Language;

@@ -14,6 +14,7 @@ import { FormField } from "@/components/auth/form-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useI18n } from "@/hooks/use-i18n";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function sanitizeAmountInput(value: string): string {
   const noComma = value.replace(/,/g, "");
@@ -70,12 +71,15 @@ export function CreditCardPaymentDialog({
   >([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountsLoading, setAccountsLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setAmount("");
     setOccurredAt(formatTodayAsInputDate());
     setError(null);
+    setAccounts([]);
+    setAccountsLoading(true);
     fetch("/api/financial-accounts")
       .then((r) => (r.ok ? r.json() : []))
       .then(
@@ -109,7 +113,8 @@ export function CreditCardPaymentDialog({
           );
           setFromAccountId(nonCreditCard[0]?.id ?? "");
         }
-      );
+      )
+      .finally(() => setAccountsLoading(false));
   }, [open, accountId]);
 
   const amountNum = Number.parseFloat(amount.replace(/,/g, ""));
@@ -217,7 +222,14 @@ export function CreditCardPaymentDialog({
             onChange={setOccurredAt}
             required
           />
-          {accounts.length > 0 && (
+          {accountsLoading ? (
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                {t("accounts.paymentFromAccountLabel")}
+              </label>
+              <Skeleton className="h-10 w-full rounded-md" />
+            </div>
+          ) : accounts.length > 0 ? (
             <div>
               <label htmlFor="payment-from-account" className="mb-1 block text-sm font-medium">
                 {t("accounts.paymentFromAccountLabel")}
@@ -233,7 +245,7 @@ export function CreditCardPaymentDialog({
                 className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               />
             </div>
-          )}
+          ) : null}
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           )}

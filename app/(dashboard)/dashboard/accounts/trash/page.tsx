@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Trash2,
@@ -51,7 +51,7 @@ export default function AccountsTrashPage() {
   const [error, setError] = useState<string | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
 
-  async function fetchAccounts() {
+  const fetchAccounts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -73,11 +73,11 @@ export default function AccountsTrashPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     void fetchAccounts();
-  }, []);
+  }, [fetchAccounts]);
 
   async function handleRestore(acc: FinancialAccount) {
     if (restoringId) return;
