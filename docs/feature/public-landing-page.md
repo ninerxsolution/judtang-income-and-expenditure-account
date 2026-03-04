@@ -138,6 +138,7 @@ All landing content under `home.*`:
 - **Accent:** `amber-600` for primary CTAs; `emerald-500` for bullets/dots
 - **Typography:** Large headline, generous line height
 - **Spacing:** `py-16` to `py-20` between sections
+- **Dark theme:** All landing components support dark mode; `.landing-page` has `--landing-*` CSS variables for both light and dark; CTA buttons use `dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200`
 - **Avoid:** Heavy gradients, buzzwords, excessive animations
 
 ---

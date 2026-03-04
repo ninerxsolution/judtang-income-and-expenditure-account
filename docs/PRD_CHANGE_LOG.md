@@ -5,6 +5,16 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 05/03/2026 (Dark theme coverage)
+
+- docs/structure/dashboard-responsive-ui.md — §5 Mobile Bottom Nav: added dark theme note (theme-aware colors via useTheme).
+- docs/feature/public-landing-page.md — §11 Visual Guidelines: added Dark theme bullet (landing CSS variables, CTA dark variants).
+- CHANGELOG.md — Added v0.9.12: dark theme coverage (mobile nav, landing, accounts, sidebar, calendar, bank combobox).
+- CHANGELOG.th.md — Added v0.9.12 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 04/03/2026 (Transactions table responsive + mobile bottom nav v2)
 
 - docs/structure/dashboard-responsive-ui.md — Added §9 Transactions Table Responsive; updated §5 Mobile Bottom Nav (cream bg, icon+label, active bar, 5 items); added useIsDesktopOrLarger hook.

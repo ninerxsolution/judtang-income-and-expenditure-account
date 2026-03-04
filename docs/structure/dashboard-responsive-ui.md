@@ -68,8 +68,9 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 - **Shown when:** `useIsMobile()` is true (< 768px)
 - **Position:** Fixed bottom, full width
 - **Items:** Dashboard, Accounts, Transactions, Summary, Settings (5 items)
-- **Styling:** Cream background (`bg-stone-100`), icon + text label per item; `md:hidden`; safe-area-inset-bottom for notched devices
-- **Active state:** Amber indicator bar at top of active item (`border-t-2 border-amber-500`)
+- **Styling:** Cream background (light) / stone-900 (dark); icon + text label per item; `md:hidden`; safe-area-inset-bottom for notched devices
+- **Active state:** Indicator bar at top of active item; colors adapt to theme via `useTheme()`
+- **Dark theme:** Background, border, active/inactive colors are theme-aware (light: cream/olive; dark: stone-900/stone-400)
 
 ---
 
