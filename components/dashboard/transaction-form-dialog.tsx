@@ -18,6 +18,8 @@ import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { cn } from "@/lib/utils";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
@@ -100,6 +102,9 @@ export function TransactionFormDialog({
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
   const [formDataLoading, setFormDataLoading] = useState(false);
+
+  const isMobile = useIsMobile();
+  const viewport = useVisualViewport(open && isMobile);
 
   const amountError = useMemo(() => {
     if (!amount) return null;
@@ -405,6 +410,17 @@ export function TransactionFormDialog({
           "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
         )}
+        style={
+          isMobile && viewport
+            ? {
+                height: viewport.height,
+                top: viewport.offsetTop,
+                left: 0,
+                width: "100%",
+                maxWidth: "100%",
+              }
+            : undefined
+        }
       >
         <DialogHeader className="shrink-0">
           <DialogTitle>
