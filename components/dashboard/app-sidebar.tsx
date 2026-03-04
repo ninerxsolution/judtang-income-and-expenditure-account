@@ -19,6 +19,7 @@ import {
   BarChart3,
   FileText,
   PanelLeftIcon,
+  Home,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -83,26 +84,11 @@ function getInitials(name: string | null | undefined, email: string | null | und
 }
 
 const navItems = [
-  {
-    key: "accounts",
-    href: "/dashboard/accounts",
-    icon: Landmark,
-  },
-  {
-    key: "calendar",
-    href: "/dashboard/calendar",
-    icon: CalendarRange,
-  },
-  {
-    key: "transactions",
-    href: "/dashboard/transactions",
-    icon: Wallet,
-  },
-  {
-    key: "summary",
-    href: "/dashboard/summary",
-    icon: BarChart3,
-  }
+  { key: "home", href: "/dashboard", icon: Home },
+  { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
+  { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
+  { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
+  { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
 ] as const;
 
 export function AppSidebarLayout({
@@ -162,8 +148,10 @@ export function AppSidebarLayout({
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive =
-                    pathname === item.href ||
-                    (pathname?.startsWith(item.href));
+                    item.href === "/dashboard"
+                      ? pathname === "/dashboard"
+                      : pathname === item.href ||
+                        (pathname?.startsWith(item.href + "/") ?? false);
 
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -228,48 +216,52 @@ export function AppSidebarLayout({
                     {/* {t("dashboard.sidebar.navigation")} */}
                     </DialogTitle>
                 </DialogHeader>
-                <nav className="grid grid-cols-2 gap-3">
+                <nav className="flex flex-col gap-3">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive =
-                      pathname === item.href ||
-                      (pathname?.startsWith(item.href) ?? false);
+                      item.href === "/dashboard"
+                        ? pathname === "/dashboard"
+                        : pathname === item.href ||
+                          (pathname?.startsWith(item.href + "/") ?? false);
                     return (
                       <DialogClose asChild key={item.href}>
-                        <Link
-                          href={item.href}
+                        <Button
+                          asChild
+                          variant="outline"
                           className={cn(
-                            "flex flex-col aspect-square items-center justify-center gap-2 rounded-xl border p-4 transition-colors bg-background",
-                            "hover:bg-accent hover:text-accent-foreground",
-                            "outline-none focus:bg-accent focus:text-accent-foreground",
-                            isActive && "border-primary bg-amber-200 text-primary"
+                            "w-full flex h-auto py-4 gap-2 justify-start rounded-xl",
+                            isActive && "border-none bg-amber-200 text-primary"
                           )}
                         >
-                          <Icon className="h-8 w-8 shrink-0" />
-                          <span className="text-sm font-medium">
-                            {t(`dashboard.sidebar.${item.key}`)}
-                          </span>
-                        </Link>
+                          <Link href={item.href}>
+                            <Icon className="h-8 w-8 shrink-0" />
+                            <span className="text-sm font-medium">
+                              {t(`dashboard.sidebar.${item.key}`)}
+                            </span>
+                          </Link>
+                        </Button>
                       </DialogClose>
                     );
                   })}
                   {isAdmin && (
                     <DialogClose asChild>
-                      <Link
-                        href="/admin/reports"
+                      <Button
+                        asChild
+                        variant="outline"
                         className={cn(
-                          "flex flex-col items-center justify-center gap-2 rounded-xl border p-4 transition-colors",
-                          "hover:bg-accent hover:text-accent-foreground",
-                          "outline-none focus:bg-accent focus:text-accent-foreground",
+                          "w-full flex flex-col h-auto py-4 gap-2",
                           pathname?.startsWith("/admin") &&
-                            "border-primary bg-primary/10 text-primary"
+                            "border-primary bg-amber-200 text-primary"
                         )}
                       >
-                        <FileText className="h-8 w-8 shrink-0" />
-                        <span className="text-sm font-medium">
-                          {t("dashboard.sidebar.reports")}
-                        </span>
-                      </Link>
+                        <Link href="/admin/reports">
+                          <FileText className="h-8 w-8 shrink-0" />
+                          <span className="text-sm font-medium">
+                            {t("dashboard.sidebar.reports")}
+                          </span>
+                        </Link>
+                      </Button>
                     </DialogClose>
                   )}
                 </nav>
