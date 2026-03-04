@@ -5,6 +5,16 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 04/03/2026 (Dashboard responsive UI)
+
+- docs/structure/dashboard-responsive-ui.md — New: Responsive sidebar (dialog on small screens), mobile bottom nav, useIsSmallScreen/useIsMobile hooks, breakpoints, dashboard layout.
+- docs/INDEX.md — Added dashboard-responsive-ui.md to structure list.
+- CHANGELOG.md — Added v0.9.10: responsive sidebar, mobile bottom nav, useIsSmallScreen, dashboard layout, button styles.
+- CHANGELOG.th.md — Added v0.9.10 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 04/03/2026 (Account Detail Page)
 
 - app/(dashboard)/dashboard/accounts/[id]/page.tsx — New: Account detail page with header, info card, quick actions, summary stats, transaction list.

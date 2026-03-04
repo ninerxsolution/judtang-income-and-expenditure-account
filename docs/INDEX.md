@@ -18,6 +18,7 @@ Architectural and technical conventions.
 | [mvp-boundary.md](./structure/mvp-boundary.md) | MVP in-scope and out-of-scope |
 | [open-questions.md](./structure/open-questions.md) | Items to be defined |
 | [ui-component-icon-guidelines.md](./structure/ui-component-icon-guidelines.md) | shadcn/ui and Lucide usage |
+| [dashboard-responsive-ui.md](./structure/dashboard-responsive-ui.md) | Responsive sidebar, mobile bottom nav, breakpoints, hooks |
 | [required_lib.md](./structure/required_lib.md) | Required libraries and tools (runtime, UI, dev/test) |
 
 ---

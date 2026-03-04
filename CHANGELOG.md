@@ -2,6 +2,23 @@
 
 ---
 
+# v0.9.10 - 2026-03-04
+
+## Added
+
+- **Responsive sidebar navigation** — On small screens (< 640px), sidebar opens as a dialog with nav items in a 2×2 grid for easier touch access
+- **Mobile bottom navigation** — Fixed bottom nav bar on mobile (< 768px) with quick links to Dashboard, Accounts, and Calendar
+- **useIsSmallScreen hook** — Detects viewport below Tailwind sm (640px) for mobile-first UI adjustments
+- **Dashboard layout responsiveness** — Single-column layout on small screens; text wrapping on button labels to prevent overflow
+
+## Changed
+
+- **Dashboard button styles** — Enhanced visual feedback and accessibility with border and shadow improvements
+- **Dialog component** — Refined content styling for sidebar nav overlay on small screens
+- **Account management** — Improved add-account button design; default account type support in creation modal
+
+---
+
 # v0.9.9 - 2026-03-03
 
 ## Added
