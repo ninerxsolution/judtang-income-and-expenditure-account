@@ -18,6 +18,7 @@ type FormFieldProps = {
   maxLength?: number;
   inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
   placeholder?: string;
+  onFocus?: React.FocusEventHandler<HTMLInputElement>;
 };
 
 export function FormField({
@@ -32,6 +33,7 @@ export function FormField({
   maxLength,
   inputMode,
   placeholder,
+  onFocus,
 }: FormFieldProps) {
   return (
     <div className="space-y-2">
@@ -42,6 +44,7 @@ export function FormField({
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
         autoComplete={autoComplete}
         maxLength={maxLength}
         inputMode={inputMode}
