@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { Monitor, Trash2, LogOut } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +52,7 @@ export default function SessionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
 
-  async function fetchSessions() {
+  const fetchSessions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -71,11 +71,11 @@ export default function SessionsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, [fetchSessions]);
 
   async function revokeOne(sessionId: string) {
     setRevoking(sessionId);

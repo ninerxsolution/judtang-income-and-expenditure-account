@@ -118,7 +118,7 @@ function CardDropdown({
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" data-required={required}>
       <button
         type="button"
         id={id}
@@ -126,7 +126,6 @@ function CardDropdown({
         className={cn(DROPDOWN_STYLES, className)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-required={required}
       >
         <div className="flex min-w-0 items-center gap-3">
           {value ? (
@@ -144,6 +143,7 @@ function CardDropdown({
             <button
               type="button"
               role="option"
+              aria-selected={!value}
               className={cn(OPTION_STYLES, !value && OPTION_SELECTED)}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -167,6 +167,7 @@ function CardDropdown({
                 key={opt.id}
                 type="button"
                 role="option"
+                aria-selected={isSelected}
                 className={cn(OPTION_STYLES, isSelected && OPTION_SELECTED)}
                 onMouseDown={(e) => {
                   e.preventDefault();

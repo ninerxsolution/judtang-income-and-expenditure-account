@@ -18,10 +18,19 @@ import {
   Sun,
   BarChart3,
   FileText,
+  PanelLeftIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +59,7 @@ import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { useFullscreen } from "@/components/dashboard/fullscreen-context";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsSmallScreen } from "@/hooks/use-mobile";
 import { formatAmount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -110,6 +120,7 @@ export function AppSidebarLayout({
   const { fullscreen, toggleFullscreen } = useFullscreen();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const isDark = (resolvedTheme ?? theme) === "dark";
+  const isSmallScreen = useIsSmallScreen();
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -197,7 +208,76 @@ export function AppSidebarLayout({
 
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 z-10">
-          <SidebarTrigger className="-ml-1" />
+          {isSmallScreen ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 -ml-1"
+                  aria-label={t("dashboard.sidebar.navigation")}
+                  aria-haspopup="dialog"
+                >
+                  <PanelLeftIcon className="h-4 w-4" />
+                  <span className="sr-only">{t("dashboard.sidebar.navigation")}</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[min(90vw,24rem)] gap-4 p-4 rounded-2xl bg-transparent border-none shadow-none" showCloseButton={false}>
+                <DialogHeader>
+                  <DialogTitle className="text-white">
+                    {/* {t("dashboard.sidebar.navigation")} */}
+                    </DialogTitle>
+                </DialogHeader>
+                <nav className="grid grid-cols-2 gap-3">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive =
+                      pathname === item.href ||
+                      (pathname?.startsWith(item.href) ?? false);
+                    return (
+                      <DialogClose asChild key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            "flex flex-col aspect-square items-center justify-center gap-2 rounded-xl border p-4 transition-colors bg-background",
+                            "hover:bg-accent hover:text-accent-foreground",
+                            "outline-none focus:bg-accent focus:text-accent-foreground",
+                            isActive && "border-primary bg-amber-200 text-primary"
+                          )}
+                        >
+                          <Icon className="h-8 w-8 shrink-0" />
+                          <span className="text-sm font-medium">
+                            {t(`dashboard.sidebar.${item.key}`)}
+                          </span>
+                        </Link>
+                      </DialogClose>
+                    );
+                  })}
+                  {isAdmin && (
+                    <DialogClose asChild>
+                      <Link
+                        href="/admin/reports"
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-2 rounded-xl border p-4 transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          "outline-none focus:bg-accent focus:text-accent-foreground",
+                          pathname?.startsWith("/admin") &&
+                            "border-primary bg-primary/10 text-primary"
+                        )}
+                      >
+                        <FileText className="h-8 w-8 shrink-0" />
+                        <span className="text-sm font-medium">
+                          {t("dashboard.sidebar.reports")}
+                        </span>
+                      </Link>
+                    </DialogClose>
+                  )}
+                </nav>
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <SidebarTrigger className="-ml-1" />
+          )}
           <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
             <span
               className={cn(
@@ -227,64 +307,135 @@ export function AppSidebarLayout({
             </Button>
             <div className="w-px h-8 bg-border mx-1" aria-hidden="true" />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger className="outline-none flex gap-3 items-center cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full p-2 px-3 transition-all">
-                <div>
-                  {profile?.name ?? t("dashboard.sidebar.account")}
-                </div>
-                <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
-                  {getInitials(profile?.name, profile?.email)}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
+            {isSmallScreen ? (
+              <Dialog>
+                <DialogTrigger
+                  className="outline-none flex gap-3 items-center cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full p-2 px-3 transition-all"
+                  aria-haspopup="dialog"
+                  aria-label={t("dashboard.sidebar.account")}
+                >
+                  <div>
+                    {profile?.name ?? t("dashboard.sidebar.account")}
+                  </div>
+                  <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
+                    {getInitials(profile?.name, profile?.email)}
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-[min(90vw,20rem)] gap-0 p-0 rounded-2xl" showCloseButton={true}>
+                  <DialogHeader className="p-4 pb-2">
+                    <DialogTitle className="text-left">
                       {profile?.name ?? t("dashboard.sidebar.account")}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    </DialogTitle>
+                    <p className="text-xs leading-none text-muted-foreground text-left mt-1">
                       {profile?.email ?? "—"}
                     </p>
+                  </DialogHeader>
+                  <nav className="flex flex-col py-1">
+                    <DialogClose asChild>
+                      <Link
+                        href="/dashboard/me"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <User className="h-4 w-4 shrink-0" />
+                        <span>{t("dashboard.sidebar.profile")}</span>
+                      </Link>
+                    </DialogClose>
+                    <DialogClose asChild>
+                      <Link
+                        href="/dashboard/settings"
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <Settings className="h-4 w-4 shrink-0" />
+                        <span>{t("dashboard.sidebar.settings")}</span>
+                      </Link>
+                    </DialogClose>
+                    <div className="my-1 h-px bg-border" />
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none focus:bg-accent focus:text-accent-foreground w-full text-left"
+                      onClick={() => {
+                        setTheme(isDark ? "light" : "dark");
+                      }}
+                    >
+                      {isDark ? (
+                        <Sun className="h-4 w-4 shrink-0" />
+                      ) : (
+                        <Moon className="h-4 w-4 shrink-0" />
+                      )}
+                      <span>{t("dashboard.sidebar.theme")}</span>
+                    </button>
+                    <div className="my-1 h-px bg-border" />
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer hover:bg-destructive/10 hover:text-destructive outline-none focus:bg-destructive/10 focus:text-destructive w-full text-left text-destructive"
+                      onClick={() => void handleLogout()}
+                    >
+                      <LogOut className="h-4 w-4 shrink-0" />
+                      <span>{t("auth.logout.button")}</span>
+                    </button>
+                  </nav>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="outline-none flex gap-3 items-center cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full p-2 px-3 transition-all">
+                  <div>
+                    {profile?.name ?? t("dashboard.sidebar.account")}
                   </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/me" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>{t("dashboard.sidebar.profile")}</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>{t("dashboard.sidebar.settings")}</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="block sm:hidden"/>
-                <DropdownMenuItem
-                  className="cursor-pointer flex sm:hidden"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setTheme(isDark ? "light" : "dark");
-                  }}
-                >
-                  {isDark ? (
-                    <Sun className="mr-2 h-4 w-4" />
-                  ) : (
-                    <Moon className="mr-2 h-4 w-4" />
-                  )}
-                  <span>{t("dashboard.sidebar.theme")}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                  onClick={() => void handleLogout()}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t("auth.logout.button")}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
+                    {getInitials(profile?.name, profile?.email)}
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {profile?.name ?? t("dashboard.sidebar.account")}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {profile?.email ?? "—"}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/me" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>{t("dashboard.sidebar.profile")}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings" className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>{t("dashboard.sidebar.settings")}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="block sm:hidden"/>
+                  <DropdownMenuItem
+                    className="cursor-pointer flex sm:hidden"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setTheme(isDark ? "light" : "dark");
+                    }}
+                  >
+                    {isDark ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-2 h-4 w-4" />
+                    )}
+                    <span>{t("dashboard.sidebar.theme")}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                    onClick={() => void handleLogout()}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{t("auth.logout.button")}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </header>
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pb-16 md:pb-0">

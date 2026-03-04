@@ -37,7 +37,7 @@ export function TransactionDeleteDialog({
   transaction,
   onConfirm,
 }: TransactionDeleteDialogProps) {
-  const { t, locale, language } = useI18n();
+  const { t, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);

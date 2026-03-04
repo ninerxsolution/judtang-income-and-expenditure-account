@@ -12,6 +12,7 @@ import {
   getDictionary,
   type Language,
 } from "@/i18n";
+import { BulletList } from "@/components/ui/bullet-list";
 import { Button } from "@/components/ui/button";
 import { TERMS_VERSION } from "@/lib/terms";
 
@@ -44,20 +45,6 @@ export default async function TermsPage() {
         {paragraph}
       </p>
     ));
-
-  const BulletList = ({ items }: { items: string[] }) => (
-    <ul className="space-y-1.5 pl-4">
-      {items.map((item) => (
-        <li
-          key={item}
-          className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
-        >
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-          {item}
-        </li>
-      ))}
-    </ul>
-  );
 
   return (
     <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
@@ -120,7 +107,11 @@ export default async function TermsPage() {
             <p className="mb-4 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {t.sections.serviceDescription.body}
             </p>
-            <BulletList items={t.sections.serviceDescription.clarifications} />
+            <BulletList
+              items={t.sections.serviceDescription.clarifications}
+              itemClassName="text-[#6B5E4E] dark:text-stone-400"
+              bulletClassName="bg-emerald-500"
+            />
           </section>
 
           {/* 3. User Responsibilities */}
@@ -135,7 +126,11 @@ export default async function TermsPage() {
             <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
               {t.sections.userResponsibilities.intro}
             </p>
-            <BulletList items={t.sections.userResponsibilities.items} />
+            <BulletList
+              items={t.sections.userResponsibilities.items}
+              itemClassName="text-[#6B5E4E] dark:text-stone-400"
+              bulletClassName="bg-emerald-500"
+            />
           </section>
 
           {/* 4. Limitation of Liability */}
@@ -185,13 +180,21 @@ export default async function TermsPage() {
                 <h3 className="mb-2 text-sm font-medium text-[#3D3020] dark:text-stone-200">
                   {t.sections.termination.providerRights.title}
                 </h3>
-                <BulletList items={t.sections.termination.providerRights.items} />
+                <BulletList
+                items={t.sections.termination.providerRights.items}
+                itemClassName="text-[#6B5E4E] dark:text-stone-400"
+                bulletClassName="bg-emerald-500"
+              />
               </div>
               <div>
                 <h3 className="mb-2 text-sm font-medium text-[#3D3020] dark:text-stone-200">
                   {t.sections.termination.userRights.title}
                 </h3>
-                <BulletList items={t.sections.termination.userRights.items} />
+                <BulletList
+                items={t.sections.termination.userRights.items}
+                itemClassName="text-[#6B5E4E] dark:text-stone-400"
+                bulletClassName="bg-emerald-500"
+              />
               </div>
             </div>
           </section>

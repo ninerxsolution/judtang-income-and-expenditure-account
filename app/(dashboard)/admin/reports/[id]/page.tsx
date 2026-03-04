@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -145,10 +146,13 @@ export default function AdminReportDetailPage() {
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <img
+                      <Image
                         src={imgUrl}
                         alt={`Screenshot ${i + 1}`}
+                        width={96}
+                        height={96}
                         className="h-24 w-auto rounded border border-[#D4C9B0] object-cover dark:border-stone-700"
+                        unoptimized
                       />
                     </a>
                   );

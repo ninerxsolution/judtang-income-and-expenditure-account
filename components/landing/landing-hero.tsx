@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { translate, type Language } from "@/i18n";
 
 type LandingHeroProps = {

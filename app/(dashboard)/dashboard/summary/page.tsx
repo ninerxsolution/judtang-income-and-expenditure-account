@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/card";
 import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Summary = { income: number; expense: number; totalBalance?: number } | null;
 type MonthItem = { monthIndex: number; income: number; expense: number };
@@ -254,9 +255,13 @@ export default function SummaryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-              {summaryLoading ? "—" : summary ? formatAmount(summary.income) : "0.00"}
-            </p>
+            {summaryLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                {summary ? formatAmount(summary.income) : "0.00"}
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
@@ -267,9 +272,13 @@ export default function SummaryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
-              {summaryLoading ? "—" : summary ? formatAmount(summary.expense) : "0.00"}
-            </p>
+            {summaryLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
+                {summary ? formatAmount(summary.expense) : "0.00"}
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
@@ -280,15 +289,19 @@ export default function SummaryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p
-              className={`text-xl font-semibold tabular-nums ${
-                balance >= 0
-                  ? "text-zinc-900 dark:text-zinc-50"
-                  : "text-red-700 dark:text-red-300"
-              }`}
-            >
-              {summaryLoading ? "—" : summary ? formatAmount(balance) : "0.00"}
-            </p>
+            {summaryLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p
+                className={`text-xl font-semibold tabular-nums ${
+                  balance >= 0
+                    ? "text-zinc-900 dark:text-zinc-50"
+                    : "text-red-700 dark:text-red-300"
+                }`}
+              >
+                {summary ? formatAmount(balance) : "0.00"}
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
@@ -299,11 +312,13 @@ export default function SummaryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xl font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
-              {summaryLoading || expenseRatio === null
-                ? "—"
-                : `${expenseRatio}%`}
-            </p>
+            {summaryLoading || expenseRatio === null ? (
+              <Skeleton className="h-7 w-16" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
+                {expenseRatio}%
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -317,8 +332,13 @@ export default function SummaryPage() {
           </CardHeader>
           <CardContent>
             {monthLoading ? (
-              <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">
-                {t("dashboard.summary.loading")}
+              <div className="h-[280px] space-y-2">
+                <Skeleton className="h-[240px] w-full rounded-lg" />
+                <div className="flex gap-2 justify-center">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-4 w-8" />
+                  ))}
+                </div>
               </div>
             ) : barData.length === 0 ? (
               <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">
@@ -351,8 +371,8 @@ export default function SummaryPage() {
           </CardHeader>
           <CardContent>
             {categoryLoading ? (
-              <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">
-                {t("dashboard.summary.loading")}
+              <div className="h-[280px] flex items-center justify-center">
+                <Skeleton className="h-48 w-48 rounded-full" />
               </div>
             ) : pieData.length === 0 ? (
               <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">

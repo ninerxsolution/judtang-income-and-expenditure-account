@@ -2,7 +2,6 @@ import {
   normalizeEmail,
   isValidEmailFormat,
   validatePasswordLength,
-  EMAIL_MAX_LENGTH,
   MIN_PASSWORD_LENGTH,
   MAX_PASSWORD_LENGTH,
 } from "../validation";

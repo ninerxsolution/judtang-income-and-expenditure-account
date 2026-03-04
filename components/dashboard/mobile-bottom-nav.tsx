@@ -14,10 +14,9 @@ import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
-  { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
-  { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
+  { key: "dashboard", title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { key: "accounts", title: "Accounts", href: "/dashboard/accounts", icon: Landmark },
+  { key: "calendar", title: "Calendar", href: "/dashboard/calendar", icon: CalendarRange },
 ] as const;
 
 export function MobileBottomNav() {
@@ -37,7 +36,7 @@ export function MobileBottomNav() {
       }}
       aria-label={t("dashboard.sidebar.navigation")}
     >
-      <div className="flex h-14 items-center justify-around">
+      <div className="flex h-14 items-center justify-around px-6 gap-5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isHome = item.href === "/dashboard";
@@ -50,9 +49,9 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center justify-center flex-1 py-2 transition-colors",
+                "flex flex-col items-center justify-center flex-1 py-2 transition-colors rounded-full",
                 isActive
-                  ? "text-primary"
+                  ? "text-primary bg-amber-300"
                   : "text-muted-foreground hover:text-foreground"
               )}
               aria-current={isActive ? "page" : undefined}

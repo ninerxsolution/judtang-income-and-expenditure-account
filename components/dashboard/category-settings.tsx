@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Tag, Lock, Plus, Pencil, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,7 +41,7 @@ export function CategorySettings() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deletePending, setDeletePending] = useState(false);
 
-  async function fetchCategories() {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -57,11 +57,11 @@ export function CategorySettings() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     void fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   async function handleAddFromCapsule() {
     const trimmed = addName.trim();

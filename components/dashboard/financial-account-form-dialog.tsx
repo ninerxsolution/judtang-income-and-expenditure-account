@@ -36,12 +36,6 @@ function sanitizeNumericInput(value: string, maxLength: number): string {
   return digits;
 }
 
-/** Format card number for display: "1234567890123456" -> "1234 5678 9012 3456" */
-function formatCardNumber(digits: string): string {
-  const d = digits.replace(/\D/g, "");
-  return d.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-}
-
 /** Format bank account for display: "1234567890" -> "123-4-56789-0" (Thai format 3-1-5-1) */
 function formatBankAccountNumber(digits: string): string {
   const d = digits.replace(/\D/g, "");

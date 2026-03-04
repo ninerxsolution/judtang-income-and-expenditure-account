@@ -1,0 +1,65 @@
+---
+description: เมื่อแก้ปัญหาแล้ว ให้สร้าง rule จำไว้เพื่อกันปัญหาซ้ำ / Create rules when fixing issues to prevent recurrence
+alwaysApply: true
+---
+
+# Agent: Document Fixes as Rules
+
+**เมื่อเจอปัญหาและแก้ไขได้แล้ว ให้สร้าง rule ขึ้นมาจำไว้ทันที**
+
+**When you encounter a problem and fix it, create a rule to remember it immediately.**
+
+## ทำเมื่อไหร่ / When
+
+- หลังแก้ bug, error, หรือพฤติกรรมผิดปกติที่เจอระหว่างทำงาน
+- After fixing a bug, error, or unexpected behavior encountered during work
+
+## ต้องมีใน rule / Required in the rule
+
+1. **ปัญหาที่เจอ / Problem encountered**
+   - อธิบายให้ครบ: อาการเป็นยังไง, error message (ถ้ามี), สถานการณ์ที่เกิด
+   - Describe fully: symptoms, error messages (if any), context where it occurred
+
+2. **สาเหตุ / Root cause**
+   - ทำไมถึงเกิด (ถ้ารู้)
+   - Why it happened (if known)
+
+3. **วิธีแก้ / Solution**
+   - แก้ยังไง step-by-step
+   - How it was fixed, step by step
+
+4. **วิธีกันไม่ให้เกิดซ้ำ / How to prevent recurrence**
+   - Do / Don't ที่ควรทำต่อจากนี้
+   - Do / Don't to follow going forward
+
+## ตัวอย่าง / Example
+
+```markdown
+---
+description: ปัญหา X — อย่าทำ Y
+alwaysApply: true
+---
+
+# ปัญหา: [ชื่อสั้น]
+
+## ที่เจอ
+- อาการ: ...
+- Error: ...
+- สถานการณ์: ...
+
+## สาเหตุ
+- ...
+
+## วิธีแก้
+1. ...
+2. ...
+
+## กันซ้ำ
+- Do: ...
+- Don't: ...
+```
+
+## เป้าหมาย / Goal
+
+กันไม่ให้ปัญหาซ้ำในอนาคต — รายละเอียดใส่ให้ครบ  
+Prevent the same problem from recurring — include full details.

@@ -58,21 +58,20 @@ export function CategoryCombobox({
     ? searchQuery
     : (selectedCategory && getCategoryDisplayName(selectedCategory.name, localeKey)) ?? "";
 
-  useEffect(() => {
-    if (!open) {
-      setSearchQuery("");
-    }
-  }, [open]);
+  function closeDropdown() {
+    setSearchQuery("");
+    setOpen(false);
+  }
 
   function handleSelect(categoryId: string) {
     onChange(categoryId);
-    setOpen(false);
+    closeDropdown();
   }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeDropdown();
       }
     }
     if (open) {
@@ -120,6 +119,7 @@ export function CategoryCombobox({
                 <button
                   type="button"
                   role="option"
+                  aria-selected={!value}
                   className={cn(
                     "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                     !value && "bg-[#EBF4E3] dark:bg-stone-800"
@@ -139,6 +139,7 @@ export function CategoryCombobox({
                     key={cat.id}
                     type="button"
                     role="option"
+                    aria-selected={isSelected}
                     className={cn(
                       "w-full rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800",
                       isSelected && "bg-[#EBF4E3] dark:bg-stone-800"

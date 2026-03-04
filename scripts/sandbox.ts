@@ -3,9 +3,7 @@
  * Run: npm run playground   or   npx tsx scripts/sandbox.ts
  */
 
-// eslint-disable-next-line no-console
 console.log("[playground] Hello from scripts/sandbox.ts");
-// eslint-disable-next-line no-console
 console.log("[playground] Time:", new Date().toISOString());
 
 // Optional: try Winston (if you add a shared logger later, require it here)

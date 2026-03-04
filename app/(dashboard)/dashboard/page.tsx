@@ -104,7 +104,7 @@ export default function DashboardPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 w-full gap-2">
                     <Button
                       variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-0 bg-emerald-500/10 py-3 text-emerald-600 hover:bg-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25"
+                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/15 py-3 text-emerald-700 shadow-sm transition-all hover:border-emerald-500/70 hover:bg-emerald-500/25 hover:shadow-md active:scale-[0.98] dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:border-emerald-500/60 dark:hover:bg-emerald-500/30"
                       onClick={() => openQuickAdd("INCOME")}
                     >
                       <Plus className="h-4 w-4 shrink-0" />
@@ -112,7 +112,7 @@ export default function DashboardPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-0 bg-red-500/10 py-3 text-red-600 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:hover:bg-red-500/25"
+                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-red-500/40 bg-red-500/15 py-3 text-red-700 shadow-sm transition-all hover:border-red-500/70 hover:bg-red-500/25 hover:shadow-md active:scale-[0.98] dark:border-red-500/30 dark:bg-red-500/20 dark:text-red-300 dark:hover:border-red-500/60 dark:hover:bg-red-500/30"
                       onClick={() => openQuickAdd("EXPENSE")}
                     >
                       <Minus className="h-4 w-4 shrink-0" />
@@ -120,7 +120,7 @@ export default function DashboardPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-0 bg-amber-500/10 py-3 text-amber-600 hover:bg-amber-500/20 dark:bg-amber-500/15 dark:text-amber-400 dark:hover:bg-amber-500/25"
+                      className="flex h-auto flex-col items-center gap-1.5 rounded-2xl border-2 border-amber-500/40 bg-amber-500/15 py-3 text-amber-700 shadow-sm transition-all hover:border-amber-500/70 hover:bg-amber-500/25 hover:shadow-md active:scale-[0.98] dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:border-amber-500/60 dark:hover:bg-amber-500/30"
                       onClick={() => openQuickAdd("TRANSFER")}
                     >
                       <ArrowLeftRight className="h-4 w-4 shrink-0" />

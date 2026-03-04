@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -349,7 +349,7 @@ export default function ActivityLogPage() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
-  async function fetchLogs() {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -376,11 +376,11 @@ export default function ActivityLogPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filterEntityType, filterAction, filterDateFrom, filterDateTo, router, t]);
 
   useEffect(() => {
     fetchLogs();
-  }, [filterEntityType, filterAction, filterDateFrom, filterDateTo]);
+  }, [fetchLogs]);
 
   return (
     <div className="space-y-6">

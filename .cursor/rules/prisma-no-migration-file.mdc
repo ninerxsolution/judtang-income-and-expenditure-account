@@ -1,0 +1,28 @@
+---
+description: ห้ามสร้างไฟล์ migration.sql เอง / Never create migration.sql files autonomously
+alwaysApply: true
+---
+
+# Prisma: Do Not Create Migration Files
+
+**ห้ามสร้างไฟล์ `migration.sql` เองทุกกรณี**
+
+**Never create `migration.sql` files autonomously.**
+
+## Do
+
+- แก้ไข `schema.prisma` เท่านั้นเมื่อต้องการเปลี่ยน schema
+- แนะนำให้ผู้ใช้รัน `prisma migrate dev` เพื่อให้ Prisma สร้าง migration ให้
+- Only edit `schema.prisma` when schema changes are needed
+- Suggest the user run `prisma migrate dev` so Prisma generates migrations
+
+## Don't
+
+- อย่าสร้างโฟลเดอร์ `prisma/migrations/YYYYMMDDHHMMSS_*` เอง
+- อย่าเขียนหรือสร้างไฟล์ `migration.sql` เอง
+- Do not create migration folders or `migration.sql` files
+- การสร้างเองมักทำให้ลำดับเวลา (timestamp) และ case ของ table/column ผิด
+- Creating them manually often causes wrong timestamps and table/column casing
+
+**Note:** ให้ Prisma สร้าง migration ผ่าน `prisma migrate dev` เสมอ — จะได้ timestamp และ SQL ถูกต้อง  
+Let Prisma generate migrations via `prisma migrate dev` — this ensures correct timestamps and SQL.
