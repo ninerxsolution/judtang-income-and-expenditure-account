@@ -437,12 +437,12 @@ export default function AccountsPage() {
           <button
             type="button"
             onClick={() => openCreateModal()}
-            className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50"
+            className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50 dark:border-stone-600 dark:hover:border-stone-500 dark:hover:bg-stone-800/50 dark:focus:ring-stone-500/50"
           >
             <div
-              className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5"
+              className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5 dark:border-stone-600 dark:bg-stone-800/30"
             >
-              <CirclePlus className="h-[22px] w-[22px] text-[#C8B890]" strokeWidth={2} />
+              <CirclePlus className="h-[22px] w-[22px] text-[#C8B890] dark:text-stone-500" strokeWidth={2} />
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-[#6B5E4E] dark:text-stone-500">
@@ -503,7 +503,7 @@ export default function AccountsPage() {
                           />
                         </div>
                       ) : (
-                        <TypeIcon className="h-5 w-5 text-[#A09080]" />
+                        <TypeIcon className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
                       )}
                       <CardTitle className="text-base">
                         <Link
@@ -830,7 +830,7 @@ export default function AccountsPage() {
                   <section>
                     <div className="mb-4 flex items-center justify-between gap-2">
                       <h2 className="flex items-center gap-2 text-lg font-semibold">
-                        <Landmark className="h-5 w-5 text-[#A09080]" />
+                        <Landmark className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
                         {t("accounts.sectionAccounts")}
                       </h2>
                       {hiddenDefault && (
@@ -857,12 +857,12 @@ export default function AccountsPage() {
                         <button
                           type="button"
                           onClick={() => openCreateModal()}
-                          className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50"
+                          className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50 dark:border-stone-600 dark:hover:border-stone-500 dark:hover:bg-stone-800/50 dark:focus:ring-stone-500/50"
                         >
                           <div
-                            className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5"
+                            className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5 dark:border-stone-600 dark:bg-stone-800/30"
                           >
-                            <CirclePlus className="h-[22px] w-[22px] text-[#C8B890]" strokeWidth={2} />
+                            <CirclePlus className="h-[22px] w-[22px] text-[#C8B890] dark:text-stone-500" strokeWidth={2} />
                           </div>
                           <div className="text-center">
                             <p className="text-sm font-semibold text-[#6B5E4E] dark:text-stone-500">
@@ -880,7 +880,7 @@ export default function AccountsPage() {
                 {(creditCards.length > 0 || regularAccounts.length > 0 || hiddenDefault) && (
                   <section>
                     <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-                      <CreditCard className="h-5 w-5 text-[#A09080]" />
+                      <CreditCard className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
                       {t("accounts.sectionCreditCards")}
                     </h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -888,12 +888,12 @@ export default function AccountsPage() {
                       <button
                         type="button"
                         onClick={() => openCreateModal("CREDIT_CARD")}
-                        className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50"
+                        className="rounded-3xl flex min-h-[180px] flex-col items-center justify-center gap-3 border-2 border-dashed border-[#C8B890] bg-transparent p-5 transition-all hover:border-[#B8A880] hover:bg-[#C8B890]/5 focus:outline-none focus:ring-2 focus:ring-[#C8B890]/50 dark:border-stone-600 dark:hover:border-stone-500 dark:hover:bg-stone-800/50 dark:focus:ring-stone-500/50"
                       >
                         <div
-                          className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5"
+                          className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[#C8B890] bg-[#C8B890]/12.5 dark:border-stone-600 dark:bg-stone-800/30"
                         >
-                          <CirclePlus className="h-[22px] w-[22px] text-[#C8B890]" strokeWidth={2} />
+                          <CirclePlus className="h-[22px] w-[22px] text-[#C8B890] dark:text-stone-500" strokeWidth={2} />
                         </div>
                         <div className="text-center">
                           <p className="text-sm font-semibold text-[#6B5E4E] dark:text-stone-500">

@@ -825,7 +825,7 @@ export function TransactionsCalendar({
         !dailyError &&
         dailyItems.length === 0 && (
           <div className="flex min-h-[80px] animate-in fade-in-0 duration-200 items-center justify-center py-6">
-            <p className="text-xs text-[#A09080] dark:text-[#A09080]">
+            <p className="text-xs text-[#A09080] dark:text-stone-500">
               {t("calendar.modal.empty")}
             </p>
           </div>
@@ -899,7 +899,7 @@ export function TransactionsCalendar({
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[10px] text-[#A09080] dark:text-[#A09080]">
+                    <p className="mt-0.5 text-[10px] text-[#A09080] dark:text-stone-500">
                       {new Date(tx.occurredAt).toLocaleTimeString(locale, {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -1071,7 +1071,7 @@ export function TransactionsCalendar({
               )}
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-[#A09080]">
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-stone-500">
               {WEEKDAY_LABEL_KEYS.map((key) => (
                 <div key={key} className="py-1">
                   {t(`calendar.weekdays.${key}`)}
@@ -1136,7 +1136,7 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="text-[10px] text-[#A09080] dark:text-[#A09080]">
+                          <span className="text-[10px] text-[#A09080] dark:text-stone-500">
                             {day.count}
                           </span>
                         )}
@@ -1147,7 +1147,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between border-t border-[#D4C9B0] pt-3 dark:border-stone-700 text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between border-t border-[#D4C9B0] pt-3 dark:border-stone-700 text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1228,7 +1228,7 @@ export function TransactionsCalendar({
                         .join(" ")}
                     >
                       <div className="flex min-w-14 flex-col sm:min-w-16">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
                           {t(`calendar.weekdays.${weekdayKey}`)}
                         </span>
                         <span className="text-sm font-semibold tabular-nums">
@@ -1251,7 +1251,7 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="text-[11px] text-[#A09080] dark:text-[#A09080]">
+                          <span className="text-[11px] text-[#A09080] dark:text-stone-500">
                             {day.count}
                           </span>
                         )}
@@ -1267,7 +1267,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1315,7 +1315,7 @@ export function TransactionsCalendar({
                   </div>
                 </div>
                 {monthSummaryLoading && (
-                  <p className="text-xs text-[#A09080] dark:text-[#A09080]">
+                  <p className="text-xs text-[#A09080] dark:text-stone-500">
                     {t("calendar.loading.months")}
                   </p>
                 )}
@@ -1361,7 +1361,7 @@ export function TransactionsCalendar({
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         hasData
                           ? "text-[#3D3020] dark:text-stone-100"
-                          : "text-[#A09080] dark:text-[#A09080]",
+                          : "text-[#A09080] dark:text-stone-500",
                         isCurrentMonth
                           ? "border-[#5C6B52] dark:border-stone-100"
                           : "",
@@ -1385,7 +1385,7 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="text-[#A09080] dark:text-[#A09080]">
+                          <span className="text-[#A09080] dark:text-stone-500">
                             {count}
                           </span>
                         )}
@@ -1396,7 +1396,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1480,7 +1480,7 @@ export function TransactionsCalendar({
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         hasData
                           ? "text-[#3D3020] dark:text-stone-100"
-                          : "text-[#A09080] dark:text-[#A09080]",
+                          : "text-[#A09080] dark:text-stone-500",
                         isCurrentYear
                           ? "border-[#5C6B52] dark:border-stone-100"
                           : "",
@@ -1502,7 +1502,7 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="text-[#A09080] dark:text-[#A09080]">
+                          <span className="text-[#A09080] dark:text-stone-500">
                             {count}
                           </span>
                         )}
@@ -1513,7 +1513,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-[#A09080]">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1534,7 +1534,7 @@ export function TransactionsCalendar({
                 <>
                   <div className="flex items-center justify-between border-b border-[#D4C9B0] px-5 py-4 dark:border-stone-700">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
+                      <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
                         {t("calendar.modal.title")}
                       </p>
                       <h2 className="text-sm font-semibold text-[#3D3020] dark:text-stone-100">
@@ -1562,7 +1562,7 @@ export function TransactionsCalendar({
                   </div>
                   <div className="grid grid-cols-2 gap-4 border-b border-[#D4C9B0] px-5 py-2.5 dark:border-stone-700 bg-[#F5F0E8]/50 dark:bg-stone-900/50">
                     <div>
-                      <p className="text-xs text-[#A09080] dark:text-[#A09080]">
+                      <p className="text-xs text-[#A09080] dark:text-stone-500">
                         {t("calendar.legend.income")}
                       </p>
                       <p className="text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
@@ -1570,7 +1570,7 @@ export function TransactionsCalendar({
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-[#A09080] dark:text-[#A09080]">
+                      <p className="text-xs text-[#A09080] dark:text-stone-500">
                         {t("calendar.legend.expense")}
                       </p>
                       <p className="text-sm font-semibold tabular-nums text-red-600 dark:text-red-400">
@@ -1584,7 +1584,7 @@ export function TransactionsCalendar({
                 </>
               ) : (
                 <div className="flex flex-1 items-center justify-center p-8">
-                  <p className="text-sm text-[#A09080] dark:text-[#A09080]">
+                  <p className="text-sm text-[#A09080] dark:text-stone-500">
                     {t("calendar.legend.hintDayClick")}
                   </p>
                 </div>
@@ -1603,7 +1603,7 @@ export function TransactionsCalendar({
           <div className="flex items-center justify-between border-b border-[#D4C9B0] px-4 py-3 dark:border-stone-700 transition-all duration-200 ease-out">
             <DialogTitle asChild>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-[#A09080]">
+                <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
                   {t("calendar.modal.title")}
                 </p>
                 <p className="text-sm font-semibold text-[#3D3020] dark:text-stone-100">

@@ -231,7 +231,7 @@ export function AppSidebarLayout({
                           variant="outline"
                           className={cn(
                             "w-full flex h-auto py-4 gap-2 justify-start rounded-xl",
-                            isActive && "border-none bg-amber-200 text-primary"
+                            isActive && "border-none bg-amber-200 text-primary dark:bg-amber-900/50 dark:text-amber-100"
                           )}
                         >
                           <Link href={item.href}>
@@ -252,7 +252,7 @@ export function AppSidebarLayout({
                         className={cn(
                           "w-full flex flex-col h-auto py-4 gap-2",
                           pathname?.startsWith("/admin") &&
-                            "border-primary bg-amber-200 text-primary"
+                            "border-primary bg-amber-200 text-primary dark:bg-amber-900/50 dark:text-amber-100"
                         )}
                       >
                         <Link href="/admin/reports">

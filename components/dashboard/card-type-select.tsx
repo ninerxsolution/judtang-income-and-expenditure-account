@@ -26,10 +26,10 @@ function CardAccountTypeIcon({
   id: string;
   className?: string;
 }) {
-  if (id === "debit") return <Landmark className={cn("h-5 w-5 shrink-0 text-[#A09080]", className)} />;
-  if (id === "prepaid") return <Wallet className={cn("h-5 w-5 shrink-0 text-[#A09080]", className)} />;
-  if (id === "other") return <CreditCard className={cn("h-5 w-5 shrink-0 text-[#A09080]", className)} />;
-  return <CreditCard className={cn("h-5 w-5 shrink-0 text-[#A09080]", className)} />;
+  if (id === "debit") return <Landmark className={cn("h-5 w-5 shrink-0 text-[#A09080] dark:text-stone-400", className)} />;
+  if (id === "prepaid") return <Wallet className={cn("h-5 w-5 shrink-0 text-[#A09080] dark:text-stone-400", className)} />;
+  if (id === "other") return <CreditCard className={cn("h-5 w-5 shrink-0 text-[#A09080] dark:text-stone-400", className)} />;
+  return <CreditCard className={cn("h-5 w-5 shrink-0 text-[#A09080] dark:text-stone-400", className)} />;
 }
 
 export function CardNetworkIcon({
@@ -56,9 +56,9 @@ export function CardNetworkIcon({
     );
   }
   if (id === "truemoney") {
-    return <Smartphone className={cn("h-5 w-5 shrink-0 text-[#A09080]", className)} />;
+    return <Smartphone className={cn("h-5 w-5 shrink-0 text-[#A09080] dark:text-stone-400", className)} />;
   }
-  return <CreditCard className={cn("h-5 w-5 shrink-0 text-[#A09080]", className)} />;
+  return <CreditCard className={cn("h-5 w-5 shrink-0 text-[#A09080] dark:text-stone-400", className)} />;
 }
 
 const DROPDOWN_STYLES =

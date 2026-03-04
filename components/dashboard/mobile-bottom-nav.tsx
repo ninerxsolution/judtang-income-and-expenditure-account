@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   Wallet,
@@ -25,16 +26,18 @@ const navItems = [
   { key: "transactions", href: "/dashboard/transactions", icon: List },
 ] as const;
 
-const activeColor = "rgb(92, 107, 82)";
-const inactiveColor = "rgb(160, 144, 128)";
-const navBg = "rgb(253, 250, 244)";
-const navBorder = "rgb(221, 213, 187)";
-
 export function MobileBottomNav() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
   const { t } = useI18n();
   const { openQuickAdd } = useTransactionForm();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  const navBg = isDark ? "rgb(28, 25, 23)" : "rgb(253, 250, 244)";
+  const navBorder = isDark ? "rgb(68, 64, 60)" : "rgb(221, 213, 187)";
+  const activeColor = isDark ? "rgb(212, 212, 212)" : "rgb(92, 107, 82)";
+  const inactiveColor = isDark ? "rgb(163, 163, 163)" : "rgb(160, 144, 128)";
   const [quickOpen, setQuickOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
