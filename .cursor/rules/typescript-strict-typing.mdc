@@ -1,0 +1,34 @@
+---
+description: เช็ค type เสมอ ห้าม any ใช้ lint ช่วยตรวจ / Always check types, no any, use lint
+alwaysApply: true
+---
+
+# TypeScript: Strict Typing & Lint
+
+**เวลาเขียนโค้ด ให้เช็ค type เสมอ ห้ามใช้ `any` และใช้ lint ช่วยตรวจ**
+
+**When writing code, always check types, never use `any`, and use lint to verify.**
+
+## Do
+
+- กำหนด type ให้ครบทุก parameter, return value, variable
+- ใช้ `unknown` แทน `any` เมื่อ type ไม่แน่ใจ
+- ใช้ type inference ได้เมื่อ TypeScript infer ได้ชัด
+- หลังแก้ไขไฟล์ ให้ใช้ `read_lints` ตรวจก่อนจบ
+- Define types for all parameters, return values, and variables
+- Use `unknown` instead of `any` when type is uncertain
+- Run lint (e.g. `read_lints`) after editing to verify
+
+## Don't
+
+- ห้ามใช้ `any` ทุกกรณี
+- Do not use `any` under any circumstances
+- อย่าข้ามการเช็ค type เพื่อให้ compile ผ่านเร็ว
+- Don't skip type checking just to make code compile quickly
+
+## Lint
+
+- ใช้ `read_lints` กับไฟล์ที่แก้ไขแล้วก่อนจบการแก้ไข
+- Use `read_lints` on edited files before finishing
+- แก้ไข lint errors ที่เจอ
+- Fix any lint errors found
