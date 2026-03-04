@@ -21,6 +21,7 @@ export const thDictionary = {
       edit: "แก้ไข",
       delete: "ลบ",
       copied: "คัดลอกสำเร็จ",
+      changeDate: "เปลี่ยน",
     },
     time: {
       justNow: "เมื่อสักครู่",
@@ -668,7 +669,10 @@ export const thDictionary = {
       categoryLabel: "หมวดหมู่ (ไม่บังคับ)",
       categorySearchPlaceholder: "ค้นหาหมวดหมู่…",
       categoryNoResults: "ไม่พบหมวดหมู่",
+      categoryShowMore: "…",
+      categoryShowLess: "−",
       dateLabel: "วันที่",
+      dateSelectPlaceholder: "เลือกวันที่",
       noteLabel: "หมายเหตุ (ไม่บังคับ)",
       amountInvalid: "จำนวนเงินต้องเป็นตัวเลขบวก",
       statusLabel: "สถานะ (บัตรเครดิต)",

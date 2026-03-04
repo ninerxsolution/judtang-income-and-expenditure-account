@@ -17,6 +17,7 @@ export const enDictionary = {
       edit: "Edit",
       delete: "Delete",
       copied: "Copied",
+      changeDate: "Change",
     },
     errors: {
       unauthenticated: "You are not signed in.",
@@ -673,7 +674,10 @@ export const enDictionary = {
       categoryLabel: "Category (optional)",
       categorySearchPlaceholder: "Search category…",
       categoryNoResults: "No category found",
+      categoryShowMore: "…",
+      categoryShowLess: "−",
       dateLabel: "Date",
+      dateSelectPlaceholder: "Select date",
       noteLabel: "Note (optional)",
       amountInvalid: "Amount must be a positive number",
       statusLabel: "Status (credit card)",
