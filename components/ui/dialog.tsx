@@ -5,6 +5,7 @@ import { X } from "lucide-react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const Dialog = DialogPrimitive.Root
 
@@ -84,11 +85,41 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+function DialogBody({
+  className,
+  onFocusCapture,
+  ...props
+}: React.ComponentProps<"div">) {
+  const isMobile = useIsMobile()
+
+  const handleFocusCapture = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (typeof onFocusCapture === "function") {
+      onFocusCapture(event)
+    }
+
+    if (!isMobile) {
+      return
+    }
+
+    const target = event.target as HTMLElement | null
+    if (!target || typeof target.scrollIntoView !== "function") {
+      return
+    }
+
+    window.setTimeout(() => {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "nearest",
+      })
+    }, 100)
+  }
+
   return (
     <div
       className={cn("flex-1 min-h-0 overflow-y-auto pr-4", className)}
       {...props}
+      onFocusCapture={handleFocusCapture}
     />
   )
 }
