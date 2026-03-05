@@ -106,13 +106,14 @@ function DialogBody({
       return
     }
 
+    // Delay before scroll so user can notice the scroll on mobile (keyboard + visual feedback)
     window.setTimeout(() => {
       target.scrollIntoView({
         behavior: "smooth",
         block: "center",
         inline: "nearest",
       })
-    }, 100)
+    }, 500)
   }
 
   return (
