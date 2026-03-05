@@ -1097,7 +1097,7 @@ export function TransactionsCalendar({
                           ? "text-[#A09080] dark:text-stone-500"
                           : "text-[#3D3020] dark:text-stone-100",
                         day.isToday
-                          ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
+                          ? "border-[#3D4A3A] dark:border-stone-100"
                           : "",
                         isSelected
                           ? "border-stone-500 dark:border-stone-100"
@@ -1111,7 +1111,7 @@ export function TransactionsCalendar({
                           {day.date.getDate()}
                         </span>
                         {day.isToday && (
-                          <span className="rounded-full hidden sm:block bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
+                          <span className="rounded-full bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
                             {t("calendar.today")}
                           </span>
                         )}
@@ -1214,7 +1214,7 @@ export function TransactionsCalendar({
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         "text-[#3D3020] dark:text-stone-100",
                         day.isToday
-                          ? "border-[#5C6B52] border-offset-1 border-offset-[#FDFAF4] dark:border-stone-100 dark:border-offset-stone-900"
+                          ? "border-[#3D4A3A] dark:border-stone-100"
                           : "",
                       ]
                         .filter(Boolean)
