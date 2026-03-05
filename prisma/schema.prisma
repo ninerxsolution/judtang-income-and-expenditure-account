@@ -39,6 +39,12 @@ enum UserRole {
   ADMIN
 }
 
+enum RecurringFrequency {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
 enum ReportCategory {
   BUG
   CALCULATION_ISSUE
@@ -96,8 +102,9 @@ model User {
   categories         Category[]
   termsAcceptances   UserTermsAcceptance[]
   reports            Report[]
-  budgetTemplates    BudgetTemplate[]
-  budgetMonths       BudgetMonth[]
+  budgetTemplates        BudgetTemplate[]
+  budgetMonths           BudgetMonth[]
+  recurringTransactions  RecurringTransaction[]
 }
 
 // Tracks active JWT sessions per user (sessionId in JWT cookie).
@@ -158,9 +165,10 @@ model FinancialAccount {
   updatedAt      DateTime  @updatedAt
   userId         String
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions   Transaction[]
-  transfersTo    Transaction[] @relation("TransferTo")
-  creditCardStatements CreditCardStatement[]
+  transactions          Transaction[]
+  transfersTo           Transaction[]          @relation("TransferTo")
+  creditCardStatements  CreditCardStatement[]
+  recurringTransactions RecurringTransaction[]
 
   // Credit card specific (nullable for non-CREDIT_CARD accounts)
   creditLimit           Decimal?  @db.Decimal(15, 2)
@@ -190,9 +198,10 @@ model Category {
   createdAt   DateTime      @default(now())
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
+  transactions             Transaction[]
   budgetTemplateCategories BudgetTemplateCategory[]
   budgetCategories         BudgetCategory[]
+  recurringTransactions    RecurringTransaction[]
 
   @@unique([userId, name])
   @@index([userId])
@@ -212,22 +221,25 @@ model Transaction {
   postedDate           DateTime?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
-  financialAccountId   String?
-  transferAccountId   String?
-  categoryId           String?
-  statementId          String?
+  financialAccountId     String?
+  transferAccountId      String?
+  categoryId             String?
+  statementId            String?
+  recurringTransactionId String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  financialAccount FinancialAccount?   @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
-  transferAccount  FinancialAccount?    @relation("TransferTo", fields: [transferAccountId], references: [id], onDelete: SetNull)
-  categoryRef      Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  statement        CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+  financialAccount     FinancialAccount?    @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  transferAccount      FinancialAccount?    @relation("TransferTo", fields: [transferAccountId], references: [id], onDelete: SetNull)
+  categoryRef          Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  statement            CreditCardStatement? @relation(fields: [statementId], references: [id], onDelete: SetNull)
+  recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
 
   @@index([userId, occurredAt])
   @@index([financialAccountId])
   @@index([transferAccountId])
   @@index([statementId])
+  @@index([recurringTransactionId])
 }
 
 // --- Terms & Conditions Acceptance Log ---
@@ -328,6 +340,35 @@ model BudgetCategory {
   @@unique([budgetMonthId, categoryId])
   @@index([budgetMonthId])
   @@index([categoryId])
+}
+
+// --- Recurring Transactions (templates for repeating income/expenses) ---
+
+model RecurringTransaction {
+  id                 String             @id @default(cuid())
+  userId             String
+  name               String
+  type               TransactionType    // INCOME or EXPENSE only
+  amount             Decimal            @db.Decimal(15, 2)
+  categoryId         String?
+  financialAccountId String?
+  frequency          RecurringFrequency
+  dayOfMonth         Int?               // 1-31, used for MONTHLY and YEARLY
+  monthOfYear        Int?               // 1-12, used for YEARLY only
+  startDate          DateTime
+  endDate            DateTime?
+  isActive           Boolean            @default(true)
+  note               String?            @db.Text
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryRef      Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  financialAccount FinancialAccount? @relation(fields: [financialAccountId], references: [id], onDelete: SetNull)
+  transactions     Transaction[]
+
+  @@index([userId])
+  @@index([financialAccountId])
 }
 
 // --- Help & Feedback Reports ---

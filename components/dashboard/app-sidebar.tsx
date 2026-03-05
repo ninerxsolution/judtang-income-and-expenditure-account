@@ -20,6 +20,7 @@ import {
   FileText,
   PanelLeftIcon,
   Home,
+  RepeatIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -89,6 +90,7 @@ const navItems = [
   { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
   { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
   { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
+  { key: "recurring", href: "/dashboard/recurring", icon: RepeatIcon },
 ] as const;
 
 export function AppSidebarLayout({
