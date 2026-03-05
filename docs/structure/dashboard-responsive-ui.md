@@ -1,6 +1,6 @@
 # Dashboard Responsive UI
 
-**Updated:** 04/03/2026
+**Updated:** 05/03/2026
 
 **Source:** PRD §18 (Income & Expense), Dashboard layout
 
@@ -108,7 +108,16 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 ---
 
-## 9. Accessibility
+## 9. Fullscreen dialog — input focus scroll (mobile)
+
+- **Component:** `DialogBody` in `components/ui/dialog.tsx`
+- **When:** Any dialog that uses `DialogBody` and is fullscreen on mobile (e.g. transaction form, account form, category form, credit card payment, profile edit)
+- **Behavior:** On mobile (`useIsMobile()`), when the user focuses any input or textarea inside the dialog body, the scrollable area (DialogBody) automatically scrolls so the focused element is brought into view (`scrollIntoView` with `block: 'center'`, after a short delay to account for virtual keyboard)
+- **Purpose:** Avoids the user having to manually scroll down after tapping a field when the keyboard opens
+
+---
+
+## 10. Accessibility
 
 - Nav items use `aria-label` from i18n
 - Dialog trigger has `aria-haspopup="dialog"`

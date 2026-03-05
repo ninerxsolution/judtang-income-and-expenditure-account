@@ -11,11 +11,13 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { getCategoryDisplayName } from "@/lib/categories-display";
@@ -87,6 +89,7 @@ export default function TransactionsPage() {
   const [deleteTransaction, setDeleteTransaction] = useState<Transaction | null>(null);
 
   const [actionMenuTx, setActionMenuTx] = useState<Transaction | null>(null);
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
   async function fetchTransactions(overrides?: { offset?: number }) {
     setLoading(true);
@@ -237,7 +240,7 @@ export default function TransactionsPage() {
             {t("transactions.list.subtitle")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => openCreateModal()}
             className="inline-flex gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
@@ -245,15 +248,15 @@ export default function TransactionsPage() {
             <Plus className="h-4 w-4" />
             {t("transactions.list.newTransaction")}
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="rounded-lg border space-y-3 border-[#D4C9B0] bg-[#F5F0E8]/50 p-3 md:p-4 dark:border-stone-700 dark:bg-stone-900/40">
         <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-200">
           {t("transactions.list.filters")}
         </h2>
-        <div className="space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex gap-2 w-full items-end sm:gap-2">
             <div className="min-w-0 flex-1 space-y-1.5">
               <label htmlFor="list-search" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
                 {t("transactions.list.searchLabel")}
@@ -277,74 +280,160 @@ export default function TransactionsPage() {
               {t("transactions.list.applyFilters")}
             </Button>
           </div>
-          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 items-end">
-            <DatePicker
-              id="list-from"
-              label={t("dataTools.export.fromDate")}
-              value={filterFrom}
-              onChange={setFilterFrom}
-              className="min-w-0 space-y-1.5"
-            />
-            <DatePicker
-              id="list-to"
-              label={t("dataTools.export.toDate")}
-              value={filterTo}
-              onChange={setFilterTo}
-              className="min-w-0 space-y-1.5"
-            />
-            <div className="min-w-0 space-y-1.5">
-              <label htmlFor="list-type" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
-                {t("dataTools.export.type")}
-              </label>
-              <select
-                id="list-type"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
-                className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
-              >
-                <option value="all">{t("dataTools.export.typeAll")}</option>
-                <option value="INCOME">{t("transactions.common.income")}</option>
-                <option value="EXPENSE">{t("transactions.common.expense")}</option>
-                <option value="TRANSFER">{t("transactions.common.transfer")}</option>
-              </select>
+          {/* Desktop (lg+): always show advanced filters. Tablet and below: collapsible with "Advanced search" */}
+          {isDesktop ? (
+            <div className="flex flex-wrap min-w-0 gap-2 items-end">
+              <DateRangePicker
+                id="list-date-range"
+                label={t("dataTools.export.dateRange")}
+                value={{ from: filterFrom, to: filterTo }}
+                onChange={(v) => {
+                  setFilterFrom(v.from ?? "");
+                  setFilterTo(v.to ?? "");
+                }}
+                placeholder={t("dataTools.export.dateRangePlaceholder")}
+                numberOfMonths={2}
+              />
+              <div className="min-w-0 space-y-1.5">
+                <label htmlFor="list-type" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                  {t("dataTools.export.type")}
+                </label>
+                <select
+                  id="list-type"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
+                  className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+                >
+                  <option value="all">{t("dataTools.export.typeAll")}</option>
+                  <option value="INCOME">{t("transactions.common.income")}</option>
+                  <option value="EXPENSE">{t("transactions.common.expense")}</option>
+                  <option value="TRANSFER">{t("transactions.common.transfer")}</option>
+                </select>
+              </div>
+              <div className="min-w-0 space-y-1.5">
+                <label htmlFor="list-account" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                  {t("transactions.new.accountLabel")}
+                </label>
+                <select
+                  id="list-account"
+                  value={filterAccountId}
+                  onChange={(e) => setFilterAccountId(e.target.value)}
+                  className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+                >
+                  <option value="">{t("dataTools.export.typeAll")}</option>
+                  {accounts.map((acc) => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="min-w-0 space-y-1.5">
+                <label htmlFor="list-category" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                  {t("transactions.new.categoryLabel")}
+                </label>
+                <select
+                  id="list-category"
+                  value={filterCategoryId}
+                  onChange={(e) => setFilterCategoryId(e.target.value)}
+                  className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+                >
+                  <option value="">{t("dataTools.export.typeAll")}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="min-w-0 space-y-1.5">
-              <label htmlFor="list-account" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
-                {t("transactions.new.accountLabel")}
-              </label>
-              <select
-                id="list-account"
-                value={filterAccountId}
-                onChange={(e) => setFilterAccountId(e.target.value)}
-                className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+          ) : (
+            <div className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAdvancedSearchOpen((prev) => !prev)}
+                className="h-8 w-full justify-between gap-2 sm:h-9"
+                aria-expanded={advancedSearchOpen}
+                aria-label={t("transactions.list.advancedSearchAria")}
               >
-                <option value="">{t("dataTools.export.typeAll")}</option>
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name}
-                  </option>
-                ))}
-              </select>
+                <span>{t("transactions.list.advancedSearch")}</span>
+                {advancedSearchOpen ? (
+                  <ChevronUp className="h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                )}
+              </Button>
+              {advancedSearchOpen && (
+                <div className="mt-3 flex flex-wrap min-w-0 gap-2 items-end">
+                  <DateRangePicker
+                    id="list-date-range"
+                    label={t("dataTools.export.dateRange")}
+                    value={{ from: filterFrom, to: filterTo }}
+                    onChange={(v) => {
+                      setFilterFrom(v.from ?? "");
+                      setFilterTo(v.to ?? "");
+                    }}
+                    placeholder={t("dataTools.export.dateRangePlaceholder")}
+                    numberOfMonths={2}
+                  />
+                  <div className="min-w-0 space-y-1.5">
+                    <label htmlFor="list-type" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                      {t("dataTools.export.type")}
+                    </label>
+                    <select
+                      id="list-type"
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value as "all" | "INCOME" | "EXPENSE" | "TRANSFER")}
+                      className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+                    >
+                      <option value="all">{t("dataTools.export.typeAll")}</option>
+                      <option value="INCOME">{t("transactions.common.income")}</option>
+                      <option value="EXPENSE">{t("transactions.common.expense")}</option>
+                      <option value="TRANSFER">{t("transactions.common.transfer")}</option>
+                    </select>
+                  </div>
+                  <div className="min-w-0 space-y-1.5">
+                    <label htmlFor="list-account" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                      {t("transactions.new.accountLabel")}
+                    </label>
+                    <select
+                      id="list-account"
+                      value={filterAccountId}
+                      onChange={(e) => setFilterAccountId(e.target.value)}
+                      className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+                    >
+                      <option value="">{t("dataTools.export.typeAll")}</option>
+                      {accounts.map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="min-w-0 space-y-1.5">
+                    <label htmlFor="list-category" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
+                      {t("transactions.new.categoryLabel")}
+                    </label>
+                    <select
+                      id="list-category"
+                      value={filterCategoryId}
+                      onChange={(e) => setFilterCategoryId(e.target.value)}
+                      className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
+                    >
+                      <option value="">{t("dataTools.export.typeAll")}</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="min-w-0 space-y-1.5">
-              <label htmlFor="list-category" className="block text-xs font-medium text-[#6B5E4E] sm:text-sm dark:text-stone-400">
-                {t("transactions.new.categoryLabel")}
-              </label>
-              <select
-                id="list-category"
-                value={filterCategoryId}
-                onChange={(e) => setFilterCategoryId(e.target.value)}
-                className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
-              >
-                <option value="">{t("dataTools.export.typeAll")}</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
