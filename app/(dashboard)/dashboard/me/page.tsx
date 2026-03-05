@@ -459,7 +459,7 @@ export default function UserPage() {
 
       {/* Edit name dialog */}
       <Dialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
-        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader className="shrink-0">
             <DialogTitle>{t("profile.editNameDialogTitle")}</DialogTitle>
             <DialogDescription>
@@ -494,7 +494,7 @@ export default function UserPage() {
 
       {/* Change password dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader className="shrink-0">
             <DialogTitle>{t("profile.changePasswordDialogTitle")}</DialogTitle>
             <DialogDescription>

@@ -913,7 +913,7 @@ export default function BudgetSettingsPage() {
 
       {/* Add category budget dialog */}
       <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader>
             <DialogTitle>{t("settings.budget.addCategoryBudget")}</DialogTitle>
           </DialogHeader>
@@ -974,7 +974,7 @@ export default function BudgetSettingsPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader>
             <DialogTitle>{t("settings.budget.editCategoryBudget")}</DialogTitle>
           </DialogHeader>

@@ -88,7 +88,7 @@ export function CategoryFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
         <DialogHeader className="shrink-0">
           <DialogTitle>
             {editId ? t("settings.categories.editTitle") : t("settings.categories.addTitle")}

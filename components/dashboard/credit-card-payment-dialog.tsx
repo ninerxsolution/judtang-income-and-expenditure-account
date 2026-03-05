@@ -182,7 +182,7 @@ export function CreditCardPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md">
+      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("accounts.paymentDialogTitle")}</DialogTitle>
           <p className="text-sm text-[#A09080] dark:text-stone-400">{accountName}</p>

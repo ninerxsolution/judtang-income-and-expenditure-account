@@ -31,7 +31,7 @@ export function TermsModal({ open, onOpenChange }: TermsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
+      <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
         <DialogHeader className="shrink-0">
           <DialogTitle>{t.title}</DialogTitle>
           <div className="flex flex-wrap items-center gap-2 pt-1">
