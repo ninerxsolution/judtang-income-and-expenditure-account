@@ -412,12 +412,7 @@ export default function AccountsPage() {
             {t("accounts.subtitle")}
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/dashboard/accounts/trash" className="gap-2">
-            <Trash2 className="h-4 w-4" />
-            {t("accounts.viewTrash")}
-          </Link>
-        </Button>
+  
       </div>
 
       {loading && (
@@ -833,23 +828,29 @@ export default function AccountsPage() {
                         <Landmark className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
                         {t("accounts.sectionAccounts")}
                       </h2>
-                      {hiddenDefault && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {hiddenDefault && (
                             <DropdownMenuItem
                               onClick={() => handleShowDefault(hiddenDefault.id)}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               {t("accounts.showDefaultAccount")}
                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                          )}
+                          <DropdownMenuItem asChild>
+                            <Link href="/dashboard/accounts/trash" className="flex cursor-pointer items-center">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t("accounts.viewTrash")}
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     {regularAccounts.length > 0 && (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

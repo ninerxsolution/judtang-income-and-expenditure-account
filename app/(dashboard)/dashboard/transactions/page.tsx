@@ -240,7 +240,7 @@ export default function TransactionsPage() {
             {t("transactions.list.subtitle")}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => openCreateModal()}
             className="inline-flex gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
@@ -248,7 +248,7 @@ export default function TransactionsPage() {
             <Plus className="h-4 w-4" />
             {t("transactions.list.newTransaction")}
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="rounded-lg border space-y-3 border-[#D4C9B0] bg-[#F5F0E8]/50 p-3 md:p-4 dark:border-stone-700 dark:bg-stone-900/40">
