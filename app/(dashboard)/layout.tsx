@@ -24,13 +24,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="dashboard-page min-h-screen">
+    <div className="dashboard-page h-dvh min-h-dvh overflow-hidden">
       <SessionTouch />
       <DashboardDataProvider>
         <TransactionFormProvider>
           <FullscreenProvider>
             <AccountDetailBreadcrumbProvider>
-              <SidebarProvider className="h-svh overflow-hidden">
+              <SidebarProvider className="h-dvh overflow-hidden">
                 <AppSidebarLayout>
                   <DashboardBreadcrumb className="px-4 py-4" />
                   <DashboardContent>

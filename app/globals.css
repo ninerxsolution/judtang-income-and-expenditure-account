@@ -253,6 +253,14 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Dashboard viewport: fallback for browsers that don't support dvh (e.g. older Android) */
+@supports not (height: 100dvh) {
+  .dashboard-page.h-dvh {
+    height: 100vh;
+    min-height: 100vh;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
