@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.13 - 2026-03-05
+
+## Changed
+
+- **Fullscreen dialog input focus on mobile** — When a dialog is fullscreen on mobile, focusing any input or textarea (e.g. date, account, amount, note) now automatically scrolls the dialog body so the focused field is visible. Implemented in `DialogBody` (`components/ui/dialog.tsx`) so all dialogs using it (transaction form, account form, category form, credit card payment, profile, etc.) get this behavior without per-dialog changes.
+
+---
+
 # v0.9.12 - 2026-03-05
 
 ## Changed

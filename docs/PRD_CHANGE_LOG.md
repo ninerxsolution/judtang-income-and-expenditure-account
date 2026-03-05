@@ -5,6 +5,15 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 05/03/2026 (Fullscreen dialog input focus scroll on mobile)
+
+- docs/structure/dashboard-responsive-ui.md — Added §9 Fullscreen dialog — input focus scroll (mobile): DialogBody auto-scrolls focused input into view on mobile; renumbered §10 Accessibility.
+- CHANGELOG.md — Added v0.9.13: fullscreen dialog input focus scroll on mobile (DialogBody).
+- CHANGELOG.th.md — Added v0.9.13 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 05/03/2026 (Dark theme coverage)
 
 - docs/structure/dashboard-responsive-ui.md — §5 Mobile Bottom Nav: added dark theme note (theme-aware colors via useTheme).
