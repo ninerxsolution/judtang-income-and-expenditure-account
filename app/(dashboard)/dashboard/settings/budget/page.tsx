@@ -116,7 +116,7 @@ export default function BudgetSettingsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [loadingBudget, setLoadingBudget] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [, setLoadingCategories] = useState(true);
   const [savingTotal, setSavingTotal] = useState(false);
   const [applyTemplateId, setApplyTemplateId] = useState<string>("");
   const [applying, setApplying] = useState(false);
@@ -202,7 +202,6 @@ export default function BudgetSettingsPage() {
   );
 
   async function handleSaveTotalBudget() {
-    const value = budget?.totalBudget ?? 0;
     const input = document.getElementById("total-budget-input") as HTMLInputElement | null;
     const raw = input?.value?.replace(/,/g, "")?.trim();
     const num = raw ? parseFloat(raw) : 0;
@@ -346,6 +345,7 @@ export default function BudgetSettingsPage() {
 
   async function handleDeleteTemplate() {
     if (!deleteTemplateId) return;
+    setDeletingTemplate(true);
     try {
       const res = await fetch(`/api/budget-templates/${deleteTemplateId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
@@ -354,6 +354,8 @@ export default function BudgetSettingsPage() {
       fetchTemplates();
     } catch {
       toast.error(t("common.errors.generic"));
+    } finally {
+      setDeletingTemplate(false);
     }
   }
 
@@ -913,7 +915,7 @@ export default function BudgetSettingsPage() {
 
       {/* Add category budget dialog */}
       <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader>
             <DialogTitle>{t("settings.budget.addCategoryBudget")}</DialogTitle>
           </DialogHeader>
@@ -974,7 +976,7 @@ export default function BudgetSettingsPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader>
             <DialogTitle>{t("settings.budget.editCategoryBudget")}</DialogTitle>
           </DialogHeader>

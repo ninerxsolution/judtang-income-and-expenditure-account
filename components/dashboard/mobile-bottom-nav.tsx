@@ -88,65 +88,45 @@ export function MobileBottomNav() {
           />
           <div
             className={cn(
-              "fixed bottom-20 right-4 z-50 flex flex-col items-end gap-3 duration-200",
+              "fixed bottom-20 right-0 left-0 z-50 flex flex-col items-center gap-3 duration-200",
               isClosing
                 ? "animate-out slide-out-to-bottom fade-out-0"
                 : "animate-in slide-in-from-bottom-4 fade-in-0"
             )}
           >
-            <div className="flex items-center gap-3">
-              <span
-                className={cn(
-                  "text-sm px-3 py-1.5 rounded-2xl font-semibold shadow-sm",
-                  "border border-[#D4C9B0] bg-[#FDFAF4] text-[#3D3020]",
-                  "dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
-                )}
-              >
-                {t("dashboard.summary.recordIncome")}
-              </span>
-              <button
-                type="button"
-                className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-white",
-                  "border border-emerald-600/80 bg-emerald-600/80 shadow-md",
-                  "transition-colors hover:bg-emerald-700",
-                  "dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:bg-emerald-900/50"
-                )}
-                onClick={() => handleQuickAdd("INCOME")}
-                aria-label={t("dashboard.summary.recordIncome")}
-              >
-                <ArrowDownCircle className="h-[18px] w-[18px]" strokeWidth={2} />
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={cn(
-                  "text-sm px-3 py-1.5 rounded-2xl font-semibold shadow-sm",
-                  "border border-[#D4C9B0] bg-[#FDFAF4] text-[#3D3020]",
-                  "dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
-                )}
-              >
-                {t("dashboard.summary.recordExpense")}
-              </span>
-              <button
-                type="button"
-                className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-white",
-                  "border border-red-600/80 bg-red-600/80 shadow-md",
-                  "transition-colors hover:bg-red-700",
-                  "dark:border-red-800 dark:bg-red-950/50 dark:text-red-200 dark:hover:bg-red-900/50"
-                )}
-                onClick={() => handleQuickAdd("EXPENSE")}
-                aria-label={t("dashboard.summary.recordExpense")}
-              >
-                <ArrowUpCircle className="h-[18px] w-[18px]" strokeWidth={2} />
-              </button>
-            </div>
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-2xl font-semibold shadow-sm text-white",
+                "border border-emerald-600/80 bg-emerald-600/80",
+                "transition-colors hover:bg-emerald-700",
+                "dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:bg-emerald-900/50"
+              )}
+              onClick={() => handleQuickAdd("INCOME")}
+              aria-label={t("dashboard.summary.recordIncome")}
+            >
+              <span className="text-sm">{t("dashboard.summary.recordIncome")}</span>
+              <ArrowDownCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-2xl font-semibold shadow-sm text-white",
+                "border border-red-600/80 bg-red-600/80",
+                "transition-colors hover:bg-red-700",
+                "dark:border-red-800 dark:bg-red-950/50 dark:text-red-200 dark:hover:bg-red-900/50"
+              )}
+              onClick={() => handleQuickAdd("EXPENSE")}
+              aria-label={t("dashboard.summary.recordExpense")}
+            >
+              <span className="text-sm">{t("dashboard.summary.recordExpense")}</span>
+              <ArrowUpCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+            </button>
           </div>
         </div>
       )}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch h-18 min-[350px]:h-auto"
         style={{
           backgroundColor: navBg,
           borderTop: `1px solid ${navBorder}`,
@@ -155,7 +135,7 @@ export function MobileBottomNav() {
         aria-label={t("dashboard.sidebar.navigation")}
       >
         
-        {navItems.map((item) => {
+        {navItems.slice(0, 2).map((item) => {
           const Icon = item.icon;
           const isHome = item.href === "/dashboard";
           const isActive = isHome
@@ -191,7 +171,7 @@ export function MobileBottomNav() {
                 <Icon className="h-[17px] w-[17px] shrink-0" aria-hidden />
               </span>
               <span
-                className="text-[12px]"
+                className="text-[12px] hidden min-[350px]:block"
                 style={{
                   fontWeight: isActive ? 600 : 400,
                 }}
@@ -204,15 +184,61 @@ export function MobileBottomNav() {
         <button
           type="button"
           onClick={() => setQuickOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 relative transition-colors"
+          className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 relative transition-colors font-medium"
           style={{ color: inactiveColor }}
           aria-label={t("dashboard.summary.quickAddTitle")}
         >
-          <Plus className="h-[17px] w-[17px] shrink-0" aria-hidden />
-          <span className="text-[12px]" style={{ fontWeight: 400 }}>
+          <Plus className="h-[17px] w-[17px] shrink-0 min-w-10 min-h-10 bg-amber-300 rounded-full p-3 -mt-8 max-[350px]:mt-0" aria-hidden />
+          <span className="text-[12px] hidden min-[350px]:block" style={{ fontWeight: 500 }}>
             {t("dashboard.summary.quickAddTitle")}
           </span>
         </button>
+        {navItems.slice(2, 4).map((item) => {
+          const Icon = item.icon;
+          const isHome = item.href === "/dashboard";
+          const isActive = isHome
+            ? pathname === "/dashboard"
+            : pathname === item.href || pathname?.startsWith(item.href + "/");
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 relative",
+                "transition-colors"
+              )}
+              style={{
+                color: isActive ? activeColor : inactiveColor,
+              }}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={t(`dashboard.sidebar.${item.key}`)}
+            >
+              {isActive && (
+                <span
+                  className="absolute top-0 w-8 h-0.5 rounded-full"
+                  style={{ backgroundColor: activeColor }}
+                  aria-hidden
+                />
+              )}
+              <span
+                style={{
+                  transform: isActive ? "translateY(-1px) scale(1.18)" : "none",
+                }}
+              >
+                <Icon className="h-[17px] w-[17px] shrink-0" aria-hidden />
+              </span>
+              <span
+                className="text-[12px] hidden min-[350px]:block"
+                style={{
+                  fontWeight: isActive ? 600 : 400,
+                }}
+              >
+                {t(`dashboard.sidebar.${item.key}`)}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
     </>
   );

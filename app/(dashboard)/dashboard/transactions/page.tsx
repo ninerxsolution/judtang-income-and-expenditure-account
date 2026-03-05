@@ -6,7 +6,6 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
-  Plus,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -188,12 +187,6 @@ export default function TransactionsPage() {
       setFormOpen(true);
     }
   }, [searchParams]);
-
-  function openCreateModal(initialDate?: string | null) {
-    setFormEditId(null);
-    setFormInitialDate(initialDate ?? null);
-    setFormOpen(true);
-  }
 
   function openEditModal(tx: Transaction) {
     setFormEditId(tx.id);

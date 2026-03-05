@@ -127,7 +127,6 @@ export function DatePicker({
               dateValue ? "text-primary" : "text-muted-foreground",
               className,
             )}
-            aria-required={required}
             aria-label={t("common.actions.changeDate")}
           >
             {displayText}

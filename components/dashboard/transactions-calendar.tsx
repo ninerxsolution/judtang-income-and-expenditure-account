@@ -281,7 +281,7 @@ type TransactionsCalendarProps = {
 };
 
 export function TransactionsCalendar({
-  showNewTransactionButton = true,
+  showNewTransactionButton: _ = true,
   showQuickActions = false,
   variant = "embedded",
 }: TransactionsCalendarProps) {
@@ -682,13 +682,6 @@ export function TransactionsCalendar({
   function openQuickAdd(type: "INCOME" | "EXPENSE" | "TRANSFER") {
     setFormEditId(null);
     setFormInitialDate(formatDateInput(new Date()));
-    setFormInitialType(type);
-    setFormOpen(true);
-  }
-
-  function openQuickAddForDate(dateIso: string, type: "INCOME" | "EXPENSE" | "TRANSFER") {
-    setFormEditId(null);
-    setFormInitialDate(dateIso);
     setFormInitialType(type);
     setFormOpen(true);
   }
@@ -1598,9 +1591,9 @@ export function TransactionsCalendar({
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && closeDay()}>
         <DialogContent
           showCloseButton={false}
-          className="max-w-md overflow-hidden rounded-xl p-0 gap-0 transition-[min-height] duration-200 ease-out sm:max-w-md"
+          className="flex max-h-[90vh] flex-col overflow-hidden rounded-xl p-0 gap-0 transition-[min-height] duration-200 ease-out sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
         >
-          <div className="flex items-center justify-between border-b border-[#D4C9B0] px-4 py-3 dark:border-stone-700 transition-all duration-200 ease-out">
+          <div className="flex shrink-0 items-center justify-between border-b border-[#D4C9B0] px-4 py-3 dark:border-stone-700 transition-all duration-200 ease-out">
             <DialogTitle asChild>
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
@@ -1634,7 +1627,7 @@ export function TransactionsCalendar({
           </div>
 
           <div
-            className="min-h-[120px] max-h-[70vh] overflow-y-auto px-4 py-3 text-sm transition-all duration-200 ease-out"
+            className="flex-1 min-h-0 overflow-y-auto px-4 py-3 text-sm transition-all duration-200 ease-out"
           >
             {dayDetailContent}
           </div>
@@ -1726,4 +1719,3 @@ export function TransactionsCalendar({
     </div>
   );
 }
-
