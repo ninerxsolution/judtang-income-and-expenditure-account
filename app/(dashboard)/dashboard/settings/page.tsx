@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Bell, Monitor, Trash2, Languages, Info, HelpCircle } from "lucide-react";
+import { Bell, Monitor, Trash2, Languages, Info, HelpCircle, Wallet } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,6 +134,7 @@ export default function SettingsPage() {
     { id: "language", label: t("settings.language.titleWithNative") },
     { id: "activity-log", label: t("settings.activityLog.title") },
     { id: "categories", label: t("settings.categories.title") },
+    { id: "budget", label: t("settings.budget.title") },
     { id: "data-tools", label: t("dataTools.title") },
     { id: "sessions", label: t("settings.sessions.title") },
     { id: "feedback", label: t("settings.feedback.title") },
@@ -341,6 +342,35 @@ export default function SettingsPage() {
         <div id="categories" className="scroll-mt-6">
           <CategorySettings />
         </div>
+
+        {/* Budget link-out */}
+        <section
+          id="budget"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
+        >
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-7 w-7 items-center justify-center">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                  {t("settings.budget.title")}
+                </h2>
+                <p className="mt-1 text-xs text-[#6B5E4E] dark:text-stone-400">
+                  {t("settings.budget.description")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Link
+            href="/dashboard/settings/budget"
+            className="inline-flex items-center text-sm font-medium text-[#3D3020] hover:text-[#6B5E4E] dark:text-stone-100 dark:hover:text-stone-300 underline-offset-4 hover:underline"
+          >
+            {t("settings.budget.open")}
+          </Link>
+        </section>
 
         {/* Tools inline section (full tools UI embedded) */}
         <section

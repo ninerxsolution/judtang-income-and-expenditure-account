@@ -2,6 +2,19 @@
 
 ---
 
+# v0.9.14 - 2026-03-05
+
+## Added
+
+- **Budget: Template CRUD in Settings** — On the Budget settings page (`/dashboard/settings/budget`), a new Templates section lets you create, list, edit, and delete budget templates. Each template has a name, optional total budget, and repeatable category limits (category + amount). Create/Edit dialog supports multiple category rows with add/remove; Delete uses a confirmation dialog. Apply-template block remains when templates exist.
+- **Budget: Edit category budget** — Each category budget row for the selected month now has an Edit button (pencil icon). Clicking it opens a dialog to change the limit (฿) for that category; saving calls `PATCH /api/budgets/categories/[id]` and refreshes progress. No need to delete and re-add to change a limit.
+
+## Changed
+
+- **Budget settings i18n** — New keys under `settings.budget`: `createTemplate`, `editTemplate`, `deleteTemplate`, `templateDeleteConfirm`, `editCategoryBudget`, `addLimitRow` (EN/TH).
+
+---
+
 # v0.9.13 - 2026-03-05
 
 ## Changed

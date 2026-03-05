@@ -5,6 +5,21 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 05/03/2026 (Budget: Template CRUD UI and Edit category budget)
+
+- app/(dashboard)/dashboard/settings/budget/page.tsx — Templates section (list, Add template), Create/Edit template dialog (name, totalBudget, category limits rows), Delete template AlertDialog; Edit category budget (Edit button per row, dialog to change limit, PATCH categories/[id]).
+- i18n/dictionaries/en.ts, th.ts — Added settings.budget: createTemplate, editTemplate, deleteTemplate, templateDeleteConfirm, editCategoryBudget, addLimitRow.
+- docs/feature/budget-management.md — UI §5: Template management (create, list, edit, delete); Edit category budget (change limit per row).
+
+---
+
+## 05/03/2026 (Budget Management feature)
+
+- docs/feature/budget-management.md — New: Budget Management (templates, BudgetMonth, BudgetCategory, progress calculation, APIs, UI, edge cases).
+- docs/INDEX.md — Added reference to budget-management.md in feature section.
+
+---
+
 ## 05/03/2026 (Fullscreen dialog input focus scroll on mobile)
 
 - docs/structure/dashboard-responsive-ui.md — Added §9 Fullscreen dialog — input focus scroll (mobile): DialogBody auto-scrolls focused input into view on mobile; renumbered §10 Accessibility.

@@ -96,6 +96,8 @@ model User {
   categories         Category[]
   termsAcceptances   UserTermsAcceptance[]
   reports            Report[]
+  budgetTemplates    BudgetTemplate[]
+  budgetMonths       BudgetMonth[]
 }
 
 // Tracks active JWT sessions per user (sessionId in JWT cookie).
@@ -189,6 +191,8 @@ model Category {
   userId      String
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  budgetTemplateCategories BudgetTemplateCategory[]
+  budgetCategories         BudgetCategory[]
 
   @@unique([userId, name])
   @@index([userId])
@@ -261,6 +265,69 @@ model CreditCardStatement {
 
   @@index([accountId])
   @@index([accountId, closingDate])
+}
+
+// --- Budget Management ---
+
+model BudgetTemplate {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  isActive    Boolean   @default(true)
+  totalBudget Decimal?  @db.Decimal(15, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryLimits BudgetTemplateCategory[]
+
+  @@index([userId])
+}
+
+model BudgetTemplateCategory {
+  id           String   @id @default(cuid())
+  templateId   String
+  categoryId   String?
+  limitAmount  Decimal  @db.Decimal(15, 2)
+  createdAt    DateTime @default(now())
+
+  template BudgetTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  category Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([templateId, categoryId])
+  @@index([templateId])
+  @@index([categoryId])
+}
+
+model BudgetMonth {
+  id          String    @id @default(cuid())
+  userId      String
+  year        Int
+  month       Int       // 1-12
+  totalBudget Decimal?  @db.Decimal(15, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryBudgets  BudgetCategory[]
+
+  @@unique([userId, year, month])
+  @@index([userId, year, month])
+}
+
+model BudgetCategory {
+  id            String   @id @default(cuid())
+  budgetMonthId String
+  categoryId    String?
+  limitAmount   Decimal  @db.Decimal(15, 2)
+  createdAt     DateTime @default(now())
+
+  budgetMonth BudgetMonth @relation(fields: [budgetMonthId], references: [id], onDelete: Cascade)
+  category    Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([budgetMonthId, categoryId])
+  @@index([budgetMonthId])
+  @@index([categoryId])
 }
 
 // --- Help & Feedback Reports ---

@@ -4,9 +4,9 @@
  * Dashboard home: summary cards + calendar.
  * Protected by proxy — requires login. URL: /dashboard
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Plus, Minus } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Plus, Minus, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
@@ -32,6 +32,24 @@ export default function DashboardPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [formInitialType, setFormInitialType] = useState<"INCOME" | "EXPENSE" | "TRANSFER">("EXPENSE");
+  const [budgetOverview, setBudgetOverview] = useState<{
+    totalSpent: number;
+    totalBudget: number | null;
+    totalProgress: number;
+    totalIndicator: "normal" | "warning" | "critical" | "over";
+  } | null>(null);
+  const [budgetLoading, setBudgetLoading] = useState(true);
+
+  useEffect(() => {
+    const now = new Date();
+    fetch(`/api/budgets?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { totalSpent: number; totalBudget: number | null; totalProgress: number; totalIndicator: string } | null) => {
+        if (data) setBudgetOverview({ totalSpent: data.totalSpent, totalBudget: data.totalBudget, totalProgress: data.totalProgress, totalIndicator: data.totalIndicator as "normal" | "warning" | "critical" | "over" });
+      })
+      .catch(() => { })
+      .finally(() => setBudgetLoading(false));
+  }, []);
 
   function openQuickAdd(type: "INCOME" | "EXPENSE" | "TRANSFER") {
     setFormInitialType(type);
@@ -86,7 +104,7 @@ export default function DashboardPage() {
                   <CardTitle className="text-sm font-medium justify-between flex items-center text-white/90">
                     {t("dashboard.summary.balance")}
                     <Link href="/dashboard/accounts" className="text-xs text-white/50 hover:text-white transition-all hover:underline">
-                     {t("dashboard.summary.fromAllAccounts", { count: accountCount })}
+                      {t("dashboard.summary.fromAllAccounts", { count: accountCount })}
                     </Link>
                   </CardTitle>
                 </CardHeader>
@@ -101,6 +119,78 @@ export default function DashboardPage() {
               </Card>
             </>
           )}
+
+          {/* Budget overview card — current month */}
+          <div className="mt-4">
+              {budgetLoading ? (
+                <Card className="border-[#D4C9B0] dark:border-stone-700">
+                  <CardContent className="pt-4">
+                    <Skeleton className="h-16 w-full rounded-md" />
+                  </CardContent>
+                </Card>
+              ) : budgetOverview?.totalBudget != null && budgetOverview.totalBudget > 0 ? (
+                <Card className="border-[#D4C9B0] dark:border-stone-700">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-[#5C6B52] dark:text-stone-400" />
+                      {t("settings.budget.title")} ({t("dashboard.summary.title")})
+                    </CardTitle>
+                    <Link
+                      href={`/dashboard/settings/budget?year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`}
+                      className="text-xs font-medium text-[#5C6B52] hover:underline dark:text-stone-400 dark:hover:text-stone-300"
+                    >
+                      {t("settings.budget.open")}
+                    </Link>
+                  </CardHeader>
+                  <CardContent className="space-y-1">
+                    <p className="text-lg font-semibold tabular-nums">
+                      ฿ {formatAmount(budgetOverview.totalSpent)} / ฿ {formatAmount(budgetOverview.totalBudget)}
+                      <span
+                        className={`ml-2 text-sm font-normal ${budgetOverview.totalIndicator === "over"
+                            ? "text-red-600 dark:text-red-400"
+                            : budgetOverview.totalIndicator === "critical"
+                              ? "text-orange-600 dark:text-orange-400"
+                              : budgetOverview.totalIndicator === "warning"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-[#6B5E4E] dark:text-stone-400"
+                          }`}
+                      >
+                        ({Math.round(budgetOverview.totalProgress * 100)}%)
+                      </span>
+                    </p>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
+                      <div
+                        className={`h-full ${budgetOverview.totalIndicator === "over"
+                            ? "bg-red-500"
+                            : budgetOverview.totalIndicator === "critical"
+                              ? "bg-orange-500"
+                              : budgetOverview.totalIndicator === "warning"
+                                ? "bg-amber-500"
+                                : "bg-emerald-500"
+                          }`}
+                        style={{ width: `${Math.min(100, budgetOverview.totalProgress * 100)}%` }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="border-[#D4C9B0] dark:border-stone-700">
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-[#6B5E4E] dark:text-stone-400 mb-2">
+                      {t("settings.budget.description")}
+                    </p>
+                    <Link
+                      href={`/dashboard/settings/budget?year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`}
+                    >
+                      <Button variant="outline" size="sm">
+                        <Wallet className="h-4 w-4 mr-1" />
+                        {t("settings.budget.setBudget")}
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
           {/* Recent account activity */}
           {/* <div className="space-y-2">
@@ -240,8 +330,10 @@ export default function DashboardPage() {
                 </Card>
               </div>
             )}
+
+            
           </div>
-          <TransactionsCalendar showNewTransactionButton={false} showQuickActions={true}/>
+          <TransactionsCalendar showNewTransactionButton={false} showQuickActions={true} />
         </div>
       </div>
 
