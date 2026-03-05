@@ -1,6 +1,6 @@
-"use client";
+ "use client";
 
-import { ArrowDownCircle, ArrowLeftRight, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";

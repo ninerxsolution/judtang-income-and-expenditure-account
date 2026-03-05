@@ -4,15 +4,13 @@
  * Dashboard home: summary cards + calendar.
  * Protected by proxy — requires login. URL: /dashboard
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Plus, Minus, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
-import { AccountIcon } from "@/components/dashboard/account-combobox";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
-import type { DashboardTransactionAccount } from "@/components/dashboard/dashboard-data-context";
 import {
   Card,
   CardContent,
@@ -31,7 +29,7 @@ export default function DashboardPage() {
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [formInitialType, setFormInitialType] = useState<"INCOME" | "EXPENSE" | "TRANSFER">("EXPENSE");
+  const [formInitialType, _setFormInitialType] = useState<"INCOME" | "EXPENSE" | "TRANSFER">("EXPENSE");
   const [budgetOverview, setBudgetOverview] = useState<{
     totalSpent: number;
     totalBudget: number | null;
@@ -51,26 +49,9 @@ export default function DashboardPage() {
       .finally(() => setBudgetLoading(false));
   }, []);
 
-  function openQuickAdd(type: "INCOME" | "EXPENSE" | "TRANSFER") {
-    setFormInitialType(type);
-    setFormOpen(true);
-  }
-
   function handleFormSuccess() {
     refresh();
   }
-
-  const accountItems = useMemo(() => {
-    const items: { account: DashboardTransactionAccount; txType: "INCOME" | "EXPENSE" | "TRANSFER" }[] = [];
-    const txTypeMap = { INCOME: "INCOME" as const, EXPENSE: "EXPENSE" as const, TRANSFER: "TRANSFER" as const };
-    for (const tx of recentTransactions) {
-      const txType = txTypeMap[tx.type as keyof typeof txTypeMap] ?? "EXPENSE";
-      if (tx.financialAccount) items.push({ account: tx.financialAccount, txType });
-      if (tx.type === "TRANSFER" && tx.transferAccount) items.push({ account: tx.transferAccount, txType });
-      if (items.length >= 4) break;
-    }
-    return items.slice(0, 4);
-  }, [recentTransactions]);
 
   return (
     <div className="space-y-6 pt-4 sm:pt-8">
