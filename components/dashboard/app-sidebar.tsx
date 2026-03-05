@@ -195,7 +195,7 @@ export function AppSidebarLayout({
       </Sidebar>
 
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 z-10">
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:static">
           {isSmallScreen ? (
             <Dialog>
               <DialogTrigger asChild>
