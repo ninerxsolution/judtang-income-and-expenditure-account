@@ -779,7 +779,7 @@ export default function BudgetSettingsPage() {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
           <DialogHeader>
             <DialogTitle>
               {editTemplateId
