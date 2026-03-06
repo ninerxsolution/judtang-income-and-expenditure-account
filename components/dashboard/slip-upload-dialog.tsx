@@ -21,6 +21,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
+const MAX_FILES_PER_REQUEST = 10;
 
 function sanitizeAmountInput(value: string): string {
   const noComma = value.replace(/,/g, "");
@@ -102,6 +103,7 @@ export function SlipUploadDialog({
   const [accountsLoading, setAccountsLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const processingControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -176,6 +178,12 @@ export function SlipUploadDialog({
     if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
+    if (fileList.length > MAX_FILES_PER_REQUEST) {
+      setGlobalError(
+        t("dashboard.slipUpload.errorGeneric"),
+      );
+      return;
+    }
     const tooLarge = fileList.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
     if (tooLarge.length > 0) {
       setGlobalError(t("dashboard.slipUpload.errorFileTooLarge"));
@@ -183,6 +191,11 @@ export function SlipUploadDialog({
     }
 
     setGlobalError(null);
+    if (processingControllerRef.current) {
+      processingControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    processingControllerRef.current = controller;
     setStep("processing");
 
     const formData = new FormData();
@@ -192,6 +205,7 @@ export function SlipUploadDialog({
       const res = await fetch("/api/ocr/parse-slips", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
 
       const data = (await res.json()) as {
@@ -239,7 +253,12 @@ export function SlipUploadDialog({
 
       setDrafts(newDrafts);
       setStep("preview");
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        // Request was cancelled; just reset to select state.
+        setStep("select");
+        return;
+      }
       setGlobalError(t("dashboard.slipUpload.errorGeneric"));
       setStep("select");
     }
