@@ -470,6 +470,8 @@ export const thDictionary = {
       deleteTemplate: "ลบเทมเพลต",
       templateDeleteConfirm: "ลบเทมเพลตนี้หรือไม่? จะไม่กระทบงบเดือนที่สร้างไว้แล้ว",
       editCategoryBudget: "แก้ไขงบ",
+      deleteCategoryBudget: "ลบงบหมวดหมู่",
+      deleteCategoryBudgetConfirm: "ลบงบหมวดหมู่นี้สำหรับเดือนที่เลือกหรือไม่?",
       addLimitRow: "เพิ่มหมวด",
       applyTemplateSuccess: "ใช้เทมเพลตแล้ว",
       saveSuccess: "บันทึกแล้ว",
