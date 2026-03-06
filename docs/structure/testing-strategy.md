@@ -1,6 +1,6 @@
 # Testing Strategy
 
-**Updated:** 03/03/2026
+**Updated:** 06/03/2026
 
 **Source:** PRD §10
 
@@ -43,20 +43,23 @@
 
 - **__tests__/api/app-info.test.ts** — GET (401, 200)
 - **__tests__/api/auth/register.test.ts** — POST (validation, duplicate, success)
+- **__tests__/api/auth/forgot-password.test.ts** — POST (validation, 200 ok)
+- **__tests__/api/auth/reset-password.test.ts** — POST (token, newPassword, 200)
+- **__tests__/api/auth/verify-email.test.ts** — GET (token query, 200)
 - **__tests__/api/users/me.test.ts** — GET (401, 404, 200), PATCH (401, 400, 200)
+- **__tests__/api/users/me-password.test.ts** — PATCH (401, 400, 401 wrong password, 200)
 - **__tests__/api/sessions.test.ts** — GET, POST, DELETE (401, 400, 200)
 - **__tests__/api/financial-accounts.test.ts** — GET, POST, GET/PATCH/DELETE [id]
 - **__tests__/api/transactions.test.ts** — GET, POST (validation, success)
+- **__tests__/api/transactions-export.test.ts** — GET (401, 200 CSV)
+- **__tests__/api/transactions-import.test.ts** — POST (401, 400 no content, 200 with CSV)
 - **__tests__/api/categories.test.ts** — GET, POST, PATCH, DELETE [id]
 - **__tests__/api/dashboard.test.ts** — GET /api/dashboard/init
 - **__tests__/api/activity-log.test.ts** — GET /api/activity-log
 - **__tests__/api/transactions-summary.test.ts** — GET /api/transactions/summary
 - **__tests__/api/credit-card.test.ts** — payment, apply-interest, close-statement
+- **__tests__/api/reports.test.ts** — POST (401, 400 invalid category/title, 200 create)
 
 ## Deferred
 
-- `POST /api/auth/forgot-password`, `reset-password`, `verify-email` — token + email flow
-- `POST /api/transactions/import`, `export` — file handling
-- `POST /api/reports` — PDF generation
-- `PATCH /api/users/me/password` — password change flow
 - `__tests__/auth/auth.test.ts` — NextAuth credentials flow

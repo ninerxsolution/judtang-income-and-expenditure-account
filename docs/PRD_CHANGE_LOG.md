@@ -5,6 +5,44 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 06/03/2026 (Credit Card Apply Interest v1.1)
+
+- lib/credit-card/interest.ts — New: applyInterest(accountId, userId); formula daily rate, INTEREST transaction, interestCalculatedUntil update, recomputeOutstanding, Activity Log CREDIT_CARD_INTEREST_APPLIED.
+- app/api/credit-card/[id]/apply-interest/route.ts — Replaced 501 stub with applyInterest call; 404/400/200 handling.
+- lib/activity-log.ts — Added CREDIT_CARD_INTEREST_APPLIED.
+- lib/credit-card/__tests__/interest.test.ts — New: unit tests for applyInterest.
+- __tests__/api/credit-card.test.ts — apply-interest: 404, 400 incomplete, 200 applied false/true.
+- app/(dashboard)/dashboard/settings/activity-log/page.tsx — ACTION_OPTIONS and formatDetails for CREDIT_CARD_INTEREST_APPLIED.
+- i18n/dictionaries/en.ts, th.ts — activityLog.actions.CREDIT_CARD_INTEREST_APPLIED, details.creditCardInterestApplied.
+- docs/feature/credit-card-engine.md — §4.6 Apply Interest (v1.1), §5 apply-interest row, §7 removed Interest (v1.1) from Out of Scope.
+- docs/core/activity-log.md — Added CREDIT_CARD_INTEREST_APPLIED to Credit card actions.
+
+---
+
+## 06/03/2026 (Testing strategy: deferred API tests added)
+
+- __tests__/api/auth/forgot-password.test.ts, reset-password.test.ts, verify-email.test.ts — New tests for auth flows.
+- __tests__/api/transactions-export.test.ts, transactions-import.test.ts — New tests for export/import.
+- __tests__/api/reports.test.ts — New tests for POST /api/reports.
+- __tests__/api/users/me-password.test.ts — New tests for PATCH /api/users/me/password.
+- docs/structure/testing-strategy.md — Moved above from Deferred to API integration tests; updated date.
+
+---
+
+## 06/03/2026 (MVP Boundary: Budget + Recurring)
+
+- docs/structure/mvp-boundary.md — Added Budget Management and Recurring Transactions to Implemented (Beyond MVP); updated date to 06/03/2026.
+
+---
+
+## 06/03/2026 (Recurring Transactions feature doc + PRD §7.6)
+
+- docs/feature/recurring-transactions.md — New: Recurring Transactions feature doc (data model, APIs, logic, UI, Activity Log).
+- docs/INDEX.md — Added reference to recurring-transactions.md in feature section.
+- docs/PRD.md — Added §7.6 Recurring Transactions (templates, due by month, confirm as transaction).
+
+---
+
 ## 06/03/2026 (Dialog form fullscreen on mobile — convention)
 
 - docs/structure/dashboard-responsive-ui.md — Added §10 Dialog: form vs simple (mobile fullscreen): rule that form dialogs must be fullscreen on mobile; class pattern and layout; reference to .cursor/rules/dialog-mobile-fullscreen-form.mdc. Renumbered §10 Accessibility to §11.

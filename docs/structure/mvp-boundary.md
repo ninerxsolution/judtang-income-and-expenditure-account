@@ -1,6 +1,6 @@
 # MVP Boundary
 
-**Updated:** 03/03/2026
+**Updated:** 06/03/2026
 
 **Source:** PRD §13
 
@@ -22,6 +22,8 @@
 - **Income & Expense** — Transactions, calendar, Data Tools for CSV import/export (PRD §18)
 - **Financial Accounts** — Bank, wallet, cash, credit card (PRD §18)
 - **Credit Card Engine** — Statement cycle, payment allocation (PRD §18)
+- **Budget Management** — Monthly/category budgets, templates, progress (see [feature/budget-management.md](../feature/budget-management.md))
+- **Recurring Transactions** — Templates, due by month, confirm as transaction (see [feature/recurring-transactions.md](../feature/recurring-transactions.md))
 
 ## MVP Out of Scope
 

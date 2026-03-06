@@ -82,6 +82,13 @@ Fields เพิ่มเติมสำหรับ CREDIT_CARD:
 2. Create CreditCardStatement
 3. Assign transactions to statement
 
+### 4.6 Apply Interest (v1.1)
+
+- **ช่วงคำนวณ:** จาก `interestCalculatedUntil` ของบัญชี (ถ้า null ใช้ `periodEnd` ของ statement ล่าสุดที่ปิดแล้ว หรือต้นเดือนของวันสร้างบัญชี) ถึงวันนี้
+- **สูตร:** ดอกเบี้ย = outstanding × (อัตรารายปี % / 100) / 365 × จำนวนวัน (ปัดสองทศนิยม)
+- **การทำงาน:** สร้าง Transaction type INTEREST, amount = ดอกเบี้ยที่คำนวณได้, status POSTED, occurredAt = วันสิ้นสุดช่วง; อัปเดต `FinancialAccount.interestCalculatedUntil`; เรียก `recomputeOutstanding`; บันทึก Activity Log `CREDIT_CARD_INTEREST_APPLIED`
+- **กรณีไม่คิดดอกเบี้ย:** outstanding ≤ 0 หรือไม่มีช่วงที่จะคำนวณ — คืน `applied: false` พร้อม message
+
 ## 5. APIs
 
 | Endpoint | Purpose |
@@ -89,7 +96,7 @@ Fields เพิ่มเติมสำหรับ CREDIT_CARD:
 | `GET /api/credit-card/[id]` | Dashboard data (limit, outstanding, available, statement, due date, utilization) |
 | `POST /api/credit-card/[id]/close-statement` | Close statement for given closing date |
 | `POST /api/credit-card/[id]/payment` | Record payment; body: `amount`, `occurredAt`, `fromAccountId?`, `note?` |
-| `POST /api/credit-card/[id]/apply-interest` | (v1.1) Apply interest |
+| `POST /api/credit-card/[id]/apply-interest` | Apply interest (v1.1); returns `{ applied, transactionId?, amount?, message? }` |
 | `POST /api/credit-card/[id]/import-statement` | Import CSV, return matched/missing/duplicates/unmatched |
 
 ## 6. Validation Rules
@@ -102,7 +109,6 @@ Fields เพิ่มเติมสำหรับ CREDIT_CARD:
 
 ## 7. Out of Scope (v1)
 
-- Interest calculation (v1.1)
 - Automatic bank sync
 - Multi-currency
 - Installment plans

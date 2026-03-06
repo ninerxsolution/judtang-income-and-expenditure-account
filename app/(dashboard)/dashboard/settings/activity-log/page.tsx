@@ -42,6 +42,7 @@ const ACTION_OPTIONS = [
   { value: "TRANSACTION_EXPORT", labelKey: "TRANSACTION_EXPORT" },
   { value: "TRANSACTION_IMPORT", labelKey: "TRANSACTION_IMPORT" },
   { value: "CREDIT_CARD_PAYMENT", labelKey: "CREDIT_CARD_PAYMENT" },
+  { value: "CREDIT_CARD_INTEREST_APPLIED", labelKey: "CREDIT_CARD_INTEREST_APPLIED" },
   { value: "FINANCIAL_ACCOUNT_CREATED", labelKey: "FINANCIAL_ACCOUNT_CREATED" },
   { value: "FINANCIAL_ACCOUNT_UPDATED", labelKey: "FINANCIAL_ACCOUNT_UPDATED" },
   { value: "FINANCIAL_ACCOUNT_DISABLED", labelKey: "FINANCIAL_ACCOUNT_DISABLED" },
@@ -179,6 +180,18 @@ function formatDetails(
         amount: `฿${amount}`,
         fromAccount: fromAccountName ?? "—",
         date: occurredAt || "—",
+      }),
+    );
+    return detailLines;
+  }
+
+  if (action === "CREDIT_CARD_INTEREST_APPLIED") {
+    const amount = formatAmount(details.amount);
+    const toDate = formatDetailDate(details.toDate, locale);
+    detailLines.push(
+      t("activityLog.details.creditCardInterestApplied", {
+        amount: `฿${amount}`,
+        toDate: toDate || "—",
       }),
     );
     return detailLines;

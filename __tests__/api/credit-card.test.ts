@@ -34,6 +34,11 @@ jest.mock("@/lib/credit-card", () => ({
   getLatestStatement: jest.fn().mockResolvedValue(null),
 }));
 
+const mockApplyInterest = jest.fn();
+jest.mock("@/lib/credit-card/interest", () => ({
+  applyInterest: (...args: unknown[]) => mockApplyInterest(...args),
+}));
+
 jest.mock("@/lib/cache", () => ({
   revalidateTag: jest.fn(),
 }));
@@ -197,8 +202,9 @@ describe("POST /api/credit-card/[id]/apply-interest", () => {
     expect(data).toEqual({ error: "Unauthorized" });
   });
 
-  it("returns 501 not implemented", async () => {
+  it("returns 404 when account not found", async () => {
     mockGetServerSession.mockResolvedValue(createMockSession());
+    mockApplyInterest.mockRejectedValue(new Error("Not found"));
 
     const req = new Request("http://localhost/api/credit-card/cc-1/apply-interest", {
       method: "POST",
@@ -208,8 +214,63 @@ describe("POST /api/credit-card/[id]/apply-interest", () => {
     });
     const data = await res.json();
 
-    expect(res.status).toBe(501);
-    expect(data.error).toContain("not yet implemented");
+    expect(res.status).toBe(404);
+    expect(data.error).toBe("Not found");
+  });
+
+  it("returns 400 when account is incomplete", async () => {
+    mockGetServerSession.mockResolvedValue(createMockSession());
+    mockApplyInterest.mockRejectedValue(new Error("Credit card account is incomplete"));
+
+    const req = new Request("http://localhost/api/credit-card/cc-1/apply-interest", {
+      method: "POST",
+    });
+    const res = await applyInterestPOST(req, {
+      params: createParams({ id: "cc-1" }),
+    });
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain("incomplete");
+  });
+
+  it("returns 200 applied false when no outstanding", async () => {
+    mockGetServerSession.mockResolvedValue(createMockSession());
+    mockApplyInterest.mockResolvedValue({ applied: false, message: "No outstanding balance" });
+
+    const req = new Request("http://localhost/api/credit-card/cc-1/apply-interest", {
+      method: "POST",
+    });
+    const res = await applyInterestPOST(req, {
+      params: createParams({ id: "cc-1" }),
+    });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.applied).toBe(false);
+    expect(data.message).toContain("outstanding");
+  });
+
+  it("returns 200 applied true with transactionId and amount", async () => {
+    mockGetServerSession.mockResolvedValue(createMockSession());
+    mockApplyInterest.mockResolvedValue({
+      applied: true,
+      transactionId: "tx-interest-1",
+      amount: 75.5,
+    });
+
+    const req = new Request("http://localhost/api/credit-card/cc-1/apply-interest", {
+      method: "POST",
+    });
+    const res = await applyInterestPOST(req, {
+      params: createParams({ id: "cc-1" }),
+    });
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.applied).toBe(true);
+    expect(data.transactionId).toBe("tx-interest-1");
+    expect(data.amount).toBe(75.5);
   });
 });
 

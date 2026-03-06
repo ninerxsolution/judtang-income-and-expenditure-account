@@ -78,6 +78,10 @@ User-facing report submission at Settings → Help & Feedback (`/dashboard/setti
 
 A public Terms & Conditions page at `/terms` (no login required) that defines the service agreement, acceptable use, and user obligations. Linked in the landing page footer. See [feature/terms-and-conditions.md](feature/terms-and-conditions.md) for full spec.
 
+### 7.6 Recurring Transactions
+
+Templates for repeating income or expense items (WEEKLY, MONTHLY, YEARLY). Users view items due in a selected month and confirm to create an actual Transaction from a template. See [feature/recurring-transactions.md](feature/recurring-transactions.md) for full spec.
+
 ---
 
 ## 8. Authentication & Authorization
