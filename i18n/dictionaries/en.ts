@@ -182,6 +182,21 @@ export const enDictionary = {
     header: {
       netBalance: "Net balance",
     },
+    slipUpload: {
+      title: "Slip upload",
+      selectImages: "Select bank slip images to create transactions.",
+      chooseImages: "Choose images",
+      processing: "Processing slips…",
+      previewTitle: "Confirm transactions",
+      confirmAll: "Confirm & create",
+      creating: "Creating transactions…",
+      parseWarning: "Could not read this slip automatically. Please fill in the details.",
+      errorNotConfigured: "Slip OCR is not configured.",
+      errorRateLimit: "Too many OCR requests. Please try again later.",
+      errorFileTooLarge: "One or more files are too large (max 1 MB).",
+      errorGeneric: "Failed to process slips. Please try again.",
+      partialSuccess: "Some transactions could not be created.",
+    },
   },
   summary: {
     period: {

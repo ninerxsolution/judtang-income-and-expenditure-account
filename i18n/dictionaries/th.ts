@@ -182,6 +182,21 @@ export const thDictionary = {
     header: {
       netBalance: "ยอดสุทธิ",
     },
+    slipUpload: {
+      title: "อัปโหลดสลิป",
+      selectImages: "เลือกรูปสลิปธนาคารเพื่อสร้างรายการ",
+      chooseImages: "เลือกรูปภาพ",
+      processing: "กำลังประมวลผลสลิป…",
+      previewTitle: "ยืนยันรายการ",
+      confirmAll: "ยืนยันและสร้าง",
+      creating: "กำลังสร้างรายการ…",
+      parseWarning: "อ่านสลิปอัตโนมัติไม่ได้ กรุณากรอกข้อมูลเอง",
+      errorNotConfigured: "Slip OCR ยังไม่ได้ตั้งค่า",
+      errorRateLimit: "คำขอ OCR เยอะเกินไป กรุณาลองใหม่ภายหลัง",
+      errorFileTooLarge: "ไฟล์บางไฟล์ใหญ่เกินไป (สูงสุด 1 MB)",
+      errorGeneric: "ประมวลผลสลิปไม่สำเร็จ กรุณาลองใหม่",
+      partialSuccess: "บางรายการสร้างไม่สำเร็จ",
+    },
   },
   summary: {
     period: {

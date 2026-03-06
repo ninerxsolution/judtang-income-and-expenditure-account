@@ -5,6 +5,26 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 06/03/2026 (Slip OCR: dual-language parser)
+
+- lib/slip-parser.ts — Thai support: จำนวน/บาท amount pattern, ม.ค./ก.พ./... date pattern, Buddhist Era year; skip Thai boilerplate in note.
+- lib/__tests__/slip-parser.test.ts — Thai amount, Thai date (2-digit year and Buddhist Era), full Thai slip sample.
+- docs/feature/slip-ocr.md — New: Slip OCR feature doc.
+- docs/structure/testing-strategy.md — Added slip-parser.test.ts to Lib unit tests.
+
+---
+
+## 06/03/2026 (Slip OCR to Transaction)
+
+- app/api/ocr/parse-slips/route.ts — New: POST /api/ocr/parse-slips; auth, FormData files, OCR.space API (language=tha), parseSlipText; 503/429/400 handling.
+- lib/slip-parser.ts — New: parseSlipText (amount, occurredAt, note) for Kasikorn-style slips.
+- components/dashboard/slip-upload-dialog.tsx — New: SlipUploadDialog (select images, processing, preview, confirm & create).
+- components/dashboard/mobile-bottom-nav.tsx — handleSlipUpload, SlipUploadDialog; Slip upload button opens dialog.
+- .env.example — OCR_SPACE_API_KEY.
+- i18n/dictionaries/en.ts, th.ts — dashboard.slipUpload keys.
+
+---
+
 ## 06/03/2026 (Credit Card Apply Interest v1.1)
 
 - lib/credit-card/interest.ts — New: applyInterest(accountId, userId); formula daily rate, INTEREST transaction, interestCalculatedUntil update, recomputeOutstanding, Activity Log CREDIT_CARD_INTEREST_APPLIED.

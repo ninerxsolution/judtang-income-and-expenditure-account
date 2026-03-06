@@ -38,6 +38,7 @@
 - **lib/__tests__/financial-accounts.test.ts** — `isAccountIncomplete` for CASH/OTHER, BANK/WALLET, CREDIT_CARD; Prisma Decimal handling
 - **lib/credit-card/__tests__/payment.test.ts** — `recordPayment` validation and success paths
 - **lib/credit-card/__tests__/statement.test.ts** — `getPeriodForClosingDate`
+ - **lib/__tests__/slip-parser.test.ts** — `parseSlipText` (EN/TH amount, date, note for Kasikorn-style slips)
 
 ## API integration tests
 

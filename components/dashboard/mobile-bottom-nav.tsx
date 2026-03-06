@@ -18,6 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
 import { useTransactionForm } from "@/components/dashboard/transaction-form-context";
+import { SlipUploadDialog } from "@/components/dashboard/slip-upload-dialog";
 
 const navItems = [
   { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -39,6 +40,7 @@ export function MobileBottomNav() {
   const activeColor = isDark ? "rgb(212, 212, 212)" : "rgb(92, 107, 82)";
   const inactiveColor = isDark ? "rgb(163, 163, 163)" : "rgb(160, 144, 128)";
   const [quickOpen, setQuickOpen] = useState(false);
+  const [slipDialogOpen, setSlipDialogOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -69,6 +71,11 @@ export function MobileBottomNav() {
     handleClose();
   }
 
+  function handleSlipUpload() {
+    setSlipDialogOpen(true);
+    handleClose();
+  }
+
   const showOverlay = quickOpen || isClosing;
 
   return (
@@ -88,7 +95,7 @@ export function MobileBottomNav() {
           />
           <div
             className={cn(
-              "fixed bottom-20 right-0 left-0 z-50 flex flex-col items-center gap-3 duration-200",
+              "fixed bottom-24 right-0 left-0 z-50 flex flex-col items-center gap-3 duration-200",
               isClosing
                 ? "animate-out slide-out-to-bottom fade-out-0"
                 : "animate-in slide-in-from-bottom-4 fade-in-0"
@@ -122,9 +129,28 @@ export function MobileBottomNav() {
               <span className="text-sm">{t("dashboard.summary.recordExpense")}</span>
               <ArrowUpCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
             </button>
+            <button
+              type="button"
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-2xl font-semibold shadow-sm text-white",
+                "border border-blue-600/80 bg-blue-600/80",
+                "transition-colors hover:bg-blue-700",
+                "dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/50"
+              )}
+              onClick={() => handleSlipUpload()}
+              aria-label="Slip upload"
+            >
+              <span className="text-sm">Slip upload</span>
+              <ArrowUpCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+            </button>
           </div>
         </div>
       )}
+      <SlipUploadDialog
+        open={slipDialogOpen}
+        onOpenChange={setSlipDialogOpen}
+        onSuccess={() => setSlipDialogOpen(false)}
+      />
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch h-18 min-[350px]:h-auto"
         style={{
