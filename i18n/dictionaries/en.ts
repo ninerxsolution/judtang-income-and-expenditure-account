@@ -470,6 +470,8 @@ export const enDictionary = {
       deleteTemplate: "Delete template",
       templateDeleteConfirm: "Delete this template? It will not affect already-created monthly budgets.",
       editCategoryBudget: "Edit limit",
+      deleteCategoryBudget: "Delete category budget",
+      deleteCategoryBudgetConfirm: "Remove this category budget for the selected month?",
       addLimitRow: "Add category",
       applyTemplateSuccess: "Template applied.",
       saveSuccess: "Saved.",
