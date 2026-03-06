@@ -90,7 +90,7 @@ export async function createRecurringTransaction(params: CreateRecurringTransact
     details: { name: recurring.name, frequency: recurring.frequency },
   });
 
-  revalidateTag("recurring-transactions");
+  revalidateTag("recurring-transactions", "max");
   return recurring;
 }
 
@@ -151,7 +151,7 @@ export async function updateRecurringTransaction(
     details: params,
   });
 
-  revalidateTag("recurring-transactions");
+  revalidateTag("recurring-transactions", "max");
   return updated;
 }
 
@@ -169,7 +169,7 @@ export async function deleteRecurringTransaction(userId: string, id: string) {
     details: { name: existing.name },
   });
 
-  revalidateTag("recurring-transactions");
+  revalidateTag("recurring-transactions", "max");
 }
 
 export type RecurringDueItem = Awaited<ReturnType<typeof getDueRecurringTransactions>>[number];
@@ -266,8 +266,8 @@ export async function confirmRecurringTransaction(
     details: { source: "recurring", recurringId, name: template.name },
   });
 
-  revalidateTag("transactions");
-  revalidateTag("recurring-transactions");
+  revalidateTag("transactions", "max");
+  revalidateTag("recurring-transactions", "max");
 
   return transaction;
 }
