@@ -1,7 +1,7 @@
 import "./load-env";
 import bcrypt from "bcrypt";
-import { subDays, addDays, startOfDay, endOfDay } from "date-fns";
-import { TransactionType, TransactionStatus } from "@prisma/client";
+import { subDays, addDays, subMonths, startOfDay, endOfDay } from "date-fns";
+import { TransactionType, TransactionStatus, RecurringFrequency } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { THAI_BANKS, BANK_OTHER } from "../lib/thai-banks";
 import { CARD_NETWORKS } from "../lib/card-types";
@@ -36,6 +36,7 @@ const EXPENSE_RANGES = {
   utilities: { min: 500, max: 2000 },
   shopping: { min: 200, max: 2000 },
   other: { min: 50, max: 500 },
+  savings: { min: 500, max: 3000 },
 } as const;
 
 type SeedContext = {
@@ -414,7 +415,7 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
   const primaryCard = ctx.creditCards[0]!;
 
   let totalTx = 0;
-  const expenseCategories = ["อาหาร", "ค่าขนส่ง", "ค่าที่พัก", "ค่าน้ำค่าไฟ", "ค่าอินเทอร์เน็ต", "ช้อปปิ้ง", "ค่าอื่นๆ", "ของขวัญ", "ค่ารักษาพยาบาล"] as const;
+  const expenseCategories = ["อาหาร", "ค่าขนส่ง", "ค่าที่พัก", "ค่าน้ำค่าไฟ", "ค่าอินเทอร์เน็ต", "ช้อปปิ้ง", "ค่าอื่นๆ", "ของขวัญ", "ค่ารักษาพยาบาล", "เงินออม"] as const;
 
   for (let d = 0; d <= DAYS_BACK; d++) {
     const dayStart = addDays(startDate, d);
@@ -470,6 +471,18 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
       });
     }
 
+    if (dayOfMonth === 10 && d % 55 < 2 && Math.random() < 0.6) {
+      txs.push({
+        type: "INCOME",
+        amount: randomAmount(3000, 15000),
+        financialAccountId: primaryBank.id,
+        category: "เงินเดือน",
+        note: "รายได้พิเศษ/ฟรีแลนซ์",
+        occurredAt: dayStart,
+        status: "POSTED",
+      });
+    }
+
     const remainingSlots = txCount - txs.length;
     for (let i = 0; i < remainingSlots; i++) {
       const roll = Math.random();
@@ -497,6 +510,7 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
           categoryChoice === "อาหาร" ? EXPENSE_RANGES.food
             : categoryChoice === "ค่าขนส่ง" ? EXPENSE_RANGES.transport
             : categoryChoice === "ช้อปปิ้ง" ? EXPENSE_RANGES.shopping
+            : categoryChoice === "เงินออม" ? EXPENSE_RANGES.savings
             : EXPENSE_RANGES.other;
         const status: "PENDING" | "POSTED" = Math.random() < 0.08 ? "PENDING" : "POSTED";
         txs.push({
@@ -709,13 +723,310 @@ async function seedActivityLogs(userId: string): Promise<void> {
   }
 }
 
+async function seedTermsAcceptance(userId: string): Promise<void> {
+  const existing = await prisma.userTermsAcceptance.findFirst({
+    where: { userId, termsVersion: "1.0" },
+  });
+  if (!existing) {
+    await prisma.userTermsAcceptance.create({
+      data: { userId, termsVersion: "1.0" },
+    });
+    console.log("Created terms acceptance (1.0).");
+  }
+}
+
+async function seedRecurringTransactions(ctx: SeedContext): Promise<void> {
+  const existing = await prisma.recurringTransaction.findFirst({
+    where: { userId: ctx.userId },
+  });
+  if (existing) {
+    console.log("Recurring transactions already exist.");
+    return;
+  }
+
+  const primaryBank = ctx.bankAccounts[0];
+  if (!primaryBank) return;
+
+  const startDate = subDays(startOfDay(new Date()), 270);
+  const endDatePast = subDays(startOfDay(new Date()), 400);
+
+  const salaryCatId = ctx.categoryMap["เงินเดือน"]?.id ?? null;
+  const rentCatId = ctx.categoryMap["ค่าที่พัก"]?.id ?? null;
+  const utilitiesCatId = ctx.categoryMap["ค่าน้ำค่าไฟ"]?.id ?? null;
+  const internetCatId = ctx.categoryMap["ค่าอินเทอร์เน็ต"]?.id ?? null;
+  const foodCatId = ctx.categoryMap["อาหาร"]?.id ?? null;
+  const otherCatId = ctx.categoryMap["ค่าอื่นๆ"]?.id ?? null;
+
+  await prisma.recurringTransaction.createMany({
+    data: [
+      {
+        userId: ctx.userId,
+        name: "เงินเดือน",
+        type: "INCOME",
+        amount: 35000,
+        categoryId: salaryCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.MONTHLY,
+        dayOfMonth: 25,
+        monthOfYear: null,
+        startDate,
+        endDate: null,
+        isActive: true,
+        note: "เงินเดือน",
+      },
+      {
+        userId: ctx.userId,
+        name: "ค่าเช่า",
+        type: "EXPENSE",
+        amount: 8000,
+        categoryId: rentCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.MONTHLY,
+        dayOfMonth: 1,
+        monthOfYear: null,
+        startDate,
+        endDate: null,
+        isActive: true,
+        note: "ค่าเช่า",
+      },
+      {
+        userId: ctx.userId,
+        name: "ค่าน้ำค่าไฟ",
+        type: "EXPENSE",
+        amount: 1200,
+        categoryId: utilitiesCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.MONTHLY,
+        dayOfMonth: 5,
+        monthOfYear: null,
+        startDate,
+        endDate: null,
+        isActive: true,
+        note: "ค่าน้ำค่าไฟ",
+      },
+      {
+        userId: ctx.userId,
+        name: "ค่าอินเทอร์เน็ต",
+        type: "EXPENSE",
+        amount: 799,
+        categoryId: internetCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.MONTHLY,
+        dayOfMonth: 8,
+        monthOfYear: null,
+        startDate,
+        endDate: null,
+        isActive: true,
+        note: "ค่าอินเทอร์เน็ต",
+      },
+      {
+        userId: ctx.userId,
+        name: "ค่าอาหารรายสัปดาห์",
+        type: "EXPENSE",
+        amount: 800,
+        categoryId: foodCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.WEEKLY,
+        dayOfMonth: null,
+        monthOfYear: null,
+        startDate,
+        endDate: null,
+        isActive: true,
+        note: "ค่าอาหารรายสัปดาห์",
+      },
+      {
+        userId: ctx.userId,
+        name: "ประกันชีวิต",
+        type: "EXPENSE",
+        amount: 15000,
+        categoryId: otherCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.YEARLY,
+        dayOfMonth: 1,
+        monthOfYear: 7,
+        startDate,
+        endDate: null,
+        isActive: true,
+        note: "ประกันชีวิตรายปี",
+      },
+      {
+        userId: ctx.userId,
+        name: "ค่าสมาชิกยิม",
+        type: "EXPENSE",
+        amount: 599,
+        categoryId: otherCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.MONTHLY,
+        dayOfMonth: 15,
+        monthOfYear: null,
+        startDate,
+        endDate: null,
+        isActive: false,
+        note: "ยกเลิกแล้ว",
+      },
+      {
+        userId: ctx.userId,
+        name: "ค่าประกันรถ",
+        type: "EXPENSE",
+        amount: 12000,
+        categoryId: otherCatId,
+        financialAccountId: primaryBank.id,
+        frequency: RecurringFrequency.YEARLY,
+        dayOfMonth: 1,
+        monthOfYear: 3,
+        startDate,
+        endDate: endDatePast,
+        isActive: false,
+        note: "หมดอายุ",
+      },
+    ],
+  });
+  console.log("Created 8 recurring transaction templates.");
+}
+
+async function seedBudgets(ctx: SeedContext): Promise<void> {
+  const existing = await prisma.budgetTemplate.findFirst({
+    where: { userId: ctx.userId },
+  });
+  if (existing) {
+    console.log("Budget data already exists.");
+    return;
+  }
+
+  const cat = (name: string) => ctx.categoryMap[name]?.id ?? null;
+  const standardLimits = [
+    { categoryId: cat("อาหาร"), limitAmount: 6000 },
+    { categoryId: cat("ค่าขนส่ง"), limitAmount: 2000 },
+    { categoryId: cat("ช้อปปิ้ง"), limitAmount: 3500 },
+    { categoryId: cat("ค่าน้ำค่าไฟ"), limitAmount: 1500 },
+    { categoryId: cat("ค่าอินเทอร์เน็ต"), limitAmount: 800 },
+    { categoryId: cat("ค่าอื่นๆ"), limitAmount: 2000 },
+  ].filter((r) => r.categoryId != null) as { categoryId: string; limitAmount: number }[];
+
+  const savingLimits = [
+    { categoryId: cat("อาหาร"), limitAmount: 4000 },
+    { categoryId: cat("ค่าขนส่ง"), limitAmount: 1500 },
+    { categoryId: cat("ช้อปปิ้ง"), limitAmount: 1500 },
+    { categoryId: cat("ค่าน้ำค่าไฟ"), limitAmount: 1200 },
+    { categoryId: cat("ค่าอินเทอร์เน็ต"), limitAmount: 700 },
+  ].filter((r) => r.categoryId != null) as { categoryId: string; limitAmount: number }[];
+
+  await prisma.budgetTemplate.create({
+    data: {
+      userId: ctx.userId,
+      name: "งบประมาณรายเดือน",
+      isActive: true,
+      totalBudget: 35000,
+      categoryLimits: {
+        create: standardLimits.map((r) => ({
+          categoryId: r.categoryId,
+          limitAmount: r.limitAmount,
+        })),
+      },
+    },
+  });
+  await prisma.budgetTemplate.create({
+    data: {
+      userId: ctx.userId,
+      name: "งบประมาณประหยัด",
+      isActive: true,
+      totalBudget: 22000,
+      categoryLimits: {
+        create: savingLimits.map((r) => ({
+          categoryId: r.categoryId,
+          limitAmount: r.limitAmount,
+        })),
+      },
+    },
+  });
+  console.log("Created 2 budget templates.");
+
+  const today = new Date();
+  const months: { year: number; month: number; totalBudget: number | null; categoryLimits: { categoryId: string; limitAmount: number }[] }[] = [];
+
+  for (let i = 0; i < 5; i++) {
+    const d = subMonths(today, i);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    if (i === 0) {
+      months.push({
+        year,
+        month,
+        totalBudget: 8000,
+        categoryLimits: [
+          { categoryId: cat("อาหาร")!, limitAmount: 2000 },
+          { categoryId: cat("ช้อปปิ้ง")!, limitAmount: 500 },
+          { categoryId: cat("ค่าขนส่ง")!, limitAmount: 800 },
+        ].filter((r) => r.categoryId != null) as { categoryId: string; limitAmount: number }[],
+      });
+    } else if (i === 1) {
+      months.push({
+        year,
+        month,
+        totalBudget: 20000,
+        categoryLimits: [
+          { categoryId: cat("อาหาร")!, limitAmount: 4500 },
+          { categoryId: cat("ค่าขนส่ง")!, limitAmount: 1500 },
+          { categoryId: cat("ช้อปปิ้ง")!, limitAmount: 2500 },
+          { categoryId: cat("ค่าน้ำค่าไฟ")!, limitAmount: 1200 },
+          { categoryId: cat("ค่าอื่นๆ")!, limitAmount: 1500 },
+        ].filter((r) => r.categoryId != null) as { categoryId: string; limitAmount: number }[],
+      });
+    } else if (i === 2) {
+      months.push({
+        year,
+        month,
+        totalBudget: 35000,
+        categoryLimits: standardLimits,
+      });
+    } else if (i === 3) {
+      months.push({
+        year,
+        month,
+        totalBudget: null,
+        categoryLimits: standardLimits,
+      });
+    } else {
+      months.push({
+        year,
+        month,
+        totalBudget: 35000,
+        categoryLimits: standardLimits,
+      });
+    }
+  }
+
+  for (const m of months) {
+    const budgetMonth = await prisma.budgetMonth.create({
+      data: {
+        userId: ctx.userId,
+        year: m.year,
+        month: m.month,
+        totalBudget: m.totalBudget,
+        categoryBudgets: {
+          create: m.categoryLimits.map((r) => ({
+            categoryId: r.categoryId,
+            limitAmount: r.limitAmount,
+          })),
+        },
+      },
+    });
+    void budgetMonth;
+  }
+  console.log("Created 5 budget months.");
+}
+
 async function resetSeedData(userId: string): Promise<void> {
   await prisma.transaction.deleteMany({ where: { userId } });
   await prisma.activityLog.deleteMany({ where: { userId } });
+  await prisma.recurringTransaction.deleteMany({ where: { userId } });
+  await prisma.budgetTemplate.deleteMany({ where: { userId } });
+  await prisma.budgetMonth.deleteMany({ where: { userId } });
+  await prisma.userTermsAcceptance.deleteMany({ where: { userId } });
   await prisma.financialAccount.deleteMany({
     where: { userId, isDefault: false },
   });
-  console.log("Reset transactions, activity logs, and non-default accounts.");
+  console.log("Reset transactions, activity logs, recurring, budgets, terms, and non-default accounts.");
 }
 
 async function main() {
@@ -751,8 +1062,11 @@ async function main() {
 
   const totalTx = await seedTransactions(ctx);
   await seedDisabledAccounts(ctx);
+  await seedTermsAcceptance(userId);
+  await seedRecurringTransactions(ctx);
+  await seedBudgets(ctx);
 
-  console.log(`Created ${totalTx} transactions over ${DAYS_BACK} days.`);
+  console.log(`Seed done: ${totalTx} transactions over ${DAYS_BACK} days, budgets, recurring templates, terms.`);
 }
 
 main()
