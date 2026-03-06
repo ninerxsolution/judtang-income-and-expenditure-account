@@ -2,6 +2,12 @@
 
 ## Cursor Cloud specific instructions
 
+### Git workflow
+
+- Before writing any code, always create a new branch named `cursor/<short-description>` (e.g. `cursor/fix-login-bug`, `cursor/add-export-feature`) based on the current branch.
+- Commit each logical change separately with a descriptive message.
+- Do not force push or amend commits.
+
 ### Product overview
 
 Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking income/expenses across bank accounts, credit cards, and wallets. Uses MariaDB/MySQL via Prisma ORM, NextAuth for authentication, and Tailwind CSS + shadcn/ui for the frontend.
