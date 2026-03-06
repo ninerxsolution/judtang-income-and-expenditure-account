@@ -4,6 +4,7 @@ import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { recordPayment } from "@/lib/credit-card";
 import { revalidateTag } from "@/lib/cache";
+import { parseOccurredAt } from "@/lib/date-range";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -47,13 +48,7 @@ export async function POST(
     );
   }
 
-  let occurredAt = new Date();
-  if (body.occurredAt) {
-    const parsed = new Date(body.occurredAt);
-    if (!Number.isNaN(parsed.getTime())) {
-      occurredAt = parsed;
-    }
-  }
+  const occurredAt = parseOccurredAt(body.occurredAt);
 
   try {
     const transaction = await recordPayment({

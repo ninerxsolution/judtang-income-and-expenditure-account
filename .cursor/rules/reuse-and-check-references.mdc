@@ -1,0 +1,29 @@
+---
+description: ทำ function/component ให้ reuse ได้ แก้ที่เดียว — และเวลาแก้หรือเพิ่มต้องเช็คว่ามีจุดอื่นที่ใช้ pattern เดียวกันหรือไม่
+alwaysApply: true
+---
+
+# Reuse และเช็ค reference
+
+## หลักการ
+
+- **ทุก function / component ที่คุณเขียน** ให้พิจารณาว่ามันจะถูกนำไป **reuse** ได้หรือไม่
+- ถ้าได้ ให้ทำเป็น **function หรือ component ร่วม** แล้วใช้ผ่าน config, props, หรือ parameter เพื่อให้ควบคุม variant ได้ — **เวลาแก้ไขจะได้แก้ที่เดียว**
+- **เมื่อแก้หรือเพิ่มฟีเจอร์** ไม่ให้แก้แค่จุดเดียว — ต้อง **เช็คว่ามีจุดอื่นที่ใช้ pattern เดียวกันหรือไม่** แล้วแก้หรือปรับให้ใช้ของร่วมกัน
+
+## Do
+
+- ก่อนส่ง code: ค้นหา (grep / search) ว่ามีที่อื่นที่ใช้ pattern เดียวกัน (เช่น from+to date → ดูทุกหน้าที่มี date range; dialog form → ดูทุก dialog ที่มี form หลายฟิลด์)
+- สร้างหรือใช้ **shared component / shared function** แล้วให้ทุกจุดที่เกี่ยวข้องใช้ของเดียวกัน
+- ใช้ config, attribute, props เพื่อให้ควบคุม variant ได้ แก้ที่เดียวได้ผลทุกที่
+
+## Don't
+
+- อย่าแก้แค่จุดเดียวโดยไม่เช็คว่ามี reference อื่นที่ต้องแก้หรือ reuse ด้วย
+- อย่าทำของซ้ำ (เช่น DatePicker สองตัวสำหรับ from/to) เมื่อมี component เดียว (DateRangePicker) ที่ทำหน้าที่นั้นอยู่แล้ว
+
+## ตัวอย่างในโปรเจกต์
+
+- **Date range (from/to):** ใช้ `DateRangePicker` — ดู rule `date-range-use-date-range-picker.mdc` และจุดที่ใช้ (transactions, data-tools, accounts/[id], activity-log)
+- **Dialog form หลายฟิลด์:** ใช้ fullscreen on mobile — ดู rule `dialog-mobile-fullscreen-form.mdc`
+- **occurredAt:** ใช้ `parseOccurredAt()` จาก `lib/date-range.ts` เมื่อรับ date-only จาก API — ดู rule `transaction-occurred-at-datetime.mdc`

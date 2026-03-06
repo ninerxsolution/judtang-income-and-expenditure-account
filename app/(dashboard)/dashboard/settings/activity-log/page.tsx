@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -431,19 +431,16 @@ export default function ActivityLogPage() {
               ))}
             </select>
           </div>
-          <DatePicker
-            id="activity-log-from"
-            label={t("activityLog.filters.fromDate")}
-            value={filterDateFrom}
-            onChange={setFilterDateFrom}
-            className="min-w-[180px]"
-          />
-          <DatePicker
-            id="activity-log-to"
-            label={t("activityLog.filters.toDate")}
-            value={filterDateTo}
-            onChange={setFilterDateTo}
-            className="min-w-[180px]"
+          <DateRangePicker
+            id="activity-log-date-range"
+            label={t("dataTools.export.dateRange")}
+            value={{ from: filterDateFrom, to: filterDateTo }}
+            onChange={(v) => {
+              setFilterDateFrom(v.from ?? "");
+              setFilterDateTo(v.to ?? "");
+            }}
+            placeholder={t("dataTools.export.dateRangePlaceholder")}
+            className="min-w-[200px]"
           />
         </div>
       </section>

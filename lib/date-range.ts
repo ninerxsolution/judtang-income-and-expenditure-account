@@ -59,6 +59,32 @@ export function getDateRangeInTimezone(
 }
 
 /**
+ * Parse occurredAt from API body. If the value is date-only (YYYY-MM-DD),
+ * merge with current UTC time so the transaction time reflects "now" instead
+ * of midnight UTC (which displays as 07:00 in Bangkok).
+ */
+export function parseOccurredAt(value: string | undefined): Date {
+  const now = new Date();
+  if (!value || typeof value !== "string" || value.trim() === "") {
+    return now;
+  }
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const d = new Date(trimmed + "T00:00:00.000Z");
+    if (Number.isNaN(d.getTime())) return now;
+    d.setUTCHours(
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds(),
+      now.getUTCMilliseconds(),
+    );
+    return d;
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? now : parsed;
+}
+
+/**
  * Convert a Date (UTC) to YYYY-MM-DD string in the given timezone.
  * Used for grouping transactions by local date.
  */

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { getDateRangeInTimezone } from "@/lib/date-range";
+import { getDateRangeInTimezone, parseOccurredAt } from "@/lib/date-range";
 import {
   createTransaction,
   TransactionType,
@@ -83,13 +83,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let occurredAt = new Date();
-  if (body.occurredAt) {
-    const parsed = new Date(body.occurredAt);
-    if (!Number.isNaN(parsed.getTime())) {
-      occurredAt = parsed;
-    }
-  }
+  const occurredAt = parseOccurredAt(body.occurredAt);
 
   let financialAccountId = body.financialAccountId;
   if (!financialAccountId) {

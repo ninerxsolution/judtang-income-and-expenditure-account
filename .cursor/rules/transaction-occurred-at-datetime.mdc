@@ -1,0 +1,33 @@
+---
+description: Transaction occurredAt — ต้องเป็นวันที่+เวลา (ไม่ใช่แค่วันที่) เพื่อไม่ให้เป็น 07:00 Bangkok
+alwaysApply: true
+---
+
+# Transaction occurredAt: ใช้ Date+Time เสมอ
+
+## ปัญหาที่เจอ
+
+- Transaction ที่สร้างจาก feature อื่น (ชำระบัตร, ยืนยัน recurring ฯลฯ) บันทึกเวลาเป็น **07:00 (Bangkok)** แทนที่จะเป็นเวลาที่ผู้ใช้กดบันทึก (เช่น 15:34)
+- **สาเหตุ:** ส่งค่า `occurredAt` แบบ **date-only** (`"YYYY-MM-DD"`) ไป API → backend ใช้ `new Date("2025-03-06")` ได้ **เที่ยงคืน UTC** = 07:00 ใน timezone Bangkok (UTC+7)
+
+## วิธีแก้ที่ทำแล้ว
+
+1. **Frontend (ทุก dialog ที่สร้าง transaction):** ก่อนส่ง API ให้รวม **วันที่ที่เลือก + เวลาปัจจุบัน** (จาก browser) แล้วส่งเป็น **ISO string** (มีเวลา)
+   - ตัวอย่าง: วันที่เลือก `2025-03-06` + กดบันทึกตอน 15:34 → ส่ง `new Date(2025, 2, 6, 15, 34, ...).toISOString()`
+2. **Backend:** ใช้ `parseOccurredAt(body.occurredAt)` จาก `@/lib/date-range` — ถ้าได้ค่า date-only จะ merge กับเวลาปัจจุบัน (UTC) แทนเที่ยงคืน UTC
+
+## Do
+
+- ทุกจุดที่สร้าง transaction (ฟอร์มรายรับรายจ่าย, ชำระบัตร, ยืนยัน recurring, โอนเงิน ฯลฯ) ให้ส่ง/ตั้งค่า `occurredAt` เป็น **full datetime** (วันที่ + เวลาที่กดบันทึกหรือเวลาปัจจุบัน)
+- API ที่รับ `occurredAt` จาก body ใช้ `parseOccurredAt(body.occurredAt)` เพื่อรองรับ client ที่ส่งแค่วันที่
+
+## Don't
+
+- อย่าส่งแค่ `"YYYY-MM-DD"` เป็น `occurredAt` จาก frontend เมื่อผู้ใช้ไม่ได้เลือกเวลา — จะได้ 00:00 UTC = 07:00 Bangkok
+- อย่าใช้ `new Date(body.occurredAt)` ตรงๆ เมื่อค่าอาจเป็น date-only — ใช้ `parseOccurredAt()` แทน
+
+## อ้างอิง
+
+- `lib/date-range.ts`: `parseOccurredAt()`
+- `components/dashboard/transaction-form-dialog.tsx`: การรวม date + current time ก่อนส่ง
+- `components/dashboard/credit-card-payment-dialog.tsx`, `recurring-confirm-dialog.tsx`: แก้ให้ส่ง ISO ที่มีเวลาแล้ว

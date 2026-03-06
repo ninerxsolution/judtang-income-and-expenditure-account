@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogBody,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
@@ -223,7 +224,12 @@ export function RecurringTransactionFormDialog({
   if (loadState === "loading") {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent
+          className={cn(
+            "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
+            "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+          )}
+        >
           <DialogBody>
             <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
               Loading…
@@ -236,14 +242,19 @@ export function RecurringTransactionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent
+        className={cn(
+          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
+          "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+        )}
+      >
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <RepeatIcon className="h-4 w-4 text-muted-foreground" />
             {isEdit ? r.form.titleEdit : r.form.titleCreate}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
           <DialogBody className="space-y-4">
             {/* Type toggle */}
             <div className="flex rounded-lg overflow-hidden border border-border">
@@ -439,7 +450,7 @@ export function RecurringTransactionFormDialog({
             {error && <p className="text-sm text-destructive">{error}</p>}
           </DialogBody>
 
-          <DialogFooter className="flex flex-col gap-2">
+          <DialogFooter className="shrink-0 flex flex-col gap-2">
             {isEdit && !deleteConfirm && (
               <Button
                 type="button"

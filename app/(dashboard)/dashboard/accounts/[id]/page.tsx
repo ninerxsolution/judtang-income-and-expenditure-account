@@ -30,7 +30,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { formatAmount } from "@/lib/format";
 import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
 import { getCardNetworkDisplayName } from "@/lib/card-types";
@@ -670,19 +670,16 @@ export default function AccountDetailPage() {
       <Card>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
-            <DatePicker
-              id="tx-from"
-              label={t("dataTools.export.fromDate")}
-              value={txFilterFrom}
-              onChange={setTxFilterFrom}
-              className="min-w-[140px]"
-            />
-            <DatePicker
-              id="tx-to"
-              label={t("dataTools.export.toDate")}
-              value={txFilterTo}
-              onChange={setTxFilterTo}
-              className="min-w-[140px]"
+            <DateRangePicker
+              id="tx-date-range"
+              label={t("dataTools.export.dateRange")}
+              value={{ from: txFilterFrom, to: txFilterTo }}
+              onChange={(v) => {
+                setTxFilterFrom(v.from ?? "");
+                setTxFilterTo(v.to ?? "");
+              }}
+              placeholder={t("dataTools.export.dateRangePlaceholder")}
+              className="min-w-[200px]"
             />
             <div className="min-w-[120px] space-y-1">
               <label htmlFor="tx-type" className="block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">

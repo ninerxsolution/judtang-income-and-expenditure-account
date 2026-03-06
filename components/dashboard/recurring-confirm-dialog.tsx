@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogBody,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
@@ -95,13 +96,27 @@ export function RecurringConfirmDialog({
     setError(null);
     setPending(true);
 
+    // Combine selected date with current time so occurredAt reflects when user clicked save (not 00:00 UTC = 07:00 Bangkok)
+    const dateStr = occurredAt;
+    const [y, m, day] = dateStr.split("-").map(Number);
+    const now = new Date();
+    const occurredAtValue = new Date(
+      y,
+      m - 1,
+      day,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds()
+    ).toISOString();
+
     try {
       const res = await fetch(`/api/recurring-transactions/${item.id}/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: parseFloat(amount),
-          occurredAt,
+          occurredAt: occurredAtValue,
           financialAccountId,
           categoryId: item.categoryId ?? null,
           note: note.trim() || null,
@@ -127,14 +142,19 @@ export function RecurringConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
+      <DialogContent
+        className={cn(
+          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-sm",
+          "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+        )}
+      >
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2Icon className="h-4 w-4 text-emerald-500" />
             {r.confirmDialog.title}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
           <DialogBody className="space-y-4">
             <p className="text-sm text-muted-foreground">
               {r.confirmDialog.description.replace("{name}", item.name)}
@@ -189,7 +209,7 @@ export function RecurringConfirmDialog({
             {error && <p className="text-sm text-destructive">{error}</p>}
           </DialogBody>
 
-          <DialogFooter className="flex gap-2">
+          <DialogFooter className="shrink-0 flex gap-2">
             <Button
               type="button"
               variant="outline"

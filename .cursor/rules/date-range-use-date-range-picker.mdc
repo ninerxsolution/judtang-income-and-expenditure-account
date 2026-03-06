@@ -1,0 +1,36 @@
+---
+description: ช่วงวันที่ (from/to) ใช้ DateRangePicker component เดียว — และเวลาแก้/เพิ่มต้องเช็คทุกจุดที่ใช้ pattern เดียวกัน
+alwaysApply: true
+---
+
+# Date range (from + to): ใช้ DateRangePicker และเช็ค reference
+
+## กฎ
+
+- **เมื่อต้องใช้ "จากวันที่" และ "ถึงวันที่" (from + to) ใน UI** ให้ใช้ **DateRangePicker** (`@/components/ui/date-range-picker`) component เดียว ไม่ใช่แยกเป็น DatePicker สองตัว
+- **เมื่อแก้หรือเพิ่มฟีเจอร์ที่เกี่ยวกับ date range** ต้อง **เช็ค reference** ว่ามีจุดอื่นที่ใช้ pattern เดียวกันหรือไม่ — ถ้ามี ให้แก้หรือทำให้สอดคล้องกัน (ใช้ component/function เดียว แก้ที่เดียว)
+
+## จุดที่ใช้ DateRangePicker ในโปรเจกต์ (reference)
+
+| ที่ใช้ | ใช้สำหรับ |
+|--------|------------|
+| `app/(dashboard)/dashboard/transactions/page.tsx` | ฟิลเตอร์รายการ transaction (from/to) |
+| `components/dashboard/data-tools.tsx` | Export transaction (ช่วงวันที่) |
+| `app/(dashboard)/dashboard/accounts/[id]/page.tsx` | ฟิลเตอร์ transaction ในหน้ารายละเอียดบัญชี |
+| `app/(dashboard)/dashboard/settings/activity-log/page.tsx` | ฟิลเตอร์ activity log (dateFrom/dateTo) |
+
+## Do
+
+- ใช้ `DateRangePicker` ด้วย `value={{ from: string, to: string }}` และ `onChange={(v) => { setFrom(v.from ?? ""); setTo(v.to ?? ""); }}`
+- ใช้ i18n key เดียวกัน: `dataTools.export.dateRange`, `dataTools.export.dateRangePlaceholder`
+- ก่อนส่ง code ที่แก้ "date range" หรือ "from/to date": ค้นหา (grep) ว่ามีที่อื่นใช้ from+to หรือ date range หรือไม่ แล้วใช้ component/pattern เดียวกัน
+
+## Don't
+
+- อย่าใช้ DatePicker สองตัวแยกสำหรับ from และ to — ใช้ DateRangePicker แทน
+- อย่าแก้แค่จุดเดียวโดยไม่ค้นหาว่ามีที่อื่นที่ควรแก้หรือ reuse ด้วย
+
+## Reuse แบบแก้ที่เดียว
+
+- Logic ช่วงวันที่ (timezone, parse) อยู่ที่ `lib/date-range.ts` (เช่น `getDateRangeInTimezone`, `parseOccurredAt`, `toDateStringInTimezone`)
+- UI ช่วงวันที่ ใช้ `components/ui/date-range-picker.tsx` — ถ้าต้องการปรับพฤติกรรมหรือ style ให้แก้ที่ component นี้ที่เดียว ทุกหน้าที่ใช้จะได้ผลเหมือนกัน

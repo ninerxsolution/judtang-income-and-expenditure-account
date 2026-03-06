@@ -155,6 +155,20 @@ export function CreditCardPaymentDialog({
       return;
     }
 
+    // Combine selected date with current time so occurredAt reflects when user clicked save (not 00:00 UTC = 07:00 Bangkok)
+    const dateStr = occurredAt || formatTodayAsInputDate();
+    const [y, m, day] = dateStr.split("-").map(Number);
+    const now = new Date();
+    const occurredAtValue = new Date(
+      y,
+      m - 1,
+      day,
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+      now.getMilliseconds()
+    ).toISOString();
+
     setPending(true);
     try {
       const res = await fetch(`/api/credit-card/${accountId}/payment`, {
@@ -162,7 +176,7 @@ export function CreditCardPaymentDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: amountNum,
-          occurredAt: occurredAt || formatTodayAsInputDate(),
+          occurredAt: occurredAtValue,
           fromAccountId: fromAccountId || undefined,
         }),
       });

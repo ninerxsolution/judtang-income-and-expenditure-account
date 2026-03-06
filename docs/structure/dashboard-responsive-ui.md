@@ -117,7 +117,18 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 ---
 
-## 10. Accessibility
+## 10. Dialog: form vs simple (mobile fullscreen)
+
+- **Rule:** Dialogs that contain a **form with multiple input fields** must be **fullscreen on mobile** (viewport &lt; md). Otherwise the content overflows the small dialog and is hard to use (scroll, tap targets). Dialogs that are **simple** (e.g. confirm/cancel only, or a short message) may stay centered and do not need fullscreen.
+- **Implementation:** Use the same `DialogContent` class pattern as in `transaction-form-dialog`, `credit-card-payment-dialog`, `category-form-dialog`, `financial-account-form-dialog`:
+  - Desktop: `max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md` (or `sm:max-w-sm` / `sm:max-w-lg` as needed)
+  - Mobile: `max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none`
+  - Inner layout: `DialogHeader` with `shrink-0`; `<form className="flex flex-1 flex-col min-h-0 overflow-hidden">`; `DialogBody` for scrollable form fields; `DialogFooter` with `shrink-0`.
+- **Reference:** `.cursor/rules/dialog-mobile-fullscreen-form.mdc`; components listed above.
+
+---
+
+## 11. Accessibility
 
 - Nav items use `aria-label` from i18n
 - Dialog trigger has `aria-haspopup="dialog"`

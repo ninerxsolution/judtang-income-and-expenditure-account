@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { confirmRecurringTransaction } from "@/lib/recurring-transactions";
+import { parseOccurredAt } from "@/lib/date-range";
 
 type SessionWithId = { user: { id?: string } };
 type RouteContext = { params: Promise<{ id: string }> };
@@ -43,7 +44,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   try {
     const transaction = await confirmRecurringTransaction(userId, id, {
       amount,
-      occurredAt: new Date(body.occurredAt),
+      occurredAt: parseOccurredAt(body.occurredAt),
       financialAccountId: body.financialAccountId,
       categoryId: body.categoryId ?? null,
       note: body.note ?? null,

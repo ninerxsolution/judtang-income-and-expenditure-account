@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, Upload, Wrench } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useI18n } from "@/hooks/use-i18n";
 
 type ImportErrorItem = {
@@ -160,19 +160,16 @@ export function DataTools() {
             {t("dataTools.export.description")}
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
-            <DatePicker
-              id="export-from"
-              label={t("dataTools.export.fromDate")}
-              value={exportFrom}
-              onChange={setExportFrom}
-              className="min-w-[180px]"
-            />
-            <DatePicker
-              id="export-to"
-              label={t("dataTools.export.toDate")}
-              value={exportTo}
-              onChange={setExportTo}
-              className="min-w-[180px]"
+            <DateRangePicker
+              id="export-date-range"
+              label={t("dataTools.export.dateRange")}
+              value={{ from: exportFrom, to: exportTo }}
+              onChange={(v) => {
+                setExportFrom(v.from ?? "");
+                setExportTo(v.to ?? "");
+              }}
+              placeholder={t("dataTools.export.dateRangePlaceholder")}
+              className="min-w-[200px]"
             />
             <div>
               <label htmlFor="export-type" className="mb-1 block text-xs font-medium text-[#6B5E4E] dark:text-stone-400">

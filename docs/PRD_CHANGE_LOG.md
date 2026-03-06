@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 06/03/2026 (Dialog form fullscreen on mobile — convention)
+
+- docs/structure/dashboard-responsive-ui.md — Added §10 Dialog: form vs simple (mobile fullscreen): rule that form dialogs must be fullscreen on mobile; class pattern and layout; reference to .cursor/rules/dialog-mobile-fullscreen-form.mdc. Renumbered §10 Accessibility to §11.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 05/03/2026 (Budget: Template CRUD UI and Edit category budget)
 
 - app/(dashboard)/dashboard/settings/budget/page.tsx — Templates section (list, Add template), Create/Edit template dialog (name, totalBudget, category limits rows), Delete template AlertDialog; Edit category budget (Edit button per row, dialog to change limit, PATCH categories/[id]).

@@ -1,0 +1,45 @@
+---
+description: Dialog ที่มีฟอร์มหลายฟิลด์ — บนมือถือต้อง fullscreen และ scroll ได้ เพื่อไม่ให้ content ทะลุจอกดลำบาก
+alwaysApply: true
+---
+
+# Dialog บนมือถือ: Form หลายฟิลด์ = Fullscreen
+
+## กฎ
+
+- **Dialog ที่มีแค่ปุ่มยืนยัน/ยกเลิก (confirm/cancel เท่านั้น)** → ไม่จำเป็นต้อง fullscreen บนมือถือ
+- **Dialog ที่มี form ให้กรอกข้อมูล และมีหลายฟิลด์** → **ต้อง** ทำเป็น fullscreen บน viewport เล็ก (มือถือ) และให้ content scroll ได้ เพราะ content จะยาวทะลุจอ และ dialog แบบกลางจอไม่ได้ออกแบบมาให้กรอกฟอร์มยาวบนมือถือ
+
+## วิธีทำ (ต้องทำทุกครั้งที่สร้าง/แก้ Dialog ที่มี form หลายฟิลด์)
+
+1. **DialogContent** ใช้ class ชุดนี้ (ให้ตรงกับที่ใช้ใน `transaction-form-dialog`, `credit-card-payment-dialog`, `category-form-dialog`, `financial-account-form-dialog`):
+
+   ```
+   "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md"
+   "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+   ```
+
+   - บนจอใหญ่: dialog กลางจอ, max-h 90vh, ความกว้าง sm:max-w-md
+   - บนจอเล็ก (max-md): fullscreen (เต็มจอ), ไม่มี translate กลางจอ, h-dvh เต็มความสูง
+
+2. **โครงสร้างภายใน**
+   - `DialogHeader` ใส่ `className="shrink-0"` เพื่อไม่ให้หัวบีบ
+   - `<form>` ใส่ `className="flex flex-1 flex-col min-h-0 overflow-hidden"` เพื่อให้ form กินพื้นที่และลูกที่ scroll ได้ทำงาน
+   - ใช้ `DialogBody` เป็นพื้นที่ scroll หลัก (มี `overflow-y-auto` อยู่แล้วจาก ui/dialog) — ใส่ฟิลด์ form ไว้ใน DialogBody
+   - `DialogFooter` ใส่ `shrink-0` (หรืออยู่ใน form หลัง DialogBody) เพื่อให้ปุ่มอยู่ล่างคงที่
+
+3. **ตัวอย่างอ้างอิง**
+   - `components/dashboard/transaction-form-dialog.tsx`
+   - `components/dashboard/credit-card-payment-dialog.tsx`
+   - `components/dashboard/category-form-dialog.tsx`
+   - `components/dashboard/financial-account-form-dialog.tsx`
+
+## Do
+
+- ทุกครั้งที่เพิ่มหรือแก้ Dialog ที่มี **form หลายฟิลด์** ให้เช็คทันทีว่าใส่ fullscreen on mobile + layout แบบด้านบนแล้วหรือยัง
+- ใช้ pattern เดียวกับ dialog form อื่นในโปรเจกต์ (ดูจาก transaction-form-dialog / category-form-dialog)
+
+## Don't
+
+- อย่าใช้แค่ `max-w-sm` / `max-w-md` อย่างเดียวโดยไม่มี `max-md:inset-0 max-md:...` สำหรับ Dialog ที่มี form ยาว
+- อย่าข้ามการเช็คเมื่อทำ feature ใหม่ที่ใช้ Dialog — ถ้าเป็น form ให้ใช้ fullscreen on mobile เสมอ
