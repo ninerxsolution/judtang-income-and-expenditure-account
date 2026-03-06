@@ -1,20 +1,20 @@
 "use client";
 
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
-import { DEFAULT_LANGUAGE, LANGUAGE_LOCALES, Language, translate } from "@/i18n";
+import { DEFAULT_LANGUAGE, LANGUAGE_LOCALES, Language, translate, getDictionary, type Dictionary } from "@/i18n";
 
 type I18nContextValue = {
   language: Language;
   locale: string;
   setLanguage: (language: Language) => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: Dictionary & ((key: string, params?: Record<string, string | number>) => string);
 };
 
 export const I18nContext = createContext<I18nContextValue>({
   language: DEFAULT_LANGUAGE,
   locale: LANGUAGE_LOCALES[DEFAULT_LANGUAGE],
   setLanguage: () => {},
-  t: (key: string) => key,
+  t: ((key: string) => key) as I18nContextValue["t"],
 });
 
 type I18nProviderProps = {
@@ -67,7 +67,12 @@ export function I18nProvider({ initialLanguage, children }: I18nProviderProps) {
       return translate(language, key, params);
     },
     [language],
-  );
+  ) as I18nContextValue["t"];
+
+  // Attach dictionary properties to the function so both patterns work:
+  // t("key") for function calls and t.key for object access
+  const dict = getDictionary(language);
+  Object.assign(t, dict);
 
   const value = useMemo<I18nContextValue>(
     () => ({

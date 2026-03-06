@@ -10,6 +10,7 @@ import { ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
+import { RecurringDueWidget } from "@/components/dashboard/recurring-due-widget";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
   Card,
@@ -312,7 +313,9 @@ export default function DashboardPage() {
               </div>
             )}
 
-            
+            <div className="mt-4">
+              <RecurringDueWidget />
+            </div>
           </div>
           <TransactionsCalendar showNewTransactionButton={false} showQuickActions={true} />
         </div>
