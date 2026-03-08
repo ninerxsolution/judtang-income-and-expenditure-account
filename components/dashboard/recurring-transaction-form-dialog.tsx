@@ -255,7 +255,7 @@ export function RecurringTransactionFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4">
+          <DialogBody className="space-y-4 pb-2">
             {/* Type toggle */}
             <div className="flex rounded-lg overflow-hidden border border-border">
               {(["EXPENSE", "INCOME"] as RecurringType[]).map((t) => (
@@ -447,30 +447,34 @@ export function RecurringTransactionFormDialog({
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           </DialogBody>
 
-          <DialogFooter className="shrink-0 flex flex-col gap-2">
+          <DialogFooter
+            className={cn(
+              "shrink-0",
+              isEdit && deleteConfirm && "flex flex-col gap-2 items-stretch"
+            )}
+          >
             {isEdit && !deleteConfirm && (
               <Button
                 type="button"
                 variant="ghost"
-                className="text-destructive hover:text-destructive w-full"
+                className="text-destructive hover:text-destructive mr-auto"
                 onClick={() => setDeleteConfirm(true)}
               >
                 {r.form.deleteButton}
               </Button>
             )}
             {isEdit && deleteConfirm && (
-              <div className="flex flex-col gap-2 w-full">
+              <>
                 <p className="text-sm text-destructive text-center">
                   {r.form.deleteConfirm.replace("{name}", name)}
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex-1"
                     onClick={() => setDeleteConfirm(false)}
                   >
                     {t.common.actions.cancel}
@@ -478,28 +482,28 @@ export function RecurringTransactionFormDialog({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="flex-1"
                     onClick={handleDelete}
                     disabled={deletePending}
                   >
                     {r.form.deleteButton}
                   </Button>
                 </div>
-              </div>
+              </>
             )}
-            <div className="flex gap-2 w-full">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => onOpenChange(false)}
-              >
-                {t.common.actions.cancel}
-              </Button>
-              <Button type="submit" className="flex-1" disabled={pending}>
-                {pending ? "…" : r.form.saveButton}
-              </Button>
-            </div>
+            {(!isEdit || !deleteConfirm) && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  {t.common.actions.cancel}
+                </Button>
+                <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={pending}>
+                  {pending ? "…" : r.form.saveButton}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

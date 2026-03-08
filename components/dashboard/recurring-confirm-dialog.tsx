@@ -144,18 +144,17 @@ export function RecurringConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-sm",
+          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
         )}
       >
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2Icon className="h-4 w-4 text-emerald-500" />
             {r.confirmDialog.title}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4">
+          <DialogBody className="space-y-4 pb-2">
             <p className="text-sm text-muted-foreground">
               {r.confirmDialog.description.replace("{name}", item.name)}
             </p>
@@ -206,19 +205,18 @@ export function RecurringConfirmDialog({
               />
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           </DialogBody>
 
-          <DialogFooter className="shrink-0 flex gap-2">
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
               onClick={() => onOpenChange(false)}
             >
               {t.common.actions.cancel}
             </Button>
-            <Button type="submit" className="flex-1 bg-emerald-500 hover:bg-emerald-600" disabled={pending}>
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={pending}>
               {pending ? "…" : r.confirmDialog.confirmButton}
             </Button>
           </DialogFooter>

@@ -31,6 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatAmount } from "@/lib/format";
+import { formatYearForDisplay } from "@/lib/format-year";
 import { useI18n } from "@/hooks/use-i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -60,7 +61,7 @@ function getYearRange(year: number): { from: string; to: string } {
 }
 
 export default function SummaryPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
@@ -227,7 +228,7 @@ export default function SummaryPage() {
           >
             {yearOptions.map((y) => (
               <option key={y} value={y}>
-                {y}
+                {formatYearForDisplay(y, language)}
               </option>
             ))}
           </select>

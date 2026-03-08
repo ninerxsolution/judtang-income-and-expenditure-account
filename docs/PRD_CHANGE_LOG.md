@@ -5,6 +5,28 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 07/03/2026 (Year display พ.ศ./ค.ศ.)
+
+- lib/format-year.ts — New: formatYearForDisplay(year, language) for Buddhist Era (th) / Gregorian (en).
+- app/(dashboard)/dashboard/settings/budget/page.tsx — Year dropdown uses formatYearForDisplay.
+- app/(dashboard)/dashboard/summary/page.tsx — Year dropdown uses formatYearForDisplay.
+- components/dashboard/transactions-calendar.tsx — Use formatYearForDisplay from lib; remove local implementation.
+- components/landing/landing-footer.tsx — Copyright year uses formatYearForDisplay.
+- .cursor/rules/date-time-year-display.mdc — New: rule for year display in date/time components.
+- docs/structure/date-time-year-display.md — New: convention and component list for พ.ศ./ค.ศ.
+- docs/INDEX.md — Added date-time-year-display.md to structure index.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
+## 07/03/2026 (Planned: In-App Notifications)
+
+- docs/feature/notifications.md — New: Planned feature note — notification window for news, updates, in-app alerts.
+- docs/INDEX.md — Added notifications.md to feature index.
+- docs/PRD_CHANGE_LOG.md — Changelog entry.
+
+---
+
 ## 06/03/2026 (Slip OCR: dual-language parser)
 
 - lib/slip-parser.ts — Thai support: จำนวน/บาท amount pattern, ม.ค./ก.พ./... date pattern, Buddhist Era year; skip Thai boilerplate in note.

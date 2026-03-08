@@ -52,7 +52,7 @@ export function RecurringDueWidget() {
 
   useEffect(() => {
     loadItems();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const unpaidItems = items.filter((i) => !i.isPaid).slice(0, 4);
@@ -98,24 +98,28 @@ export function RecurringDueWidget() {
             {unpaidItems.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors group"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors group cursor-pointer"
+                onClick={() => {
+                  setConfirmItem(item);
+                  setConfirmOpen(true);
+                }}
               >
                 <CircleIcon className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                 <span className="flex-1 text-sm truncate">{item.name}</span>
                 <span className="text-sm font-medium text-red-500 shrink-0">
-                  {formatAmount(Number(item.amount))}
+                  ฿ {formatAmount(Number(item.amount))}
                 </span>
-                <Button
+                {/* <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30 shrink-0"
+                  className="h-6 px-2 text-xs bg-red-600 text-white hover:bg-red-700 hover:text-white shrink-0"
                   onClick={() => {
                     setConfirmItem(item);
                     setConfirmOpen(true);
                   }}
                 >
-                  {r.widget.confirmPay}
-                </Button>
+                  {r.widget.pay}
+                </Button> */}
               </div>
             ))}
           </div>

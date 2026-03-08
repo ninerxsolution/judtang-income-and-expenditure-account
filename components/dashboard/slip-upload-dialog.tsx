@@ -338,7 +338,7 @@ export function SlipUploadDialog({
         </DialogHeader>
 
         <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4 pl-1 overflow-y-auto">
+          <DialogBody className="space-y-4">
             {step === "select" && (
               <>
                 <p className="text-sm text-muted-foreground">
@@ -536,6 +536,7 @@ export function SlipUploadDialog({
                 </Button>
                 <Button
                   onClick={handleConfirm}
+                  className="bg-emerald-500 hover:bg-emerald-600"
                   disabled={validDraftCount === 0}
                 >
                   {t("dashboard.slipUpload.confirmAll")}

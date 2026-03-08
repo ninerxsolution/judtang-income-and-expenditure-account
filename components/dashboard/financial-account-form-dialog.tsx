@@ -358,7 +358,7 @@ export function FinancialAccountFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4 pl-1">
+          <DialogBody className="space-y-4">
             {loadState === "loading" && (
               <div className="space-y-4">
                 <div>
@@ -666,6 +666,7 @@ export function FinancialAccountFormDialog({
             </Button>
             <Button
               type="submit"
+              className="bg-emerald-500 hover:bg-emerald-600"
               disabled={pending || loadState === "loading"}
             >
               {pending

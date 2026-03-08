@@ -95,7 +95,7 @@ export function CategoryFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4 pl-1">
+          <DialogBody className="space-y-4">
           <FormField
             id="category-form-name"
             label={t("settings.categories.addPlaceholder")}
@@ -116,7 +116,7 @@ export function CategoryFormDialog({
             >
               {t("common.actions.cancel")}
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={pending}>
               {pending ? t("common.actions.save") : t("common.actions.save")}
             </Button>
           </DialogFooter>

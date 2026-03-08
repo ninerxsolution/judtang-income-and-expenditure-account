@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { translate, type Language } from "@/i18n";
+import { formatYearForDisplay } from "@/lib/format-year";
 
 type LandingFooterProps = {
   language: Language;
@@ -9,7 +10,8 @@ type LandingFooterProps = {
 };
 
 export function LandingFooter({ language, version }: LandingFooterProps) {
-  const year = new Date().getFullYear();
+  const yearGregorian = new Date().getFullYear();
+  const yearDisplay = formatYearForDisplay(yearGregorian, language);
 
   return (
     <footer className="border-t border-[#D4C9B0] py-12 dark:border-stone-800">
@@ -38,7 +40,7 @@ export function LandingFooter({ language, version }: LandingFooterProps) {
             </Link>
           </div>
           <p className="text-sm text-[#A09080] dark:text-stone-500">
-            {translate(language, "home.footer.copyright", { year: String(year) })}
+            {translate(language, "home.footer.copyright", { year: yearDisplay })}
           </p>
         </div>
       </div>
