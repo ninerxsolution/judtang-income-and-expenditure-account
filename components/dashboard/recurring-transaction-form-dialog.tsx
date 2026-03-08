@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { CategoryCombobox } from "@/components/dashboard/category-combobox";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useI18n } from "@/hooks/use-i18n";
 import type { AccountOption } from "@/components/dashboard/account-combobox";
 
@@ -146,6 +147,10 @@ export function RecurringTransactionFormDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!startDate.trim()) {
+      setError(r.startDateRequired);
+      return;
+    }
     setPending(true);
 
     const payload = {
@@ -394,31 +399,18 @@ export function RecurringTransactionFormDialog({
               </div>
             )}
 
-            {/* Start date */}
-            <div className="space-y-1.5">
-              <Label htmlFor="recurring-start">{r.startDate}</Label>
-              <input
-                id="recurring-start"
-                type="date"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* End date */}
-            <div className="space-y-1.5">
-              <Label htmlFor="recurring-end">{r.endDate}</Label>
-              <input
-                id="recurring-end"
-                type="date"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-              />
-            </div>
+            {/* Start – End date range */}
+            <DateRangePicker
+              id="recurring-date-range"
+              label={t("dataTools.export.dateRange")}
+              value={{ from: startDate, to: endDate || undefined }}
+              onChange={(v) => {
+                setStartDate(v.from ?? "");
+                setEndDate(v.to ?? "");
+              }}
+              placeholder={t("dataTools.export.dateRangePlaceholder")}
+              numberOfMonths={1}
+            />
 
             {/* Note */}
             <div className="space-y-1.5">

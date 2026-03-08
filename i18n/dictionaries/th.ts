@@ -1174,6 +1174,7 @@ export const thDictionary = {
     },
     startDate: "วันเริ่มต้น",
     endDate: "วันสิ้นสุด (ไม่บังคับ)",
+    startDateRequired: "กรุณาเลือกวันเริ่มต้น",
     isActive: "เปิดใช้งาน",
     form: {
       titleCreate: "เพิ่มรายการประจำ",

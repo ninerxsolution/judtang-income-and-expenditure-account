@@ -126,14 +126,10 @@ export default function RecurringPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl py-6 px-4 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <RepeatIcon className="h-6 w-6 text-muted-foreground" />
-            {r.title}
-          </h1>
           <p className="text-sm text-muted-foreground mt-1">{r.subtitle}</p>
         </div>
         <Button onClick={openCreate} size="sm" className="shrink-0">

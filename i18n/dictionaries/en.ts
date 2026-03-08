@@ -1179,6 +1179,7 @@ export const enDictionary = {
     },
     startDate: "Start date",
     endDate: "End date (optional)",
+    startDateRequired: "Start date is required.",
     isActive: "Active",
     form: {
       titleCreate: "Add Recurring Transaction",

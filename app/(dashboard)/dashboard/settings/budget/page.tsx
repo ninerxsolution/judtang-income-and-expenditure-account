@@ -577,26 +577,12 @@ export default function BudgetSettingsPage() {
     totalBudgetNum != null ? totalBudgetNum - totalSpent : null;
 
   return (
-    <div className="space-y-6 pt-4 sm:pt-8">
-      {/* Back link */}
-      <Link
-        href="/dashboard/settings"
-        className="inline-flex items-center gap-1 text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        {t("common.actions.back")}
-      </Link>
+    <div className="space-y-6">
 
       {/* Header + Month navigation */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <header className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#D4C9B0] bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-800">
-            <Wallet className="h-5 w-5 text-[#5C6B52] dark:text-stone-300" />
-          </div>
           <div>
-            <h1 className="text-xl font-semibold">
-              {t("settings.budget.title")}
-            </h1>
             <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
               {t("settings.budget.description")}
             </p>
