@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { useState, useEffect, useRef } from "react";
 import {
   AlertCircle,
@@ -361,8 +362,10 @@ export function SlipUploadDialog({
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [responseDraftId, setResponseDraftId] = useState<string | null>(null);
+  const [previewDraftId, setPreviewDraftId] = useState<string | null>(null);
   const [editingDraftIds, setEditingDraftIds] = useState<string[]>([]);
   const [restoredMessage, setRestoredMessage] = useState<string | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
@@ -382,6 +385,7 @@ export function SlipUploadDialog({
     setGlobalError(null);
     setRestoredMessage(null);
     setResponseDraftId(null);
+    setPreviewDraftId(null);
     setEditingDraftIds([]);
     setBatchElapsedMs(null);
     setFileInputKey((k) => k + 1);
@@ -425,6 +429,7 @@ export function SlipUploadDialog({
   useEffect(() => {
     if (!open) {
       setResponseDraftId(null);
+      setPreviewDraftId(null);
       setEditingDraftIds([]);
       return;
     }
@@ -527,6 +532,7 @@ export function SlipUploadDialog({
     requestControllersRef.current.delete(id);
     setDrafts((prev) => prev.filter((draft) => draft.id !== id));
     setResponseDraftId((current) => (current === id ? null : current));
+    setPreviewDraftId((current) => (current === id ? null : current));
     setEditingDraftIds((prev) => prev.filter((draftId) => draftId !== id));
   }
 
@@ -995,6 +1001,23 @@ export function SlipUploadDialog({
   const selectedDraft = responseDraftId
     ? drafts.find((draft) => draft.id === responseDraftId) ?? null
     : null;
+  const previewDraft = previewDraftId
+    ? drafts.find((draft) => draft.id === previewDraftId) ?? null
+    : null;
+
+  useEffect(() => {
+    if (!previewDraft?.file) {
+      setPreviewImageUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(previewDraft.file);
+    setPreviewImageUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [previewDraft?.file]);
 
   function getStepSummaryLine(draft: SlipDraft): string {
     if (draft.submitStatus === "submitting") {
@@ -1263,6 +1286,15 @@ export function SlipUploadDialog({
                               <Button
                                 type="button"
                                 variant="ghost"
+                                size="sm"
+                                onClick={() => setPreviewDraftId(draft.id)}
+                                disabled={!draft.file}
+                              >
+                                {t("dashboard.slipUpload.previewImage")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => setResponseDraftId(draft.id)}
@@ -1504,6 +1536,43 @@ export function SlipUploadDialog({
               )}
             </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(previewDraftId)}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setPreviewDraftId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-3xl">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>{t("dashboard.slipUpload.previewImageTitle")}</DialogTitle>
+            <DialogDescription>
+              {previewDraft?.rawFileName ?? t("dashboard.slipUpload.previewUnavailable")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            {previewImageUrl ? (
+              <div className="relative mx-auto h-[55dvh] w-full overflow-hidden rounded-md bg-muted/30 sm:h-128">
+                <NextImage
+                  src={previewImageUrl}
+                  alt={previewDraft?.rawFileName ?? t("dashboard.slipUpload.previewImageTitle")}
+                  fill
+                  unoptimized
+                  className="object-contain"
+                  sizes="100vw"
+                />
+              </div>
+            ) : (
+              <div className="flex min-h-48 items-center justify-center rounded-md border border-dashed px-4 text-sm text-muted-foreground">
+                {t("dashboard.slipUpload.previewUnavailable")}
+              </div>
+            )}
+          </DialogBody>
+          
         </DialogContent>
       </Dialog>
 
