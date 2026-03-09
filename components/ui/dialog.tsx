@@ -118,7 +118,7 @@ function DialogBody({
 
   return (
     <div
-      className={cn("flex-1 min-h-0 overflow-y-auto pr-4 pl-1", className)}
+      className={cn("flex-1 min-h-0 overflow-y-auto pr-4 pl-3", className)}
       {...props}
       onFocusCapture={handleFocusCapture}
     />
@@ -131,7 +131,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("text-lg font-semibold leading-none tracking-tight pl-3 pr-4", className)}
     {...props}
   />
 ))
