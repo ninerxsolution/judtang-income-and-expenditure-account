@@ -261,6 +261,44 @@
   }
 }
 
+/* ─── View Transitions ──────────────────────────────────────────────────────
+   Applied when navigating between dashboard pages.
+   Uses a short cross-fade (180 ms). Skipped entirely for users who prefer
+   reduced motion.
+   ──────────────────────────────────────────────────────────────────────────── */
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes vt-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: 180ms ease-out both vt-fade-out;
+    /* Disable the default `plus-lighter` blend which brightens the overlap. */
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-new(root) {
+    animation: 180ms ease-in both vt-fade-in;
+    mix-blend-mode: normal;
+  }
+}
+
+/* Disable all view-transition animations for reduced-motion users. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

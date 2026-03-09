@@ -134,7 +134,7 @@ export function AppSidebarLayout({
                 {t("common.appName")}
               </span>
               <span className="text-[11px] text-muted-foreground">
-                {t("dashboard.pageTitle.dashboard")}
+                {t("dashboard.pageTitle.dashboard")} 
               </span>
             </div>
           </Link>
@@ -163,10 +163,10 @@ export function AppSidebarLayout({
                         isActive={isActive}
                         tooltip={t(`dashboard.sidebar.${item.key}`)}
                       >
-                        <Link href={item.href}>
-                          <Icon />
-                          <span>{t(`dashboard.sidebar.${item.key}`)}</span>
-                        </Link>
+                          <Link href={item.href}>
+                            <Icon />
+                            <span>{t(`dashboard.sidebar.${item.key}`)}</span>
+                          </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -179,9 +179,9 @@ export function AppSidebarLayout({
                       tooltip={t("dashboard.sidebar.reports")}
                     >
                       <Link href="/admin/reports">
-                        <FileText />
-                        <span>{t("dashboard.sidebar.reports")}</span>
-                      </Link>
+                          <FileText />
+                          <span>{t("dashboard.sidebar.reports")}</span>
+                        </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
