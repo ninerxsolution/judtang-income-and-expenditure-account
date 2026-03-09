@@ -9,9 +9,14 @@ const OCR_SPACE_URL = "https://api.ocr.space/parse/image";
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB (OCR.space free tier)
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp", "image/tiff"];
 const MAX_FILES_PER_REQUEST = 10;
-const OCR_CONCURRENCY = 3;
-const OCR_TIMEOUT_MS = 20000;
+const OCR_CONCURRENCY = 5;
+const OCR_TIMEOUT_MS = 60000; // 60 seconds
+const OCR_MAX_RETRIES = 1;
+const PRIMARY_OCR_ENGINE = "2";
+const FALLBACK_OCR_ENGINE = "3";
 const IS_PRODUCTION = process.env.APP_ENV === "production";
+
+type OcrEngine = typeof PRIMARY_OCR_ENGINE | typeof FALLBACK_OCR_ENGINE;
 
 type OcrSpaceParsedResult = {
   FileParseExitCode: number;
@@ -40,6 +45,11 @@ export type SlipItemResponse = {
   error?: string;
 };
 
+type OcrRequestResult =
+  | { kind: "response"; response: Response }
+  | { kind: "error"; error: "OCR_REQUEST_TIMEOUT" | "OCR_REQUEST_FAILED" }
+  | { kind: "rate_limit" };
+
 async function runWithConcurrency<T>(
   tasks: Array<() => Promise<T>>,
   limit: number,
@@ -48,12 +58,12 @@ async function runWithConcurrency<T>(
   let nextIndex = 0;
 
   async function worker() {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    while (nextIndex < tasks.length) {
       const current = nextIndex;
-      if (current >= tasks.length) break;
       nextIndex += 1;
-      results[current] = await tasks[current]();
+      const task = tasks[current];
+      if (!task) return;
+      results[current] = await task();
     }
   }
 
@@ -82,7 +92,6 @@ async function processFile(
 
   const log = (stage: string, extra: Record<string, unknown> = {}): void => {
     if (IS_PRODUCTION) return;
-    // eslint-disable-next-line no-console
     console.log(
       JSON.stringify({
         stage,
@@ -111,124 +120,183 @@ async function processFile(
     };
   }
 
-  const ocrStart = Date.now();
   const arrayBuffer = await file.arrayBuffer();
   const blob = new Blob([arrayBuffer], {
     type: file.type || "application/octet-stream",
   });
-  const ocrForm = new FormData();
-  ocrForm.append("file", blob, file.name || "image.png");
-  // ocrForm.append("language", "tha");
-  ocrForm.append("OCREngine", "3");
-  ocrForm.append("isOverlayRequired", "false");
-  ocrForm.append("apikey", apiKey);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    controller.abort();
-  }, OCR_TIMEOUT_MS);
+  async function fetchOcrResponse(engine: OcrEngine): Promise<OcrRequestResult> {
+    let res: Response | null = null;
+    for (let attempt = 0; attempt <= OCR_MAX_RETRIES; attempt += 1) {
+      const ocrForm = new FormData();
+      ocrForm.append("file", blob, file.name || "image.png");
+      // ocrForm.append("language", "tha");
+      ocrForm.append("OCREngine", engine);
+      ocrForm.append("isOverlayRequired", "false");
+      ocrForm.append("apikey", apiKey);
 
-  let res: Response;
-  try {
-    res = await fetch(OCR_SPACE_URL, {
-      method: "POST",
-      headers: {
-        apikey: apiKey,
-      },
-      body: ocrForm,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    clearTimeout(timeoutId);
-    const durationMs = Date.now() - ocrStart;
-    if (error instanceof Error && error.name === "AbortError") {
-      log("ocr_timeout", { durationMs });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, OCR_TIMEOUT_MS);
+      const attemptStart = Date.now();
+
+      try {
+        res = await fetch(OCR_SPACE_URL, {
+          method: "POST",
+          headers: {
+            apikey: apiKey,
+          },
+          body: ocrForm,
+          signal: controller.signal,
+        });
+        log("ocr_response", {
+          engine,
+          status: res.status,
+          durationMs: Date.now() - attemptStart,
+          attempt: attempt + 1,
+        });
+        break;
+      } catch (error) {
+        const durationMs = Date.now() - attemptStart;
+        const shouldRetry = attempt < OCR_MAX_RETRIES;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        if (error instanceof Error && error.name === "AbortError") {
+          log(shouldRetry ? "ocr_timeout_retry" : "ocr_timeout", {
+            engine,
+            durationMs,
+            attempt: attempt + 1,
+          });
+          if (shouldRetry) {
+            continue;
+          }
+          return { kind: "error", error: "OCR_REQUEST_TIMEOUT" };
+        }
+
+        log(shouldRetry ? "ocr_request_failed_retry" : "ocr_request_failed", {
+          engine,
+          durationMs,
+          attempt: attempt + 1,
+          error: errorMessage,
+        });
+        if (shouldRetry) {
+          continue;
+        }
+        return { kind: "error", error: "OCR_REQUEST_FAILED" };
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    if (!res) {
+      return { kind: "error", error: "OCR_REQUEST_FAILED" };
+    }
+
+    if (res.status === 429) {
+      log("ocr_rate_limit", { engine });
+      return { kind: "rate_limit" };
+    }
+
+    return { kind: "response", response: res };
+  }
+
+  const engines: OcrEngine[] = [PRIMARY_OCR_ENGINE, FALLBACK_OCR_ENGINE];
+  for (const engine of engines) {
+    const requestResult = await fetchOcrResponse(engine);
+    if (requestResult.kind === "rate_limit") {
+      throw new Error("RATE_LIMIT");
+    }
+    if (requestResult.kind === "error") {
       return {
         index,
         rawFileName,
         rawText: undefined,
-        error: "OCR_REQUEST_TIMEOUT",
+        error: requestResult.error,
       };
     }
-    log("ocr_request_failed", { durationMs, error: error instanceof Error ? error.message : String(error) });
-    return {
-      index,
-      rawFileName,
-      rawText: undefined,
-      error: "OCR_REQUEST_FAILED",
-    };
-  } finally {
-    clearTimeout(timeoutId);
-  }
 
-  const durationMs = Date.now() - ocrStart;
-  log("ocr_response", { status: res.status, durationMs });
+    const res = requestResult.response;
+    let data: OcrSpaceResponse;
+    try {
+      data = (await res.json()) as OcrSpaceResponse;
+    } catch (error) {
+      log("ocr_response_invalid", {
+        engine,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        index,
+        rawFileName,
+        error: "OCR_RESPONSE_INVALID",
+      };
+    }
 
-  if (res.status === 429) {
-    log("ocr_rate_limit");
-    // Signal caller to return 429 for the whole request
-    throw new Error("RATE_LIMIT");
-  }
+    if (data.IsErroredOnProcessing || (data.OCRExitCode && data.OCRExitCode >= 3)) {
+      const message = data.ErrorMessage;
+      const errMsg = typeof message === "string"
+        ? message
+        : data.ErrorDetails ?? "OCR failed";
+      log("ocr_failed", { engine, OCRExitCode: data.OCRExitCode, error: errMsg });
+      return {
+        index,
+        rawFileName,
+        error: errMsg || "OCR_FAILED",
+      };
+    }
 
-  let data: OcrSpaceResponse;
-  try {
-    data = (await res.json()) as OcrSpaceResponse;
-  } catch (error) {
-    log("ocr_response_invalid", { error: error instanceof Error ? error.message : String(error) });
-    return {
-      index,
-      rawFileName,
-      error: "OCR_RESPONSE_INVALID",
-    };
-  }
+    const first = data.ParsedResults?.[0];
+    if (!first || first.FileParseExitCode !== 1 || !first.ParsedText) {
+      const errMsg = first?.ErrorMessage ?? first?.ErrorDetails ?? "No text extracted";
+      const shouldFallback = engine === PRIMARY_OCR_ENGINE;
+      log(shouldFallback ? "parse_failed_no_text_fallback" : "parse_failed_no_text", {
+        engine,
+        error: errMsg,
+      });
+      if (shouldFallback) {
+        continue;
+      }
+      return {
+        index,
+        rawFileName,
+        rawText: first?.ParsedText ?? undefined,
+        error: errMsg || "PARSE_FAILED",
+      };
+    }
 
-  if (data.IsErroredOnProcessing || (data.OCRExitCode && data.OCRExitCode >= 3)) {
-    const message = data.ErrorMessage;
-    const errMsg = typeof message === "string"
-      ? message
-      : data.ErrorDetails ?? "OCR failed";
-    log("ocr_failed", { OCRExitCode: data.OCRExitCode, error: errMsg });
-    return {
-      index,
-      rawFileName,
-      error: errMsg || "OCR_FAILED",
-    };
-  }
+    const parsed = parseSlipText(first.ParsedText);
+    if (!parsed) {
+      const shouldFallback = engine === PRIMARY_OCR_ENGINE;
+      log(shouldFallback ? "parse_failed_amount_fallback" : "parse_failed_amount", {
+        engine,
+      });
+      if (shouldFallback) {
+        continue;
+      }
+      return {
+        index,
+        rawFileName,
+        rawText: first.ParsedText,
+        error: "PARSE_FAILED",
+      };
+    }
 
-  const first = data.ParsedResults?.[0];
-  if (!first || first.FileParseExitCode !== 1 || !first.ParsedText) {
-    const errMsg = first?.ErrorMessage ?? first?.ErrorDetails ?? "No text extracted";
-    log("parse_failed_no_text", { error: errMsg });
-    return {
-      index,
-      rawFileName,
-      rawText: first?.ParsedText ?? undefined,
-      error: errMsg || "PARSE_FAILED",
-    };
-  }
-
-  const parsed = parseSlipText(first.ParsedText);
-  if (!parsed) {
-    log("parse_failed_amount", {});
+    log("parse_success", { engine, amount: parsed.amount });
     return {
       index,
       rawFileName,
       rawText: first.ParsedText,
-      error: "PARSE_FAILED",
+      parsed: {
+        amount: parsed.amount,
+        occurredAt: parsed.occurredAt ? parsed.occurredAt.toISOString() : null,
+        note: parsed.note ?? null,
+      },
     };
   }
-
-  log("parse_success", { amount: parsed.amount });
-
   return {
     index,
     rawFileName,
-    rawText: first.ParsedText,
-    parsed: {
-      amount: parsed.amount,
-      occurredAt: parsed.occurredAt ? parsed.occurredAt.toISOString() : null,
-      note: parsed.note ?? null,
-    },
+    error: "PARSE_FAILED",
   };
 }
 
@@ -298,7 +366,6 @@ export async function POST(request: Request) {
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const routeStart = Date.now();
   if (!IS_PRODUCTION) {
-    // eslint-disable-next-line no-console
     console.log(
       JSON.stringify({
         stage: "route_start",
@@ -319,7 +386,6 @@ export async function POST(request: Request) {
     );
     if (!IS_PRODUCTION) {
       const totalDurationMs = Date.now() - routeStart;
-      // eslint-disable-next-line no-console
       console.log(
         JSON.stringify({
           stage: "route_end",
@@ -333,7 +399,6 @@ export async function POST(request: Request) {
   } catch (error) {
     if (!IS_PRODUCTION) {
       const totalDurationMs = Date.now() - routeStart;
-      // eslint-disable-next-line no-console
       console.log(
         JSON.stringify({
           stage: "route_error",

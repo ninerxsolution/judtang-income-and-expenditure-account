@@ -1,0 +1,29 @@
+---
+description: Slip OCR engine 2 must fallback to engine 3 on parse failure
+globs: app/api/ocr/parse-slips/route.ts
+alwaysApply: false
+---
+
+# Slip OCR Engine Fallback
+
+## Problem encountered
+
+- Switching OCR.space from `OCREngine=3` to `OCREngine=2` made slip upload much faster.
+- Some bank slips then returned OCR text that looked readable but lost key amount labels such as `Baht` / `บาท`, which caused `parseSlipText()` to return `PARSE_FAILED`.
+
+## Root cause
+
+- `OCREngine=2` is faster but less reliable for noisy or stylized slip layouts.
+- The parser expects recognizable amount patterns, so lower-quality OCR output can break extraction even when the numeric amount is visible.
+
+## Solution
+
+1. Keep `OCREngine=2` as the primary engine for speed.
+2. If OCR succeeds but parsing fails or no usable text is extracted, retry the same slip with `OCREngine=3`.
+3. Keep timeout/network retry logic separate from engine fallback logic.
+
+## Prevent recurrence
+
+- Do: preserve the `engine 2 -> engine 3` fallback when optimizing slip OCR speed.
+- Do: add or keep tests that verify fallback occurs when engine 2 OCR text cannot be parsed.
+- Don't: switch all slips to `OCREngine=2` without a fallback path.

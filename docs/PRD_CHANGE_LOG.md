@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 09/03/2026 (Slip upload persistence + UX)
+
+- docs/feature/slip-ocr.md — Updated slip upload docs: client-side compression and telemetry, OCR engine 2 with fallback to engine 3, compact summary/edit flow, and localStorage persistence/recovery behavior.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
 ## 09/03/2026
 
 - docs/feature/recurring-transactions.md — Updated recurring UI notes: mobile card stacking, inline calendar date trigger in confirm dialog, toggle switch for active state in edit dialog, and solid primary confirm button.

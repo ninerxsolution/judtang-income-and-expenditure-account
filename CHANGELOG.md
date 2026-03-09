@@ -2,6 +2,19 @@
 
 ---
 
+# v0.9.16 - 2026-03-09
+
+## Changed
+
+- **Slip upload persistence** — Slip drafts and OCR results are now persisted in `localStorage`, so you can close the slip upload dialog, do something else, and reopen it later without losing the current batch.
+- **Slip upload background flow** — Closing the dialog no longer aborts in-flight OCR/upload while staying on the same page; reopening the dialog shows the latest in-progress or completed state.
+- **Slip upload recovery after refresh** — Completed and errored drafts are restored after refresh. Drafts that were still processing are restored as interrupted items so users can review or re-upload safely.
+- **Slip upload review UI** — Each slip now stays compact while loading, then switches to a summary view (`amount`, `type`, `date`) after OCR is done. Advanced fields are hidden behind an expandable edit section.
+- **Slip upload telemetry and speed feedback** — The dialog now shows per-slip upload percentage, uploaded/total size, estimated upload speed, file size before/after compression, per-slip elapsed time, and batch elapsed time.
+- **Slip upload action states** — Preview mode now keeps an upload entry point visible when appropriate, supports adding more slips to the existing batch, and preserves a usable empty state after clearing drafts.
+
+---
+
 # v0.9.15 - 2026-03-09
 
 ## Changed
