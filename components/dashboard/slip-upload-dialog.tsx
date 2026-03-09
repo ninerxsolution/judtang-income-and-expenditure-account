@@ -997,6 +997,16 @@ export function SlipUploadDialog({
     : null;
 
   function getStepSummaryLine(draft: SlipDraft): string {
+    if (draft.submitStatus === "submitting") {
+      return t("dashboard.slipUpload.statusCreating");
+    }
+    if (draft.submitStatus === "success") {
+      return t("dashboard.slipUpload.statusCreated");
+    }
+    if (draft.submitStatus === "error") {
+      return t("dashboard.slipUpload.statusCreateFailed");
+    }
+
     switch (draft.processingStage) {
       case "queued":
         return t("dashboard.slipUpload.statusQueued");
@@ -1016,7 +1026,7 @@ export function SlipUploadDialog({
         return parts.join(" · ");
       }
       case "processing":
-        return "OCR.space…";
+        return "OCR Processing…";
       case "success": {
         const parts: string[] = [t("dashboard.slipUpload.processDone")];
         if (draft.compressionStatus === "done" && draft.uploadFileSizeBytes !== null) {
@@ -1063,36 +1073,6 @@ export function SlipUploadDialog({
     return type === "INCOME" ? t("transactions.new.income") : t("transactions.new.expense");
   }
 
-  function getProcessingStatusLabel(draft: SlipDraft): string {
-    if (draft.submitStatus === "submitting") {
-      return t("dashboard.slipUpload.statusCreating");
-    }
-    if (draft.submitStatus === "success") {
-      return t("dashboard.slipUpload.statusCreated");
-    }
-    if (draft.submitStatus === "error") {
-      return t("dashboard.slipUpload.statusCreateFailed");
-    }
-    if (draft.parseStatus === "success") {
-      return t("dashboard.slipUpload.statusSuccess");
-    }
-    if (draft.parseStatus === "error") {
-      return t("dashboard.slipUpload.statusError");
-    }
-
-    switch (draft.processingStage) {
-      case "queued":
-        return t("dashboard.slipUpload.statusQueued");
-      case "compressing":
-        return t("dashboard.slipUpload.statusCompressing");
-      case "uploading":
-        return t("dashboard.slipUpload.statusUploading");
-      case "processing":
-        return t("dashboard.slipUpload.statusProcessingOcr");
-      default:
-        return t("dashboard.slipUpload.statusLoading");
-    }
-  }
 
   return (
     <>
@@ -1241,7 +1221,7 @@ export function SlipUploadDialog({
                       const isDraftCreated = draft.submitStatus === "success";
                       const isDraftDisabled = isDraftLoading || isDraftSubmitting || isDraftCreated;
                       const isDraftEditing = editingDraftIds.includes(draft.id);
-                      const statusLabel = getProcessingStatusLabel(draft);
+                      const statusLabel = getStepSummaryLine(draft);
                       const hasResponse = Boolean(draft.ocrResponse || draft.transactionResponse);
 
                       return (
@@ -1310,20 +1290,6 @@ export function SlipUploadDialog({
                             </p>
                           )}
 
-                          {draft.processingStage !== "success" && (
-                            <div>
-                              <p
-                                className={cn(
-                                  "text-xs",
-                                  draft.processingStage === "error"
-                                    ? "text-amber-600 dark:text-amber-400"
-                                    : "text-muted-foreground"
-                                )}
-                              >
-                                {getStepSummaryLine(draft)}
-                              </p>
-                            </div>
-                          )}
 
                           <div className="space-y-1">
                             {draft.parseStatus !== "loading" && (

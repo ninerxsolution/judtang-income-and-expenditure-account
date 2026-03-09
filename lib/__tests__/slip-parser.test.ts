@@ -85,16 +85,30 @@ Remaining Bal.: 789,281.03 Baht`;
     expect(result?.amount).toBe(888);
   });
 
-  it("extracts Thai date with 2-digit year", () => {
+  it("extracts Thai date with 2-digit year (treated as พ.ศ. 25xx)", () => {
+    // 65 -> พ.ศ. 2565 -> ค.ศ. 2022
     const result = parseSlipText(
       "Amount: 100 Baht\n25 ม.ค. 65 23:06 น.\n"
     );
     expect(result?.occurredAt).toBeInstanceOf(Date);
-    expect(result?.occurredAt?.getFullYear()).toBe(2065);
+    expect(result?.occurredAt?.getFullYear()).toBe(2022);
     expect(result?.occurredAt?.getMonth()).toBe(0);
     expect(result?.occurredAt?.getDate()).toBe(25);
     expect(result?.occurredAt?.getHours()).toBe(23);
     expect(result?.occurredAt?.getMinutes()).toBe(6);
+  });
+
+  it("extracts Thai date with 2-digit year 68 (treated as พ.ศ. 2568 = ค.ศ. 2025)", () => {
+    // 68 -> พ.ศ. 2568 -> ค.ศ. 2025
+    const result = parseSlipText(
+      "Amount: 500 Baht\n9 ต.ค. 68 15:46 น.\n"
+    );
+    expect(result?.occurredAt).toBeInstanceOf(Date);
+    expect(result?.occurredAt?.getFullYear()).toBe(2025);
+    expect(result?.occurredAt?.getMonth()).toBe(9); // October = 9
+    expect(result?.occurredAt?.getDate()).toBe(9);
+    expect(result?.occurredAt?.getHours()).toBe(15);
+    expect(result?.occurredAt?.getMinutes()).toBe(46);
   });
 
   it("extracts Thai date with Buddhist Era year", () => {

@@ -119,9 +119,9 @@ function extractOccurredAt(text: string): Date | undefined {
 
     let yearFull: number;
     if (yearRaw >= 2500) {
-      yearFull = yearRaw - 543; // Buddhist Era -> Gregorian
+      yearFull = yearRaw - 543; // Buddhist Era 4-digit -> Gregorian
     } else if (yearRaw < 100) {
-      yearFull = 2000 + yearRaw;
+      yearFull = 2500 + yearRaw - 543; // Thai slips use พ.ศ. short form, e.g. 68 = พ.ศ. 2568 = 2025
     } else {
       yearFull = yearRaw;
     }
