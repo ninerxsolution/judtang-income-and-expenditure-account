@@ -265,22 +265,30 @@ export default function UserPage() {
   if (loading && !profile) {
     return (
       <div className="space-y-10">
-        <Skeleton className="h-7 w-40" />
-        <section className="space-y-4 rounded-lg border border-border bg-muted/30 p-6">
-          <Skeleton className="h-4 w-16" />
-          <div className="flex gap-4">
+        <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
+          <Skeleton className="mb-4 h-4 w-16" />
+          <div className="flex flex-wrap items-center gap-4">
             <Skeleton className="h-16 w-16 rounded-full" />
-            <div className="flex flex-1 flex-col gap-2">
+            <div className="space-y-2">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-4 w-48" />
               <Skeleton className="h-3 w-40" />
+              <Skeleton className="h-3 w-28" />
             </div>
           </div>
         </section>
-        <section className="space-y-4 rounded-lg border border-border bg-muted/30 p-6">
+        <div className="min-w-0 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <Skeleton className="h-4 w-48" />
+          <div className="mt-2 flex gap-[5px]">
+            {[...Array(12)].map((_, i) => (
+              <Skeleton key={i} className="h-3 w-3 rounded" />
+            ))}
+          </div>
+        </div>
+        <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6 space-y-4">
           <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-full rounded-md" />
+          <Skeleton className="h-9 w-full rounded-md" />
         </section>
       </div>
     );

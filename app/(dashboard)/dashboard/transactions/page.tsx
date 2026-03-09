@@ -431,10 +431,33 @@ export default function TransactionsPage() {
       </div>
 
       {loading && (
-        <div className="mt-6 space-y-2">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-md" />
-          ))}
+        <div className="mt-6 overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
+          <table className="min-w-full text-xs lg:text-sm">
+            <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+              <tr>
+                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left"><Skeleton className="h-3 w-16" /></th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-14" /></th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-10" /></th>
+                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right"><Skeleton className="ml-auto h-3 w-14" /></th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-14" /></th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-12" /></th>
+                <th className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-3 w-16" /></th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
+                  <td className="px-2 py-2 lg:px-4"><Skeleton className="h-4 w-28" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                  <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
+                  <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

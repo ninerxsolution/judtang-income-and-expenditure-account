@@ -87,9 +87,29 @@ export default function AdminReportDetailPage() {
   if (loading || !report) {
     return (
       <div className="space-y-6 p-4 md:p-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-4 w-28" />
+        <div>
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="mt-1 h-4 w-40" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <div>
+              <Skeleton className="h-3.5 w-20" />
+              <Skeleton className="mt-1 h-32 w-full rounded-md" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="mt-1 h-4 w-32" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

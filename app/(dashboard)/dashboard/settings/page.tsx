@@ -402,11 +402,20 @@ export default function SettingsPage() {
           </div>
 
           {loadingSessions && !sessionsData ? (
-            <div className="space-y-2">
+            <ul className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-14 w-full rounded-md" />
+                <li key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 dark:border-stone-700 dark:bg-stone-900/60">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-14 rounded-md" />
+                </li>
               ))}
-            </div>
+            </ul>
           ) : sessionsError ? (
             <p className="text-sm text-red-600 dark:text-red-400">
               {t("settings.sessions.error")}

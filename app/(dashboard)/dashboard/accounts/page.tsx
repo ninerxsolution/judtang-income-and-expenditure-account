@@ -418,7 +418,22 @@ export default function AccountsPage() {
       {loading && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-lg" />
+            <Card key={i} className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-5 w-28" />
+                  </div>
+                  <Skeleton className="h-3 w-36" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded-md" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="mt-2 h-3 w-40" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
