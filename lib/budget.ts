@@ -93,6 +93,20 @@ export type MonthBudgetWithActuals = {
   categoryBudgets: CategoryBudgetWithActual[];
 };
 
+export type BudgetCoverageMonth = {
+  month: number;
+  hasTotalBudget: boolean;
+  categoryBudgetCount: number;
+  isConfigured: boolean;
+  updatedAt: Date | null;
+};
+
+export type BudgetCoverageForYear = {
+  year: number;
+  configuredMonthCount: number;
+  months: BudgetCoverageMonth[];
+};
+
 /** Load budget for month and merge with actuals. Returns structure even when no BudgetMonth exists. */
 export async function getBudgetForMonth(
   userId: string,
@@ -153,6 +167,62 @@ export async function getBudgetForMonth(
     totalProgress,
     totalIndicator,
     categoryBudgets,
+  };
+}
+
+export async function getBudgetCoverageForYear(
+  userId: string,
+  year: number,
+): Promise<BudgetCoverageForYear> {
+  const rows = await prisma.budgetMonth.findMany({
+    where: { userId, year },
+    select: {
+      month: true,
+      totalBudget: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          categoryBudgets: true,
+        },
+      },
+    },
+    orderBy: {
+      month: "asc",
+    },
+  });
+
+  const coverageByMonth = new Map<number, BudgetCoverageMonth>();
+  for (const row of rows) {
+    const totalBudget = row.totalBudget != null ? Number(row.totalBudget) : null;
+    const hasTotalBudget = totalBudget != null && totalBudget > 0;
+    const categoryBudgetCount = row._count.categoryBudgets;
+
+    coverageByMonth.set(row.month, {
+      month: row.month,
+      hasTotalBudget,
+      categoryBudgetCount,
+      isConfigured: hasTotalBudget || categoryBudgetCount > 0,
+      updatedAt: row.updatedAt,
+    });
+  }
+
+  const months = Array.from({ length: 12 }, (_, index) => {
+    const month = index + 1;
+    return (
+      coverageByMonth.get(month) ?? {
+        month,
+        hasTotalBudget: false,
+        categoryBudgetCount: 0,
+        isConfigured: false,
+        updatedAt: null,
+      }
+    );
+  });
+
+  return {
+    year,
+    configuredMonthCount: months.filter((month) => month.isConfigured).length,
+    months,
   };
 }
 

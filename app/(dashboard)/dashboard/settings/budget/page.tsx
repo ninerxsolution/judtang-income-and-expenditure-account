@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -37,6 +37,7 @@ import {
 import { useI18n } from "@/hooks/use-i18n";
 import { formatAmount } from "@/lib/format";
 import { formatYearForDisplay } from "@/lib/format-year";
+import { cn } from "@/lib/utils";
 
 type BudgetTemplate = {
   id: string;
@@ -79,6 +80,20 @@ type BudgetResponse = {
   totalProgress: number;
   totalIndicator: "normal" | "warning" | "critical" | "over";
   categoryBudgets: CategoryBudgetWithActual[];
+};
+
+type BudgetCoverageMonth = {
+  month: number;
+  hasTotalBudget: boolean;
+  categoryBudgetCount: number;
+  isConfigured: boolean;
+  updatedAt: string | null;
+};
+
+type BudgetCoverageResponse = {
+  year: number;
+  configuredMonthCount: number;
+  months: BudgetCoverageMonth[];
 };
 
 type Category = { id: string; name: string };
@@ -127,17 +142,28 @@ function indicatorBadgeClass(indicator: string): string {
   }
 }
 
+function parseIntegerParam(value: string | null): number | null {
+  if (value == null) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function BudgetSettingsPage() {
   const { t, language } = useI18n();
+  const router = useRouter();
+  const pathname = usePathname();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [templates, setTemplates] = useState<BudgetTemplate[]>([]);
   const [budget, setBudget] = useState<BudgetResponse | null>(null);
+  const [coverage, setCoverage] = useState<BudgetCoverageResponse | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [loadingBudget, setLoadingBudget] = useState(true);
+  const [loadingCoverage, setLoadingCoverage] = useState(true);
   const [, setLoadingCategories] = useState(true);
+  const [initializedFromQuery, setInitializedFromQuery] = useState(false);
   const [savingTotal, setSavingTotal] = useState(false);
   const [applyTemplateId, setApplyTemplateId] = useState<string>("");
   const [applying, setApplying] = useState(false);
@@ -198,6 +224,20 @@ export default function BudgetSettingsPage() {
     }
   }, [year, month, t]);
 
+  const fetchCoverage = useCallback(async () => {
+    setLoadingCoverage(true);
+    try {
+      const res = await fetch(`/api/budgets/coverage?year=${year}`);
+      if (!res.ok) throw new Error("Failed to load budget coverage");
+      const data: BudgetCoverageResponse = await res.json();
+      setCoverage(data);
+    } catch {
+      toast.error(t("common.errors.generic"));
+    } finally {
+      setLoadingCoverage(false);
+    }
+  }, [year, t]);
+
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
@@ -217,12 +257,46 @@ export default function BudgetSettingsPage() {
   }, [fetchTemplates]);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const yearParam = parseIntegerParam(searchParams.get("year"));
+    const monthParam = parseIntegerParam(searchParams.get("month"));
+
+    if (yearParam != null) {
+      setYear(yearParam);
+    }
+    if (monthParam != null && monthParam >= 1 && monthParam <= 12) {
+      setMonth(monthParam);
+    }
+
+    setInitializedFromQuery(true);
+  }, []);
+
+  useEffect(() => {
+    if (!initializedFromQuery) return;
     fetchBudget();
-  }, [fetchBudget]);
+  }, [fetchBudget, initializedFromQuery]);
+
+  useEffect(() => {
+    if (!initializedFromQuery) return;
+    fetchCoverage();
+  }, [fetchCoverage, initializedFromQuery]);
 
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  useEffect(() => {
+    if (!initializedFromQuery) return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("year", String(year));
+    searchParams.set("month", String(month));
+
+    const query = searchParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [initializedFromQuery, month, pathname, router, year]);
 
   const budgetMonthId = budget?.budgetMonth?.id;
   const existingCategoryIds = new Set(
@@ -231,22 +305,12 @@ export default function BudgetSettingsPage() {
       .filter(Boolean),
   );
 
-  function goToPreviousMonth() {
-    if (month === 1) {
-      setYear((y) => y - 1);
-      setMonth(12);
-    } else {
-      setMonth((m) => m - 1);
-    }
+  function goToPreviousYear() {
+    setYear((y) => y - 1);
   }
 
-  function goToNextMonth() {
-    if (month === 12) {
-      setYear((y) => y + 1);
-      setMonth(1);
-    } else {
-      setMonth((m) => m + 1);
-    }
+  function goToNextYear() {
+    setYear((y) => y + 1);
   }
 
   function openEditTotalBudgetDialog() {
@@ -283,7 +347,7 @@ export default function BudgetSettingsPage() {
       toast.success(t("settings.budget.saveSuccess"));
       setEditTotalBudgetOpen(false);
       setEditTotalBudgetAmount("");
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -313,7 +377,7 @@ export default function BudgetSettingsPage() {
       }
       toast.success(t("settings.budget.applyTemplateSuccess"));
       setApplyTemplateId("");
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -493,7 +557,7 @@ export default function BudgetSettingsPage() {
       toast.success(t("settings.budget.saveSuccess"));
       setEditCategoryBudgetId(null);
       setEditCategoryBudgetAmount("");
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -544,7 +608,7 @@ export default function BudgetSettingsPage() {
       setNewCategoryId("");
       setNewCategoryAmount("");
       setAddCategoryOpen(false);
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -563,7 +627,7 @@ export default function BudgetSettingsPage() {
       if (!res.ok) throw new Error("Failed to delete");
       toast.success(t("settings.budget.deleteSuccess"));
       setDeleteCategoryId(null);
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch {
       toast.error(t("common.errors.generic"));
     } finally {
@@ -575,11 +639,16 @@ export default function BudgetSettingsPage() {
   const totalSpent = budget?.totalSpent ?? 0;
   const remaining =
     totalBudgetNum != null ? totalBudgetNum - totalSpent : null;
+  const selectedMonthLabel = t(`summary.months.${month - 1}`);
+  const selectedPeriodLabel = `${selectedMonthLabel} ${formatYearForDisplay(
+    year,
+    language,
+  )}`;
 
   return (
     <div className="space-y-6">
 
-      {/* Header + Month navigation */}
+      {/* Header + Year navigation */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <header className="flex items-center gap-3">
           <div>
@@ -594,27 +663,15 @@ export default function BudgetSettingsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={goToPreviousMonth}
-            aria-label={t("settings.budget.prevMonth")}
+            onClick={goToPreviousYear}
+            aria-label={t("settings.budget.prevYear")}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <select
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-            className="h-8 appearance-none bg-transparent px-1.5 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
-            aria-label={t("settings.budget.month")}
-          >
-            {MONTHS.map((m) => (
-              <option key={m} value={m}>
-                {t(`summary.months.${m - 1}`)}
-              </option>
-            ))}
-          </select>
-          <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="h-8 appearance-none bg-transparent px-1 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
+            className="h-8 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
             aria-label={t("settings.budget.year")}
           >
             {[year - 2, year - 1, year, year + 1, year + 2].map((y) => (
@@ -627,13 +684,84 @@ export default function BudgetSettingsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={goToNextMonth}
-            aria-label={t("settings.budget.nextMonth")}
+            onClick={goToNextYear}
+            aria-label={t("settings.budget.nextYear")}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
+
+      <section className="">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+              {t("settings.budget.coverageTitle")}
+            </h2>
+            <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+              {t("settings.budget.coverageDescription", {
+                year: formatYearForDisplay(year, language),
+              })}
+            </p>
+          </div>
+          <div className="rounded-full bg-[#F5F0E8] px-3 py-1 text-sm font-medium text-[#3D3020] dark:bg-stone-800 dark:text-stone-100">
+            {t("settings.budget.coverageSummary", {
+              configured: coverage?.configuredMonthCount ?? 0,
+              total: MONTHS.length,
+            })}
+          </div>
+        </div>
+
+        {loadingCoverage || !initializedFromQuery ? (
+          <div className="my-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 justify-center items-center">
+            {MONTHS.map((coverageMonth) => (
+              <Skeleton
+                key={coverageMonth}
+                className="h-10 rounded-lg"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+              {t("settings.budget.viewingMonth", {
+                period: selectedPeriodLabel,
+              })}
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
+              {(coverage?.months ?? []).map((coverageMonth) => {
+                const isSelected = coverageMonth.month === month;
+
+                return (
+                  <button
+                    key={coverageMonth.month}
+                    type="button"
+                    onClick={() => setMonth(coverageMonth.month)}
+                    className={cn(
+                      "flex min-h-10 flex-col rounded-lg border p-3 text-left transition-colors",
+                      coverageMonth.isConfigured
+                        ? "border-[#D4C9B0] bg-[#F5F0E8] hover:bg-[#EFE6D7] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
+                        : "border-dashed border-[#D4C9B0] bg-white hover:bg-[#FAF5EC] dark:border-stone-700 dark:bg-stone-950/40 dark:hover:bg-stone-900/80",
+                      isSelected &&
+                      "border-solid border-[#6B5E4E] dark:border-stone-300",
+                    )}
+                  >
+                    <span className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                      {t(`summary.months.${coverageMonth.month - 1}`)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {(coverage?.configuredMonthCount ?? 0) === 0 ? (
+              <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+                {t("settings.budget.coverageEmptyYear")}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </section>
 
       {/* Templates */}
       <section className="space-y-4">
@@ -705,9 +833,14 @@ export default function BudgetSettingsPage() {
 
       {/* Budget Overview */}
       <section className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
-        <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-          {t("settings.budget.totalBudget")}
-        </h2>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+            {t("settings.budget.totalBudget")}
+          </h2>
+          <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+            {selectedPeriodLabel}
+          </p>
+        </div>
 
         {loadingBudget ? (
           <div className="mt-4 space-y-4">
@@ -821,9 +954,14 @@ export default function BudgetSettingsPage() {
       {/* Category budgets */}
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-            {t("settings.budget.categoryLimit")}
-          </h2>
+          <div>
+            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+              {t("settings.budget.categoryLimit")}
+            </h2>
+            <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+              {selectedPeriodLabel}
+            </p>
+          </div>
           <Button
             variant="outline"
             size="sm"

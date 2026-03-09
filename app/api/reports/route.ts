@@ -202,7 +202,7 @@ export async function POST(request: Request) {
 
   const adminEmail = process.env.ADMIN_REPORT_EMAIL;
   if (adminEmail) {
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
     const adminDetailUrl = `${baseUrl}/admin/reports/${report.id}`;
     try {
       await sendReportNotificationEmail(

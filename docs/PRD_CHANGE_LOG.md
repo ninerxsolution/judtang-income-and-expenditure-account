@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 09/03/2026
+
+- docs/feature/recurring-transactions.md — Updated recurring UI notes: mobile card stacking, inline calendar date trigger in confirm dialog, toggle switch for active state in edit dialog, and solid primary confirm button.
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
 ## 07/03/2026 (Year display พ.ศ./ค.ศ.)
 
 - lib/format-year.ts — New: formatYearForDisplay(year, language) for Buddhist Era (th) / Gregorian (en).

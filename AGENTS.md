@@ -4,7 +4,8 @@
 
 ### Git workflow
 
-- Before writing any code, always create a new branch named `cursor/<short-description>` (e.g. `cursor/fix-login-bug`, `cursor/add-export-feature`) based on the current branch.
+- When working locally, do not require creating a new branch before editing files.
+- Create a dedicated branch only when the user explicitly asks for one, or when preparing to commit or open a pull request.
 - Commit each logical change separately with a descriptive message.
 - Do not force push or amend commits.
 

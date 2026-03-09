@@ -286,66 +286,69 @@ function RecurringCard({
 
   return (
     <div
-      className={`rounded-xl border p-4 flex items-center gap-3 transition-opacity ${
+      className={`rounded-xl border p-4 flex flex-col gap-3 transition-opacity sm:flex-row sm:items-center sm:gap-4 ${
         showActive && !item.isActive ? "opacity-50" : ""
       } ${item.isPaid ? "border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/10" : "border-border bg-card"}`}
     >
-      {/* Paid indicator */}
-      <div className="shrink-0">
-        {item.isPaid ? (
-          <CheckCircle2Icon className="h-5 w-5 text-emerald-500" />
-        ) : (
-          <CircleIcon className="h-5 w-5 text-muted-foreground/40" />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm truncate">{item.name}</span>
-          {showActive && !item.isActive && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
-              {r.badge.inactive}
-            </span>
+      <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+        {/* Paid indicator */}
+        <div className="mt-0.5 shrink-0 sm:mt-0">
+          {item.isPaid ? (
+            <CheckCircle2Icon className="h-5 w-5 text-emerald-500" />
+          ) : (
+            <CircleIcon className="h-5 w-5 text-muted-foreground/40" />
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <FrequencyBadge item={item} r={r} />
-          {item.categoryRef && (
-            <span className="text-xs text-muted-foreground">· {item.categoryRef.name}</span>
-          )}
-          {item.financialAccount && (
-            <span className="text-xs text-muted-foreground">· {item.financialAccount.name}</span>
-          )}
+
+        {/* Content */}
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm truncate">{item.name}</span>
+            {showActive && !item.isActive && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                {r.badge.inactive}
+              </span>
+            )}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+            <FrequencyBadge item={item} r={r} />
+            {item.categoryRef && (
+              <span className="text-xs text-muted-foreground">· {item.categoryRef.name}</span>
+            )}
+            {item.financialAccount && (
+              <span className="text-xs text-muted-foreground">· {item.financialAccount.name}</span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Amount */}
-      <div className="shrink-0 text-right">
-        <p
-          className={`font-semibold text-sm ${isExpense ? "text-red-500" : "text-emerald-500"}`}
-        >
-          {isExpense ? "-" : "+"}
-          {formatAmount(Number(item.amount))}
-        </p>
-      </div>
-
-      {/* Actions */}
-      <div className="shrink-0 flex items-center gap-1">
-        {showConfirm && !item.isPaid && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400"
-            onClick={onConfirm}
+      <div className="mt-1 flex w-full items-center justify-between gap-3 pl-8 sm:mt-0 sm:w-auto sm:justify-end sm:pl-0">
+        {/* Amount */}
+        <div>
+          <p
+            className={`font-semibold text-sm ${isExpense ? "text-red-500" : "text-emerald-500"}`}
           >
-            <CheckCircle2Icon className="h-3 w-3 mr-1" />
-            {r.widget.confirmPay}
+            {isExpense ? "-" : "+"}
+            {formatAmount(Number(item.amount))}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+          {showConfirm && !item.isPaid && (
+            <Button
+              size="sm"
+              className="h-8 bg-emerald-500 px-3 text-xs text-white hover:bg-emerald-600"
+              onClick={onConfirm}
+            >
+              <CheckCircle2Icon className="h-3 w-3 md:mr-1" />
+              <span className="hidden md:block">{r.widget.confirmPay}</span>
+            </Button>
+          )}
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onEdit}>
+            <PencilIcon className="h-3.5 w-3.5" />
           </Button>
-        )}
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onEdit}>
-          <PencilIcon className="h-3.5 w-3.5" />
-        </Button>
+        </div>
       </div>
     </div>
   );

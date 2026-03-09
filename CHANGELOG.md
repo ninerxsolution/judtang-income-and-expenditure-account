@@ -2,6 +2,17 @@
 
 ---
 
+# v0.9.15 - 2026-03-09
+
+## Changed
+
+- **Recurring page mobile layout** — Recurring cards on `/dashboard/recurring` now stack into two rows on small screens so item details stay readable and the amount/actions no longer feel cramped.
+- **Recurring confirm date input** — The payment date in the recurring confirm dialog now uses the same inline calendar trigger style as the transaction dialog instead of a native date input.
+- **Recurring settings active toggle** — In the recurring create/edit dialog, the active state in edit mode now uses a toggle-style switch instead of a checkbox.
+- **Recurring confirm action styling** — The `Confirm payment` button on recurring cards now uses a solid green primary style instead of an outline style.
+
+---
+
 # v0.9.14 - 2026-03-05
 
 ## Added

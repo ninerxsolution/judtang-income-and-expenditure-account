@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { useI18n } from "@/hooks/use-i18n";
@@ -87,7 +88,7 @@ export function RecurringConfirmDialog({
           if (def) setFinancialAccountId(def.id);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [open, item, defaultDate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -160,6 +161,20 @@ export function RecurringConfirmDialog({
             </p>
 
             <div className="space-y-1.5">
+              <Label htmlFor="confirm-date">{r.confirmDialog.date}</Label>
+              <div>
+                <DatePicker
+                  id="confirm-date"
+                  label={r.confirmDialog.date}
+                  value={occurredAt}
+                  onChange={setOccurredAt}
+                  required
+                  variant="inline"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="confirm-amount">{r.confirmDialog.amount}</Label>
               <input
                 id="confirm-amount"
@@ -168,18 +183,6 @@ export function RecurringConfirmDialog({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={amount}
                 onChange={(e) => setAmount(sanitizeAmountInput(e.target.value))}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-date">{r.confirmDialog.date}</Label>
-              <input
-                id="confirm-date"
-                type="date"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={occurredAt}
-                onChange={(e) => setOccurredAt(e.target.value)}
                 required
               />
             </div>

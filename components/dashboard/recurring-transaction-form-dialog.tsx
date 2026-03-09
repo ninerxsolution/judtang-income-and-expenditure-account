@@ -427,15 +427,31 @@ export function RecurringTransactionFormDialog({
 
             {/* isActive toggle (edit only) */}
             {isEdit && (
-              <div className="flex items-center gap-2">
-                <input
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-input px-3 py-2">
+                <Label htmlFor="recurring-active" className="cursor-pointer">
+                  {r.isActive}
+                </Label>
+                <button
                   id="recurring-active"
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="recurring-active">{r.isActive}</Label>
+                  type="button"
+                  role="switch"
+                  aria-checked={isActive}
+                  aria-label={r.isActive}
+                  onClick={() => setIsActive((current) => !current)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    isActive
+                      ? "border-emerald-500 bg-emerald-500"
+                      : "border-input bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "pointer-events-none inline-block h-5 w-5 rounded-full bg-background shadow-sm transition-transform",
+                      isActive ? "translate-x-5" : "translate-x-0",
+                    )}
+                  />
+                </button>
               </div>
             )}
 
