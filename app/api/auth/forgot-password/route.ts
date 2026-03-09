@@ -95,7 +95,7 @@ export async function POST(request: Request) {
         },
       });
 
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
       const resetUrl = `${baseUrl}/reset-password?token=${token}`;
       await sendPasswordResetEmail(normalizedEmail, resetUrl);
       void createActivityLog({

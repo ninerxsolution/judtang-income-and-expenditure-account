@@ -1,0 +1,27 @@
+---
+description: การแสดงปีใน component เกี่ยวกับเวลา — ไทยใช้ พ.ศ. อังกฤษใช้ ค.ศ.
+alwaysApply: true
+---
+
+# Date/Time Components: Year Display (พ.ศ. / ค.ศ.)
+
+## กฎ
+
+- **ภาษาไทย:** แสดงปีเป็น พ.ศ. (Buddhist Era) = Gregorian + 543
+- **ภาษาอังกฤษ:** แสดงปีเป็น ค.ศ. (Christian Era) = Gregorian
+
+## Do
+
+- ใช้ `formatYearForDisplay(year, language)` จาก `@/lib/format-year` เมื่อแสดงปีใน UI
+- เก็บ logic และ API ใช้ Gregorian (ค.ศ.) เสมอ — แก้เฉพาะการแสดงผล
+- component ที่มี year selector/dropdown ต้อง format ก่อนแสดง
+
+## Don't
+
+- อย่าแสดง raw `year` (Gregorian) ใน UI เมื่อ language เป็น th
+- อย่าส่ง Buddhist year ไป API — API รับ Gregorian เท่านั้น
+
+## Reference
+
+- lib/format-year.ts
+- DatePicker, DateRangePicker, transactions-calendar (ใช้ Buddhist year แล้ว)

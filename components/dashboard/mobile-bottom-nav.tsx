@@ -12,13 +12,14 @@ import {
   Plus,
   ArrowDownCircle,
   ArrowUpCircle,
+  ImagePlus,
 } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useI18n } from "@/hooks/use-i18n";
 import { cn } from "@/lib/utils";
+import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { useTransactionForm } from "@/components/dashboard/transaction-form-context";
-import { SlipUploadDialog } from "@/components/dashboard/slip-upload-dialog";
 
 const navItems = [
   { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -32,6 +33,7 @@ export function MobileBottomNav() {
   const isMobile = useIsMobile();
   const { t } = useI18n();
   const { openQuickAdd } = useTransactionForm();
+  const { openSlipUpload } = useSlipUpload();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -40,7 +42,6 @@ export function MobileBottomNav() {
   const activeColor = isDark ? "rgb(212, 212, 212)" : "rgb(92, 107, 82)";
   const inactiveColor = isDark ? "rgb(163, 163, 163)" : "rgb(160, 144, 128)";
   const [quickOpen, setQuickOpen] = useState(false);
-  const [slipDialogOpen, setSlipDialogOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,7 +73,7 @@ export function MobileBottomNav() {
   }
 
   function handleSlipUpload() {
-    setSlipDialogOpen(true);
+    openSlipUpload();
     handleClose();
   }
 
@@ -138,19 +139,14 @@ export function MobileBottomNav() {
                 "dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/50"
               )}
               onClick={() => handleSlipUpload()}
-              aria-label="Slip upload"
+              aria-label={t("dashboard.slipUpload.title")}
             >
-              <span className="text-sm">Slip upload</span>
-              <ArrowUpCircle className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+              <span className="text-sm">{t("dashboard.slipUpload.title")}</span>
+              <ImagePlus className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
             </button>
           </div>
         </div>
       )}
-      <SlipUploadDialog
-        open={slipDialogOpen}
-        onOpenChange={setSlipDialogOpen}
-        onSuccess={() => setSlipDialogOpen(false)}
-      />
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch h-18 min-[350px]:h-auto"
         style={{

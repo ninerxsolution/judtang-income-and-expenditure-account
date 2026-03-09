@@ -52,7 +52,7 @@ export async function POST() {
     data: { identifier, token, expires },
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
   const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
   await sendEmailVerification(user.email, verifyUrl);
 

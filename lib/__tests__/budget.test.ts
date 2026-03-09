@@ -4,6 +4,7 @@
 const mockAggregate = jest.fn();
 const mockGroupBy = jest.fn();
 const mockBudgetMonthFindUnique = jest.fn();
+const mockBudgetMonthFindMany = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -13,6 +14,7 @@ jest.mock("@/lib/prisma", () => ({
     },
     budgetMonth: {
       findUnique: (...args: unknown[]) => mockBudgetMonthFindUnique(...args),
+      findMany: (...args: unknown[]) => mockBudgetMonthFindMany(...args),
     },
   },
 }));
@@ -23,6 +25,7 @@ import {
   getTotalExpenseForMonth,
   getExpenseByCategoryForMonth,
   getBudgetForMonth,
+  getBudgetCoverageForYear,
 } from "../budget";
 
 beforeEach(() => jest.clearAllMocks());
@@ -162,6 +165,66 @@ describe("budget", () => {
       expect(result.categoryBudgets).toHaveLength(1);
       expect(result.categoryBudgets[0].spent).toBe(8000);
       expect(result.categoryBudgets[0].remaining).toBe(2000);
+    });
+  });
+
+  describe("getBudgetCoverageForYear", () => {
+    it("returns all 12 months with configured states", async () => {
+      const updatedAt = new Date("2026-03-05T12:00:00.000Z");
+      mockBudgetMonthFindMany.mockResolvedValue([
+        {
+          month: 1,
+          totalBudget: 15000,
+          updatedAt,
+          _count: { categoryBudgets: 0 },
+        },
+        {
+          month: 2,
+          totalBudget: null,
+          updatedAt,
+          _count: { categoryBudgets: 2 },
+        },
+        {
+          month: 3,
+          totalBudget: 0,
+          updatedAt,
+          _count: { categoryBudgets: 0 },
+        },
+      ]);
+
+      const result = await getBudgetCoverageForYear("user-1", 2026);
+
+      expect(result.year).toBe(2026);
+      expect(result.months).toHaveLength(12);
+      expect(result.configuredMonthCount).toBe(2);
+      expect(result.months[0]).toEqual({
+        month: 1,
+        hasTotalBudget: true,
+        categoryBudgetCount: 0,
+        isConfigured: true,
+        updatedAt,
+      });
+      expect(result.months[1]).toEqual({
+        month: 2,
+        hasTotalBudget: false,
+        categoryBudgetCount: 2,
+        isConfigured: true,
+        updatedAt,
+      });
+      expect(result.months[2]).toEqual({
+        month: 3,
+        hasTotalBudget: false,
+        categoryBudgetCount: 0,
+        isConfigured: false,
+        updatedAt,
+      });
+      expect(result.months[11]).toEqual({
+        month: 12,
+        hasTotalBudget: false,
+        categoryBudgetCount: 0,
+        isConfigured: false,
+        updatedAt: null,
+      });
     });
   });
 });

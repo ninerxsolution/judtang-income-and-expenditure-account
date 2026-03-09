@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2Icon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { useI18n } from "@/hooks/use-i18n";
@@ -87,7 +87,7 @@ export function RecurringConfirmDialog({
           if (def) setFinancialAccountId(def.id);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [open, item, defaultDate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -144,21 +144,34 @@ export function RecurringConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-sm",
+          "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
         )}
       >
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2Icon className="h-4 w-4 text-emerald-500" />
             {r.confirmDialog.title}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4">
+          <DialogBody className="space-y-4 pb-2">
             <p className="text-sm text-muted-foreground">
               {r.confirmDialog.description.replace("{name}", item.name)}
             </p>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-date">{r.confirmDialog.date}</Label>
+              <div>
+                <DatePicker
+                  id="confirm-date"
+                  label={r.confirmDialog.date}
+                  value={occurredAt}
+                  onChange={setOccurredAt}
+                  required
+                  variant="inline"
+                />
+              </div>
+            </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="confirm-amount">{r.confirmDialog.amount}</Label>
@@ -169,18 +182,6 @@ export function RecurringConfirmDialog({
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 value={amount}
                 onChange={(e) => setAmount(sanitizeAmountInput(e.target.value))}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-date">{r.confirmDialog.date}</Label>
-              <input
-                id="confirm-date"
-                type="date"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={occurredAt}
-                onChange={(e) => setOccurredAt(e.target.value)}
                 required
               />
             </div>
@@ -206,19 +207,18 @@ export function RecurringConfirmDialog({
               />
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           </DialogBody>
 
-          <DialogFooter className="shrink-0 flex gap-2">
+          <DialogFooter className="shrink-0">
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
               onClick={() => onOpenChange(false)}
             >
               {t.common.actions.cancel}
             </Button>
-            <Button type="submit" className="flex-1 bg-emerald-500 hover:bg-emerald-600" disabled={pending}>
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={pending}>
               {pending ? "…" : r.confirmDialog.confirmButton}
             </Button>
           </DialogFooter>

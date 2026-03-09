@@ -202,7 +202,7 @@ export function CreditCardPaymentDialog({
           <p className="text-sm text-[#A09080] dark:text-stone-400">{accountName}</p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4 pl-1">
+          <DialogBody className="space-y-4">
           <FormField
             id="payment-amount"
             label={t("accounts.paymentAmountLabel")}
@@ -273,7 +273,7 @@ export function CreditCardPaymentDialog({
             >
               {t("common.actions.cancel")}
             </Button>
-            <Button type="submit" disabled={pending || !amountValid || amountExceedsMax}>
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={pending || !amountValid || amountExceedsMax}>
               {pending ? t("common.actions.save") : t("accounts.paymentSubmit")}
             </Button>
           </DialogFooter>

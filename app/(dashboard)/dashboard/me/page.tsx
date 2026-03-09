@@ -467,7 +467,7 @@ export default function UserPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateName} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-            <DialogBody className="space-y-4 pl-1">
+            <DialogBody className="space-y-4">
               <FormField
                 id="profile-name"
                 label={t("profile.displayName")}
@@ -502,7 +502,7 @@ export default function UserPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleChangePassword} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-            <DialogBody className="space-y-4 pl-1">
+            <DialogBody className="space-y-4">
               <FormField
                 id="current-password"
                 label={t("profile.currentPassword")}

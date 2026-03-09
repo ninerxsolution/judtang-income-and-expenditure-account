@@ -31,6 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatAmount } from "@/lib/format";
+import { formatYearForDisplay } from "@/lib/format-year";
 import { useI18n } from "@/hooks/use-i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -60,7 +61,7 @@ function getYearRange(year: number): { from: string; to: string } {
 }
 
 export default function SummaryPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
@@ -193,7 +194,7 @@ export default function SummaryPage() {
   }, []);
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold">
           {t("dashboard.pageTitle.summary")}
@@ -202,7 +203,8 @@ export default function SummaryPage() {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as "month" | "year")}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+            className="flex h-10 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm font-inherit ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={t("summary.period.thisMonth")}
           >
             <option value="month">{t("summary.period.thisMonth")}</option>
             <option value="year">{t("summary.period.thisYear")}</option>
@@ -211,7 +213,8 @@ export default function SummaryPage() {
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+              className="flex h-10 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm font-inherit ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={t("settings.budget.month")}
             >
               {monthOptions.map((m) => (
                 <option key={m} value={m}>
@@ -223,18 +226,20 @@ export default function SummaryPage() {
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+            className="flex h-10 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm font-inherit ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={t("settings.budget.year")}
           >
             {yearOptions.map((y) => (
               <option key={y} value={y}>
-                {y}
+                {formatYearForDisplay(y, language)}
               </option>
             ))}
           </select>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+            className="flex h-10 min-w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm font-inherit ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={t("summary.allAccounts")}
           >
             <option value="">{t("summary.allAccounts")}</option>
             {accounts.map((a) => (

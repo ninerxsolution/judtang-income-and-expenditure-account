@@ -27,9 +27,11 @@ import {
 } from "@/components/ui/dialog";
 import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { formatAmount } from "@/lib/format";
+import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
+import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 import { CalendarQuickActions } from "@/components/dashboard/calendar-quick-actions";
@@ -265,13 +267,6 @@ function buildWeekDays(
 
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-function formatYearForDisplay(year: number, locale: string): string {
-  if (locale === "th-TH" || locale === "th") {
-    return String(year + 543);
-  }
-  return String(year);
-}
-
 type TransactionsCalendarProps = {
   showNewTransactionButton?: boolean;
   /** แสดงปุ่ม quick action รับ/จ่าย/โอน ในปฏิทิน (default: false) */
@@ -286,6 +281,7 @@ export function TransactionsCalendar({
   variant = "embedded",
 }: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
+  const { openSlipUpload } = useSlipUpload();
   const localeKey = language === "th" ? "th" : "en";
 
   const [formOpen, setFormOpen] = useState(false);
@@ -1060,7 +1056,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1189,7 +1188,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1304,7 +1306,7 @@ export function TransactionsCalendar({
                     <ChevronRight className="h-4 w-4" />
                   </button>
                   <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                    {formatYearForDisplay(year, locale)}
+                    {formatYearForDisplay(year, language)}
                   </div>
                 </div>
                 {monthSummaryLoading && (
@@ -1320,7 +1322,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1423,7 +1428,7 @@ export function TransactionsCalendar({
                     <ChevronRight className="h-4 w-4" />
                   </button>
                   <div className="ml-2 text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                    {formatYearForDisplay(yearRangeStart, locale)}–{formatYearForDisplay(yearRangeEnd, locale)}
+                    {formatYearForDisplay(yearRangeStart, language)}–{formatYearForDisplay(yearRangeEnd, language)}
                   </div>
                 </div>
                 {yearSummaryError && !yearSummaryLoading && (
@@ -1434,7 +1439,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1481,7 +1489,7 @@ export function TransactionsCalendar({
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      <span className="text-sm font-medium">{formatYearForDisplay(y, locale)}</span>
+                      <span className="text-sm font-medium">{formatYearForDisplay(y, language)}</span>
                       <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
                         <div className="flex items-center gap-0.5">
                           {incomeCount > 0 && (

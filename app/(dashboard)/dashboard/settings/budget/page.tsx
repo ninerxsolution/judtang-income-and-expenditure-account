@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -11,6 +11,7 @@ import {
   Trash2,
   Loader2,
   Pencil,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useI18n } from "@/hooks/use-i18n";
 import { formatAmount } from "@/lib/format";
+import { formatYearForDisplay } from "@/lib/format-year";
+import { cn } from "@/lib/utils";
 
 type BudgetTemplate = {
   id: string;
@@ -77,6 +80,20 @@ type BudgetResponse = {
   totalProgress: number;
   totalIndicator: "normal" | "warning" | "critical" | "over";
   categoryBudgets: CategoryBudgetWithActual[];
+};
+
+type BudgetCoverageMonth = {
+  month: number;
+  hasTotalBudget: boolean;
+  categoryBudgetCount: number;
+  isConfigured: boolean;
+  updatedAt: string | null;
+};
+
+type BudgetCoverageResponse = {
+  year: number;
+  configuredMonthCount: number;
+  months: BudgetCoverageMonth[];
 };
 
 type Category = { id: string; name: string };
@@ -125,17 +142,28 @@ function indicatorBadgeClass(indicator: string): string {
   }
 }
 
+function parseIntegerParam(value: string | null): number | null {
+  if (value == null) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function BudgetSettingsPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const router = useRouter();
+  const pathname = usePathname();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [templates, setTemplates] = useState<BudgetTemplate[]>([]);
   const [budget, setBudget] = useState<BudgetResponse | null>(null);
+  const [coverage, setCoverage] = useState<BudgetCoverageResponse | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [loadingBudget, setLoadingBudget] = useState(true);
+  const [loadingCoverage, setLoadingCoverage] = useState(true);
   const [, setLoadingCategories] = useState(true);
+  const [initializedFromQuery, setInitializedFromQuery] = useState(false);
   const [savingTotal, setSavingTotal] = useState(false);
   const [applyTemplateId, setApplyTemplateId] = useState<string>("");
   const [applying, setApplying] = useState(false);
@@ -163,7 +191,10 @@ export default function BudgetSettingsPage() {
   >(null);
   const [editCategoryBudgetAmount, setEditCategoryBudgetAmount] = useState("");
   const [savingEditCategory, setSavingEditCategory] = useState(false);
+  const [editTotalBudgetOpen, setEditTotalBudgetOpen] = useState(false);
+  const [editTotalBudgetAmount, setEditTotalBudgetAmount] = useState("");
   const [deletingTemplate, setDeletingTemplate] = useState(false);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -193,6 +224,20 @@ export default function BudgetSettingsPage() {
     }
   }, [year, month, t]);
 
+  const fetchCoverage = useCallback(async () => {
+    setLoadingCoverage(true);
+    try {
+      const res = await fetch(`/api/budgets/coverage?year=${year}`);
+      if (!res.ok) throw new Error("Failed to load budget coverage");
+      const data: BudgetCoverageResponse = await res.json();
+      setCoverage(data);
+    } catch {
+      toast.error(t("common.errors.generic"));
+    } finally {
+      setLoadingCoverage(false);
+    }
+  }, [year, t]);
+
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
@@ -212,12 +257,46 @@ export default function BudgetSettingsPage() {
   }, [fetchTemplates]);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const yearParam = parseIntegerParam(searchParams.get("year"));
+    const monthParam = parseIntegerParam(searchParams.get("month"));
+
+    if (yearParam != null) {
+      setYear(yearParam);
+    }
+    if (monthParam != null && monthParam >= 1 && monthParam <= 12) {
+      setMonth(monthParam);
+    }
+
+    setInitializedFromQuery(true);
+  }, []);
+
+  useEffect(() => {
+    if (!initializedFromQuery) return;
     fetchBudget();
-  }, [fetchBudget]);
+  }, [fetchBudget, initializedFromQuery]);
+
+  useEffect(() => {
+    if (!initializedFromQuery) return;
+    fetchCoverage();
+  }, [fetchCoverage, initializedFromQuery]);
 
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  useEffect(() => {
+    if (!initializedFromQuery) return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("year", String(year));
+    searchParams.set("month", String(month));
+
+    const query = searchParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [initializedFromQuery, month, pathname, router, year]);
 
   const budgetMonthId = budget?.budgetMonth?.id;
   const existingCategoryIds = new Set(
@@ -226,29 +305,25 @@ export default function BudgetSettingsPage() {
       .filter(Boolean),
   );
 
-  function goToPreviousMonth() {
-    if (month === 1) {
-      setYear((y) => y - 1);
-      setMonth(12);
-    } else {
-      setMonth((m) => m - 1);
-    }
+  function goToPreviousYear() {
+    setYear((y) => y - 1);
   }
 
-  function goToNextMonth() {
-    if (month === 12) {
-      setYear((y) => y + 1);
-      setMonth(1);
-    } else {
-      setMonth((m) => m + 1);
-    }
+  function goToNextYear() {
+    setYear((y) => y + 1);
   }
 
-  async function handleSaveTotalBudget() {
-    const input = document.getElementById(
-      "total-budget-input",
-    ) as HTMLInputElement | null;
-    const raw = input?.value?.replace(/,/g, "")?.trim();
+  function openEditTotalBudgetDialog() {
+    setEditTotalBudgetAmount(
+      totalBudgetNum != null && totalBudgetNum > 0
+        ? formatAmount(totalBudgetNum)
+        : "",
+    );
+    setEditTotalBudgetOpen(true);
+  }
+
+  async function handleSaveTotalBudgetFromDialog() {
+    const raw = editTotalBudgetAmount.replace(/,/g, "").trim();
     const num = raw ? parseFloat(raw) : 0;
     if (!Number.isFinite(num) || num < 0) {
       toast.error(
@@ -270,7 +345,9 @@ export default function BudgetSettingsPage() {
         );
       }
       toast.success(t("settings.budget.saveSuccess"));
-      fetchBudget();
+      setEditTotalBudgetOpen(false);
+      setEditTotalBudgetAmount("");
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -300,7 +377,7 @@ export default function BudgetSettingsPage() {
       }
       toast.success(t("settings.budget.applyTemplateSuccess"));
       setApplyTemplateId("");
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -327,9 +404,9 @@ export default function BudgetSettingsPage() {
     setTemplateFormCategoryLimits(
       tm.categoryLimits.length > 0
         ? tm.categoryLimits.map((cl) => ({
-            categoryId: cl.categoryId ?? "",
-            limitAmount: String(cl.limitAmount),
-          }))
+          categoryId: cl.categoryId ?? "",
+          limitAmount: String(cl.limitAmount),
+        }))
         : [{ categoryId: "", limitAmount: "" }],
     );
     setCreateTemplateOpen(true);
@@ -480,7 +557,7 @@ export default function BudgetSettingsPage() {
       toast.success(t("settings.budget.saveSuccess"));
       setEditCategoryBudgetId(null);
       setEditCategoryBudgetAmount("");
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -495,7 +572,7 @@ export default function BudgetSettingsPage() {
     if (!newCategoryId || !Number.isFinite(num) || num <= 0) {
       toast.error(
         t("settings.budget.categoryLimit") +
-          " — category and amount required",
+        " — category and amount required",
       );
       return;
     }
@@ -531,7 +608,7 @@ export default function BudgetSettingsPage() {
       setNewCategoryId("");
       setNewCategoryAmount("");
       setAddCategoryOpen(false);
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("common.errors.generic"),
@@ -550,7 +627,7 @@ export default function BudgetSettingsPage() {
       if (!res.ok) throw new Error("Failed to delete");
       toast.success(t("settings.budget.deleteSuccess"));
       setDeleteCategoryId(null);
-      fetchBudget();
+      await Promise.all([fetchBudget(), fetchCoverage()]);
     } catch {
       toast.error(t("common.errors.generic"));
     } finally {
@@ -562,28 +639,19 @@ export default function BudgetSettingsPage() {
   const totalSpent = budget?.totalSpent ?? 0;
   const remaining =
     totalBudgetNum != null ? totalBudgetNum - totalSpent : null;
+  const selectedMonthLabel = t(`summary.months.${month - 1}`);
+  const selectedPeriodLabel = `${selectedMonthLabel} ${formatYearForDisplay(
+    year,
+    language,
+  )}`;
 
   return (
-    <div className="space-y-6 pt-4 sm:pt-8">
-      {/* Back link */}
-      <Link
-        href="/dashboard/settings"
-        className="inline-flex items-center gap-1 text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        {t("common.actions.back")}
-      </Link>
+    <div className="space-y-6">
 
-      {/* Header + Month navigation */}
+      {/* Header + Year navigation */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <header className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#D4C9B0] bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-800">
-            <Wallet className="h-5 w-5 text-[#5C6B52] dark:text-stone-300" />
-          </div>
           <div>
-            <h1 className="text-xl font-semibold">
-              {t("settings.budget.title")}
-            </h1>
             <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
               {t("settings.budget.description")}
             </p>
@@ -595,34 +663,20 @@ export default function BudgetSettingsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={goToPreviousMonth}
-            aria-label={t("common.actions.back")}
+            onClick={goToPreviousYear}
+            aria-label={t("settings.budget.prevYear")}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <select
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-            className="h-8 appearance-none bg-transparent px-1.5 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
-            aria-label={t("settings.budget.month")}
-          >
-            {MONTHS.map((m) => (
-              <option key={m} value={m}>
-                {new Date(year, m - 1, 1).toLocaleString(undefined, {
-                  month: "short",
-                })}
-              </option>
-            ))}
-          </select>
-          <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="h-8 appearance-none bg-transparent px-1 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
+            className="h-8 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
             aria-label={t("settings.budget.year")}
           >
             {[year - 2, year - 1, year, year + 1, year + 2].map((y) => (
               <option key={y} value={y}>
-                {y}
+                {formatYearForDisplay(y, language)}
               </option>
             ))}
           </select>
@@ -630,19 +684,163 @@ export default function BudgetSettingsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={goToNextMonth}
-            aria-label={t("settings.budget.month")}
+            onClick={goToNextYear}
+            aria-label={t("settings.budget.nextYear")}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      <section className="">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+              {t("settings.budget.coverageTitle")}
+            </h2>
+            <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+              {t("settings.budget.coverageDescription", {
+                year: formatYearForDisplay(year, language),
+              })}
+            </p>
+          </div>
+          <div className="rounded-full bg-[#F5F0E8] px-3 py-1 text-sm font-medium text-[#3D3020] dark:bg-stone-800 dark:text-stone-100">
+            {t("settings.budget.coverageSummary", {
+              configured: coverage?.configuredMonthCount ?? 0,
+              total: MONTHS.length,
+            })}
+          </div>
+        </div>
+
+        {loadingCoverage || !initializedFromQuery ? (
+          <div className="my-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 justify-center items-center">
+            {MONTHS.map((coverageMonth) => (
+              <Skeleton
+                key={coverageMonth}
+                className="h-10 rounded-lg"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+              {t("settings.budget.viewingMonth", {
+                period: selectedPeriodLabel,
+              })}
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
+              {(coverage?.months ?? []).map((coverageMonth) => {
+                const isSelected = coverageMonth.month === month;
+
+                return (
+                  <button
+                    key={coverageMonth.month}
+                    type="button"
+                    onClick={() => setMonth(coverageMonth.month)}
+                    className={cn(
+                      "flex min-h-10 flex-col rounded-lg border p-3 text-left transition-colors",
+                      coverageMonth.isConfigured
+                        ? "border-[#D4C9B0] bg-[#F5F0E8] hover:bg-[#EFE6D7] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
+                        : "border-dashed border-[#D4C9B0] bg-white hover:bg-[#FAF5EC] dark:border-stone-700 dark:bg-stone-950/40 dark:hover:bg-stone-900/80",
+                      isSelected &&
+                      "border-solid border-[#6B5E4E] dark:border-stone-300",
+                    )}
+                  >
+                    <span className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                      {t(`summary.months.${coverageMonth.month - 1}`)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {(coverage?.configuredMonthCount ?? 0) === 0 ? (
+              <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+                {t("settings.budget.coverageEmptyYear")}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </section>
+
+      {/* Templates */}
+      <section className="space-y-4">
+        {/* <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+            {t("settings.budget.templates")}
+          </h2>
+          <Button variant="outline" size="sm" onClick={openCreateTemplate}>
+            <Plus className="h-4 w-4" />
+            {t("settings.budget.addTemplate")}
+          </Button>
+        </div> */}
+
+        {/* Apply template row + Settings opens templates dialog */}
+        {!loadingTemplates && (
+          <div className="flex flex-wrap items-center justify-between gap-2 w-max">
+            <div className="flex items-center gap-2">
+              {templates.length > 0 ? (
+                <>
+                  <span className="text-xs font-medium text-[#3D3020] dark:text-stone-200">
+                    {t("settings.budget.applyTemplate")}:
+                  </span>
+                  <select
+                    value={applyTemplateId}
+                    onChange={(e) => setApplyTemplateId(e.target.value)}
+                    className="h-8 min-w-[140px] flex-1 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-2.5 text-sm outline-none focus:ring-2 focus:ring-ring dark:border-stone-700 dark:bg-stone-900"
+                    aria-label={t("settings.budget.applyTemplate")}
+                  >
+                    <option value="">
+                      {t("settings.budget.templates")}…
+                    </option>
+                    {templates.map((tm) => (
+                      <option key={tm.id} value={tm.id}>
+                        {tm.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    onClick={handleApplyTemplate}
+                    disabled={!applyTemplateId || applying}
+                    style={{ display: applyTemplateId ? "" : "none" }}
+                  >
+                    {applying ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      t("settings.budget.applyTemplate")
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <span className="text-xs font-medium text-[#3D3020] dark:text-stone-200">
+                  {t("settings.budget.templates")}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setTemplatesDialogOpen(true)}
+              aria-label={t("settings.budget.templates")}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </section>
+
       {/* Budget Overview */}
       <section className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
-        <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-          {t("settings.budget.totalBudget")}
-        </h2>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+            {t("settings.budget.totalBudget")}
+          </h2>
+          <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+            {selectedPeriodLabel}
+          </p>
+        </div>
 
         {loadingBudget ? (
           <div className="mt-4 space-y-4">
@@ -692,11 +890,10 @@ export default function BudgetSettingsPage() {
                       {t("settings.budget.remaining")}
                     </p>
                     <p
-                      className={`mt-1 text-lg font-semibold ${
-                        remaining != null && remaining < 0
-                          ? "text-red-600 dark:text-red-400"
-                          : "text-[#3D3020] dark:text-stone-100"
-                      }`}
+                      className={`mt-1 text-lg font-semibold ${remaining != null && remaining < 0
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-[#3D3020] dark:text-stone-100"
+                        }`}
                     >
                       ฿
                       {formatAmount(
@@ -733,7 +930,7 @@ export default function BudgetSettingsPage() {
               </p>
             )}
 
-            {/* Total budget input */}
+            {/* Total budget: open dialog to edit */}
             <div
               className={
                 totalBudgetNum != null && totalBudgetNum > 0
@@ -741,51 +938,30 @@ export default function BudgetSettingsPage() {
                   : ""
               }
             >
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="total-budget-input"
-                    className="text-xs font-medium text-[#6B5E4E] dark:text-stone-400"
-                  >
-                    {t("settings.budget.totalBudget")} (฿)
-                  </Label>
-                  <Input
-                    key={`total-${year}-${month}-${totalBudgetNum}`}
-                    id="total-budget-input"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0"
-                    defaultValue={
-                      totalBudgetNum != null
-                        ? formatAmount(totalBudgetNum)
-                        : ""
-                    }
-                    className="w-40 font-mono"
-                  />
-                </div>
-                <Button
-                  onClick={handleSaveTotalBudget}
-                  disabled={savingTotal}
-                  size="sm"
-                >
-                  {savingTotal ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    t("common.actions.save")
-                  )}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openEditTotalBudgetDialog}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                {t("settings.budget.editTotalBudget")}
+              </Button>
             </div>
           </div>
         )}
       </section>
 
       {/* Category budgets */}
-      <section className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
+      <section className="space-y-4">
         <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-            {t("settings.budget.categoryLimit")}
-          </h2>
+          <div>
+            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+              {t("settings.budget.categoryLimit")}
+            </h2>
+            <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+              {selectedPeriodLabel}
+            </p>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -818,11 +994,11 @@ export default function BudgetSettingsPage() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {(budget?.categoryBudgets ?? []).map((cb) => (
               <div
                 key={cb.id}
-                className="rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] p-4 dark:border-stone-700 dark:bg-stone-900/60"
+                className="flex flex-col justify-between rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] p-4 dark:border-stone-700 dark:bg-stone-900/60 h-full"
               >
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
@@ -880,107 +1056,6 @@ export default function BudgetSettingsPage() {
               </div>
             ))}
           </div>
-        )}
-      </section>
-
-      {/* Templates */}
-      <section className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-            {t("settings.budget.templates")}
-          </h2>
-          <Button variant="outline" size="sm" onClick={openCreateTemplate}>
-            <Plus className="h-4 w-4" />
-            {t("settings.budget.addTemplate")}
-          </Button>
-        </div>
-
-        {/* Apply template callout */}
-        {!loadingTemplates && templates.length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-[#5C6B52]/30 bg-[#5C6B52]/5 p-3 dark:border-stone-600 dark:bg-stone-800/30">
-            <span className="text-xs font-medium text-[#3D3020] dark:text-stone-200">
-              {t("settings.budget.applyTemplate")}:
-            </span>
-            <select
-              value={applyTemplateId}
-              onChange={(e) => setApplyTemplateId(e.target.value)}
-              className="h-8 min-w-[140px] flex-1 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-2.5 text-sm outline-none focus:ring-2 focus:ring-ring dark:border-stone-700 dark:bg-stone-900"
-              aria-label={t("settings.budget.applyTemplate")}
-            >
-              <option value="">
-                {t("settings.budget.templates")}…
-              </option>
-              {templates.map((tm) => (
-                <option key={tm.id} value={tm.id}>
-                  {tm.name}
-                </option>
-              ))}
-            </select>
-            <Button
-              size="sm"
-              onClick={handleApplyTemplate}
-              disabled={!applyTemplateId || applying}
-            >
-              {applying ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                t("settings.budget.applyTemplate")
-              )}
-            </Button>
-          </div>
-        )}
-
-        {loadingTemplates ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full rounded-md" />
-            <Skeleton className="h-12 w-full rounded-md" />
-          </div>
-        ) : templates.length === 0 ? (
-          <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
-            {t("settings.budget.noTemplates")}
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {templates.map((tm) => (
-              <li
-                key={tm.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2.5 dark:border-stone-700 dark:bg-stone-900/60"
-              >
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                    {tm.name}
-                  </span>
-                  <span className="ml-2 text-xs text-[#A09080] dark:text-stone-400">
-                    {tm.totalBudget != null
-                      ? `฿${formatAmount(tm.totalBudget)}`
-                      : ""}
-                    {tm.categoryLimits.length > 0 &&
-                      ` · ${tm.categoryLimits.length} ${t("settings.budget.categoryLimit")}(s)`}
-                  </span>
-                </div>
-                <div className="flex items-center gap-0.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => openEditTemplate(tm)}
-                    aria-label={t("settings.budget.editTemplate")}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => setDeleteTemplateId(tm.id)}
-                    aria-label={t("settings.budget.deleteTemplate")}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
         )}
       </section>
 
@@ -1121,6 +1196,88 @@ export default function BudgetSettingsPage() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Templates list dialog (manage templates: add / edit / delete) */}
+      <Dialog
+        open={templatesDialogOpen}
+        onOpenChange={setTemplatesDialogOpen}
+      >
+        <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-lg max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>
+              {t("settings.budget.templates")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+            <div className="flex shrink-0 justify-end pb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  openCreateTemplate();
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {t("settings.budget.addTemplate")}
+              </Button>
+            </div>
+            <div className="min-h-0 overflow-y-auto space-y-2">
+              {loadingTemplates ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full rounded-md" />
+                  <Skeleton className="h-12 w-full rounded-md" />
+                </div>
+              ) : templates.length === 0 ? (
+                <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+                  {t("settings.budget.noTemplates")}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {templates.map((tm) => (
+                    <li
+                      key={tm.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2.5 dark:border-stone-700 dark:bg-stone-900/60"
+                    >
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                          {tm.name}
+                        </span>
+                        <span className="ml-2 text-xs text-[#A09080] dark:text-stone-400">
+                          {tm.totalBudget != null
+                            ? `฿${formatAmount(tm.totalBudget)}`
+                            : ""}
+                          {tm.categoryLimits.length > 0 &&
+                            ` · ${tm.categoryLimits.length} ${t("settings.budget.categoryLimit")}(s)`}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => openEditTemplate(tm)}
+                          aria-label={t("settings.budget.editTemplate")}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTemplateId(tm.id)}
+                          aria-label={t("settings.budget.deleteTemplate")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1267,6 +1424,63 @@ export default function BudgetSettingsPage() {
               disabled={savingEditCategory}
             >
               {savingEditCategory ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t("common.actions.save")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit total budget dialog */}
+      <Dialog
+        open={editTotalBudgetOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditTotalBudgetOpen(false);
+            setEditTotalBudgetAmount("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
+          <DialogHeader>
+            <DialogTitle>
+              {t("settings.budget.editTotalBudget")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-total-budget">
+                {t("settings.budget.totalBudget")} (฿)
+              </Label>
+              <Input
+                id="edit-total-budget"
+                type="text"
+                inputMode="decimal"
+                placeholder="0"
+                value={editTotalBudgetAmount}
+                onChange={(e) =>
+                  setEditTotalBudgetAmount(e.target.value)
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditTotalBudgetOpen(false);
+                setEditTotalBudgetAmount("");
+              }}
+            >
+              {t("common.actions.cancel")}
+            </Button>
+            <Button
+              onClick={handleSaveTotalBudgetFromDialog}
+              disabled={savingTotal}
+            >
+              {savingTotal ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 t("common.actions.save")

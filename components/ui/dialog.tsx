@@ -43,7 +43,7 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-zinc-200 bg-white p-6 shadow-lg duration-200 dark:border-zinc-700 dark:bg-zinc-900 rounded-lg",
+          "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border border-zinc-200 bg-white p-6 shadow-lg duration-200 dark:border-zinc-700 dark:bg-zinc-900 rounded-lg dashboard-page",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}
@@ -118,7 +118,7 @@ function DialogBody({
 
   return (
     <div
-      className={cn("flex-1 min-h-0 overflow-y-auto pr-4", className)}
+      className={cn("flex-1 min-h-0 overflow-y-auto pr-4 pl-3", className)}
       {...props}
       onFocusCapture={handleFocusCapture}
     />
@@ -131,7 +131,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("text-lg font-semibold leading-none tracking-tight pl-3 pr-4", className)}
     {...props}
   />
 ))

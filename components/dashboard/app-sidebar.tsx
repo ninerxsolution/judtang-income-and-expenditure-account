@@ -89,8 +89,9 @@ const navItems = [
   { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
   { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
   { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
-  { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
   { key: "recurring", href: "/dashboard/recurring", icon: RepeatIcon },
+  { key: "budget", href: "/dashboard/settings/budget", icon: Wallet },
+  { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
 ] as const;
 
 export function AppSidebarLayout({
@@ -275,13 +276,13 @@ export function AppSidebarLayout({
           <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
             <span
               className={cn(
-                "text-sm font-semibold tabular-nums bg-[#EBF4E3] dark:bg-stone-800 rounded-full px-3 py-1",
+                "text-sm font-semibold tabular-nums bg-white/50 dark:bg-stone-800 rounded-full px-3 py-1",
                 balance !== null && balance < 0
                   ? "text-red-600 dark:text-red-300"
                   : "text-foreground"
               )}
             >
-              {balance !== null ? formatAmount(balance) : "—"}
+              ฿ {balance !== null ? formatAmount(balance) : "—"}
             </span>
           </div>
           <div className="ml-auto flex items-center gap-1 sm:gap-4">

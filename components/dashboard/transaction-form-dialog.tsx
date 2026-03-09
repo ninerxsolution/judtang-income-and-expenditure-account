@@ -508,7 +508,7 @@ export function TransactionFormDialog({
           onSubmit={handleSubmit}
           className="flex flex-1 flex-col min-h-0 overflow-hidden"
         >
-          <DialogBody className="space-y-4 pl-1">
+          <DialogBody className="space-y-4">
             {loadState === "loading" && (
               <div className="space-y-4">
                 <div>
@@ -816,7 +816,7 @@ export function TransactionFormDialog({
             >
               {t("common.actions.cancel")}
             </Button>
-            <Button type="submit" disabled={pending || loadState === "loading" || formDataLoading}>
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-600" disabled={pending || loadState === "loading" || formDataLoading}>
               {pending
                 ? t("transactions.new.pending")
                 : isEdit

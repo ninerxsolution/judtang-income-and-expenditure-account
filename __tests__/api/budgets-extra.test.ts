@@ -10,6 +10,7 @@ const mockBudgetCategoryCreate = jest.fn();
 const mockBudgetCategoryUpdate = jest.fn();
 const mockBudgetCategoryDelete = jest.fn();
 const mockApplyTemplateToMonth = jest.fn();
+const mockGetBudgetCoverageForYear = jest.fn();
 const mockCreateActivityLog = jest.fn();
 
 jest.mock("next-auth", () => ({
@@ -36,6 +37,8 @@ jest.mock("@/lib/prisma", () => ({
 
 jest.mock("@/lib/budget", () => ({
   applyTemplateToMonth: (...args: unknown[]) => mockApplyTemplateToMonth(...args),
+  getBudgetCoverageForYear: (...args: unknown[]) =>
+    mockGetBudgetCoverageForYear(...args),
 }));
 
 jest.mock("@/lib/activity-log", () => ({
@@ -58,6 +61,7 @@ jest.mock("@prisma/client", () => ({
 import { PATCH as BUDGET_MONTH_PATCH } from "@/app/api/budgets/month/route";
 import { POST as APPLY_TEMPLATE } from "@/app/api/budgets/apply-template/route";
 import { POST as BUDGET_CAT_POST } from "@/app/api/budgets/categories/route";
+import { GET as BUDGET_COVERAGE_GET } from "@/app/api/budgets/coverage/route";
 import { PATCH as BUDGET_CAT_PATCH, DELETE as BUDGET_CAT_DELETE } from "@/app/api/budgets/categories/[id]/route";
 import { createRequest, createMockSession, createParams, TEST_USER_ID } from "../helpers/api-helper";
 
@@ -290,6 +294,60 @@ describe("POST /api/budgets/categories", () => {
     const res = await BUDGET_CAT_POST(req);
     expect(res.status).toBe(200);
     expect(mockBudgetCategoryUpdate).toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/budgets/coverage", () => {
+  it("returns 401 when not authenticated", async () => {
+    mockGetServerSession.mockResolvedValue(null);
+    const res = await BUDGET_COVERAGE_GET(
+      new Request("http://localhost/api/budgets/coverage?year=2026"),
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 when year is invalid", async () => {
+    const res = await BUDGET_COVERAGE_GET(
+      new Request("http://localhost/api/budgets/coverage?year=bad"),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns budget coverage when authenticated", async () => {
+    const updatedAt = new Date("2026-03-05T12:00:00.000Z");
+    mockGetBudgetCoverageForYear.mockResolvedValue({
+      year: 2026,
+      configuredMonthCount: 2,
+      months: [
+        {
+          month: 1,
+          hasTotalBudget: true,
+          categoryBudgetCount: 0,
+          isConfigured: true,
+          updatedAt,
+        },
+        {
+          month: 2,
+          hasTotalBudget: false,
+          categoryBudgetCount: 1,
+          isConfigured: true,
+          updatedAt: null,
+        },
+      ],
+    });
+
+    const res = await BUDGET_COVERAGE_GET(
+      new Request("http://localhost/api/budgets/coverage?year=2026"),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.configuredMonthCount).toBe(2);
+    expect(data.months[0].updatedAt).toBe(updatedAt.toISOString());
+    expect(mockGetBudgetCoverageForYear).toHaveBeenCalledWith(
+      TEST_USER_ID,
+      2026,
+    );
   });
 });
 
