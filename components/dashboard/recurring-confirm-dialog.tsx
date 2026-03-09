@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2Icon } from "lucide-react";
 import {
   Dialog,
   DialogContent,

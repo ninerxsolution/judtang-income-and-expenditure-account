@@ -1,15 +1,19 @@
  "use client";
 
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ImagePlus } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
 type CalendarQuickActionsProps = {
   onQuickAdd: (type: TransactionType) => void;
+  onSlipUpload: () => void;
 };
 
-export function CalendarQuickActions({ onQuickAdd }: CalendarQuickActionsProps) {
+export function CalendarQuickActions({
+  onQuickAdd,
+  onSlipUpload,
+}: CalendarQuickActionsProps) {
   const { t } = useI18n();
 
   return (
@@ -32,6 +36,17 @@ export function CalendarQuickActions({ onQuickAdd }: CalendarQuickActionsProps) 
         <ArrowUpCircle className="h-4.5 w-4.5" />
         <span className="hidden sm:block">
         {t("transactions.common.expense")}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={onSlipUpload}
+        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-600/80 bg-blue-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/50"
+        aria-label={t("dashboard.slipUpload.title")}
+      >
+        <ImagePlus className="h-4.5 w-4.5" />
+        <span className="hidden sm:block">
+          {t("dashboard.slipUpload.title")}
         </span>
       </button>
       {/* <button

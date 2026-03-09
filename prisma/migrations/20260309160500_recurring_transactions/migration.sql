@@ -1,8 +1,5 @@
--- AlterTable: add recurringTransactionId to Transaction
+-- AlterTable
 ALTER TABLE `Transaction` ADD COLUMN `recurringTransactionId` VARCHAR(191) NULL;
-
--- CreateIndex on Transaction
-CREATE INDEX `Transaction_recurringTransactionId_idx` ON `Transaction`(`recurringTransactionId`);
 
 -- CreateTable
 CREATE TABLE `RecurringTransaction` (
@@ -28,6 +25,12 @@ CREATE TABLE `RecurringTransaction` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateIndex
+CREATE INDEX `Transaction_recurringTransactionId_idx` ON `Transaction`(`recurringTransactionId`);
+
+-- AddForeignKey
+ALTER TABLE `Transaction` ADD CONSTRAINT `Transaction_recurringTransactionId_fkey` FOREIGN KEY (`recurringTransactionId`) REFERENCES `RecurringTransaction`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
 -- AddForeignKey
 ALTER TABLE `RecurringTransaction` ADD CONSTRAINT `RecurringTransaction_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -36,6 +39,3 @@ ALTER TABLE `RecurringTransaction` ADD CONSTRAINT `RecurringTransaction_category
 
 -- AddForeignKey
 ALTER TABLE `RecurringTransaction` ADD CONSTRAINT `RecurringTransaction_financialAccountId_fkey` FOREIGN KEY (`financialAccountId`) REFERENCES `FinancialAccount`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Transaction` ADD CONSTRAINT `Transaction_recurringTransactionId_fkey` FOREIGN KEY (`recurringTransactionId`) REFERENCES `RecurringTransaction`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

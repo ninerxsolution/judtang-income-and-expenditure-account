@@ -31,6 +31,7 @@ import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
+import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 import { CalendarQuickActions } from "@/components/dashboard/calendar-quick-actions";
@@ -280,6 +281,7 @@ export function TransactionsCalendar({
   variant = "embedded",
 }: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
+  const { openSlipUpload } = useSlipUpload();
   const localeKey = language === "th" ? "th" : "en";
 
   const [formOpen, setFormOpen] = useState(false);
@@ -1054,7 +1056,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1183,7 +1188,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1314,7 +1322,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 
@@ -1428,7 +1439,10 @@ export function TransactionsCalendar({
               </div>
 
               {showQuickActions && (
-                <CalendarQuickActions onQuickAdd={openQuickAdd} />
+                <CalendarQuickActions
+                  onQuickAdd={openQuickAdd}
+                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+                />
               )}
             </div>
 

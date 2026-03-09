@@ -1,0 +1,32 @@
+---
+description: ตรวจ script ก่อนรัน build/verify และห้ามใช้ script ที่พาไป prisma migrate เอง
+alwaysApply: true
+---
+
+# Build/Verify: ตรวจ script ก่อนรันเสมอ
+
+## ปัญหาที่เคยเจอ
+
+- เคยรัน `npm run build` เพื่อ verify frontend
+- แต่ script นี้ใน `package.json` คือ `prisma generate && prisma migrate deploy && next build`
+- ทำให้ไปชน `prisma migrate deploy` ทั้งที่โปรเจกต์ห้ามรัน migrate เอง และไปติด failed migration / duplicate column ใน DB
+
+## วิธีจำ
+
+- ก่อนรัน `npm run build`, `npm run dev`, หรือ script ใด ๆ ที่เกี่ยวกับ DB/Prisma ให้เปิดดู `package.json` scripts ก่อนเสมอ
+- ถ้า script มี `prisma migrate`, `prisma migrate deploy`, `prisma migrate dev` หรือคำสั่งที่เปลี่ยน DB:
+  ห้ามรันเอง เว้นแต่ผู้ใช้สั่งชัดเจน
+- ถ้าต้องการ verify เฉพาะ frontend compile:
+  ใช้ `npx next build`, `npm run lint`, หรือคำสั่ง read-only/compile-only ที่ไม่แตะ migration
+
+## Do
+
+- อ่าน `.cursor/rules/prisma-no-migrate.mdc` และ `.cursor/rules/prisma-no-migration-file.mdc` ก่อนแตะงาน Prisma/DB
+- ใช้ `db:push` เฉพาะเมื่อผู้ใช้สั่งเองตามกติกาโปรเจกต์
+- ถ้าเจอ migration file หรือ failed migration ที่ไม่แน่ใจว่าใครสร้าง: หยุดและแจ้งผู้ใช้ก่อน
+
+## Don't
+
+- อย่ารัน `npm run build` แบบอัตโนมัติโดยไม่ตรวจ script ก่อน
+- อย่าใช้ script verify ที่แอบพาไปรัน `prisma migrate*`
+- อย่าสร้างหรือแก้ `prisma/migrations/*/migration.sql` เองอีก
