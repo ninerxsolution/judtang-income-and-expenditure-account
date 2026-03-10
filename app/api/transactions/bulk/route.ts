@@ -11,7 +11,7 @@ import { revalidateTag } from "@/lib/cache";
 
 const MAX_BULK_ROWS = 500;
 
-const ALLOWED_TYPES = new Set([
+const ALLOWED_TYPES = new Set<string>([
   TransactionType.INCOME,
   TransactionType.EXPENSE,
   TransactionType.TRANSFER,
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     const item = items[i];
     const typeUpper = (item.type ?? "").toString().trim().toUpperCase();
 
-    if (!ALLOWED_TYPES.has(typeUpper as TransactionType)) {
+    if (!ALLOWED_TYPES.has(typeUpper)) {
       errors.push({
         index: i,
         message: "type must be INCOME, EXPENSE, or TRANSFER",
