@@ -435,13 +435,28 @@ export default function TransactionsPage() {
           <table className="min-w-full text-xs lg:text-sm">
             <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
               <tr>
-                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left"><Skeleton className="h-3 w-16" /></th>
-                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-14" /></th>
-                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-10" /></th>
-                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right"><Skeleton className="ml-auto h-3 w-14" /></th>
-                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-14" /></th>
-                <th className="hidden lg:table-cell px-4 py-2 text-left"><Skeleton className="h-3 w-12" /></th>
-                <th className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-3 w-16" /></th>
+                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  <span className="lg:hidden">{t("transactions.list.columns.dateAndAccount")}</span>
+                  <span className="hidden lg:inline">{t("transactions.list.columns.date")}</span>
+                </th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  {t("transactions.list.columns.account")}
+                </th>
+                <th className="hidden lg:table-cell w-0 px-1.5 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  {t("transactions.list.columns.type")}
+                </th>
+                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
+                  {t("transactions.list.columns.amount")}
+                </th>
+                <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  {t("transactions.list.columns.category")}
+                </th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  {t("transactions.list.columns.note")}
+                </th>
+                <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                  {t("common.actions.edit")} / {t("common.actions.delete")}
+                </th>
               </tr>
             </thead>
             <tbody>

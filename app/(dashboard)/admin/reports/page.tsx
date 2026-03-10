@@ -158,12 +158,12 @@ export default function AdminReportsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#D4C9B0] bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/50">
-                <th className="px-4 py-3 text-left"><Skeleton className="h-3 w-12" /></th>
-                <th className="px-4 py-3 text-left"><Skeleton className="h-3 w-16" /></th>
-                <th className="px-4 py-3 text-left"><Skeleton className="h-3 w-10" /></th>
-                <th className="px-4 py-3 text-left"><Skeleton className="h-3 w-14" /></th>
-                <th className="px-4 py-3 text-left"><Skeleton className="h-3 w-14" /></th>
-                <th className="px-4 py-3"></th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.date")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.category")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.titleLabel")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.user")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.status")}</th>
+                <th className="px-4 py-3 text-left font-medium"></th>
               </tr>
             </thead>
             <tbody>

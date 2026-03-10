@@ -266,9 +266,11 @@ export default function UserPage() {
     return (
       <div className="space-y-10">
         <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
-          <Skeleton className="mb-4 h-4 w-16" />
+          <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-4">Profile</h2>
           <div className="flex flex-wrap items-center gap-4">
-            <Skeleton className="h-16 w-16 rounded-full" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700">
+              <User className="h-8 w-8 text-zinc-500 dark:text-zinc-400" />
+            </div>
             <div className="space-y-2">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-4 w-48" />
@@ -286,7 +288,7 @@ export default function UserPage() {
           </div>
         </div>
         <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6 space-y-4">
-          <Skeleton className="h-4 w-24" />
+          <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Settings</h2>
           <Skeleton className="h-9 w-full rounded-md" />
           <Skeleton className="h-9 w-full rounded-md" />
         </section>

@@ -404,9 +404,9 @@ export default function SettingsPage() {
           {loadingSessions && !sessionsData ? (
             <ul className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <li key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 dark:border-stone-700 dark:bg-stone-900/60">
+                <li key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900/60">
                   <div className="flex items-center gap-3">
-                    <Skeleton className="h-4 w-4 rounded" />
+                    <Monitor className="h-4 w-4 text-[#A09080]" />
                     <div className="space-y-1">
                       <Skeleton className="h-4 w-24" />
                       <Skeleton className="h-3 w-32" />
