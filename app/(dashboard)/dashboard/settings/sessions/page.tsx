@@ -122,12 +122,26 @@ export default function SessionsPage() {
   if (loading && !data) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-7 w-48" />
-        <div className="space-y-2">
+        <h1 className="text-xl font-semibold">
+          {t("dashboard.pageTitle.sessions")}
+        </h1>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+          {t("sessionsPage.subtitle")}
+        </p>
+        <ul className="mt-6 space-y-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            <li key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-4">
+              <div className="flex items-center gap-3">
+                <Monitor className="h-5 w-5 text-zinc-500" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-36" />
+                </div>
+              </div>
+              <Skeleton className="h-7 w-16 rounded-md" />
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     );
   }

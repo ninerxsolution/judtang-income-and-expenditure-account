@@ -77,9 +77,13 @@ export function RecurringDueWidget() {
       </div>
 
       {loading && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {[1, 2].map((i) => (
-            <Skeleton key={i} className="h-10 w-full rounded-lg" />
+            <div key={i} className="flex items-center gap-2 rounded-lg px-2 py-1.5">
+              <Skeleton className="h-4 w-4 rounded-full shrink-0" />
+              <Skeleton className="h-3.5 flex-1" />
+              <Skeleton className="h-3.5 w-16 shrink-0" />
+            </div>
           ))}
         </div>
       )}

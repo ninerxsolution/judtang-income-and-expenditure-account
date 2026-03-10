@@ -1,0 +1,60 @@
+---
+description: Skeleton loading states ต้องแสดง static structure เหมือน content
+alwaysApply: true
+---
+
+# Skeleton: แสดง Static Structure เหมือน Content
+
+## หลักการ
+
+Skeleton loading state ต้องมี **static structure** (label, icon, heading, section title) เหมือนกับ content state ทุกประการ
+
+- **Static elements** (ไม่ขึ้นกับ API data): แสดง **ของจริง** ทั้งใน skeleton และ content
+- **Dynamic values** (ตัวเลข, ชื่อ, วันที่ จาก API): ใช้ `<Skeleton />` placeholder
+
+## Do
+
+- Section headers, page titles, table column headers → แสดง label จริงทั้งใน skeleton และ content
+- Icons ที่เป็น static (เช่น Landmark, CreditCard, Monitor) → แสดง icon จริง ไม่ใช่ Skeleton กลม
+- Container styling (border, bg, rounded, grid layout) → ใช้เหมือนกันทั้ง skeleton กับ content
+- ค่าที่มาจาก API (balance, name, date, amount) → ใช้ `<Skeleton />` เท่านั้น
+
+## Don't
+
+- อย่าใช้ `<Skeleton />` แทน label/title/heading ที่เป็น static text
+- อย่าใช้ `<Skeleton />` แทน icon ที่เป็น static (เช่น section icon)
+- อย่าให้ skeleton เป็นแค่ก้อนเทาสี่เหลี่ยม แล้วพอโหลดเสร็จ structure เปลี่ยนหมด
+
+## ตัวอย่าง
+
+```tsx
+// ❌ ผิด — ใช้ Skeleton แทน static label
+<th><Skeleton className="h-3 w-16" /></th>
+
+// ✅ ถูก — ใช้ label จริง
+<th className="text-left font-medium text-muted-foreground">
+  {t("transactions.list.columns.date")}
+</th>
+```
+
+```tsx
+// ❌ ผิด — ไม่มี section header ใน skeleton
+{loading && <Skeleton className="h-32" />}
+
+// ✅ ถูก — มี section header เหมือน content
+{loading && (
+  <section>
+    <h2 className="flex items-center gap-2 text-lg font-semibold">
+      <Landmark className="h-5 w-5" />
+      {t("accounts.sectionAccounts")}
+    </h2>
+    <Skeleton className="h-32" />
+  </section>
+)}
+```
+
+## อ้างอิง
+
+- `app/(dashboard)/dashboard/accounts/page.tsx` — section headers ใน skeleton
+- `app/(dashboard)/dashboard/transactions/page.tsx` — table headers ใน skeleton
+- `app/(dashboard)/dashboard/page.tsx` — card titles, icons ใน skeleton

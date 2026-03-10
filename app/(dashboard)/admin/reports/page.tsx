@@ -154,10 +154,31 @@ export default function AdminReportsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
+        <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#D4C9B0] bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/50">
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.date")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.category")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.titleLabel")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.user")}</th>
+                <th className="px-4 py-3 text-left font-medium">{t("admin.reports.status")}</th>
+                <th className="px-4 py-3 text-left font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="border-b border-[#D4C9B0] dark:border-stone-800">
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-32" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-5 w-14 rounded-full" /></td>
+                  <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : reports.length === 0 ? (
         <p className="text-sm text-[#A09080] dark:text-stone-400">

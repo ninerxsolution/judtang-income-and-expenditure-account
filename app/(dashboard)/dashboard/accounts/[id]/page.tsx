@@ -400,9 +400,60 @@ export default function AccountDetailPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-12 w-48" />
-        <Skeleton className="h-40 w-full rounded-lg" />
-        <Skeleton className="h-64 w-full rounded-lg" />
+        <Button variant="ghost" asChild>
+          <Link href="/dashboard/accounts" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            {t("accounts.detail.backToAccounts")}
+          </Link>
+        </Button>
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-44" />
+            <div className="flex gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-[#A09080] dark:text-stone-400">
+                  {t("accounts.detail.incomeTotal")}
+                </p>
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-[#A09080] dark:text-stone-400">
+                  {t("accounts.detail.expenseTotal")}
+                </p>
+                <Skeleton className="h-6 w-24" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
+          <table className="min-w-full text-sm">
+            <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.date")}</th>
+                <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
+                <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
+                  <td className="px-4 py-2"><Skeleton className="h-4 w-28" /></td>
+                  <td className="px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                  <td className="px-4 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                  <td className="px-4 py-2"><Skeleton className="h-4 w-20" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -709,10 +760,27 @@ export default function AccountDetailPage() {
       </Card>
 
       {txLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+            <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
+              <table className="min-w-full text-sm">
+                <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.date")}</th>
+                    <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                    <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
+                      <td className="px-4 py-2"><Skeleton className="h-4 w-28" /></td>
+                      <td className="px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                      <td className="px-4 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                      <td className="px-4 py-2"><Skeleton className="h-4 w-20" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : transactions.length === 0 ? (
             <p className="py-8 text-center text-sm text-[#A09080] dark:text-stone-400">
