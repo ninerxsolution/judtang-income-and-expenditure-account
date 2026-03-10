@@ -23,6 +23,7 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
     calendar: "Calendar",
     "activity-log": "Activity log",
     accounts: "Accounts",
+    "monthly-entry": "Monthly Entry",
   };
 
   if (map[segment]) return map[segment];
