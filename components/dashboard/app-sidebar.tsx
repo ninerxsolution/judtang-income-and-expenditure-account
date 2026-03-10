@@ -21,6 +21,7 @@ import {
   PanelLeftIcon,
   Home,
   RepeatIcon,
+  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -89,6 +90,7 @@ const navItems = [
   { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
   { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
   { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
+  { key: "monthlyEntry", href: "/dashboard/monthly-entry", icon: ClipboardList },
   { key: "recurring", href: "/dashboard/recurring", icon: RepeatIcon },
   { key: "budget", href: "/dashboard/settings/budget", icon: Wallet },
   { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
