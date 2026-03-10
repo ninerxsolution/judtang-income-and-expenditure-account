@@ -21,6 +21,11 @@ import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
+import {
+  AccountCombobox,
+  AccountIcon,
+  type AccountOption,
+} from "@/components/dashboard/account-combobox";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -35,14 +40,25 @@ type RowEntry = {
 };
 
 type Category = { id: string; name: string };
-type Account = { id: string; name: string };
 
 type ExistingTransaction = {
   id: string;
   type: string;
   amount: number;
-  financialAccount?: { id: string; name: string } | null;
-  transferAccount?: { id: string; name: string } | null;
+  financialAccount?: {
+    id: string;
+    name: string;
+    type?: string;
+    bankName?: string | null;
+    cardNetwork?: string | null;
+  } | null;
+  transferAccount?: {
+    id: string;
+    name: string;
+    type?: string;
+    bankName?: string | null;
+    cardNetwork?: string | null;
+  } | null;
   categoryRef?: { id: string; name: string } | null;
   category: string | null;
   note: string | null;
@@ -100,7 +116,7 @@ export default function MonthlyEntryPage() {
   const [month, setMonth] = useState(now.getMonth());
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<AccountOption[]>([]);
   const [loadingMeta, setLoadingMeta] = useState(true);
 
   const [existingTransactions, setExistingTransactions] = useState<ExistingTransaction[]>([]);
@@ -129,11 +145,18 @@ export default function MonthlyEntryPage() {
       fetch("/api/categories").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/financial-accounts").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([cats, accs]: [Category[], (Account & { isActive?: boolean })[]]) => {
+      .then(([cats, accs]: [Category[], (AccountOption & { isActive?: boolean; isDefault?: boolean })[]]) => {
         setCategories(Array.isArray(cats) ? cats : []);
         const activeAccounts = (Array.isArray(accs) ? accs : [])
           .filter((a) => a.isActive !== false)
-          .map((a) => ({ id: a.id, name: a.name }));
+          .map((a) => ({
+            id: a.id,
+            name: a.name,
+            type: a.type ?? "BANK",
+            bankName: a.bankName ?? null,
+            cardNetwork: a.cardNetwork ?? null,
+            isDefault: a.isDefault,
+          }));
         setAccounts(activeAccounts);
       })
       .catch(() => {
@@ -480,7 +503,17 @@ export default function MonthlyEntryPage() {
                         </span>
                       )}
                       {tx.financialAccount && (
-                        <span className="text-muted-foreground/60 text-xs truncate ml-auto hidden sm:inline">
+                        <span className="flex items-center gap-1 text-muted-foreground/60 text-xs truncate ml-auto hidden sm:inline-flex">
+                          <AccountIcon
+                            account={{
+                              id: tx.financialAccount.id,
+                              name: tx.financialAccount.name,
+                              type: tx.financialAccount.type ?? "BANK",
+                              bankName: tx.financialAccount.bankName,
+                              cardNetwork: tx.financialAccount.cardNetwork,
+                            }}
+                            size="sm"
+                          />
                           {tx.financialAccount.name}
                         </span>
                       )}
@@ -553,38 +586,32 @@ export default function MonthlyEntryPage() {
                       </select>
 
                       {/* Account */}
-                      <select
-                        value={row.financialAccountId}
-                        onChange={(e) =>
-                          updateRow(day, row.id, "financialAccountId", e.target.value)
-                        }
-                        className="appearance-none bg-transparent border rounded px-2 py-1 text-xs max-w-[7rem] truncate cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                      >
-                        {accounts.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="w-[10rem]">
+                        <AccountCombobox
+                          value={row.financialAccountId}
+                          onChange={(id) =>
+                            updateRow(day, row.id, "financialAccountId", id)
+                          }
+                          accounts={accounts}
+                          className="!py-1 !text-xs !h-7"
+                        />
+                      </div>
 
                       {/* Transfer account (only for TRANSFER) */}
                       {row.type === "TRANSFER" && (
-                        <select
-                          value={row.transferAccountId}
-                          onChange={(e) =>
-                            updateRow(day, row.id, "transferAccountId", e.target.value)
-                          }
-                          className="appearance-none bg-transparent border rounded px-2 py-1 text-xs max-w-[7rem] truncate cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                        >
-                          <option value="">→ {t("transactions.new.toAccount")}</option>
-                          {accounts
-                            .filter((a) => a.id !== row.financialAccountId)
-                            .map((a) => (
-                              <option key={a.id} value={a.id}>
-                                → {a.name}
-                              </option>
-                            ))}
-                        </select>
+                        <div className="w-[10rem]">
+                          <AccountCombobox
+                            value={row.transferAccountId}
+                            onChange={(id) =>
+                              updateRow(day, row.id, "transferAccountId", id)
+                            }
+                            accounts={accounts}
+                            excludeIds={row.financialAccountId ? [row.financialAccountId] : []}
+                            allowEmpty
+                            emptyLabel={`→ ${t("transactions.new.toAccount")}`}
+                            className="!py-1 !text-xs !h-7"
+                          />
+                        </div>
                       )}
 
                       {/* Note */}
