@@ -104,9 +104,18 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
       </div>
 
       {loading && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-md" />
+            <div key={i} className="flex items-center justify-between gap-3 rounded-md border border-[#E8E0C8] px-3 py-2 dark:border-stone-800">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-6 w-14 rounded-full" />
+                <div className="space-y-1">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-16" />
+            </div>
           ))}
         </div>
       )}

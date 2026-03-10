@@ -87,9 +87,37 @@ export default function AdminReportDetailPage() {
   if (loading || !report) {
     return (
       <div className="space-y-6 p-4 md:p-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
+        <Link
+          href="/admin/reports"
+          className="inline-flex items-center gap-1 text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to reports
+        </Link>
+        <header>
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="mt-1 h-4 w-40" />
+        </header>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <div>
+              <Label className="text-[#A09080] dark:text-stone-400">
+                Description
+              </Label>
+              <Skeleton className="mt-1 h-32 w-full rounded-md" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="mt-1 h-4 w-32" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

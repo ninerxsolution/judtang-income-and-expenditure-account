@@ -139,10 +139,23 @@ export function CategorySettings() {
       </div>
 
       {loading && !categories.length ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-10 w-full rounded-md" />
-          ))}
+        <div className="space-y-4">
+          <div>
+            <Skeleton className="mb-2 h-3 w-20" />
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-8 rounded-full" style={{ width: `${60 + i * 12}px` }} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <Skeleton className="mb-2 h-3 w-24" />
+            <div className="flex flex-wrap gap-2">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-8 rounded-full" style={{ width: `${64 + i * 16}px` }} />
+              ))}
+            </div>
+          </div>
         </div>
       ) : error ? (
         <p className="text-sm text-red-600 dark:text-red-400">

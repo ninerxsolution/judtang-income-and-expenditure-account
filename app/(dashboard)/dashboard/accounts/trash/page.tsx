@@ -119,7 +119,19 @@ export default function AccountsTrashPage() {
       {loading && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-lg" />
+            <Card key={i} className="opacity-90">
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-5 w-28" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-9 w-full rounded-md" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

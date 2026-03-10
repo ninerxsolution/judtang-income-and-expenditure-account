@@ -459,11 +459,18 @@ export default function ActivityLogPage() {
       </section>
 
       {loading && list.length === 0 ? (
-        <div className="space-y-2">
+        <ul className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+            <li key={i} className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-48" />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : error ? (
         <p className="text-red-600 dark:text-red-400">{error}</p>
       ) : list.length === 0 ? (
