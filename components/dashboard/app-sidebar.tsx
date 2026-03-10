@@ -290,15 +290,28 @@ export function AppSidebarLayout({
             <Button
               variant="ghost"
               size="icon"
-              className="hidden sm:block h-8 w-8 rounded-full"
+              className="hidden sm:flex h-8 w-8 rounded-full"
               aria-label={fullscreen ? t("dashboard.fullscreen.exit") : t("dashboard.fullscreen.enter")}
               onClick={toggleFullscreen}
             >
-              {fullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
+              <span className="relative inline-flex h-4 w-4" aria-hidden>
+                <Minimize2
+                  className={cn(
+                    "absolute inset-0 h-4 w-4 transition-all duration-200",
+                    fullscreen
+                      ? "scale-100 opacity-100"
+                      : "scale-0 opacity-0 pointer-events-none"
+                  )}
+                />
+                <Maximize2
+                  className={cn(
+                    "absolute inset-0 h-4 w-4 transition-all duration-200",
+                    fullscreen
+                      ? "scale-0 opacity-0 pointer-events-none"
+                      : "scale-100 opacity-100"
+                  )}
+                />
+              </span>
             </Button>
             <div className="w-px h-8 bg-border mx-1" aria-hidden="true" />
 
@@ -309,7 +322,7 @@ export function AppSidebarLayout({
                   aria-haspopup="dialog"
                   aria-label={t("dashboard.sidebar.account")}
                 >
-                  <div>
+                  <div className="hidden sm:block">
                     {profile?.name ?? t("dashboard.sidebar.account")}
                   </div>
                   <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">

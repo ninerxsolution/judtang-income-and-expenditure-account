@@ -1090,7 +1090,7 @@ export function TransactionsCalendar({
                       type="button"
                       onClick={() => openDay(day.iso)}
                       className={[
-                        "flex h-16 flex-col rounded-md border px-1.5 py-1 text-left transition-colors duration-150 ease-out",
+                        "flex h-16 flex-col rounded-md border p-1 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         isMuted
                           ? "text-[#A09080] dark:text-stone-500"
@@ -1106,14 +1106,14 @@ export function TransactionsCalendar({
                         .join(" ")}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1">
-                        <span className="text-[11px] font-semibold">
+                        <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${day.isToday ? "bg-[#5C6B52] text-center aspect-square text-white dark:bg-stone-100 dark:text-stone-900" : ""}`}>
                           {day.date.getDate()}
                         </span>
-                        {day.isToday && (
+                        {/* {day.isToday && (
                           <span className="rounded-full bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
                             {t("calendar.today")}
                           </span>
-                        )}
+                        )} */}
                       </div>
                       <div className="mt-auto flex items-center justify-between gap-1 pt-1">
                         <div className="flex items-center gap-0.5">
@@ -1128,7 +1128,7 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="text-[10px] text-[#A09080] dark:text-stone-500">
+                          <span className="hidden sm:block text-[10px] text-[#A09080] dark:text-stone-500">
                             {day.count}
                           </span>
                         )}
@@ -1579,7 +1579,7 @@ export function TransactionsCalendar({
                       </p>
                     </div>
                   </div>
-                  <div className="flex-1 min-h-[120px] max-h-[50vh] overflow-y-auto px-3 sm:px-5 py-3 text-sm">
+                  <div className="flex-1 min-h-[120px] max-h-[50vh] overflow-y-auto p-2 text-sm">
                     {dayDetailContent}
                   </div>
                 </>

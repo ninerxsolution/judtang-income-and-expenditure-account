@@ -46,11 +46,24 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={ariaLabel}
       onClick={toggleTheme}
     >
-      {isDark ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
+      <span className="relative inline-flex h-4 w-4" aria-hidden>
+        <Sun
+          className={cn(
+            "absolute inset-0 h-4 w-4 transition-all duration-200",
+            isDark
+              ? "rotate-0 opacity-100"
+              : "rotate-180 opacity-0 pointer-events-none"
+          )}
+        />
+        <Moon
+          className={cn(
+            "absolute inset-0 h-4 w-4 transition-all duration-200",
+            isDark
+              ? "-rotate-180 opacity-0 pointer-events-none"
+              : "rotate-0 opacity-100"
+          )}
+        />
+      </span>
     </Button>
   );
 }

@@ -45,7 +45,7 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
-      <nav className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-6 py-4">
+      <nav className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-2 sm:px-6 py-2 sm:py-4">
         <Link
           href="/"
           className="flex items-center gap-2 text-lg font-semibold text-[#3D3020] dark:text-stone-100"
@@ -68,7 +68,7 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
                 className="gap-1.5 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
               >
                 <ThemeIcon className="h-4 w-4" />
-                {themeLabel}
+                {/* {themeLabel} */}
                 <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -104,9 +104,9 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
                 className="gap-1.5 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
               >
                 <Globe className="h-4 w-4" />
-                {language === "th"
+                {/* {language === "th"
                   ? t("settings.language.optionThai")
-                  : t("settings.language.optionEnglish")}
+                  : t("settings.language.optionEnglish")} */}
                 <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -138,14 +138,14 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
           )}
           <Link
             href="/sign-in"
-            className="text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
+            className="hidden sm:block text-sm text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
           >
             {translate(language, "home.nav.login")}
           </Link>
           <Button
             asChild
             size="sm"
-            className="bg-[#5C6B52] hover:bg-[#4A5E40] text-white dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+            className="hidden sm:flex bg-[#5C6B52] hover:bg-[#4A5E40] text-white dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
           >
             <Link href="/register">
               {translate(language, "home.nav.getStarted")}
