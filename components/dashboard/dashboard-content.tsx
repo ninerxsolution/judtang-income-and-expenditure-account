@@ -18,7 +18,7 @@ export function DashboardContent({ children, className }: DashboardContentProps)
       key={pathname}
       className={cn(
         "mx-auto min-w-0 px-4 py-4 space-y-4",
-        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-350",
+        "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500",
         fullscreen ? "max-w-full" : "max-w-7xl",
         className
       )}
