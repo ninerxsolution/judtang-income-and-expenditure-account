@@ -156,7 +156,7 @@ Templates for repeating income or expense items (WEEKLY, MONTHLY, YEARLY). Users
 - Framework: Next.js
 - Authentication: NextAuth
 - Database: MySQL (Prisma ORM)
-- Analytics: Vercel Web Analytics (`@vercel/analytics/next`)
+- Analytics: Vercel Web Analytics (`@vercel/analytics/next`), Vercel Speed Insights (`@vercel/speed-insights/next`)
 - Logging: Winston (file-based)
 - Testing: Jest + Supertest
 

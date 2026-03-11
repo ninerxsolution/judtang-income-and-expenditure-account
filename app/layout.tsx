@@ -6,6 +6,7 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_LOCALES,
@@ -79,6 +80,7 @@ export default async function RootLayout({
           </ThemeProvider>
         </I18nProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.17 - 2026-03-11
+
+## Added
+
+- **Vercel Speed Insights** — Integrated `@vercel/speed-insights/next` in the root layout to collect real-user performance metrics (Core Web Vitals) for monitoring and optimization.
+
+---
+
 # v0.9.16 - 2026-03-09
 
 ## Changed

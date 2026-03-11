@@ -5,6 +5,18 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 11/03/2026 (Vercel Speed Insights)
+
+- app/layout.tsx — Added SpeedInsights from @vercel/speed-insights/next in root layout.
+- docs/PRD.md — Added Vercel Speed Insights to §11 Technical Stack.
+- docs/structure/technical-stack.md — Added Vercel Speed Insights to Analytics row.
+- docs/structure/required_lib.md — Added @vercel/speed-insights to Runtime / Application table.
+- CHANGELOG.md — Added v0.9.17: Vercel Speed Insights.
+- CHANGELOG.th.md — Added v0.9.17 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
 ## 09/03/2026 (Slip upload persistence + UX)
 
 - docs/feature/slip-ocr.md — Updated slip upload docs: client-side compression and telemetry, OCR engine 2 with fallback to engine 3, compact summary/edit flow, and localStorage persistence/recovery behavior.

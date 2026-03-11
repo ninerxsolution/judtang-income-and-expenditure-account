@@ -19,6 +19,7 @@ This document lists required libraries and tools for the project. Use it for onb
 | Database      | Prisma           | ORM for MySQL; @prisma/client + prisma (dev). User data, Activity Log |
 | Logging (file)| Winston          | Structured JSON, date-based dirs |
 | Analytics     | @vercel/analytics | Vercel Web Analytics for anonymous page views |
+| Speed Insights| @vercel/speed-insights | Vercel Speed Insights for Core Web Vitals (real-user metrics) |
 
 ---
 

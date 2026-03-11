@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.17 - 2026-03-11
+
+## Added
+
+- **Vercel Speed Insights** — เพิ่ม `@vercel/speed-insights/next` ใน root layout เพื่อเก็บข้อมูลประสิทธิภาพจากผู้ใช้จริง (Core Web Vitals) สำหรับการติดตามและปรับปรุง
+
+---
+
 # v0.9.16 - 2026-03-09
 
 ## Changed
