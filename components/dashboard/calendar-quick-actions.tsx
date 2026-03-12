@@ -21,7 +21,7 @@ export function CalendarQuickActions({
       <button
         type="button"
         onClick={() => onQuickAdd("INCOME")}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/80 bg-emerald-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200 dark:hover:bg-emerald-900/50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/80 bg-emerald-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
       >
         <ArrowDownCircle className="h-4.5 w-4.5" />
         <span className="hidden sm:block">
@@ -31,7 +31,7 @@ export function CalendarQuickActions({
       <button
         type="button"
         onClick={() => onQuickAdd("EXPENSE")}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-red-600/80 bg-red-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-200 dark:hover:bg-red-900/50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-red-600/80 bg-red-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
       >
         <ArrowUpCircle className="h-4.5 w-4.5" />
         <span className="hidden sm:block">
@@ -41,7 +41,7 @@ export function CalendarQuickActions({
       <button
         type="button"
         onClick={onSlipUpload}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-600/80 bg-blue-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-600/80 bg-blue-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-transparent dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
         aria-label={t("dashboard.slipUpload.title")}
       >
         <ImagePlus className="h-4.5 w-4.5" />

@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Plus,
   Trash2,
+  Check,
+  X,
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
@@ -26,6 +28,7 @@ import {
   AccountIcon,
   type AccountOption,
 } from "@/components/dashboard/account-combobox";
+import { RowSelect } from "@/components/dashboard/row-select";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -125,6 +128,12 @@ export default function MonthlyEntryPage() {
   // day (1-based) -> RowEntry[]
   const [dayRows, setDayRows] = useState<Record<number, RowEntry[]>>({});
   const [saving, setSaving] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<{
+    id: string;
+    day: number;
+  } | null>(null);
+  const [editingRow, setEditingRow] = useState<RowEntry | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const defaultAccountId = accounts.length > 0 ? accounts[0].id : "";
   const daysInMonth = getDaysInMonth(year, month);
@@ -198,6 +207,8 @@ export default function MonthlyEntryPage() {
   useEffect(() => {
     void fetchExisting();
     setDayRows({});
+    setEditingTransaction(null);
+    setEditingRow(null);
   }, [fetchExisting]);
 
   // Group existing transactions by day
@@ -266,6 +277,104 @@ export default function MonthlyEntryPage() {
           : r,
       ),
     }));
+  }
+
+  function startEditing(tx: ExistingTransaction, day: number) {
+    setEditingTransaction({ id: tx.id, day });
+    setEditingRow({
+      id: tx.id,
+      type: tx.type as TransactionType,
+      amount: String(tx.amount),
+      categoryId: tx.categoryRef?.id ?? "",
+      financialAccountId: tx.financialAccount?.id ?? defaultAccountId,
+      transferAccountId: tx.transferAccount?.id ?? "",
+      note: tx.note ?? "",
+    });
+  }
+
+  function updateEditingRow(field: keyof RowEntry, value: string) {
+    setEditingRow((prev) =>
+      prev
+        ? {
+            ...prev,
+            [field]: field === "amount" ? sanitizeAmountInput(value) : value,
+          }
+        : null,
+    );
+  }
+
+  function cancelEditing() {
+    setEditingTransaction(null);
+    setEditingRow(null);
+  }
+
+  async function saveEditingTransaction() {
+    if (!editingTransaction || !editingRow) return;
+    const amt = parseFloat(editingRow.amount);
+    if (!Number.isFinite(amt) || amt <= 0) {
+      toast.error(t("monthlyEntry.validationAmountRequired"));
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const dateObj = new Date(year, month, editingTransaction.day);
+      const nowTime = new Date();
+      dateObj.setHours(nowTime.getHours(), nowTime.getMinutes(), nowTime.getSeconds());
+
+      const body = {
+        type: editingRow.type,
+        amount: amt,
+        financialAccountId: editingRow.financialAccountId || defaultAccountId,
+        occurredAt: dateObj.toISOString(),
+        categoryId: editingRow.categoryId || null,
+        note: editingRow.note.trim() || null,
+        ...(editingRow.type === "TRANSFER" && {
+          transferAccountId: editingRow.transferAccountId || null,
+        }),
+      };
+
+      const res = await fetch(`/api/transactions/${editingTransaction.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        toast.success(t("monthlyEntry.editSuccess"));
+        cancelEditing();
+        void fetchExisting();
+      } else {
+        toast.error(t("monthlyEntry.editFailed"));
+      }
+    } catch {
+      toast.error(t("monthlyEntry.editFailed"));
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function deleteEditingTransaction() {
+    if (!editingTransaction) return;
+
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/transactions/${editingTransaction.id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success(t("monthlyEntry.deleteSuccess"));
+        cancelEditing();
+        void fetchExisting();
+      } else {
+        toast.error(t("monthlyEntry.deleteFailed"));
+      }
+    } catch {
+      toast.error(t("monthlyEntry.deleteFailed"));
+    } finally {
+      setSavingEdit(false);
+    }
   }
 
   // Count new entries
@@ -394,7 +503,7 @@ export default function MonthlyEntryPage() {
   return (
     <div className="px-4 pb-6 space-y-4">
       {/* Month navigation */}
-      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-4 px-4 border-b">
+      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-4 px-4">
         <div className="flex items-center gap-2">
           <CalendarRange className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-semibold">{monthLabel}</h2>
@@ -469,7 +578,7 @@ export default function MonthlyEntryPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                  className="h-9 px-2 text-xs opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onClick={() => addRow(day)}
                 >
                   <Plus className="h-3 w-3 mr-1" />
@@ -479,46 +588,191 @@ export default function MonthlyEntryPage() {
 
               {/* Existing transactions */}
               {existing.length > 0 && (
-                <div className="ml-9 space-y-1 mb-1">
-                  {existing.map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="flex items-center gap-2 text-sm py-1 px-2 rounded bg-muted/40"
-                    >
-                      <TypeIcon
-                        type={tx.type as TransactionType}
-                        className="h-3.5 w-3.5 shrink-0"
-                      />
-                      <span className="font-medium tabular-nums min-w-[4rem] text-right">
-                        {formatAmount(tx.amount)}
-                      </span>
-                      <span className="text-muted-foreground text-xs truncate">
-                        {tx.categoryRef?.name
-                          ? getCategoryDisplayName(tx.categoryRef.name, language)
-                          : tx.category ?? ""}
-                      </span>
-                      {tx.note && (
-                        <span className="text-muted-foreground/60 text-xs truncate hidden sm:inline">
-                          {tx.note}
-                        </span>
-                      )}
-                      {tx.financialAccount && (
-                        <span className="flex items-center gap-1 text-muted-foreground/60 text-xs truncate ml-auto hidden sm:inline-flex">
-                          <AccountIcon
-                            account={{
-                              id: tx.financialAccount.id,
-                              name: tx.financialAccount.name,
-                              type: tx.financialAccount.type ?? "BANK",
-                              bankName: tx.financialAccount.bankName,
-                              cardNetwork: tx.financialAccount.cardNetwork,
-                            }}
-                            size="sm"
+                <div className="space-y-2 mb-1">
+                  {existing.map((tx) => {
+                    const isEditing =
+                      editingTransaction?.id === tx.id &&
+                      editingTransaction?.day === day &&
+                      editingRow;
+
+                    if (isEditing) {
+                      return (
+                        <div
+                          key={tx.id}
+                          className="flex flex-wrap items-center gap-2"
+                        >
+                          <div className="w-30">
+                            <RowSelect
+                              value={editingRow.type}
+                              onChange={(v) => updateEditingRow("type", v)}
+                              options={TYPE_OPTIONS.map((t) => ({
+                                value: t,
+                                label:
+                                  t === "INCOME"
+                                    ? localeKey === "th"
+                                      ? "รายรับ"
+                                      : "Income"
+                                    : t === "EXPENSE"
+                                      ? localeKey === "th"
+                                        ? "รายจ่าย"
+                                        : "Expense"
+                                      : localeKey === "th"
+                                        ? "โอน"
+                                        : "Transfer",
+                              }))}
+                              renderOptionIcon={(opt) => (
+                                <TypeIcon
+                                  type={opt.value as TransactionType}
+                                  className="h-4 w-4"
+                                />
+                              )}
+                              className="h-9 py-1 text-xs"
+                            />
+                          </div>
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder={t("monthlyEntry.amount")}
+                            value={editingRow.amount}
+                            onChange={(e) =>
+                              updateEditingRow("amount", e.target.value)
+                            }
+                            className="w-30 h-9 text-xs tabular-nums text-right"
                           />
-                          {tx.financialAccount.name}
+                          <div className="w-40">
+                            <RowSelect
+                              value={editingRow.categoryId}
+                              onChange={(v) =>
+                                updateEditingRow("categoryId", v)
+                              }
+                              options={categories.map((c) => ({
+                                value: c.id,
+                                label: getCategoryDisplayName(c.name, language),
+                              }))}
+                              allowEmpty
+                              emptyLabel={t("monthlyEntry.category")}
+                              className="h-9 py-1 text-xs"
+                            />
+                          </div>
+                          <div className="w-60">
+                            <AccountCombobox
+                              value={editingRow.financialAccountId}
+                              onChange={(id) =>
+                                updateEditingRow("financialAccountId", id)
+                              }
+                              accounts={accounts}
+                              className="!py-1 !text-xs !h-9"
+                            />
+                          </div>
+                          {editingRow.type === "TRANSFER" && (
+                            <div className="w-60">
+                              <AccountCombobox
+                                value={editingRow.transferAccountId}
+                                onChange={(id) =>
+                                  updateEditingRow("transferAccountId", id)
+                                }
+                                accounts={accounts}
+                                excludeIds={
+                                  editingRow.financialAccountId
+                                    ? [editingRow.financialAccountId]
+                                    : []
+                                }
+                                allowEmpty
+                                emptyLabel={`→ ${t("transactions.new.toAccount")}`}
+                                className="!py-1 !text-xs !h-9"
+                              />
+                            </div>
+                          )}
+                          <Input
+                            type="text"
+                            placeholder={t("monthlyEntry.note")}
+                            value={editingRow.note}
+                            onChange={(e) =>
+                              updateEditingRow("note", e.target.value)
+                            }
+                            className="flex-1 min-w-24 h-9 text-xs"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                            onClick={saveEditingTransaction}
+                            disabled={savingEdit}
+                            aria-label={t("monthlyEntry.saveEdit")}
+                          >
+                            {savingEdit ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                            onClick={cancelEditing}
+                            disabled={savingEdit}
+                            aria-label={t("monthlyEntry.cancel")}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={deleteEditingTransaction}
+                            disabled={savingEdit}
+                            aria-label={t("monthlyEntry.removeRow")}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={tx.id}
+                        type="button"
+                        onClick={() => startEditing(tx, day)}
+                        className="flex w-full items-center gap-2 text-sm py-1 px-2 rounded bg-muted/40 hover:bg-muted/60 cursor-pointer text-left transition-colors"
+                        aria-label={t("monthlyEntry.editTransaction")}
+                      >
+                        <TypeIcon
+                          type={tx.type as TransactionType}
+                          className="h-3.5 w-3.5 shrink-0"
+                        />
+                        <span className="font-medium tabular-nums min-w-16 text-right">
+                          {formatAmount(tx.amount)}
                         </span>
-                      )}
-                    </div>
-                  ))}
+                        <span className="text-muted-foreground text-xs truncate">
+                          {tx.categoryRef?.name
+                            ? getCategoryDisplayName(tx.categoryRef.name, language)
+                            : tx.category ?? ""}
+                        </span>
+                        {tx.note && (
+                          <span className="text-muted-foreground/60 text-xs truncate hidden sm:inline">
+                            {tx.note}
+                          </span>
+                        )}
+                        {tx.financialAccount && (
+                          <span className="flex items-center gap-1 text-muted-foreground/60 text-xs truncate ml-auto hidden sm:inline-flex">
+                            <AccountIcon
+                              account={{
+                                id: tx.financialAccount.id,
+                                name: tx.financialAccount.name,
+                                type: tx.financialAccount.type ?? "BANK",
+                                bankName: tx.financialAccount.bankName,
+                                cardNetwork: tx.financialAccount.cardNetwork,
+                              }}
+                              size="sm"
+                            />
+                            {tx.financialAccount.name}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -528,30 +782,37 @@ export default function MonthlyEntryPage() {
                   {newRows.map((row) => (
                     <div
                       key={row.id}
-                      className="flex flex-wrap items-center gap-2 py-1.5 px-2 rounded border border-dashed border-primary/30 bg-primary/5"
+                      className="flex flex-wrap items-center gap-2"
                     >
                       {/* Type select */}
-                      <div className="relative">
-                        <select
+                      <div className="w-30">
+                        <RowSelect
                           value={row.type}
-                          onChange={(e) =>
-                            updateRow(day, row.id, "type", e.target.value)
+                          onChange={(v) =>
+                            updateRow(day, row.id, "type", v)
                           }
-                          className="appearance-none bg-transparent border rounded px-2 py-1 text-xs font-medium pr-6 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                        >
-                          {TYPE_OPTIONS.map((t) => (
-                            <option key={t} value={t}>
-                              {t === "INCOME"
-                                ? localeKey === "th" ? "รายรับ" : "Income"
+                          options={TYPE_OPTIONS.map((t) => ({
+                            value: t,
+                            label:
+                              t === "INCOME"
+                                ? localeKey === "th"
+                                  ? "รายรับ"
+                                  : "Income"
                                 : t === "EXPENSE"
-                                  ? localeKey === "th" ? "รายจ่าย" : "Expense"
-                                  : localeKey === "th" ? "โอน" : "Transfer"}
-                            </option>
-                          ))}
-                        </select>
-                        <TypeIcon
-                          type={row.type}
-                          className="h-3 w-3 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none"
+                                  ? localeKey === "th"
+                                    ? "รายจ่าย"
+                                    : "Expense"
+                                  : localeKey === "th"
+                                    ? "โอน"
+                                    : "Transfer",
+                          }))}
+                          renderOptionIcon={(opt) => (
+                            <TypeIcon
+                              type={opt.value as TransactionType}
+                              className="h-4 w-4"
+                            />
+                          )}
+                          className="h-9 py-1 text-xs"
                         />
                       </div>
 
@@ -564,42 +825,41 @@ export default function MonthlyEntryPage() {
                         onChange={(e) =>
                           updateRow(day, row.id, "amount", e.target.value)
                         }
-                        className="w-24 h-7 text-xs tabular-nums text-right"
+                        className="w-30 h-9 text-xs tabular-nums text-right"
                       />
 
                       {/* Category */}
-                      <select
-                        value={row.categoryId}
-                        onChange={(e) =>
-                          updateRow(day, row.id, "categoryId", e.target.value)
-                        }
-                        className="appearance-none bg-transparent border rounded px-2 py-1 text-xs max-w-[8rem] truncate cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                      >
-                        <option value="">
-                          {t("monthlyEntry.category")}
-                        </option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {getCategoryDisplayName(c.name, language)}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="w-40">
+                        <RowSelect
+                          value={row.categoryId}
+                          onChange={(v) =>
+                            updateRow(day, row.id, "categoryId", v)
+                          }
+                          options={categories.map((c) => ({
+                            value: c.id,
+                            label: getCategoryDisplayName(c.name, language),
+                          }))}
+                          allowEmpty
+                          emptyLabel={t("monthlyEntry.category")}
+                          className="h-9 py-1 text-xs"
+                        />
+                      </div>
 
                       {/* Account */}
-                      <div className="w-[10rem]">
+                      <div className="w-[15rem]">
                         <AccountCombobox
                           value={row.financialAccountId}
                           onChange={(id) =>
                             updateRow(day, row.id, "financialAccountId", id)
                           }
                           accounts={accounts}
-                          className="!py-1 !text-xs !h-7"
+                          className="!py-1 !text-xs !h-9"
                         />
                       </div>
 
                       {/* Transfer account (only for TRANSFER) */}
                       {row.type === "TRANSFER" && (
-                        <div className="w-[10rem]">
+                        <div className="w-[15rem]">
                           <AccountCombobox
                             value={row.transferAccountId}
                             onChange={(id) =>
@@ -609,7 +869,7 @@ export default function MonthlyEntryPage() {
                             excludeIds={row.financialAccountId ? [row.financialAccountId] : []}
                             allowEmpty
                             emptyLabel={`→ ${t("transactions.new.toAccount")}`}
-                            className="!py-1 !text-xs !h-7"
+                            className="!py-1 !text-xs !h-9"
                           />
                         </div>
                       )}
@@ -622,7 +882,7 @@ export default function MonthlyEntryPage() {
                         onChange={(e) =>
                           updateRow(day, row.id, "note", e.target.value)
                         }
-                        className="flex-1 min-w-[6rem] h-7 text-xs"
+                        className="flex-1 min-w-[6rem] h-9 text-xs"
                       />
 
                       {/* Remove */}
@@ -640,18 +900,16 @@ export default function MonthlyEntryPage() {
                 </div>
               )}
 
-              {/* Empty day - subtle add button */}
-              {!hasContent && (
+             
                 <div className="ml-9 py-0.5">
                   <button
                     type="button"
-                    className="text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                    className="text-xs text-muted-foreground/90 hover:text-muted-foreground transition-colors"
                     onClick={() => addRow(day)}
                   >
                     + {t("monthlyEntry.addRow")}
                   </button>
                 </div>
-              )}
 
               {/* Divider */}
               {(hasContent || daysWithContent.has(day)) && (
@@ -663,7 +921,7 @@ export default function MonthlyEntryPage() {
       </div>
 
       {/* Summary + Save */}
-      <div className="sticky bottom-0 bg-background border-t pt-3 pb-2 -mx-4 px-4 space-y-3">
+      <div className="sticky bottom-0 bg-background pt-3 pb-2 -mx-4 px-4 space-y-3">
         {/* Totals */}
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">
@@ -700,6 +958,7 @@ export default function MonthlyEntryPage() {
           </Button>
         )}
       </div>
+
     </div>
   );
 }
