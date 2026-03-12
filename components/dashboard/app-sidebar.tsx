@@ -233,10 +233,12 @@ export function AppSidebarLayout({
                       <DialogClose asChild key={item.href}>
                         <Button
                           asChild
-                          variant="outline"
+                          variant="ghost"
                           className={cn(
-                            "w-full flex h-auto py-4 gap-2 justify-start rounded-xl",
-                            isActive && "border-none bg-amber-200 text-primary dark:bg-amber-900/50 dark:text-amber-100"
+                            "w-full flex h-auto py-4 gap-2 justify-start rounded-xl transition-colors",
+                            isActive
+                              ? "bg-amber-200 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100"
+                              : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/50"
                           )}
                         >
                           <Link href={item.href}>
@@ -253,11 +255,12 @@ export function AppSidebarLayout({
                     <DialogClose asChild>
                       <Button
                         asChild
-                        variant="outline"
+                        variant="ghost"
                         className={cn(
-                          "w-full flex flex-col h-auto py-4 gap-2",
-                          pathname?.startsWith("/admin") &&
-                            "border-primary bg-amber-200 text-primary dark:bg-amber-900/50 dark:text-amber-100"
+                          "w-full flex flex-col h-auto py-4 gap-2 rounded-xl transition-colors",
+                          pathname?.startsWith("/admin")
+                            ? "bg-amber-200 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100"
+                            : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/50"
                         )}
                       >
                         <Link href="/admin/reports">

@@ -588,7 +588,7 @@ export default function MonthlyEntryPage() {
 
               {/* Existing transactions */}
               {existing.length > 0 && (
-                <div className="ml-9 space-y-2 mb-1">
+                <div className="space-y-2 mb-1">
                   {existing.map((tx) => {
                     const isEditing =
                       editingTransaction?.id === tx.id &&

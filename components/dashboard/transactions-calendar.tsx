@@ -936,13 +936,13 @@ export function TransactionsCalendar({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-stone-700 dark:bg-stone-900">
+            <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-transparent dark:bg-stone-800/40">
               <button
                 type="button"
                 onClick={() => setViewMode("day")}
                 className={`px-3 py-2 transition-colors duration-150 ease-out ${viewMode === "day"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
                   } rounded-l-md font-medium`}
               >
                 {t("calendar.view.day")}
@@ -950,9 +950,9 @@ export function TransactionsCalendar({
               <button
                 type="button"
                 onClick={() => setViewMode("week")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${viewMode === "week"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
+                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 font-medium transition-colors duration-150 ease-out ${viewMode === "week"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
                   }`}
               >
                 {t("calendar.view.week")}
@@ -960,9 +960,9 @@ export function TransactionsCalendar({
               <button
                 type="button"
                 onClick={() => setViewMode("month")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 font-medium transition-colors duration-150 ease-out ${viewMode === "month"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
+                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 font-medium transition-colors duration-150 ease-out ${viewMode === "month"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
                   }`}
               >
                 {t("calendar.view.month")}
@@ -970,9 +970,9 @@ export function TransactionsCalendar({
               <button
                 type="button"
                 onClick={() => setViewMode("year")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-700 rounded-r-md font-medium transition-colors duration-150 ease-out ${viewMode === "year"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-100 dark:text-stone-900"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-200 dark:hover:bg-stone-800"
+                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 rounded-r-md font-medium transition-colors duration-150 ease-out ${viewMode === "year"
+                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
+                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
                   }`}
               >
                 {t("calendar.view.year")}
@@ -981,7 +981,7 @@ export function TransactionsCalendar({
             <button
               type="button"
               onClick={goToToday}
-              className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+              className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
             >
               {t("calendar.today")}
             </button>
@@ -1033,14 +1033,14 @@ export function TransactionsCalendar({
                   <button
                     type="button"
                     onClick={goPrevMonth}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={goNextMonth}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -1165,14 +1165,14 @@ export function TransactionsCalendar({
                   <button
                     type="button"
                     onClick={goPrevWeek}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={goNextWeek}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -1289,7 +1289,7 @@ export function TransactionsCalendar({
                         monthIndex,
                       }))
                     }
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -1301,7 +1301,7 @@ export function TransactionsCalendar({
                         monthIndex,
                       }))
                     }
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -1416,14 +1416,14 @@ export function TransactionsCalendar({
                   <button
                     type="button"
                     onClick={() => setYearRangeStart((y) => y - 12)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setYearRangeStart((y) => y + 12)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D4C9B0] text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
