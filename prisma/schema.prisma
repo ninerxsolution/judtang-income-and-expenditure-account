@@ -61,6 +61,12 @@ enum ReportStatus {
   CLOSED
 }
 
+enum NotificationType {
+  EVENT_SLIP_DONE
+  EVENT_IMPORT_DONE
+  EVENT_CARD_PAYMENT
+}
+
 // --- Auth.js required models ---
 
 model Account {
@@ -105,6 +111,7 @@ model User {
   budgetTemplates        BudgetTemplate[]
   budgetMonths           BudgetMonth[]
   recurringTransactions  RecurringTransaction[]
+  notifications          Notification[]
 }
 
 // Tracks active JWT sessions per user (sessionId in JWT cookie).
@@ -393,4 +400,21 @@ model Report {
   @@index([status])
   @@index([createdAt])
   @@index([userId])
+}
+
+// --- In-App Notifications (event-based, persisted per user) ---
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  payload   Json?
+  link      String?          @db.VarChar(500)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }

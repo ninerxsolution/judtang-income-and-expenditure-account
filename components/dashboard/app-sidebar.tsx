@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
+import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { useFullscreen } from "@/components/dashboard/fullscreen-context";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useI18n } from "@/hooks/use-i18n";
@@ -318,6 +319,7 @@ export function AppSidebarLayout({
                 />
               </span>
             </Button>
+            <NotificationsPopover />
             <div className="w-px h-8 bg-border mx-1" aria-hidden="true" />
 
             {isSmallScreen ? (
