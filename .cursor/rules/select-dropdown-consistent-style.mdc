@@ -1,0 +1,29 @@
+---
+description: Select ในแถวเดียวกันใช้ RowSelect component เดียว — type, category, account ใช้ component เดียวกัน
+alwaysApply: true
+---
+
+# Select/Dropdown: ใช้ RowSelect component เดียวกัน
+
+## กฎ
+
+- **Select ในแถวเดียวกัน** (type, category, account) → ใช้ **component เดียวกัน**
+- **RowSelect** (`@/components/dashboard/row-select`) — component หลัก
+- **AccountCombobox** (`@/components/dashboard/account-combobox`) — ใช้ RowSelect ภายใน + AccountIcon
+
+## Do
+
+- ใช้ RowSelect สำหรับ type, category (options ธรรมดา)
+- ใช้ AccountCombobox สำหรับบัญชี (ใช้ RowSelect + renderOptionIcon = AccountIcon)
+- ทั้งหมดใช้ component เดียว (RowSelect) — style เหมือนกัน
+
+## Don't
+
+- อย่าผสม shadcn Select กับ AccountCombobox ในแถวเดียวกัน
+- อย่าใช้ native `<select>` เมื่อมี RowSelect
+
+## Reference
+
+- `components/dashboard/row-select.tsx` — RowSelect (component หลัก)
+- `components/dashboard/account-combobox.tsx` — AccountCombobox (RowSelect + AccountIcon)
+- `app/(dashboard)/dashboard/monthly-entry/page.tsx` — ใช้ RowSelect สำหรับ type, category; AccountCombobox สำหรับบัญชี

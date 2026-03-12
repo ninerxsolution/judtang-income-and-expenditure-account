@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { ChevronDown, Building2, Banknote, PiggyBank } from "lucide-react";
+import { Building2, Banknote, PiggyBank } from "lucide-react";
 import { THAI_BANKS, BANK_OTHER, getBankIconColor, getBankLogoUrl } from "@/lib/thai-banks";
 import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { cn } from "@/lib/utils";
+import { RowSelect, type RowSelectOption } from "@/components/dashboard/row-select";
 
 export type AccountOption = {
   id: string;
@@ -149,14 +149,6 @@ export function AccountIcon({
   );
 }
 
-const DROPDOWN_STYLES =
-  "flex w-full items-center justify-between gap-2 rounded-md border border-[#D4C9B0] px-3 py-2 text-left text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 hover:bg-[#F5F0E8] dark:hover:bg-stone-800";
-const OPTION_STYLES =
-  "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800";
-const OPTION_SELECTED = "bg-[#EBF4E3] dark:bg-stone-800";
-const POPOVER_STYLES =
-  "absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900";
-
 export function AccountCombobox({
   id,
   value,
@@ -169,95 +161,28 @@ export function AccountCombobox({
   defaultLabel,
   className,
 }: AccountComboboxProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const filteredAccounts = accounts.filter((acc) => {
-    if (excludeIds.includes(acc.id)) return false;
-    if (filterByType && !filterByType(acc.type)) return false;
-    return true;
-  });
-
-  const selected = value ? accounts.find((a) => a.id === value) ?? null : null;
-  const displayLabel = selected
-    ? `${selected.name}${selected.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}`
-    : emptyLabel;
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [open]);
+  const options: RowSelectOption<AccountOption>[] = accounts
+    .filter((acc) => {
+      if (filterByType && !filterByType(acc.type)) return false;
+      return true;
+    })
+    .map((acc) => ({
+      value: acc.id,
+      label: `${acc.name}${acc.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}`,
+      ...acc,
+    }));
 
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        id={id}
-        onClick={() => setOpen((o) => !o)}
-        className={cn(DROPDOWN_STYLES, className)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <div className="flex min-w-0 items-center gap-3">
-          {value && selected ? (
-            <AccountIcon account={selected} size="sm" />
-          ) : null}
-          <span className="truncate">{displayLabel}</span>
-        </div>
-        <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-      </button>
-      {open && (
-        <div className={POPOVER_STYLES} role="listbox">
-          {allowEmpty && (
-            <button
-              type="button"
-              role="option"
-              aria-selected={!value}
-              className={cn(OPTION_STYLES, !value && OPTION_SELECTED)}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange("");
-                setOpen(false);
-              }}
-            >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E8E0C8] dark:bg-stone-700">
-                <span className="text-xs font-medium text-[#A09080] dark:text-stone-400">
-                  —
-                </span>
-              </div>
-              {emptyLabel}
-            </button>
-          )}
-          {filteredAccounts.map((acc) => {
-            const isSelected = value === acc.id;
-            const label = `${acc.name}${acc.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}`;
-            return (
-              <button
-                key={acc.id}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                className={cn(OPTION_STYLES, isSelected && OPTION_SELECTED)}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onChange(acc.id);
-                  setOpen(false);
-                }}
-              >
-                <AccountIcon account={acc} />
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+    <RowSelect<AccountOption>
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={options}
+      excludeValues={excludeIds}
+      allowEmpty={allowEmpty}
+      emptyLabel={emptyLabel}
+      renderOptionIcon={(opt) => <AccountIcon account={opt} size="sm" />}
+      className={className}
+    />
   );
 }

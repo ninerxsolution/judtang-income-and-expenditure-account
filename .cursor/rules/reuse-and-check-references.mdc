@@ -27,3 +27,4 @@ alwaysApply: true
 - **Date range (from/to):** ใช้ `DateRangePicker` — ดู rule `date-range-use-date-range-picker.mdc` และจุดที่ใช้ (transactions, data-tools, accounts/[id], activity-log)
 - **Dialog form หลายฟิลด์:** ใช้ fullscreen on mobile — ดู rule `dialog-mobile-fullscreen-form.mdc`
 - **occurredAt:** ใช้ `parseOccurredAt()` จาก `lib/date-range.ts` เมื่อรับ date-only จาก API — ดู rule `transaction-occurred-at-datetime.mdc`
+- **Select/Dropdown ในแถวเดียวกัน:** ใช้ RowSelect component เดียว (type, category, account) — ดู rule `select-dropdown-consistent-style.mdc`

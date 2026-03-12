@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Communication style
+
+- Do not use emojis in any responses.
+
 ## Cursor Cloud specific instructions
 
 ### Git workflow

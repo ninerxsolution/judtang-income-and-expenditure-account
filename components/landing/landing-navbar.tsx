@@ -34,13 +34,6 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
 
   const currentTheme = (theme ?? "system") as ThemeValue;
 
-  const themeLabel =
-    currentTheme === "light"
-      ? translate(language, "home.nav.themeLight")
-      : currentTheme === "dark"
-        ? translate(language, "home.nav.themeDark")
-        : translate(language, "home.nav.themeSystem");
-
   const ThemeIcon = currentTheme === "light" ? Sun : currentTheme === "dark" ? Moon : Monitor;
 
   return (
@@ -68,7 +61,6 @@ export function LandingNavbar({ language }: LandingNavbarProps) {
                 className="gap-1.5 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100"
               >
                 <ThemeIcon className="h-4 w-4" />
-                {/* {themeLabel} */}
                 <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
