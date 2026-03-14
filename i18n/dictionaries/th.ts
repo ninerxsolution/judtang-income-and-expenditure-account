@@ -1315,6 +1315,9 @@ export const thDictionary = {
   notifications: {
     title: "การแจ้งเตือน",
     markAllRead: "ทำเครื่องหมายว่าอ่านทั้งหมด",
+    markAsRead: "ทำเครื่องหมายว่าอ่านแล้ว",
+    markAsUnread: "ทำเครื่องหมายว่ายังไม่อ่าน",
+    moreOptions: "ตัวเลือกเพิ่มเติม",
     tabAll: "ทั้งหมด",
     tabUnread: "ยังไม่อ่าน",
     empty: "ไม่มีการแจ้งเตือน",

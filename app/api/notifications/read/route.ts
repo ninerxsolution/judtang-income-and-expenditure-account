@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { markNotificationsRead, markAllNotificationsRead } from "@/lib/notifications";
+import {
+  markNotificationsRead,
+  markNotificationsUnread,
+  markAllNotificationsRead,
+} from "@/lib/notifications";
 
 type SessionWithId = { user: { id?: string } };
 
 /**
  * PATCH /api/notifications/read
  * Body: { ids: string[] } to mark specific notifications as read,
+ * { ids: string[], unread: true } to mark as unread,
  * or { all: true } to mark all as read.
  */
 export async function PATCH(request: Request) {
@@ -17,7 +22,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { ids?: string[]; all?: boolean };
+  let body: { ids?: string[]; all?: boolean; unread?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -30,11 +35,18 @@ export async function PATCH(request: Request) {
   }
 
   if (!Array.isArray(body.ids) || body.ids.length === 0) {
-    return NextResponse.json({ error: "ids must be a non-empty array, or pass all: true" }, { status: 400 });
+    return NextResponse.json(
+      { error: "ids must be a non-empty array, or pass all: true" },
+      { status: 400 },
+    );
   }
 
   const ids = body.ids.filter((id) => typeof id === "string");
-  await markNotificationsRead(userId, ids);
+  if (body.unread === true) {
+    await markNotificationsUnread(userId, ids);
+  } else {
+    await markNotificationsRead(userId, ids);
+  }
 
   return NextResponse.json({ ok: true });
 }

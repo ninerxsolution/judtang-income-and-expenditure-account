@@ -22,6 +22,7 @@ const mockCountUnread = jest.fn();
 const mockComputeVirtual = jest.fn();
 const mockMergeNotifications = jest.fn();
 const mockMarkRead = jest.fn();
+const mockMarkUnread = jest.fn();
 const mockMarkAllRead = jest.fn();
 
 jest.mock("@/lib/notifications", () => ({
@@ -31,6 +32,7 @@ jest.mock("@/lib/notifications", () => ({
   computeVirtualAlerts: (...args: unknown[]) => mockComputeVirtual(...args),
   mergeNotifications: (...args: unknown[]) => mockMergeNotifications(...args),
   markNotificationsRead: (...args: unknown[]) => mockMarkRead(...args),
+  markNotificationsUnread: (...args: unknown[]) => mockMarkUnread(...args),
   markAllNotificationsRead: (...args: unknown[]) => mockMarkAllRead(...args),
 }));
 
@@ -192,6 +194,7 @@ describe("PATCH /api/notifications/read", () => {
     jest.clearAllMocks();
     mockGetServerSession.mockResolvedValue(null);
     mockMarkRead.mockResolvedValue(undefined);
+    mockMarkUnread.mockResolvedValue(undefined);
     mockMarkAllRead.mockResolvedValue(undefined);
   });
 
@@ -225,6 +228,19 @@ describe("PATCH /api/notifications/read", () => {
     const res = await PATCH(req);
     expect(res.status).toBe(200);
     expect(mockMarkAllRead).toHaveBeenCalledWith("test-user-id");
+    expect(mockMarkRead).not.toHaveBeenCalled();
+    expect(mockMarkUnread).not.toHaveBeenCalled();
+  });
+
+  it("marks specific ids as unread when unread: true", async () => {
+    mockGetServerSession.mockResolvedValue(createMockSession());
+    const req = createRequest("http://localhost/api/notifications/read", {
+      method: "PATCH",
+      body: { ids: ["n-1"], unread: true },
+    });
+    const res = await PATCH(req);
+    expect(res.status).toBe(200);
+    expect(mockMarkUnread).toHaveBeenCalledWith("test-user-id", ["n-1"]);
     expect(mockMarkRead).not.toHaveBeenCalled();
   });
 

@@ -1321,6 +1321,9 @@ export const enDictionary = {
   notifications: {
     title: "Notifications",
     markAllRead: "Mark all as read",
+    markAsRead: "Mark as read",
+    markAsUnread: "Mark as unread",
+    moreOptions: "More options",
     tabAll: "All",
     tabUnread: "Unread",
     empty: "No notifications",

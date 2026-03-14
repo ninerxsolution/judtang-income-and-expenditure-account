@@ -132,6 +132,15 @@ export async function markNotificationsRead(userId: string, ids: string[]): Prom
   });
 }
 
+/** Mark specific notifications as unread. Only updates notifications that belong to the user. */
+export async function markNotificationsUnread(userId: string, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await prisma.notification.updateMany({
+    where: { id: { in: ids }, userId },
+    data: { readAt: null },
+  });
+}
+
 /** Mark all unread notifications as read for a user. */
 export async function markAllNotificationsRead(userId: string): Promise<void> {
   await prisma.notification.updateMany({

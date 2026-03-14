@@ -3,6 +3,7 @@
 import {
   Bell,
   CheckCheck,
+  MoreVertical,
   Receipt,
   Upload,
   CreditCard,
@@ -13,9 +14,24 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/lib/format";
 
@@ -37,6 +53,27 @@ type NotificationsResponse = {
   items: NotificationItem[];
   unreadCount: number;
 };
+
+const DISMISSED_VIRTUAL_IDS_KEY = "notification.dismissedVirtualIds";
+
+function getDismissedVirtualIdsFromStorage(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(DISMISSED_VIRTUAL_IDS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDismissedVirtualIds(ids: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DISMISSED_VIRTUAL_IDS_KEY, JSON.stringify(ids));
+  } catch {
+    // ignore
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -168,6 +205,9 @@ export function NotificationsPopover() {
   const [tab, setTab] = useState<"all" | "unread">("all");
   const [data, setData] = useState<NotificationsResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dismissedVirtualIds, setDismissedVirtualIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const fetchedRef = useRef(false);
 
   const fetchNotifications = useCallback(async () => {
@@ -177,6 +217,7 @@ export function NotificationsPopover() {
       if (res.ok) {
         const json = (await res.json()) as NotificationsResponse;
         setData(json);
+        setDismissedVirtualIds(new Set(getDismissedVirtualIdsFromStorage()));
       }
     } catch {
       // ignore
@@ -185,7 +226,12 @@ export function NotificationsPopover() {
     }
   }, []);
 
-  // Fetch when popover opens (once per open, not on every render)
+  // Fetch on mount so badge (unread count) shows without opening the popover
+  useEffect(() => {
+    void fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refetch when popover opens so list is fresh (and once per open)
   useEffect(() => {
     if (open && !fetchedRef.current) {
       fetchedRef.current = true;
@@ -202,6 +248,12 @@ export function NotificationsPopover() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ all: true }),
     });
+    const virtualIds = (data?.items ?? []).filter((i) => i.kind === "virtual").map((i) => i.id);
+    if (virtualIds.length > 0) {
+      const next = new Set([...getDismissedVirtualIdsFromStorage(), ...virtualIds]);
+      saveDismissedVirtualIds([...next]);
+      setDismissedVirtualIds(next);
+    }
     setData((prev) =>
       prev
         ? {
@@ -236,142 +288,245 @@ export function NotificationsPopover() {
           : null,
       );
     }
+    if (item.kind === "virtual" && !dismissedVirtualIds.has(item.id)) {
+      const next = new Set([...dismissedVirtualIds, item.id]);
+      saveDismissedVirtualIds([...next]);
+      setDismissedVirtualIds(next);
+    }
     setOpen(false);
   }
 
+  async function handleMarkRead(item: NotificationItem) {
+    if (item.kind === "persisted" && !item.readAt) {
+      await fetch("/api/notifications/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [item.id] }),
+      });
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((n) =>
+                n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n,
+              ),
+            }
+          : null,
+      );
+    }
+    if (item.kind === "virtual" && !dismissedVirtualIds.has(item.id)) {
+      const next = new Set([...dismissedVirtualIds, item.id]);
+      saveDismissedVirtualIds([...next]);
+      setDismissedVirtualIds(next);
+    }
+  }
+
+  async function handleMarkUnread(item: NotificationItem) {
+    if (item.kind === "persisted" && item.readAt) {
+      await fetch("/api/notifications/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [item.id], unread: true }),
+      });
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((n) =>
+                n.id === item.id ? { ...n, readAt: null } : n,
+              ),
+            }
+          : null,
+      );
+    }
+    if (item.kind === "virtual" && dismissedVirtualIds.has(item.id)) {
+      const next = new Set(dismissedVirtualIds);
+      next.delete(item.id);
+      saveDismissedVirtualIds([...next]);
+      setDismissedVirtualIds(next);
+    }
+  }
+
+  const isMobile = useIsMobile();
   const allItems = data?.items ?? [];
+  const isItemUnread = (item: NotificationItem): boolean =>
+    item.kind === "persisted" ? !item.readAt : !dismissedVirtualIds.has(item.id);
   const filteredItems =
-    tab === "unread"
-      ? allItems.filter((item) => !item.readAt)
-      : allItems;
+    tab === "unread" ? allItems.filter(isItemUnread) : allItems;
+  const unreadCount = allItems.filter(isItemUnread).length;
 
   const todayItems = filteredItems.filter((item) => isToday(item.createdAt));
   const earlierItems = filteredItems.filter((item) => !isToday(item.createdAt));
-  const unreadCount = data?.unreadCount ?? 0;
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-8 w-8 rounded-full"
-          aria-label={t("notifications.title")}
+  const triggerButton = (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative h-8 w-8 rounded-full"
+      aria-label={t("notifications.title")}
+    >
+      <Bell className="h-4 w-4" />
+      {unreadCount > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 text-white items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground leading-none">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
+    </Button>
+  );
+
+  const notificationContent = (
+    <>
+      {/* Header — pr-10 on mobile for Sheet close button */}
+      <div
+        className={cn(
+          "flex shrink-0 items-center justify-between border-b px-4 py-3",
+          isMobile && "pr-10",
+        )}
+      >
+        <h2 className="font-semibold text-base">{t("notifications.title")}</h2>
+        {unreadCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
+            onClick={() => void handleMarkAllRead()}
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            {t("notifications.markAllRead")}
+          </Button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex shrink-0 gap-1 px-3 py-2 border-b">
+        <button
+          type="button"
+          onClick={() => setTab("all")}
+          className={cn(
+            "px-3 py-1 rounded-full text-sm font-medium transition-colors",
+            tab === "all"
+              ? "bg-gray-200"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          )}
         >
-          <Bell className="h-4 w-4" />
+          {t("notifications.tabAll")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("unread")}
+          className={cn(
+            "flex gap-2 px-2 py-1 rounded-full text-sm font-medium transition-colors",
+            tab === "unread"
+              ? "bg-gray-200"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          )}
+        >
+          {t("notifications.tabUnread")}
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground leading-none">
+            <span className="inline-flex items-center justify-center rounded-full text-white bg-destructive text-destructive-foreground text-[10px] font-bold min-w-5 h-5 px-1">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
-        </Button>
-      </PopoverTrigger>
+        </button>
+      </div>
 
+      {/* Notification list */}
+      <div
+        className={cn(
+          "min-h-0 overflow-y-auto",
+          isMobile ? "flex-1" : "max-h-[min(70vh,400px)]",
+        )}
+      >
+        {loading && (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            <Bell className="mx-auto mb-2 h-5 w-5 animate-pulse" />
+          </div>
+        )}
+
+        {!loading && filteredItems.length === 0 && (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            <Bell className="mx-auto mb-2 h-5 w-5 opacity-40" />
+            <p>
+              {tab === "unread"
+                ? t("notifications.emptyUnread")
+                : t("notifications.empty")}
+            </p>
+          </div>
+        )}
+
+        {!loading && todayItems.length > 0 && (
+          <section>
+            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t("notifications.groupToday")}
+            </p>
+            {todayItems.map((item) => (
+                <NotificationRow
+                  key={item.id}
+                  item={item}
+                  isUnread={isItemUnread(item)}
+                  t={t}
+                  onClick={handleItemClick}
+                  onMarkRead={handleMarkRead}
+                  onMarkUnread={handleMarkUnread}
+                />
+              ))}
+          </section>
+        )}
+
+        {!loading && earlierItems.length > 0 && (
+          <section>
+            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t("notifications.groupEarlier")}
+            </p>
+            {earlierItems.map((item) => (
+                <NotificationRow
+                  key={item.id}
+                  item={item}
+                  isUnread={isItemUnread(item)}
+                  t={t}
+                  onClick={handleItemClick}
+                  onMarkRead={handleMarkRead}
+                  onMarkUnread={handleMarkUnread}
+                />
+              ))}
+          </section>
+        )}
+      </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>{triggerButton}</SheetTrigger>
+        <SheetContent
+          side="bottom"
+          showCloseButton={true}
+          className="flex h-dvh max-h-dvh flex-col gap-0 overflow-hidden rounded-t-2xl p-0 top-[56px]"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>{t("notifications.title")}</SheetTitle>
+            <SheetDescription>
+              {t("notifications.tabAll")}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+            {notificationContent}
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[min(380px,95vw)] p-0 rounded-xl shadow-lg overflow-hidden"
+        className="flex flex-col w-[min(380px,95vw)] p-0 rounded-xl shadow-lg overflow-hidden"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h2 className="font-semibold text-base">{t("notifications.title")}</h2>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-              onClick={() => void handleMarkAllRead()}
-            >
-              <CheckCheck className="h-3.5 w-3.5" />
-              {t("notifications.markAllRead")}
-            </Button>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 px-3 pt-2 pb-1 border-b">
-          <button
-            type="button"
-            onClick={() => setTab("all")}
-            className={cn(
-              "px-3 py-1 rounded-full text-sm font-medium transition-colors",
-              tab === "all"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            {t("notifications.tabAll")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("unread")}
-            className={cn(
-              "px-3 py-1 rounded-full text-sm font-medium transition-colors",
-              tab === "unread"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            {t("notifications.tabUnread")}
-            {unreadCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold min-w-5 h-5 px-1">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Notification list */}
-        <div className="max-h-[min(70vh,400px)] overflow-y-auto">
-          {loading && (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              <Bell className="mx-auto mb-2 h-5 w-5 animate-pulse" />
-            </div>
-          )}
-
-          {!loading && filteredItems.length === 0 && (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              <Bell className="mx-auto mb-2 h-5 w-5 opacity-40" />
-              <p>
-                {tab === "unread"
-                  ? t("notifications.emptyUnread")
-                  : t("notifications.empty")}
-              </p>
-            </div>
-          )}
-
-          {!loading && todayItems.length > 0 && (
-            <section>
-              <p className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {t("notifications.groupToday")}
-              </p>
-              {todayItems.map((item) => (
-                <NotificationRow
-                  key={item.id}
-                  item={item}
-                  t={t}
-                  onClick={handleItemClick}
-                />
-              ))}
-            </section>
-          )}
-
-          {!loading && earlierItems.length > 0 && (
-            <section>
-              <p className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {t("notifications.groupEarlier")}
-              </p>
-              {earlierItems.map((item) => (
-                <NotificationRow
-                  key={item.id}
-                  item={item}
-                  t={t}
-                  onClick={handleItemClick}
-                />
-              ))}
-            </section>
-          )}
-        </div>
+        {notificationContent}
       </PopoverContent>
     </Popover>
   );
@@ -383,15 +538,20 @@ export function NotificationsPopover() {
 
 function NotificationRow({
   item,
+  isUnread,
   t,
   onClick,
+  onMarkRead,
+  onMarkUnread,
 }: {
   item: NotificationItem;
+  isUnread: boolean;
   t: ReturnType<typeof useI18n>["t"];
   onClick: (item: NotificationItem) => void | Promise<void>;
+  onMarkRead: (item: NotificationItem) => void | Promise<void>;
+  onMarkUnread: (item: NotificationItem) => void | Promise<void>;
 }) {
   const body = useNotificationBody(item, t);
-  const isUnread = !item.readAt;
   const Icon = getIcon(item.type);
 
   const typeKey = item.type as keyof ReturnType<typeof useI18n>["t"] extends never
@@ -408,9 +568,9 @@ function NotificationRow({
   const content = (
     <div
       className={cn(
-        "flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors",
+        "relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors",
         isUnread
-          ? "bg-primary/5 hover:bg-primary/10"
+          ? "bg-primary/2 hover:bg-primary/5"
           : "hover:bg-accent hover:text-accent-foreground",
       )}
       onClick={() => void onClick(item)}
@@ -447,10 +607,42 @@ function NotificationRow({
         </p>
       </div>
 
-      {/* Unread dot */}
-      {isUnread && item.kind === "persisted" && (
-        <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary mt-1.5" />
-      )}
+      {/* Menu + unread dot — top right */}
+      <div
+        className="absolute right-3 top-3 flex items-center gap-1.5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {isUnread && (
+          <span
+            className="h-2 w-2 shrink-0 rounded-full bg-destructive"
+            aria-hidden
+          />
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 rounded-full opacity-70 hover:opacity-100"
+              aria-label={t("notifications.moreOptions")}
+            >
+              <MoreVertical className="h-4 w-4 rotate-90" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {isUnread ? (
+              <DropdownMenuItem onClick={() => void onMarkRead(item)}>
+                {t("notifications.markAsRead")}
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => void onMarkUnread(item)}>
+                {t("notifications.markAsUnread")}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+      </div>
     </div>
   );
 
