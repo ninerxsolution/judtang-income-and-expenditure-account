@@ -20,7 +20,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -79,28 +83,31 @@ function saveDismissedVirtualIds(ids: string[]): void {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getIcon(type: string) {
+function getIconElement(type: string) {
   switch (type) {
     case "EVENT_SLIP_DONE":
-      return Receipt;
+      return <Receipt className="h-4 w-4" />;
     case "EVENT_IMPORT_DONE":
-      return Upload;
+      return <Upload className="h-4 w-4" />;
     case "EVENT_CARD_PAYMENT":
-      return CreditCard;
+      return <CreditCard className="h-4 w-4" />;
     case "ALERT_RECURRING_DUE":
-      return RepeatIcon;
+      return <RepeatIcon className="h-4 w-4" />;
     case "ALERT_CARD_DUE":
-      return CalendarClock;
+      return <CalendarClock className="h-4 w-4" />;
     case "ALERT_BUDGET":
-      return PieChart;
+      return <PieChart className="h-4 w-4" />;
     case "ALERT_INCOMPLETE_ACCOUNT":
-      return AlertTriangle;
+      return <AlertTriangle className="h-4 w-4" />;
     default:
-      return Bell;
+      return <Bell className="h-4 w-4" />;
   }
 }
 
-function formatRelativeTime(dateStr: string, t: ReturnType<typeof useI18n>["t"]): string {
+function formatRelativeTime(
+  dateStr: string,
+  t: ReturnType<typeof useI18n>["t"],
+): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffMs = now - then;
@@ -109,8 +116,10 @@ function formatRelativeTime(dateStr: string, t: ReturnType<typeof useI18n>["t"])
   const diffDays = Math.floor(diffMs / 86_400_000);
 
   if (diffMins < 1) return t("common.time.justNow");
-  if (diffMins < 60) return t("common.time.minutesAgo").replace("{count}", String(diffMins));
-  if (diffHours < 24) return t("common.time.hoursAgo").replace("{count}", String(diffHours));
+  if (diffMins < 60)
+    return t("common.time.minutesAgo").replace("{count}", String(diffMins));
+  if (diffHours < 24)
+    return t("common.time.hoursAgo").replace("{count}", String(diffHours));
   return t("common.time.daysAgo").replace("{count}", String(diffDays));
 }
 
@@ -179,7 +188,10 @@ function useNotificationBody(
         : t("notifications.types.ALERT_BUDGET_label_total");
       const pct = Math.round(Number(p.progress ?? 0) * 100);
       if (p.isOver) {
-        return t("notifications.types.ALERT_BUDGET_body_over").replace("{label}", label);
+        return t("notifications.types.ALERT_BUDGET_body_over").replace(
+          "{label}",
+          label,
+        );
       }
       return t("notifications.types.ALERT_BUDGET_body_near")
         .replace("{label}", label)
@@ -248,9 +260,14 @@ export function NotificationsPopover() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ all: true }),
     });
-    const virtualIds = (data?.items ?? []).filter((i) => i.kind === "virtual").map((i) => i.id);
+    const virtualIds = (data?.items ?? [])
+      .filter((i) => i.kind === "virtual")
+      .map((i) => i.id);
     if (virtualIds.length > 0) {
-      const next = new Set([...getDismissedVirtualIdsFromStorage(), ...virtualIds]);
+      const next = new Set([
+        ...getDismissedVirtualIdsFromStorage(),
+        ...virtualIds,
+      ]);
       saveDismissedVirtualIds([...next]);
       setDismissedVirtualIds(next);
     }
@@ -282,7 +299,9 @@ export function NotificationsPopover() {
               ...prev,
               unreadCount: Math.max(0, prev.unreadCount - 1),
               items: prev.items.map((n) =>
-                n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n,
+                n.id === item.id
+                  ? { ...n, readAt: new Date().toISOString() }
+                  : n,
               ),
             }
           : null,
@@ -308,7 +327,9 @@ export function NotificationsPopover() {
           ? {
               ...prev,
               items: prev.items.map((n) =>
-                n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n,
+                n.id === item.id
+                  ? { ...n, readAt: new Date().toISOString() }
+                  : n,
               ),
             }
           : null,
@@ -350,7 +371,9 @@ export function NotificationsPopover() {
   const isMobile = useIsMobile();
   const allItems = data?.items ?? [];
   const isItemUnread = (item: NotificationItem): boolean =>
-    item.kind === "persisted" ? !item.readAt : !dismissedVirtualIds.has(item.id);
+    item.kind === "persisted"
+      ? !item.readAt
+      : !dismissedVirtualIds.has(item.id);
   const filteredItems =
     tab === "unread" ? allItems.filter(isItemUnread) : allItems;
   const unreadCount = allItems.filter(isItemUnread).length;
@@ -460,16 +483,16 @@ export function NotificationsPopover() {
               {t("notifications.groupToday")}
             </p>
             {todayItems.map((item) => (
-                <NotificationRow
-                  key={item.id}
-                  item={item}
-                  isUnread={isItemUnread(item)}
-                  t={t}
-                  onClick={handleItemClick}
-                  onMarkRead={handleMarkRead}
-                  onMarkUnread={handleMarkUnread}
-                />
-              ))}
+              <NotificationRow
+                key={item.id}
+                item={item}
+                isUnread={isItemUnread(item)}
+                t={t}
+                onClick={handleItemClick}
+                onMarkRead={handleMarkRead}
+                onMarkUnread={handleMarkUnread}
+              />
+            ))}
           </section>
         )}
 
@@ -479,16 +502,16 @@ export function NotificationsPopover() {
               {t("notifications.groupEarlier")}
             </p>
             {earlierItems.map((item) => (
-                <NotificationRow
-                  key={item.id}
-                  item={item}
-                  isUnread={isItemUnread(item)}
-                  t={t}
-                  onClick={handleItemClick}
-                  onMarkRead={handleMarkRead}
-                  onMarkUnread={handleMarkUnread}
-                />
-              ))}
+              <NotificationRow
+                key={item.id}
+                item={item}
+                isUnread={isItemUnread(item)}
+                t={t}
+                onClick={handleItemClick}
+                onMarkRead={handleMarkRead}
+                onMarkUnread={handleMarkUnread}
+              />
+            ))}
           </section>
         )}
       </div>
@@ -506,9 +529,7 @@ export function NotificationsPopover() {
         >
           <SheetHeader className="sr-only">
             <SheetTitle>{t("notifications.title")}</SheetTitle>
-            <SheetDescription>
-              {t("notifications.tabAll")}
-            </SheetDescription>
+            <SheetDescription>{t("notifications.tabAll")}</SheetDescription>
           </SheetHeader>
           <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
             {notificationContent}
@@ -552,9 +573,10 @@ function NotificationRow({
   onMarkUnread: (item: NotificationItem) => void | Promise<void>;
 }) {
   const body = useNotificationBody(item, t);
-  const Icon = getIcon(item.type);
 
-  const typeKey = item.type as keyof ReturnType<typeof useI18n>["t"] extends never
+  const typeKey = item.type as keyof ReturnType<
+    typeof useI18n
+  >["t"] extends never
     ? string
     : string;
   const title = (() => {
@@ -589,12 +611,17 @@ function NotificationRow({
             : "bg-muted text-muted-foreground",
         )}
       >
-        <Icon className="h-4 w-4" />
+        {getIconElement(item.type)}
       </div>
 
       {/* Text */}
       <div className="flex-1 min-w-0">
-        <p className={cn("text-sm leading-snug", isUnread ? "font-semibold" : "font-medium")}>
+        <p
+          className={cn(
+            "text-sm leading-snug",
+            isUnread ? "font-semibold" : "font-medium",
+          )}
+        >
           {title}
         </p>
         {body && (
@@ -641,7 +668,6 @@ function NotificationRow({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        
       </div>
     </div>
   );
