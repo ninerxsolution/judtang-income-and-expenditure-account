@@ -11,6 +11,7 @@ import {
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { revalidateTag } from "@/lib/cache";
+import { createNotification } from "@/lib/notifications";
 
 async function findOrCreateCategoryByName(
   tx: Pick<typeof prisma, "category">,
@@ -406,6 +407,17 @@ export async function POST(request: Request) {
         totalRows: valid.length,
       },
     });
+
+    void createNotification(
+      userId,
+      "EVENT_IMPORT_DONE",
+      {
+        createdCount: result.createdCount,
+        updatedCount: result.updatedCount,
+        totalRows: valid.length,
+      },
+      "/dashboard/transactions",
+    );
 
     revalidateTag("transactions", "max");
     revalidateTag("financial-accounts", "max");

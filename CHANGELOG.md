@@ -2,6 +2,23 @@
 
 ---
 
+# v0.9.18 - 2026-03-14
+
+## Added
+
+- **Notification per-item menu** — Each notification row now has a "⋯" (more) button in the top-right. Clicking it opens a dropdown with "Mark as read" or "Mark as unread" depending on the current state.
+- **Mark as unread** — Persisted notifications can be marked as unread via the per-item menu. Virtual alerts can be "un-dismissed" the same way (removes from localStorage).
+- **PATCH /api/notifications/read** — Extended to accept `{ ids: string[], unread: true }` for marking specific notifications as unread.
+
+## Changed
+
+- **Notification badge on load** — Unread count badge now fetches on page mount so it appears without opening the panel first.
+- **Virtual alert read state** — Virtual alerts (recurring due, budget, etc.) now persist "read" state in `localStorage` so they stay marked as read after refresh.
+- **Notifications on mobile** — Uses a fullscreen Sheet (bottom drawer) instead of Popover for better UX on small screens.
+- **Sheet accessibility** — Added `SheetHeader` with `SheetTitle` and `SheetDescription` (sr-only) for screen reader accessibility.
+
+---
+
 # v0.9.17 - 2026-03-11
 
 ## Added

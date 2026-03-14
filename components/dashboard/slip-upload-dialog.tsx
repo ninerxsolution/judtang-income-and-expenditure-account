@@ -973,8 +973,28 @@ export function SlipUploadDialog({
 
     if (successCount < results.length) {
       setGlobalError(t("dashboard.slipUpload.partialSuccess"));
+      // Still record partial success as a notification
+      void fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "EVENT_SLIP_DONE",
+          payload: { createdCount: successCount, totalCount: results.length, hasErrors: true },
+          link: "/dashboard/transactions",
+        }),
+      });
       return;
     }
+
+    void fetch("/api/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "EVENT_SLIP_DONE",
+        payload: { createdCount: successCount, totalCount: results.length, hasErrors: false },
+        link: "/dashboard/transactions",
+      }),
+    });
 
     resetSlipUpload();
     onOpenChange(false);

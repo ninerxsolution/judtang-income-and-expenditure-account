@@ -5,6 +5,16 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 14/03/2026 (In-App Notifications: implemented)
+
+- docs/feature/notifications.md — Updated: Status from Planned to Implemented; documented data model (persisted + virtual), APIs (GET, POST, PATCH read/unread), UI (Popover on desktop, Sheet on mobile, tabs, mark all read, per-item menu with Mark as read/unread), LocalStorage for virtual read state.
+- docs/INDEX.md — Updated: In-App Notifications description (implemented, removed "planned").
+- CHANGELOG.md — Added v0.9.18: In-App Notifications enhancements.
+- CHANGELOG.th.md — Added v0.9.18 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
 ## 11/03/2026 (Vercel Speed Insights)
 
 - app/layout.tsx — Added SpeedInsights from @vercel/speed-insights/next in root layout.
