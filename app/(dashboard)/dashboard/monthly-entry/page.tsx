@@ -480,6 +480,49 @@ export default function MonthlyEntryPage() {
     return days;
   }, [existingByDay, dayRows, daysInMonth]);
 
+  const scrollToDay = (day: number) => {
+    document.getElementById(`day-${day}`)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const tocDays = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const d = i + 1;
+      const dayDate = new Date(year, month, d);
+      const dayOfWeek = dayDate.toLocaleDateString(
+        localeKey === "th" ? "th-TH" : "en-US",
+        { weekday: "short" },
+      );
+      const existing = existingByDay[d] ?? [];
+      const newRows = dayRows[d] ?? [];
+      let income = 0;
+      let expense = 0;
+      let transfer = 0;
+      for (const tx of existing) {
+        if (tx.type === "INCOME") income += 1;
+        else if (tx.type === "EXPENSE") expense += 1;
+        else if (tx.type === "TRANSFER") transfer += 1;
+      }
+      for (const row of newRows) {
+        if (row.type === "INCOME") income += 1;
+        else if (row.type === "EXPENSE") expense += 1;
+        else if (row.type === "TRANSFER") transfer += 1;
+      }
+      const isToday =
+        year === today.getFullYear() &&
+        month === today.getMonth() &&
+        d === today.getDate();
+      return {
+        day: d,
+        label: `${d} ${dayOfWeek}`,
+        income,
+        expense,
+        transfer,
+        isToday,
+      };
+    });
+  }, [daysInMonth, year, month, localeKey, existingByDay, dayRows]);
+
   if (loadingMeta) {
     return (
       <div className="px-4 pb-6 space-y-4">
@@ -501,7 +544,53 @@ export default function MonthlyEntryPage() {
   }
 
   return (
-    <div className="px-4 pb-6 space-y-4">
+    <div className="flex gap-8">
+      {/* Table of contents - left sidebar (dates) */}
+      <nav
+        aria-label={t("settings.contents")}
+        className="sticky top-24 self-start hidden max-h-[calc(90vh-7rem)] w-44 shrink-0 overflow-y-auto lg:block"
+      >
+        <div className="space-y-1 pb-2 pr-2">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("settings.contents")}
+          </p>
+          {tocDays.map(({ day, label, income, expense, transfer, isToday }) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => scrollToDay(day)}
+              className={cn(
+                "flex items-center justify-between w-full px-2 py-1.5 text-left text-sm hover:bg-muted rounded-md transition-all"
+              )}
+              aria-label={`${label}, ${t("monthlyEntry.income")} ${income}, ${t("monthlyEntry.expense")} ${expense}, ${t("monthlyEntry.transfer")} ${transfer}`}
+            >
+              <span className={cn("block", isToday ? "text-foreground font-bold" : "text-muted-foreground")}>{label}</span>
+              {(income > 0 || expense > 0 || transfer > 0) && (
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0 text-xs">
+                  {income > 0 && (
+                    <span className="font-medium tabular-nums text-emerald-600 dark:text-emerald-400" title={t("monthlyEntry.income")}>
+                      {income}
+                    </span>
+                  )}
+                  {expense > 0 && (
+                    <span className="font-medium tabular-nums text-red-600 dark:text-red-400" title={t("monthlyEntry.expense")}>
+                      {expense}
+                    </span>
+                  )}
+                  {transfer > 0 && (
+                    <span className="font-medium tabular-nums text-blue-600 dark:text-blue-400" title={t("monthlyEntry.transfer")}>
+                      {transfer}
+                    </span>
+                  )}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* Main content - extra pb so sticky summary bar doesn't cover last day */}
+      <div className="min-w-0 flex-1 px-4 pb-0 space-y-4 min-h-0">
       {/* Month navigation */}
       <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-4 px-4">
         <div className="flex items-center gap-2">
@@ -559,7 +648,11 @@ export default function MonthlyEntryPage() {
             year === now.getFullYear();
 
           return (
-            <div key={day} className="group">
+            <div
+              key={day}
+              id={`day-${day}`}
+              className="group scroll-mt-6"
+            >
               {/* Day header */}
               <div className="flex items-center justify-between gap-2 py-1">
                 <div className="flex items-center gap-2">
@@ -778,7 +871,7 @@ export default function MonthlyEntryPage() {
 
               {/* New entry rows */}
               {newRows.length > 0 && (
-                <div className="ml-9 space-y-2 mb-1">
+                <div className="mt-2 space-y-2 mb-1">
                   {newRows.map((row) => (
                     <div
                       key={row.id}
@@ -959,6 +1052,7 @@ export default function MonthlyEntryPage() {
         )}
       </div>
 
+      </div>
     </div>
   );
 }
