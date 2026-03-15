@@ -78,6 +78,7 @@ This constraint is disclosed in Section 2 of the public Privacy Policy page with
 | Cloud Hosting Provider | Application infrastructure and hosting |
 | Email Delivery Service | Transactional emails (verification, reset) |
 | Cloudflare Turnstile | Bot protection and CAPTCHA verification |
+| Vercel Analytics / Speed Insights | Anonymous page views and Core Web Vitals (loaded only after user consents via cookie banner) |
 
 ---
 
@@ -108,10 +109,34 @@ The page uses `getDictionary(language)` directly (not `translate()`) because the
 
 ---
 
-## 9. Out of Scope (this version)
+## 9. Cookie Consent (Implemented)
+
+A cookie consent flow lets users choose whether to allow analytics before any tracking runs.
+
+### 9.1 Components
+
+| Component | Purpose |
+|---|---|
+| `ConsentProvider` | Manages consent state; wraps root layout |
+| `CookieConsentBanner` | Bottom banner when user has not decided; Accept all / Manage preferences |
+| `ConditionalAnalytics` | Renders Vercel Analytics + Speed Insights only when user consents to analytics |
+| `lib/consent.ts` | Stores consent in `localStorage` (`judtang_consent`); `{ necessary: true, analytics: boolean, timestamp }` |
+
+### 9.2 Flow
+
+- **First visit:** Banner appears at bottom; user can "Accept all" (analytics on) or "Manage preferences" (modal: Necessary always on, Analytics optional).
+- **After decision:** Banner hides; preference stored in localStorage.
+- **Analytics:** Vercel Analytics and Speed Insights load only when `consent.analytics === true`.
+
+### 9.3 i18n
+
+Keys under `cookieConsent.*` (banner text, modal title, necessary/analytics labels, Accept all, Manage preferences, etc.) in both `en.ts` and `th.ts`.
+
+---
+
+## 10. Out of Scope (this version)
 
 - Account deletion endpoint (to be implemented separately)
 - Data export (JSON/CSV)
-- Consent management / cookie banner
-- Cookie policy separation
+- Cookie policy as separate page
 - DPA template

@@ -5,6 +5,17 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 15/03/2026 (Cookie consent flow)
+
+- docs/feature/privacy-policy.md — Added §9 Cookie Consent (Implemented): components (ConsentProvider, CookieConsentBanner, ConditionalAnalytics, lib/consent), flow, i18n; added Vercel Analytics/Speed Insights to Third-Party Services table; removed "Consent management / cookie banner" from Out of Scope.
+- docs/structure/technical-stack.md — Analytics row: added note that Vercel Analytics and Speed Insights load conditionally only after user consents via cookie banner.
+- docs/PRD.md — §11 Technical Stack: Analytics row updated with conditional loading note.
+- CHANGELOG.md — Added v0.9.19: Cookie consent flow, conditional analytics.
+- CHANGELOG.th.md — Added v0.9.19 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
 ## 14/03/2026 (In-App Notifications: implemented)
 
 - docs/feature/notifications.md — Updated: Status from Planned to Implemented; documented data model (persisted + virtual), APIs (GET, POST, PATCH read/unread), UI (Popover on desktop, Sheet on mobile, tabs, mark all read, per-item menu with Mark as read/unread), LocalStorage for virtual read state.

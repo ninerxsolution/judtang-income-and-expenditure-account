@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useI18n } from "@/hooks/use-i18n";
 import { useConsent } from "@/components/providers/consent-provider";
@@ -15,6 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+
+type PendingAction = "acceptAll" | "save" | null;
 
 export function CookieConsentBanner() {
   const { t } = useI18n();
@@ -22,14 +25,31 @@ export function CookieConsentBanner() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+
+  const handleTransitionEnd = useCallback(() => {
+    if (pendingAction === "acceptAll") {
+      acceptAll();
+    } else if (pendingAction === "save") {
+      savePreferences(analyticsEnabled);
+    }
+    setPendingAction(null);
+  }, [pendingAction, acceptAll, savePreferences, analyticsEnabled]);
+
+  const handleAcceptAll = () => {
+    setIsDismissing(true);
+    setPendingAction("acceptAll");
+  };
+
+  const handleSavePreferences = () => {
+    setModalOpen(false);
+    setIsDismissing(true);
+    setPendingAction("save");
+  };
 
   // Avoid SSR mismatch and skip rendering once user has already decided.
   if (!mounted || hasDecided) return null;
-
-  const handleSavePreferences = () => {
-    savePreferences(analyticsEnabled);
-    setModalOpen(false);
-  };
 
   return (
     <>
@@ -37,7 +57,11 @@ export function CookieConsentBanner() {
       <div
         role="region"
         aria-label="Cookie consent"
-        className="fixed bottom-0 inset-x-0 z-50 border-t border-[#D4C9B0] bg-[#F5F0E8]/95 shadow-lg backdrop-blur-sm dark:border-stone-700 dark:bg-stone-900/95"
+        className={cn(
+          "fixed bottom-0 inset-x-0 z-50 border-t border-[#D4C9B0] bg-[#F5F0E8]/95 shadow-lg backdrop-blur-sm dark:border-stone-700 dark:bg-stone-900/95 transition-transform duration-300 ease-out",
+          isDismissing && "translate-y-full"
+        )}
+        onTransitionEnd={isDismissing ? handleTransitionEnd : undefined}
       >
         <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -61,7 +85,7 @@ export function CookieConsentBanner() {
               </Button>
               <Button
                 size="sm"
-                onClick={acceptAll}
+                onClick={handleAcceptAll}
                 className="bg-[#3D3020] text-[#F5F0E8] hover:bg-[#2A2015] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
               >
                 {t("cookieConsent.acceptAll")}
