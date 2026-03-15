@@ -305,12 +305,22 @@ export default function BudgetSettingsPage() {
       .filter(Boolean),
   );
 
-  function goToPreviousYear() {
-    setYear((y) => y - 1);
+  function goToPreviousMonth() {
+    if (month === 1) {
+      setYear((y) => y - 1);
+      setMonth(12);
+    } else {
+      setMonth((m) => m - 1);
+    }
   }
 
-  function goToNextYear() {
-    setYear((y) => y + 1);
+  function goToNextMonth() {
+    if (month === 12) {
+      setYear((y) => y + 1);
+      setMonth(1);
+    } else {
+      setMonth((m) => m + 1);
+    }
   }
 
   function openEditTotalBudgetDialog() {
@@ -663,15 +673,27 @@ export default function BudgetSettingsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={goToPreviousYear}
-            aria-label={t("settings.budget.prevYear")}
+            onClick={goToPreviousMonth}
+            aria-label={t("settings.budget.prevMonth")}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <select
+            value={month}
+            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
+            className="h-8 min-w-24 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
+            aria-label={t("settings.budget.month")}
+          >
+            {MONTHS.map((m) => (
+              <option key={m} value={m}>
+                {t(`summary.months.${m - 1}`)}
+              </option>
+            ))}
+          </select>
+          <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="h-8 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
+            className="h-8 min-w-18 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
             aria-label={t("settings.budget.year")}
           >
             {[year - 2, year - 1, year, year + 1, year + 2].map((y) => (
@@ -684,8 +706,8 @@ export default function BudgetSettingsPage() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={goToNextYear}
-            aria-label={t("settings.budget.nextYear")}
+            onClick={goToNextMonth}
+            aria-label={t("settings.budget.nextMonth")}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -693,27 +715,8 @@ export default function BudgetSettingsPage() {
       </div>
 
       <section className="">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
-            <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-              {t("settings.budget.coverageTitle")}
-            </h2>
-            <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
-              {t("settings.budget.coverageDescription", {
-                year: formatYearForDisplay(year, language),
-              })}
-            </p>
-          </div>
-          <div className="rounded-full bg-[#F5F0E8] px-3 py-1 text-sm font-medium text-[#3D3020] dark:bg-stone-800 dark:text-stone-100">
-            {t("settings.budget.coverageSummary", {
-              configured: coverage?.configuredMonthCount ?? 0,
-              total: MONTHS.length,
-            })}
-          </div>
-        </div>
-
         {loadingCoverage || !initializedFromQuery ? (
-          <div className="my-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 justify-center items-center">
+          <div className="my-4 grid gap-2 lg:grid-cols-6 xl:grid-cols-12 justify-center items-center">
             {MONTHS.map((coverageMonth) => (
               <Skeleton
                 key={coverageMonth}
@@ -728,7 +731,7 @@ export default function BudgetSettingsPage() {
                 period: selectedPeriodLabel,
               })}
             </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12">
+            <div className="grid gap-2 grid-cols-4 sm:grid-cols-6 xl:grid-cols-12">
               {(coverage?.months ?? []).map((coverageMonth) => {
                 const isSelected = coverageMonth.month === month;
 
