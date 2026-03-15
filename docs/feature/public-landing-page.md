@@ -24,6 +24,7 @@ Sections in order:
 5. **Engine / Architecture Section** — Design principles (ledger-based, liability separation, etc.)
 6. **Call To Action** — Single headline + Get Started button
 7. **Footer** — Version, Tech stack, Release Notes link, Privacy Policy link, Terms & Conditions link, Copyright
+8. **Go to Top** — Floating round button (bottom-right) with arrow-up icon; hidden when at top; appears with slide + opacity transition when user scrolls down; click scrolls to top, then button slides back out.
 
 ---
 
@@ -129,10 +130,19 @@ All landing content under `home.*`:
 | LandingEngine | `components/landing/landing-engine.tsx` |
 | LandingCta | `components/landing/landing-cta.tsx` |
 | LandingFooter | `components/landing/landing-footer.tsx` |
+| LandingGoToTop | `components/landing/landing-go-to-top.tsx` |
 
 ---
 
-## 11. Visual Guidelines
+## 11. Go to Top Button
+
+- **Placement:** Fixed bottom-right (`bottom-6 right-6`).
+- **Appearance:** Round button, ArrowUp icon (Lucide), matches landing palette (light/dark).
+- **Behaviour:** Hidden when page is at top (`scrollY` below threshold). When user scrolls down past ~150px, the button slides in from the right with opacity 0→100 (CSS transition). On click, smooth scroll to top; when top is reached, the button slides back out and fades. Uses `pointer-events-none` when hidden so it is not focusable or clickable.
+
+---
+
+## 12. Visual Guidelines
 
 - **Background:** `bg-stone-50` / `dark:bg-stone-950` (Earth tone)
 - **Accent:** `amber-600` for primary CTAs; `emerald-500` for bullets/dots
@@ -143,7 +153,7 @@ All landing content under `home.*`:
 
 ---
 
-## 12. Non-Goals
+## 13. Non-Goals
 
 - No internal schema deep dive
 - No full feature documentation

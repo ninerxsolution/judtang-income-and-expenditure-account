@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.21 - 2026-03-15
+
+## Added
+
+- **Go to Top on home page** — A floating round button (bottom-right) with an arrow-up icon appears on the public landing page (`/`) when the user scrolls down. It stays hidden at the top; after scrolling past a short threshold it slides in from the right with an opacity transition. Clicking it smooth-scrolls to the top; when back at the top the button slides out and fades. Uses Lucide `ArrowUp` and matches landing light/dark styles.
+
+---
+
 # v0.9.20 - 2026-03-15
 
 ## Added

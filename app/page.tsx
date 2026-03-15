@@ -15,6 +15,7 @@ import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingCoreValue } from "@/components/landing/landing-core-value";
 import { LandingFeatureGrid } from "@/components/landing/landing-feature-grid";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import { LandingGoToTop } from "@/components/landing/landing-go-to-top";
 
 async function getLanguage(): Promise<Language> {
   const cookieStore = await cookies();
@@ -45,6 +46,7 @@ export default async function Home() {
         
         <LandingFooter language={language} version={latestVersion} />
       </main>
+      <LandingGoToTop />
     </div>
   );
 }
