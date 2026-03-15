@@ -34,6 +34,7 @@ import { formatAmount } from "@/lib/format";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { useI18n } from "@/hooks/use-i18n";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 
 type Summary = { income: number; expense: number; totalBalance?: number } | null;
 type MonthItem = { monthIndex: number; income: number; expense: number };
@@ -175,10 +176,10 @@ export default function SummaryPage() {
   const pieData = useMemo(
     () =>
       categoryData.map((d) => ({
-        name: d.categoryName,
+        name: getCategoryDisplayName(d.categoryName, language),
         value: d.amount,
       })),
-    [categoryData],
+    [categoryData, language],
   );
 
   const yearOptions = useMemo(() => {

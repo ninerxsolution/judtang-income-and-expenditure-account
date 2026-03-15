@@ -445,16 +445,14 @@ export default function SettingsPage() {
                       <p className="text-xs text-[#A09080] dark:text-stone-400">
                         {t(
                           "settings.sessions.lastActivePrefix",
-                          formatRelative(s.lastActiveAt).key === "justNow"
-                            ? undefined
-                            : {
-                              relative: t(
-                                `common.time.${formatRelative(s.lastActiveAt).key}`,
-                                formatRelative(s.lastActiveAt).count
-                                  ? { count: formatRelative(s.lastActiveAt).count! }
-                                  : undefined,
-                              ),
-                            },
+                          {
+                            relative: t(
+                              `common.time.${formatRelative(s.lastActiveAt).key}`,
+                              formatRelative(s.lastActiveAt).count
+                                ? { count: formatRelative(s.lastActiveAt).count! }
+                                : undefined,
+                            ),
+                          },
                         )}
                       </p>
                     </div>
