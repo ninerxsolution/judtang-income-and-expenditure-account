@@ -61,17 +61,17 @@ type SessionsResponse = {
   currentSessionId: string | null;
 };
 
-function formatDate(iso: string) {
+function formatRelative(iso: string): { key: "justNow" | "minutesAgo" | "hoursAgo" | "daysAgo"; count?: number } {
   const d = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return { key: "justNow" };
+  if (diffMins < 60) return { key: "minutesAgo", count: diffMins };
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return { key: "hoursAgo", count: diffHours };
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return { key: "daysAgo", count: diffDays };
 }
 
 function deviceLabel(userAgent: string | null) {
@@ -114,7 +114,7 @@ export default function UserPage() {
         await signOut({ callbackUrl: "/sign-in" });
         return null;
       }
-      throw new Error("Failed to load profile");
+      throw new Error(t("profile.loadProfileFailed"));
     }
     return res.json() as Promise<Profile>;
   }
@@ -126,7 +126,7 @@ export default function UserPage() {
         await signOut({ callbackUrl: "/sign-in" });
         return null;
       }
-      throw new Error("Failed to load sessions");
+      throw new Error(t("profile.loadSessionsFailed"));
     }
     return res.json() as Promise<SessionsResponse>;
   }
@@ -142,7 +142,7 @@ export default function UserPage() {
       }
       if (sessionsResp) setSessionsData(sessionsResp);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setError(e instanceof Error ? e.message : t("common.errors.generic"));
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ export default function UserPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to update name");
+        toast.error(data.error ?? t("profile.updateNameFailed"));
         return;
       }
       toast.success(t("profile.nameUpdated"));
@@ -201,15 +201,15 @@ export default function UserPage() {
   async function handleChangePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      toast.error(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      toast.error(t("profile.passwordTooShort", { count: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (newPassword.length > MAX_PASSWORD_LENGTH) {
-      toast.error(`Password must be at most ${MAX_PASSWORD_LENGTH} characters.`);
+      toast.error(t("profile.passwordTooLong", { count: MAX_PASSWORD_LENGTH }));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("New password and confirmation do not match.");
+      toast.error(t("profile.passwordsMismatch"));
       return;
     }
     setPasswordPending(true);
@@ -221,7 +221,7 @@ export default function UserPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to change password");
+        toast.error(data.error ?? t("profile.changePasswordFailed"));
         return;
       }
       toast.success(t("profile.passwordUpdated"));
@@ -361,11 +361,18 @@ export default function UserPage() {
               )}
             </div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              {profile.hasPassword ? "Signed in with email & password" : "Signed in with Google"}
+              {profile.hasPassword ? t("profile.signedInEmail") : t("profile.signedInGoogle")}
             </p>
             {profile.lastActiveAt && (
               <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                Last active {formatDate(profile.lastActiveAt)}
+                {t("settings.sessions.lastActivePrefix", {
+                  relative: t(
+                    `common.time.${formatRelative(profile.lastActiveAt).key}`,
+                    formatRelative(profile.lastActiveAt).count
+                      ? { count: formatRelative(profile.lastActiveAt).count! }
+                      : undefined,
+                  ),
+                })}
               </p>
             )}
           </div>
@@ -562,12 +569,12 @@ export default function UserPage() {
       {/* Sessions block */}
       <section className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-6">
         <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Active sessions</h2>
+          <h2 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{t("profile.activeSessions")}</h2>
           <Link
             href="/dashboard/sessions"
             className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100"
           >
-            View all
+            {t("recurring.widget.viewAll")}
           </Link>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -579,7 +586,7 @@ export default function UserPage() {
               className="inline-flex items-center gap-2 rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50"
             >
               <LogOut className="h-4 w-4" />
-              Revoke all other sessions
+              {t("profile.revokeAllOthers")}
             </button>
           )}
         </div>
@@ -596,12 +603,19 @@ export default function UserPage() {
                     {deviceLabel(s.userAgent)}
                     {s.isCurrent && (
                       <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
-                        (this device)
+                        {t("settings.sessions.thisDevice")}
                       </span>
                     )}
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Last active {formatDate(s.lastActiveAt)}
+                    {t("settings.sessions.lastActivePrefix", {
+                      relative: t(
+                        `common.time.${formatRelative(s.lastActiveAt).key}`,
+                        formatRelative(s.lastActiveAt).count
+                          ? { count: formatRelative(s.lastActiveAt).count! }
+                          : undefined,
+                      ),
+                    })}
                   </p>
                 </div>
               </div>
@@ -612,18 +626,18 @@ export default function UserPage() {
                 className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 dark:border-zinc-600 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50"
               >
                 <Trash2 className="h-3 w-3" />
-                Revoke
+                {t("settings.sessions.revoke")}
               </button>
             </li>
           ))}
         </ul>
         {sessions.length === 0 && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">No sessions.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("profile.noSessions")}</p>
         )}
         {sessions.length > 5 && (
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
             <Link href="/dashboard/settings/sessions" className="underline">
-              View all {sessions.length} sessions
+              {t("profile.viewAllSessions", { count: sessions.length })}
             </Link>
           </p>
         )}

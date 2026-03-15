@@ -173,7 +173,7 @@ export default function SettingsPage() {
           </p>
         </header>
 
-        {/* Project information */}
+        {/* About */}
         <section
           id="information"
           className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
@@ -445,16 +445,14 @@ export default function SettingsPage() {
                       <p className="text-xs text-[#A09080] dark:text-stone-400">
                         {t(
                           "settings.sessions.lastActivePrefix",
-                          formatRelative(s.lastActiveAt).key === "justNow"
-                            ? undefined
-                            : {
-                              relative: t(
-                                `common.time.${formatRelative(s.lastActiveAt).key}`,
-                                formatRelative(s.lastActiveAt).count
-                                  ? { count: formatRelative(s.lastActiveAt).count! }
-                                  : undefined,
-                              ),
-                            },
+                          {
+                            relative: t(
+                              `common.time.${formatRelative(s.lastActiveAt).key}`,
+                              formatRelative(s.lastActiveAt).count
+                                ? { count: formatRelative(s.lastActiveAt).count! }
+                                : undefined,
+                            ),
+                          },
                         )}
                       </p>
                     </div>

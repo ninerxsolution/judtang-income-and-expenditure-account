@@ -34,6 +34,7 @@ import { formatAmount } from "@/lib/format";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { useI18n } from "@/hooks/use-i18n";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCategoryDisplayName } from "@/lib/categories-display";
 
 type Summary = { income: number; expense: number; totalBalance?: number } | null;
 type MonthItem = { monthIndex: number; income: number; expense: number };
@@ -175,10 +176,10 @@ export default function SummaryPage() {
   const pieData = useMemo(
     () =>
       categoryData.map((d) => ({
-        name: d.categoryName,
+        name: getCategoryDisplayName(d.categoryName, language),
         value: d.amount,
       })),
-    [categoryData],
+    [categoryData, language],
   );
 
   const yearOptions = useMemo(() => {
@@ -317,11 +318,15 @@ export default function SummaryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {summaryLoading || expenseRatio === null ? (
+            {summaryLoading ? (
               <Skeleton className="h-7 w-16" />
-            ) : (
+            ) : expenseRatio !== null ? (
               <p className="text-xl font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
                 {expenseRatio}%
+              </p>
+            ) : (
+              <p className="text-xl font-semibold text-muted-foreground">
+                N/A
               </p>
             )}
           </CardContent>

@@ -620,7 +620,7 @@ export default function AccountDetailPage() {
         <p className="text-sm mb-1 text-[#A09080] dark:text-stone-400">
           {account.type === "CREDIT_CARD"
             ? t("accounts.currentOutstanding")
-            : t("summary.balance")} 
+            : t("dashboard.summary.balance")} 
         </p>
         <p
           className={`text-3xl font-extrabold tabular-nums tracking-tight ${
