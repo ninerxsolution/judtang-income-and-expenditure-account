@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/hooks/use-i18n";
@@ -126,6 +126,7 @@ export function AnnouncementDialog() {
           }
         }}
       >
+        <DialogTitle className="sr-only">{resolvedTitle}</DialogTitle>
         <div className="relative w-full">
           {/* Close button */}
           {announcement.dismissible && (
