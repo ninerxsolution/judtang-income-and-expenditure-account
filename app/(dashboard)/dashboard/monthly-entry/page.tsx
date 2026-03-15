@@ -147,6 +147,20 @@ export default function MonthlyEntryPage() {
     return `${monthName} ${displayYear}`;
   }, [year, month, localeKey, language]);
 
+  const monthOptions = useMemo(() => {
+    const locale = localeKey === "th" ? "th-TH" : "en-US";
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(2024, i, 1);
+      const label = d.toLocaleDateString(locale, { month: "long" });
+      return { value: i, label };
+    });
+  }, [localeKey]);
+
+  const yearRange = useMemo(() => {
+    const current = now.getFullYear();
+    return Array.from({ length: 11 }, (_, i) => current - 5 + i);
+  }, []);
+
   // Fetch categories + accounts
   useEffect(() => {
     setLoadingMeta(true);
@@ -591,13 +605,13 @@ export default function MonthlyEntryPage() {
 
       {/* Main content - extra pb so sticky summary bar doesn't cover last day */}
       <div className="min-w-0 flex-1 px-4 pb-0 space-y-4 min-h-0">
-      {/* Month navigation */}
+      {/* Month/Year navigation */}
       <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-4 px-4">
         <div className="flex items-center gap-2">
-          <CalendarRange className="h-5 w-5 text-muted-foreground" />
+          <CalendarRange className="h-5 w-5 text-muted-foreground shrink-0" />
           <h2 className="text-lg font-semibold">{monthLabel}</h2>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="inline-flex items-center gap-1 self-start rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] p-1 dark:border-stone-700 dark:bg-stone-900">
           <Button
             variant="ghost"
             size="icon"
@@ -607,6 +621,30 @@ export default function MonthlyEntryPage() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
+          <select
+            className="h-8 min-w-24 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-foreground"
+            aria-label={t("monthlyEntry.selectMonth")}
+            value={month}
+            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
+          >
+            {monthOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <select
+            className="h-8 min-w-[4.5rem] appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-foreground"
+            aria-label={t("monthlyEntry.selectYear")}
+            value={year}
+            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+          >
+            {yearRange.map((y) => (
+              <option key={y} value={y}>
+                {formatYearForDisplay(y, language)}
+              </option>
+            ))}
+          </select>
           <Button
             variant="ghost"
             size="icon"

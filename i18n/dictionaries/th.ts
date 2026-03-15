@@ -1288,6 +1288,8 @@ export const thDictionary = {
     subtitle: "บันทึกหลายรายการพร้อมกัน จัดกลุ่มตามวัน",
     prevMonth: "เดือนก่อนหน้า",
     nextMonth: "เดือนถัดไป",
+    selectMonth: "เลือกเดือน",
+    selectYear: "เลือกปี",
     addRow: "เพิ่มแถว",
     addDay: "เพิ่มวัน",
     removeRow: "ลบแถว",

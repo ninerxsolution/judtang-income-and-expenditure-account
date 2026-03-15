@@ -1305,6 +1305,8 @@ export const enDictionary = {
     subtitle: "Record multiple transactions at once, organized by day.",
     prevMonth: "Previous month",
     nextMonth: "Next month",
+    selectMonth: "Select month",
+    selectYear: "Select year",
     addRow: "Add row",
     addDay: "Add day",
     removeRow: "Remove row",
