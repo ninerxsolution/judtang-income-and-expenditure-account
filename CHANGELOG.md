@@ -2,6 +2,19 @@
 
 ---
 
+# v0.9.19 - 2026-03-15
+
+## Added
+
+- **Cookie consent flow** — A cookie consent banner appears on first visit. Users can "Accept all" (enables analytics) or "Manage preferences" to choose: Necessary (always on) and Analytics (optional). Preference is stored in localStorage.
+- **Conditional analytics** — Vercel Analytics and Speed Insights load only when the user consents to analytics. No tracking runs before consent.
+
+## Changed
+
+- **Analytics loading** — Replaced direct Analytics/SpeedInsights in layout with `ConditionalAnalytics` component that checks consent before rendering.
+
+---
+
 # v0.9.18 - 2026-03-14
 
 ## Added

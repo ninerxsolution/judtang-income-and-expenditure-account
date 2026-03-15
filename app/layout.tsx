@@ -5,8 +5,9 @@ import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/components/providers/i18n-provider";
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { ConsentProvider } from "@/components/providers/consent-provider";
+import { CookieConsentBanner } from "@/components/common/cookie-consent-banner";
+import { ConditionalAnalytics } from "@/components/common/conditional-analytics";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_LOCALES,
@@ -63,7 +64,11 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin=""
+        />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Noto+Sans+Thai:wght@100..900&display=swap"
@@ -73,14 +78,16 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        <I18nProvider initialLanguage={language}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <SessionProvider>{children}</SessionProvider>
-            <Toaster />
-          </ThemeProvider>
-        </I18nProvider>
-        <Analytics />
-        <SpeedInsights />
+        <ConsentProvider>
+          <I18nProvider initialLanguage={language}>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <SessionProvider>{children}</SessionProvider>
+              <Toaster />
+            </ThemeProvider>
+            <CookieConsentBanner />
+          </I18nProvider>
+          <ConditionalAnalytics />
+        </ConsentProvider>
       </body>
     </html>
   );

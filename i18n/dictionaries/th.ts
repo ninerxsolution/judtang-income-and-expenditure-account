@@ -149,7 +149,8 @@ export const thDictionary = {
       sessions: "เซสชัน",
     },
     home: {
-      subtitle: "คุณได้เข้าสู่ระบบแล้ว พื้นที่นี้สงวนไว้สำหรับผู้ใช้ที่ผ่านการยืนยันตัวตน",
+      subtitle:
+        "คุณได้เข้าสู่ระบบแล้ว พื้นที่นี้สงวนไว้สำหรับผู้ใช้ที่ผ่านการยืนยันตัวตน",
       body: "ใช้เมนูด้านบนเพื่อเข้าถึงโปรไฟล์ผู้ใช้ เซสชัน รายการบันทึก เครื่องมือ ปฏิทิน และประวัติกิจกรรม",
     },
     summary: {
@@ -220,10 +221,12 @@ export const thDictionary = {
       clearAll: "ล้างทั้งหมด",
       emptyState: "ยังไม่มีสลิปค้างอยู่ เลือกรูปเพื่อเริ่มใหม่ได้เลย",
       restoreRecovered: "กู้คืนสลิปที่ค้างไว้จากครั้งก่อนแล้ว",
-      restoreInterrupted: "งานก่อนหน้าถูกขัดจังหวะ กรุณาตรวจสอบข้อมูลแล้วอัปโหลดใหม่หากจำเป็น",
+      restoreInterrupted:
+        "งานก่อนหน้าถูกขัดจังหวะ กรุณาตรวจสอบข้อมูลแล้วอัปโหลดใหม่หากจำเป็น",
       previewImage: "ดูรูป",
       previewImageTitle: "ตัวอย่างสลิป",
-      previewUnavailable: "ไม่พบไฟล์รูปนี้แล้ว กรุณาอัปโหลดใหม่หากต้องการดูตัวอย่าง",
+      previewUnavailable:
+        "ไม่พบไฟล์รูปนี้แล้ว กรุณาอัปโหลดใหม่หากต้องการดูตัวอย่าง",
       viewResponse: "ดูรายละเอียด response",
       responseTitle: "รายละเอียด response",
       responseOcrTitle: "OCR response",
@@ -350,8 +353,7 @@ export const thDictionary = {
     sectionAccounts: "บัญชี",
     sectionCreditCards: "บัตรเครดิต",
     incompleteAccount: "บัญชียังสร้างไม่เสร็จสมบูรณ์",
-    incompleteAccountWarning:
-      "กรุณาระบุธนาคารและเลขบัญชี/เลขบัตรก่อนใช้งาน",
+    incompleteAccountWarning: "กรุณาระบุธนาคารและเลขบัญชี/เลขบัตรก่อนใช้งาน",
     incompleteCreditCardWarning:
       "กรุณาระบุธนาคาร เลขบัตร วงเงิน ดอกเบี้ย และประเภทบัตร (เครดิต/เดบิต) ให้ครบก่อนใช้งาน",
     incompleteAccountCannotUse:
@@ -467,7 +469,8 @@ export const thDictionary = {
     },
     sessions: {
       title: "เซสชัน",
-      description: "ตรวจสอบและยกเลิกเซสชันที่กำลังใช้งานในบัญชีของคุณได้อย่างรวดเร็ว",
+      description:
+        "ตรวจสอบและยกเลิกเซสชันที่กำลังใช้งานในบัญชีของคุณได้อย่างรวดเร็ว",
       loading: "กำลังโหลดรายการเซสชัน…",
       error: "ไม่สามารถโหลดรายการเซสชันได้",
       empty: "ไม่มีเซสชันที่กำลังใช้งาน",
@@ -492,8 +495,7 @@ export const thDictionary = {
       edit: "แก้ไข",
       delete: "ลบ",
       deleteConfirmTitle: "ลบหมวดหมู่?",
-      deleteConfirmMessage:
-        "รายการที่ใช้หมวดหมู่นี้จะถูกเคลียร์หมวดหมู่ออก",
+      deleteConfirmMessage: "รายการที่ใช้หมวดหมู่นี้จะถูกเคลียร์หมวดหมู่ออก",
       loading: "กำลังโหลดหมวดหมู่…",
       error: "ไม่สามารถโหลดหมวดหมู่ได้",
       empty: "ไม่มีหมวดหมู่ที่สร้างเอง",
@@ -537,7 +539,8 @@ export const thDictionary = {
       createTemplate: "สร้างเทมเพลต",
       editTemplate: "แก้ไขเทมเพลต",
       deleteTemplate: "ลบเทมเพลต",
-      templateDeleteConfirm: "ลบเทมเพลตนี้หรือไม่? จะไม่กระทบงบเดือนที่สร้างไว้แล้ว",
+      templateDeleteConfirm:
+        "ลบเทมเพลตนี้หรือไม่? จะไม่กระทบงบเดือนที่สร้างไว้แล้ว",
       editCategoryBudget: "แก้ไขงบ",
       editTotalBudget: "แก้ไขงบรวม",
       deleteCategoryBudget: "ลบงบหมวดหมู่",
@@ -591,7 +594,8 @@ export const thDictionary = {
       button: "ดาวน์โหลด CSV",
       pending: "กำลังส่งออก…",
       failed: "ไม่สามารถส่งออกข้อมูลได้",
-      columns: "คอลัมน์: id, type, amount, category, note, occurredAt, createdAt",
+      columns:
+        "คอลัมน์: id, type, amount, category, note, occurredAt, createdAt",
     },
     import: {
       title: "นำเข้ารายการจาก CSV",
@@ -610,8 +614,7 @@ export const thDictionary = {
       errorSummary: "พบข้อผิดพลาด {count} รายการ",
       errorRow: "แถวที่ {row}: {message}",
       moreErrors: "และอีก {count} รายการ…",
-      note:
-        "ไฟล์ที่มีขนาดมากกว่า 2 MB หรือเกิน 10,000 แถวจะถูกปฏิเสธ การเปลี่ยนแปลงจะถูกใช้แบบทั้งก้อน — หากมีแถวใดแถวหนึ่งไม่ผ่านการตรวจสอบจะไม่มีการบันทึกข้อมูล",
+      note: "ไฟล์ที่มีขนาดมากกว่า 2 MB หรือเกิน 10,000 แถวจะถูกปฏิเสธ การเปลี่ยนแปลงจะถูกใช้แบบทั้งก้อน — หากมีแถวใดแถวหนึ่งไม่ผ่านการตรวจสอบจะไม่มีการบันทึกข้อมูล",
     },
   },
   home: {
@@ -631,7 +634,8 @@ export const thDictionary = {
     },
     hero: {
       headline: "รู้ว่าเงินไปไหน ทุกบัญชี ทุกบัตร",
-      subheadline: "บันทึกรายรับ-รายจ่าย โอนเงินระหว่างบัญชี และจัดการบัตรเครดิตแบบมีรอบบิล ครบในที่เดียว",
+      subheadline:
+        "บันทึกรายรับ-รายจ่าย โอนเงินระหว่างบัญชี และจัดการบัตรเครดิตแบบมีรอบบิล ครบในที่เดียว",
       primaryCta: "เริ่มใช้งาน",
       secondaryCta: "ดูฟีเจอร์ทั้งหมด",
       previewLabel: "ตัวอย่างหน้าแดชบอร์ด",
@@ -639,15 +643,18 @@ export const thDictionary = {
     coreValue: {
       structured: {
         title: "จัดการบัตรเครดิตได้จริง",
-        description: "มีรอบบิล วันครบกำหนด และแบ่งชำระจากบัญชีอื่นได้ ไม่ใช่แค่จดค่าใช้จ่าย",
+        description:
+          "มีรอบบิล วันครบกำหนด และแบ่งชำระจากบัญชีอื่นได้ ไม่ใช่แค่จดค่าใช้จ่าย",
       },
       multiAccount: {
         title: "ครบทุกบัญชีในที่เดียว",
-        description: "ไม่ว่าจะเป็นบัญชีธนาคาร กระเป๋าเงิน เงินสด หรือบัตรเครดิต ดูได้หมด",
+        description:
+          "ไม่ว่าจะเป็นบัญชีธนาคาร กระเป๋าเงิน เงินสด หรือบัตรเครดิต ดูได้หมด",
       },
       deterministic: {
         title: "ยอดถูกต้องเสมอ",
-        description: "คำนวณจากรายการจริงทุกครั้ง ไม่มีตัวเลขที่ต้องมานั่งเช็คซ้ำ",
+        description:
+          "คำนวณจากรายการจริงทุกครั้ง ไม่มีตัวเลขที่ต้องมานั่งเช็คซ้ำ",
       },
     },
     features: {
@@ -916,7 +923,8 @@ export const thDictionary = {
       creditCardPayment: "ชำระ {amount} จากบัญชี {fromAccount} วันที่ {date}",
       creditCardInterestApplied: "คิดดอกเบี้ย {amount} ถึงวันที่ {toDate}",
       transactionExport: "ส่งออก {rowCount} รายการ (มีตัวกรอง: {hasFilter})",
-      transactionImport: "นำเข้า: สร้าง {createdCount} อัปเดต {updatedCount} จาก {totalRows} แถว",
+      transactionImport:
+        "นำเข้า: สร้าง {createdCount} อัปเดต {updatedCount} จาก {totalRows} แถว",
       changeFieldType: "ประเภท",
       changeFieldAmount: "จำนวน",
       changeFieldCategory: "หมวดหมู่",
@@ -1240,11 +1248,12 @@ export const thDictionary = {
       notePlaceholder: "หมายเหตุเพิ่มเติม (ถ้ามี)",
       saveButton: "บันทึก",
       deleteButton: "ลบรายการนี้",
-      deleteConfirm: "ต้องการลบรายการ \"{name}\" ใช่ไหม? การดำเนินการนี้ไม่สามารถยกเลิกได้",
+      deleteConfirm:
+        'ต้องการลบรายการ "{name}" ใช่ไหม? การดำเนินการนี้ไม่สามารถยกเลิกได้',
     },
     confirmDialog: {
       title: "บันทึกการจ่าย",
-      description: "บันทึกว่าได้ชำระ \"{name}\" แล้ว",
+      description: 'บันทึกว่าได้ชำระ "{name}" แล้ว',
       amount: "จำนวนที่จ่ายจริง",
       date: "วันที่จ่าย",
       account: "ตัดจากบัญชี",
@@ -1304,7 +1313,8 @@ export const thDictionary = {
     income: "รายรับ",
     expense: "รายจ่าย",
     transfer: "โอน",
-    emptyMonth: "ยังไม่มีรายการในเดือนนี้ กด \"เพิ่มแถว\" ที่วันที่ต้องการเพื่อเริ่มต้น",
+    emptyMonth:
+      'ยังไม่มีรายการในเดือนนี้ กด "เพิ่มแถว" ที่วันที่ต้องการเพื่อเริ่มต้น',
     confirmDiscard: "คุณมีรายการที่ยังไม่ได้บันทึก ต้องการยกเลิกหรือไม่?",
     confirmDiscardTitle: "ยกเลิกการเปลี่ยนแปลง?",
     confirmDiscardConfirm: "ยกเลิก",
@@ -1327,9 +1337,11 @@ export const thDictionary = {
     types: {
       EVENT_SLIP_DONE: "อัปโหลดสลิปเสร็จสิ้น",
       EVENT_SLIP_DONE_body: "สร้าง {createdCount} รายการจากสลิป",
-      EVENT_SLIP_DONE_body_partial: "สร้างได้ {createdCount} จาก {totalCount} รายการ (บางรายการล้มเหลว)",
+      EVENT_SLIP_DONE_body_partial:
+        "สร้างได้ {createdCount} จาก {totalCount} รายการ (บางรายการล้มเหลว)",
       EVENT_IMPORT_DONE: "นำเข้า CSV เสร็จสิ้น",
-      EVENT_IMPORT_DONE_body: "สร้าง {createdCount} อัปเดต {updatedCount} ({totalRows} แถวทั้งหมด)",
+      EVENT_IMPORT_DONE_body:
+        "สร้าง {createdCount} อัปเดต {updatedCount} ({totalRows} แถวทั้งหมด)",
       EVENT_CARD_PAYMENT: "บันทึกการชำระบัตรเครดิตแล้ว",
       EVENT_CARD_PAYMENT_body: "ชำระ ฿{amount} ให้ {accountName}",
       ALERT_RECURRING_DUE: "รายการประจำครบกำหนด",
@@ -1337,7 +1349,8 @@ export const thDictionary = {
       ALERT_CARD_DUE: "บัตรเครดิตครบกำหนดชำระ",
       ALERT_CARD_DUE_body_today: "{accountName} ครบกำหนดชำระวันนี้",
       ALERT_CARD_DUE_body_overdue: "{accountName} เกินกำหนดชำระแล้ว",
-      ALERT_CARD_DUE_body: "{accountName} ครบกำหนดชำระในอีก {daysRemaining} วัน",
+      ALERT_CARD_DUE_body:
+        "{accountName} ครบกำหนดชำระในอีก {daysRemaining} วัน",
       ALERT_BUDGET: "งบประมาณเกินกำหนด",
       ALERT_BUDGET_body_over: "งบประมาณสำหรับ{label}เกินกำหนดแล้ว",
       ALERT_BUDGET_body_near: "งบประมาณสำหรับ{label}ใกล้เต็ม ({pct}%)",
@@ -1367,7 +1380,25 @@ export const thDictionary = {
       pageInfo: "หน้า {page} จาก {totalPages} (ทั้งหมด {total} รายการ)",
     },
   },
+  cookieConsent: {
+    bannerDescription:
+      "เว็บไซต์นี้ใช้คุกกี้เพื่อวิเคราะห์การใช้งานและปรับปรุงประสบการณ์ของคุณ คุกกี้ที่จำเป็นจะทำงานเสมอ",
+    acceptAll: "ยอมรับทั้งหมด",
+    managePreferences: "ตั้งค่าคุกกี้",
+    privacyPolicy: "นโยบายความเป็นส่วนตัว",
+    modal: {
+      title: "ตั้งค่าคุกกี้",
+      description: "เลือกประเภทคุกกี้ที่คุณยินยอมให้ใช้งาน",
+      necessary: "คุกกี้ที่จำเป็น",
+      necessaryDescription:
+        "ใช้สำหรับการทำงานหลักของเว็บไซต์ เช่น การเข้าสู่ระบบและความปลอดภัย ไม่สามารถปิดใช้งานได้",
+      analytics: "คุกกี้วิเคราะห์",
+      analyticsDescription:
+        "ช่วยให้เราเข้าใจการใช้งานเว็บไซต์ผ่าน Vercel Analytics เพื่อปรับปรุงประสบการณ์ผู้ใช้",
+      save: "บันทึกการตั้งค่า",
+      cancel: "ยกเลิก",
+    },
+  },
 };
 
 export type ThDictionary = typeof thDictionary;
-

@@ -43,7 +43,7 @@ export const enDictionary = {
       emailLabel: "Email",
       passwordLabel: "Password",
       submit: "Sign in",
-       pending: "Signing in…",
+      pending: "Signing in…",
       invalidCredentials: "Invalid email or password",
       genericError: "Something went wrong. Please try again.",
       or: "or",
@@ -76,11 +76,13 @@ export const enDictionary = {
     },
     forgotPassword: {
       title: "Forgot password",
-      subtitle: "Enter your email and we'll send you a link to reset your password.",
+      subtitle:
+        "Enter your email and we'll send you a link to reset your password.",
       emailLabel: "Email",
       submit: "Send reset link",
       pending: "Sending…",
-      success: "If an account exists with that email, you will receive a reset link shortly.",
+      success:
+        "If an account exists with that email, you will receive a reset link shortly.",
       backToSignIn: "Back to sign in",
     },
     resetPassword: {
@@ -92,7 +94,8 @@ export const enDictionary = {
       pending: "Resetting…",
       success: "Password reset. You can now sign in.",
       passwordsMismatch: "Passwords do not match.",
-      invalidOrExpiredToken: "This link is invalid or has expired. Please request a new one.",
+      invalidOrExpiredToken:
+        "This link is invalid or has expired. Please request a new one.",
       requestNewLink: "Request a new link",
       passwordTooLong: "Password must be at most 72 characters.",
       backToSignIn: "Back to sign in",
@@ -220,10 +223,12 @@ export const enDictionary = {
       clearAll: "Clear all",
       emptyState: "No pending slips. Choose images to start again.",
       restoreRecovered: "Restored your previous slip drafts.",
-      restoreInterrupted: "Previous processing was interrupted. Review the data and re-upload if needed.",
+      restoreInterrupted:
+        "Previous processing was interrupted. Review the data and re-upload if needed.",
       previewImage: "Preview",
       previewImageTitle: "Slip preview",
-      previewUnavailable: "This image file is no longer available. Please upload it again to preview it.",
+      previewUnavailable:
+        "This image file is no longer available. Please upload it again to preview it.",
       viewResponse: "View response details",
       responseTitle: "Response details",
       responseOcrTitle: "OCR response",
@@ -231,7 +236,8 @@ export const enDictionary = {
       responseStatus: "Status: {status}",
       responseNetworkError: "Network error",
       responseEmpty: "No response body available yet.",
-      parseWarning: "Could not read this slip automatically. Please fill in the details.",
+      parseWarning:
+        "Could not read this slip automatically. Please fill in the details.",
       errorNotConfigured: "Slip OCR is not configured.",
       errorRateLimit: "Too many OCR requests. Please try again later.",
       errorFileTooLarge: "One or more files are too large (max 1 MB).",
@@ -269,7 +275,8 @@ export const enDictionary = {
   accounts: {
     subtitle: "Manage your bank accounts, wallets, and cash.",
     loadFailed: "Failed to load accounts.",
-    empty: "No accounts yet. Create your first account to start logging transactions.",
+    empty:
+      "No accounts yet. Create your first account to start logging transactions.",
     newAccount: "New account",
     addAccountPlaceholder: "Add account",
     addAccountSubtext: "Connect bank or new account",
@@ -316,7 +323,8 @@ export const enDictionary = {
     lastChecked: "Last checked",
     markChecked: "Mark as checked",
     default: "Default",
-    needsAttention: "Needs attention — no recent transactions or not checked in a while.",
+    needsAttention:
+      "Needs attention — no recent transactions or not checked in a while.",
     bankNameLabel: "Bank",
     bankNamePlaceholder: "Select bank",
     bankSearchPlaceholder: "Type to search bank",
@@ -327,7 +335,8 @@ export const enDictionary = {
     accountNumberPlaceholder: "e.g. 123-4-56789-0",
     accountNumberModeFull: "Store full number (encrypted)",
     accountNumberModeLast4: "Store last 4 digits only",
-    accountNumberMin4Digits: "Please enter at least 4 digits for account number",
+    accountNumberMin4Digits:
+      "Please enter at least 4 digits for account number",
     accountNumberExact4Digits: "Please enter exactly 4 digits",
     cardNumberExact4Digits: "Please enter exactly 4 digits (last 4 of card)",
     accountNumberModeLabel: "Account number storage",
@@ -363,11 +372,13 @@ export const enDictionary = {
     delete: "Delete",
     deleteConfirmTitle: "Delete account?",
     deleteConfirmNoTransactions: "This account will be permanently deleted.",
-    deleteConfirmHasTransactions: "This account has transactions. It will be disabled.",
+    deleteConfirmHasTransactions:
+      "This account has transactions. It will be disabled.",
     cannotDeleteDefault: "Cannot delete the default account.",
     deletePending: "Deleting…",
     deleteSuccess: "Account deleted.",
-    deleteConfirmAccountNumber: "Enter the full account/card number to confirm deletion",
+    deleteConfirmAccountNumber:
+      "Enter the full account/card number to confirm deletion",
     deleteConfirmAccountNumberHint: " (ending in {masked})",
     deleteConfirmAccountNumberPlaceholder: "Enter account/card number",
     deleteConfirmRandomCode: "Enter the code {code} to confirm deletion",
@@ -411,7 +422,8 @@ export const enDictionary = {
     nameUpdated: "Name updated.",
     changePassword: "Change password",
     changePasswordDialogTitle: "Change password",
-    changePasswordDialogDescription: "Enter your current password and choose a new one.",
+    changePasswordDialogDescription:
+      "Enter your current password and choose a new one.",
     currentPassword: "Current password",
     newPassword: "New password",
     confirmPassword: "Confirm new password",
@@ -462,7 +474,8 @@ export const enDictionary = {
     },
     activityLog: {
       title: "Activity Log",
-      description: "View a complete audit trail of important actions in your account.",
+      description:
+        "View a complete audit trail of important actions in your account.",
       open: "Open Activity Log",
     },
     sessions: {
@@ -500,7 +513,8 @@ export const enDictionary = {
     },
     budget: {
       title: "Budget",
-      description: "Set monthly spending limits and track progress by category.",
+      description:
+        "Set monthly spending limits and track progress by category.",
       open: "Manage budget",
       month: "Month",
       year: "Year",
@@ -510,8 +524,7 @@ export const enDictionary = {
       nextYear: "Next year",
       viewingMonth: "Viewing {period}",
       coverageTitle: "Budget coverage",
-      coverageDescription:
-        "See which months already have budgets in {year}.",
+      coverageDescription: "See which months already have budgets in {year}.",
       coverageSummary: "{configured}/{total} months configured",
       coverageConfigured: "Configured",
       coverageNotConfigured: "Not set",
@@ -538,11 +551,13 @@ export const enDictionary = {
       createTemplate: "Create template",
       editTemplate: "Edit template",
       deleteTemplate: "Delete template",
-      templateDeleteConfirm: "Delete this template? It will not affect already-created monthly budgets.",
+      templateDeleteConfirm:
+        "Delete this template? It will not affect already-created monthly budgets.",
       editCategoryBudget: "Edit limit",
       editTotalBudget: "Edit total budget",
       deleteCategoryBudget: "Delete category budget",
-      deleteCategoryBudgetConfirm: "Remove this category budget for the selected month?",
+      deleteCategoryBudgetConfirm:
+        "Remove this category budget for the selected month?",
       addLimitRow: "Add category",
       applyTemplateSuccess: "Template applied.",
       saveSuccess: "Saved.",
@@ -553,7 +568,8 @@ export const enDictionary = {
       description: "Report bugs, request features, or send feedback.",
       open: "Open Help & Feedback",
       formTitle: "Submit a report",
-      formDescription: "Describe your issue or suggestion. We'll review it as soon as possible.",
+      formDescription:
+        "Describe your issue or suggestion. We'll review it as soon as possible.",
       categoryLabel: "Category",
       categoryPlaceholder: "Select category",
       categoryBug: "Bug",
@@ -578,7 +594,8 @@ export const enDictionary = {
   },
   dataTools: {
     title: "Data tools",
-    description: "Export or import your income and expense transactions as CSV.",
+    description:
+      "Export or import your income and expense transactions as CSV.",
     export: {
       title: "Export transactions",
       description:
@@ -592,7 +609,8 @@ export const enDictionary = {
       button: "Download CSV",
       pending: "Exporting…",
       failed: "Failed to export transactions",
-      columns: "Columns: id, type, amount, category, note, occurredAt, createdAt.",
+      columns:
+        "Columns: id, type, amount, category, note, occurredAt, createdAt.",
     },
     import: {
       title: "Import transactions from CSV",
@@ -611,16 +629,14 @@ export const enDictionary = {
       errorSummary: "{count} errors reported:",
       errorRow: "Row {row}: {message}",
       moreErrors: "And {count} more…",
-      note:
-        "Files larger than about 2 MB or more than 10,000 rows will be rejected. All changes are applied in a single operation—if any row fails validation, nothing is written.",
+      note: "Files larger than about 2 MB or more than 10,000 rows will be rejected. All changes are applied in a single operation—if any row fails validation, nothing is written.",
     },
   },
   home: {
     title: "Judtang",
     subtitle:
       "Track income & expenses, see all account balances, never lose track of your money.",
-    body:
-      "Sign in with email or Google and start tracking. View your history, change password, or manage sessions in one place.",
+    body: "Sign in with email or Google and start tracking. View your history, change password, or manage sessions in one place.",
     signInCta: "Sign in",
     dashboardCta: "Go to dashboard",
     nav: {
@@ -800,7 +816,8 @@ export const enDictionary = {
       statusPosted: "Posted",
       typeRequired: "Please select income, expense, or transfer",
       amountRequired: "Please enter an amount",
-      transferToAccountRequired: "Please select destination account for transfer",
+      transferToAccountRequired:
+        "Please select destination account for transfer",
       transferAccountsSame: "From and to accounts must be different",
       dateRequired: "Please select a date",
       saveFailed: "Failed to save transaction",
@@ -922,7 +939,8 @@ export const enDictionary = {
       creditCardPayment: "Paid {amount} from account {fromAccount} on {date}",
       creditCardInterestApplied: "Interest {amount} applied up to {toDate}",
       transactionExport: "Exported {rowCount} rows (filtered: {hasFilter})",
-      transactionImport: "Import: created {createdCount}, updated {updatedCount} from {totalRows} rows",
+      transactionImport:
+        "Import: created {createdCount}, updated {updatedCount} from {totalRows} rows",
       changeFieldType: "Type",
       changeFieldAmount: "Amount",
       changeFieldCategory: "Category",
@@ -984,7 +1002,8 @@ export const enDictionary = {
       },
       dataCollected: {
         title: "2. Information We Collect",
-        intro: "We collect only the information necessary to provide our service.",
+        intro:
+          "We collect only the information necessary to provide our service.",
         categories: [
           {
             heading: "Account Information",
@@ -1038,7 +1057,8 @@ export const enDictionary = {
       },
       dataUse: {
         title: "3. How We Use Information",
-        intro: "We use the collected information solely for the following purposes.",
+        intro:
+          "We use the collected information solely for the following purposes.",
         items: [
           "Manage user accounts and authentication",
           "Provide financial tracking and account management features",
@@ -1246,11 +1266,11 @@ export const enDictionary = {
       notePlaceholder: "Additional notes (optional)",
       saveButton: "Save",
       deleteButton: "Delete",
-      deleteConfirm: "Delete \"{name}\"? This action cannot be undone.",
+      deleteConfirm: 'Delete "{name}"? This action cannot be undone.',
     },
     confirmDialog: {
       title: "Record Payment",
-      description: "Record payment for \"{name}\"",
+      description: 'Record payment for "{name}"',
       amount: "Amount paid",
       date: "Payment date",
       account: "Deduct from account",
@@ -1310,7 +1330,8 @@ export const enDictionary = {
     income: "Income",
     expense: "Expense",
     transfer: "Transfer",
-    emptyMonth: "No entries for this month yet. Click \"Add row\" on any day to start.",
+    emptyMonth:
+      'No entries for this month yet. Click "Add row" on any day to start.',
     confirmDiscard: "You have unsaved entries. Discard changes?",
     confirmDiscardTitle: "Discard changes?",
     confirmDiscardConfirm: "Discard",
@@ -1332,10 +1353,13 @@ export const enDictionary = {
     groupEarlier: "Earlier",
     types: {
       EVENT_SLIP_DONE: "Slip upload complete",
-      EVENT_SLIP_DONE_body: "{createdCount} transaction(s) created from slip(s)",
-      EVENT_SLIP_DONE_body_partial: "{createdCount} of {totalCount} slip(s) created (some failed)",
+      EVENT_SLIP_DONE_body:
+        "{createdCount} transaction(s) created from slip(s)",
+      EVENT_SLIP_DONE_body_partial:
+        "{createdCount} of {totalCount} slip(s) created (some failed)",
       EVENT_IMPORT_DONE: "CSV import complete",
-      EVENT_IMPORT_DONE_body: "Created {createdCount}, updated {updatedCount} ({totalRows} rows total)",
+      EVENT_IMPORT_DONE_body:
+        "Created {createdCount}, updated {updatedCount} ({totalRows} rows total)",
       EVENT_CARD_PAYMENT: "Credit card payment recorded",
       EVENT_CARD_PAYMENT_body: "Paid ฿{amount} to {accountName}",
       ALERT_RECURRING_DUE: "Recurring items due",
@@ -1343,13 +1367,15 @@ export const enDictionary = {
       ALERT_CARD_DUE: "Credit card payment due",
       ALERT_CARD_DUE_body_today: "{accountName} payment due today",
       ALERT_CARD_DUE_body_overdue: "{accountName} payment overdue",
-      ALERT_CARD_DUE_body: "{accountName} payment due in {daysRemaining} day(s)",
+      ALERT_CARD_DUE_body:
+        "{accountName} payment due in {daysRemaining} day(s)",
       ALERT_BUDGET: "Budget over limit",
       ALERT_BUDGET_body_over: "Budget exceeded for {label}",
       ALERT_BUDGET_body_near: "Budget nearly full for {label} ({pct}%)",
       ALERT_BUDGET_label_total: "this month",
       ALERT_INCOMPLETE_ACCOUNT: "Account incomplete",
-      ALERT_INCOMPLETE_ACCOUNT_body: "{accountName} has missing required information",
+      ALERT_INCOMPLETE_ACCOUNT_body:
+        "{accountName} has missing required information",
     },
   },
   admin: {
@@ -1373,7 +1399,25 @@ export const enDictionary = {
       pageInfo: "Page {page} of {totalPages} ({total} total)",
     },
   },
+  cookieConsent: {
+    bannerDescription:
+      "This site uses cookies to analyze usage and improve your experience. Essential cookies are always active.",
+    acceptAll: "Accept All",
+    managePreferences: "Manage Preferences",
+    privacyPolicy: "Privacy Policy",
+    modal: {
+      title: "Cookie Preferences",
+      description: "Choose which cookies you allow us to use.",
+      necessary: "Necessary Cookies",
+      necessaryDescription:
+        "Required for core site functionality such as authentication and security. Cannot be disabled.",
+      analytics: "Analytics Cookies",
+      analyticsDescription:
+        "Help us understand how the site is used via Vercel Analytics to improve your experience.",
+      save: "Save Preferences",
+      cancel: "Cancel",
+    },
+  },
 };
 
 export type EnDictionary = typeof enDictionary;
-
