@@ -428,7 +428,7 @@ export function NotificationsPopover() {
           className={cn(
             "px-3 py-1 rounded-full text-sm font-medium transition-colors",
             tab === "all"
-              ? "bg-gray-200"
+              ? "bg-gray-200 dark:text-primary-foreground"
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
           )}
         >
@@ -440,7 +440,7 @@ export function NotificationsPopover() {
           className={cn(
             "flex gap-2 px-2 py-1 rounded-full text-sm font-medium transition-colors",
             tab === "unread"
-              ? "bg-gray-200"
+              ? "bg-gray-200 dark:text-primary-foreground"
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
           )}
         >
