@@ -318,11 +318,15 @@ export default function SummaryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {summaryLoading || expenseRatio === null ? (
+            {summaryLoading ? (
               <Skeleton className="h-7 w-16" />
-            ) : (
+            ) : expenseRatio !== null ? (
               <p className="text-xl font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
                 {expenseRatio}%
+              </p>
+            ) : (
+              <p className="text-xl font-semibold text-muted-foreground">
+                N/A
               </p>
             )}
           </CardContent>
