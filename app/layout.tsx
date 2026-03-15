@@ -8,6 +8,7 @@ import { I18nProvider } from "@/components/providers/i18n-provider";
 import { ConsentProvider } from "@/components/providers/consent-provider";
 import { CookieConsentBanner } from "@/components/common/cookie-consent-banner";
 import { ConditionalAnalytics } from "@/components/common/conditional-analytics";
+import { AnnouncementDialog } from "@/components/dashboard/announcement-dialog";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_LOCALES,
@@ -85,6 +86,7 @@ export default async function RootLayout({
               <Toaster />
             </ThemeProvider>
             <CookieConsentBanner />
+            <AnnouncementDialog />
           </I18nProvider>
           <ConditionalAnalytics />
         </ConsentProvider>

@@ -2,6 +2,19 @@
 
 ---
 
+# v0.9.20 - 2026-03-15
+
+## Added
+
+- **Announcement popup on home page** — An optional modal appears on the public home page (`/`) when `NEXT_PUBLIC_ANNOUNCEMENT_ENABLED=true`. Content is driven by `data/announcement.json` (image, title, content, optional CTA link). Date range (`start_at` / `end_at`) controls visibility. Dismissible with optional "Don't show again today" checkbox (stored in localStorage by date); or permanent dismiss when `show_once: true`.
+- **Localized announcement content** — `title`, `content`, `image_alt`, and `action_label` in the config support both Thai and English via `{ th, en }` objects; the UI resolves the value from the current app language.
+
+## Changed
+
+- **Announcement placement** — Popup shows on the home page (`/`) only, not the dashboard. Mounted in root layout.
+
+---
+
 # v0.9.19 - 2026-03-15
 
 ## Added

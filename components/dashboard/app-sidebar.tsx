@@ -216,7 +216,7 @@ export function AppSidebarLayout({
                   <span className="sr-only">{t("dashboard.sidebar.navigation")}</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[min(90vw,24rem)] gap-4 p-4 rounded-2xl bg-transparent border-none shadow-none" showCloseButton={false}>
+              <DialogContent className="max-w-[min(90vw,24rem)] gap-4 p-4 rounded-2xl bg-transparent dark:bg-transparent border-none shadow-none" showCloseButton={false}>
                 <DialogHeader>
                   <DialogTitle className="text-white">
                     {/* {t("dashboard.sidebar.navigation")} */}
@@ -239,7 +239,7 @@ export function AppSidebarLayout({
                             "w-full flex h-auto py-4 gap-2 justify-start rounded-xl transition-colors",
                             isActive
                               ? "bg-amber-200 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100"
-                              : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/50"
+                              : "bg-white/90 dark:bg-stone-800/90 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700/90"
                           )}
                         >
                           <Link href={item.href}>
@@ -261,7 +261,7 @@ export function AppSidebarLayout({
                           "w-full flex flex-col h-auto py-4 gap-2 rounded-xl transition-colors",
                           pathname?.startsWith("/admin")
                             ? "bg-amber-200 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100"
-                            : "text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800/50"
+                            : "bg-white/90 dark:bg-stone-800/90 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700/90"
                         )}
                       >
                         <Link href="/admin/reports">

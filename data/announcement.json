@@ -1,0 +1,25 @@
+{
+  "id": "promo-2026-03",
+  "title": {
+    "th": "โปรโมชั่นใหม่",
+    "en": "New Promotion"
+  },
+  "content": {
+    "th": "ข้อความตัวอย่างที่แสดงใน overlay ด้านล่าง",
+    "en": "Optional text shown in dim overlay at bottom."
+  },
+  "image": "/announcements/promo.png",
+  "image_alt": {
+    "th": "แบนเนอร์โปรโมชั่น",
+    "en": "Promotion banner"
+  },
+  "start_at": "2026-03-01",
+  "end_at": "2026-03-31",
+  "show_once": false,
+  "dismissible": true,
+  "action_url": "",
+  "action_label": {
+    "th": "ดูรายละเอียด",
+    "en": "Learn more"
+  }
+}

@@ -5,6 +5,27 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 15/03/2026 (Announcement Popup — docs and changelogs)
+
+- docs/feature/announcement-popup.md — New feature doc: overview, behaviour (home page only, date range, dismiss and "don't show again today"), config schema (incl. localized title/content/image_alt/action_label), API, implementation refs, assets.
+- docs/INDEX.md — Added reference to feature/announcement-popup.md.
+- CHANGELOG.md — Added v0.9.20: Announcement popup on home page.
+- CHANGELOG.th.md — Added v0.9.20 (Thai).
+- docs/PRD_CHANGE_LOG.md — Changelog entry for this edit.
+
+---
+
+## 15/03/2026 (Announcement Popup — implementation)
+
+- data/announcement.json — New JSON config (id, title, content, image, image_alt, start_at, end_at, show_once, dismissible, action_url, action_label); later extended with localized { th, en } for title, content, image_alt, action_label.
+- lib/announcement.ts — Announcement type, LocalizedString, resolveLocalized().
+- app/api/announcement/route.ts — GET reads data/announcement.json and validates date range.
+- components/dashboard/announcement-dialog.tsx — Client component: shows on home page (/), env guard, image + bottom overlay, optional "don't show again today" checkbox (when show_once false), localized content.
+- app/layout.tsx — Mount AnnouncementDialog (moved from dashboard layout so it appears on /).
+- .env.example — NEXT_PUBLIC_ANNOUNCEMENT_ENABLED.
+
+---
+
 ## 15/03/2026 (Cookie consent flow)
 
 - docs/feature/privacy-policy.md — Added §9 Cookie Consent (Implemented): components (ConsentProvider, CookieConsentBanner, ConditionalAnalytics, lib/consent), flow, i18n; added Vercel Analytics/Speed Insights to Third-Party Services table; removed "Consent management / cookie banner" from Out of Scope.
