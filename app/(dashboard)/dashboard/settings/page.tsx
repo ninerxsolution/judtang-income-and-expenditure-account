@@ -173,7 +173,7 @@ export default function SettingsPage() {
           </p>
         </header>
 
-        {/* Project information */}
+        {/* About */}
         <section
           id="information"
           className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"

@@ -442,7 +442,7 @@ export const enDictionary = {
     description: "Manage your activity log, data tools, and active sessions.",
     contents: "Contents",
     information: {
-      title: "Project information",
+      title: "About",
       description: "Application details and version",
       appName: "App name",
       version: "Version",
