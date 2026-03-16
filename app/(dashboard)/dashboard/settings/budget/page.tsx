@@ -34,6 +34,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useI18n } from "@/hooks/use-i18n";
 import { formatAmount } from "@/lib/format";
 import { formatYearForDisplay } from "@/lib/format-year";
@@ -678,30 +685,44 @@ export default function BudgetSettingsPage() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <select
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-            className="h-8 min-w-24 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
-            aria-label={t("settings.budget.month")}
+          <Select
+            value={String(month)}
+            onValueChange={(v) => setMonth(parseInt(v, 10))}
           >
-            {MONTHS.map((m) => (
-              <option key={m} value={m}>
-                {t(`summary.months.${m - 1}`)}
-              </option>
-            ))}
-          </select>
-          <select
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
-            className="h-8 min-w-18 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-[#3D3020] dark:text-stone-100"
-            aria-label={t("settings.budget.year")}
+            <SelectTrigger
+              size="sm"
+              className="h-8 min-w-24 border-0 bg-transparent px-2 shadow-none hover:bg-[#F5F0E8] dark:hover:bg-stone-800 focus:ring-0"
+              aria-label={t("settings.budget.month")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTHS.map((m) => (
+                <SelectItem key={m} value={String(m)}>
+                  {t(`summary.months.${m - 1}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={String(year)}
+            onValueChange={(v) => setYear(parseInt(v, 10))}
           >
-            {[year - 2, year - 1, year, year + 1, year + 2].map((y) => (
-              <option key={y} value={y}>
-                {formatYearForDisplay(y, language)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              size="sm"
+              className="h-8 min-w-18 border-0 bg-transparent px-2 shadow-none hover:bg-[#F5F0E8] dark:hover:bg-stone-800 focus:ring-0"
+              aria-label={t("settings.budget.year")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[year - 2, year - 1, year, year + 1, year + 2].map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {formatYearForDisplay(y, language)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="ghost"
             size="icon"
@@ -840,7 +861,7 @@ export default function BudgetSettingsPage() {
           {loadingBudget ? (
             <div className="mt-4 space-y-4">
               <Skeleton className="h-3 w-full rounded-full" />
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                 <Skeleton className="h-20 rounded-lg" />
                 <Skeleton className="h-20 rounded-lg" />
                 <Skeleton className="h-20 rounded-lg" />
@@ -871,24 +892,30 @@ export default function BudgetSettingsPage() {
                   </div>
 
                   {/* Stats grid */}
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 min-w-0">
+                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 min-w-0 overflow-hidden dark:border-stone-700/50 dark:bg-stone-900/40">
                       <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
                         {t("settings.budget.totalSpent")}
                       </p>
-                      <p className="mt-1 text-lg font-semibold text-[#3D3020] dark:text-stone-100">
+                      <p
+                        className="mt-1 truncate text-lg font-semibold text-[#3D3020] dark:text-stone-100"
+                        title={`฿${formatAmount(totalSpent)}`}
+                      >
                         ฿{formatAmount(totalSpent)}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
+                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 min-w-0 overflow-hidden dark:border-stone-700/50 dark:bg-stone-900/40">
                       <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
                         {t("settings.budget.remaining")}
                       </p>
                       <p
-                        className={`mt-1 text-lg font-semibold ${budget?.totalIndicator === "over"
+                        className={`mt-1 truncate text-lg font-semibold ${budget?.totalIndicator === "over"
                           ? "text-red-600 dark:text-red-400"
                           : "text-[#3D3020] dark:text-stone-100"
                           }`}
+                        title={`฿${formatAmount(
+                          (budget?.totalBudget ?? 0) - (budget?.totalSpent ?? 0),
+                        )}`}
                       >
                         ฿
                         {formatAmount(
@@ -896,11 +923,11 @@ export default function BudgetSettingsPage() {
                         )}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
+                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 min-w-0 overflow-hidden dark:border-stone-700/50 dark:bg-stone-900/40">
                       <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
                         {t("settings.budget.progress")}
                       </p>
-                      <div className="mt-1 flex items-center gap-2">
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
                         <span className="text-lg font-semibold text-[#3D3020] dark:text-stone-100">
                           {Math.round(
                             (budget?.totalProgress ?? 0) * 100,
