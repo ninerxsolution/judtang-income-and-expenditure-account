@@ -6,6 +6,14 @@ This index maps the PRD to split documents for maintainability, future expansion
 
 ---
 
+## Meta / Reference
+
+| Document | Responsibility |
+|----------|----------------|
+| [REUSABILITY_ANALYSIS.md](./REUSABILITY_ANALYSIS.md) | Analysis of features, rules, and structure that can be extracted for other systems or project scaffolding |
+
+---
+
 ## structure/
 
 Architectural and technical conventions.
