@@ -1,7 +1,13 @@
- "use client";
+"use client";
 
-import { ArrowDownCircle, ArrowUpCircle, ImagePlus } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ImagePlus, MoreHorizontal } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -25,7 +31,7 @@ export function CalendarQuickActions({
       >
         <ArrowDownCircle className="h-4.5 w-4.5" />
         <span className="hidden sm:block">
-        {t("transactions.common.income")}
+          {t("transactions.common.income")}
         </span>
       </button>
       <button
@@ -35,30 +41,26 @@ export function CalendarQuickActions({
       >
         <ArrowUpCircle className="h-4.5 w-4.5" />
         <span className="hidden sm:block">
-        {t("transactions.common.expense")}
+          {t("transactions.common.expense")}
         </span>
       </button>
-      <button
-        type="button"
-        onClick={onSlipUpload}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-600/80 bg-blue-600/80 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-transparent dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
-        aria-label={t("dashboard.slipUpload.title")}
-      >
-        <ImagePlus className="h-4.5 w-4.5" />
-        <span className="hidden sm:block">
-          {t("dashboard.slipUpload.title")}
-        </span>
-      </button>
-      {/* <button
-        type="button"
-        onClick={() => onQuickAdd("TRANSFER")}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-blue-600/80 bg-blue-600/80 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/50"
-      >
-        <ArrowLeftRight className="h-4.5 w-4.5" />
-        <span className="hidden sm:block">
-        {t("transactions.common.transfer")}
-        </span>
-      </button> */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+            aria-label={t("notifications.moreOptions")}
+          >
+            <MoreHorizontal className="h-4.5 w-4.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onSlipUpload}>
+            <ImagePlus className="h-4 w-4" />
+            {t("dashboard.slipUpload.title")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
