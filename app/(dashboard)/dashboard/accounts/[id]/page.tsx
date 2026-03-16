@@ -624,12 +624,12 @@ export default function AccountDetailPage() {
         </p>
         <p
           className={`text-3xl font-extrabold tabular-nums tracking-tight ${
-            account.type === "CREDIT_CARD"
+            account.type === "CREDIT_CARD" || (account.balance ?? 0) < 0
               ? "text-red-700 dark:text-red-300"
               : "text-emerald-600 dark:text-emerald-400"
           }`}
         >
-          {formatAmount(
+          ฿{formatAmount(
             account.type === "CREDIT_CARD"
               ? (account.currentOutstanding ?? Math.abs(account.balance))
               : account.balance
