@@ -207,16 +207,14 @@ export default function SessionsPage() {
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {t(
                     "settings.sessions.lastActivePrefix",
-                    formatRelative(s.lastActiveAt).key === "justNow"
-                      ? undefined
-                      : {
-                          relative: t(
-                            `common.time.${formatRelative(s.lastActiveAt).key}`,
-                            formatRelative(s.lastActiveAt).count
-                              ? { count: formatRelative(s.lastActiveAt).count! }
-                              : undefined,
-                          ),
-                        },
+                    {
+                      relative: t(
+                        `common.time.${formatRelative(s.lastActiveAt).key}`,
+                        formatRelative(s.lastActiveAt).count
+                          ? { count: formatRelative(s.lastActiveAt).count! }
+                          : undefined,
+                      ),
+                    },
                   )}{" "}
                   ·{" "}
                   {t(
