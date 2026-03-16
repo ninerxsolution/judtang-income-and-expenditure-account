@@ -6,10 +6,11 @@
  */
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, ChevronRight, List, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, MoreHorizontal, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
+import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { RecurringDueWidget } from "@/components/dashboard/recurring-due-widget";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function DashboardPage() {
   const { t } = useI18n();
@@ -30,7 +32,8 @@ export default function DashboardPage() {
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
 
   const [formOpen, setFormOpen] = useState(false);
-  const [formInitialType, _setFormInitialType] = useState<"INCOME" | "EXPENSE" | "TRANSFER">("EXPENSE");
+  const [formInitialType, setFormInitialType] = useState<"INCOME" | "EXPENSE" | "TRANSFER">("EXPENSE");
+  const { openSlipUpload } = useSlipUpload();
   const [budgetOverview, setBudgetOverview] = useState<{
     totalSpent: number;
     totalBudget: number | null;
@@ -92,15 +95,173 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="relative">
                   <p
-                    className={`text-3xl sm:text-4xl font-bold tabular-nums ${balance >= 0 ? "text-white" : "text-red-200"
+                    className={`text-3xl sm:text-4xl font-bold tabular-nums ${balance >= 0 ? "text-white" : "text-red-300"
                       }`}
                   >
-                    ฿ {summary ? formatAmount(balance) : "0.00"}
+                    ฿{summary ? formatAmount(balance) : "0.00"}
                   </p>
                 </CardContent>
               </Card>
             </>
           )}
+
+          {/* quick actions INCOME & EXPENSE & SLIP UPLOAD */}
+          <div className="hidden md:flex xl:hidden gap-2 h-12">
+            <button
+              type="button"
+              onClick={() => {
+                setFormInitialType("INCOME");
+                setFormOpen(true);
+              }}
+              className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-600/80 bg-emerald-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+            >
+              <ArrowDownCircle className="h-4 w-4 shrink-0" />
+              <span>{t("transactions.common.income")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFormInitialType("EXPENSE");
+                setFormOpen(true);
+              }}
+              className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-red-600/80 bg-red-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+            >
+              <ArrowUpCircle className="h-4 w-4 shrink-0" />
+              <span>{t("transactions.common.expense")}</span>
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+                  aria-label={t("notifications.moreOptions")}
+                >
+                  <MoreHorizontal className="h-4.5 w-4.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: refresh })}>
+                  <ImagePlus className="h-4 w-4" />
+                  {t("dashboard.slipUpload.title")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="gap-3">
+            {/* <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-300">
+              {t("dashboard.summary.title")}
+            </h2> */}
+            {summaryLoading ? (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Income card skeleton */}
+                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
+                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
+                      <ArrowDownCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                    </div>
+                    <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                      {t("dashboard.summary.income")} {t("dashboard.summary.title")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-7 w-24" />
+                  </CardContent>
+                </Card>
+
+                {/* Expense card skeleton */}
+                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
+                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
+                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
+                    </div>
+                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
+                      {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-7 w-24" />
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Income card - light green */}
+                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
+                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
+                      <ArrowDownCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+                    </div>
+                    <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                      {t("dashboard.summary.income")} {t("dashboard.summary.title")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
+                      ฿{summary ? formatAmount(summary.income) : "0.00"}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Expense card - light brown/pink */}
+                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
+                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
+                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
+                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
+                    </div>
+                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
+                      {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xl font-semibold tabular-nums text-red-800 dark:text-red-200">
+                      ฿{summary ? formatAmount(summary.expense) : "0.00"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* quick actions INCOME & EXPENSE & SLIP UPLOAD */}
+            {/* <div className="flex flex-col flex-wrap gap-2 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormInitialType("INCOME");
+                  setFormOpen(true);
+                }}
+                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-600/80 bg-emerald-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+              >
+                <ArrowDownCircle className="h-4 w-4 shrink-0" />
+                <span>{t("transactions.common.income")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormInitialType("EXPENSE");
+                  setFormOpen(true);
+                }}
+                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-red-600/80 bg-red-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+              >
+                <ArrowUpCircle className="h-4 w-4 shrink-0" />
+                <span>{t("transactions.common.expense")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openSlipUpload({ onSuccess: refresh })}
+                aria-label={t("dashboard.slipUpload.title")}
+                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-blue-600/80 bg-blue-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-transparent dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+              >
+                <ImagePlus className="h-4 w-4 shrink-0" />
+                <span>{t("dashboard.slipUpload.title")}</span>
+              </button>
+            </div> */}
+
+          </div>
 
           <div className="mt-4">
             <RecurringDueWidget />
@@ -186,59 +347,54 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Recent account activity */}
-          {/* <div className="space-y-2">
-            <p className="text-sm font-medium text-[#5C6B52] dark:text-stone-300">
-              {t("dashboard.summary.recentAccountActivity")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {summaryLoading ? (
-                <>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="h-12 w-28 rounded-lg" />
-                  ))}
-                </>
-              ) : accountItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">
-                  {t("dashboard.summary.recentAccountActivityEmpty")}
-                </p>
-              ) : (
-                accountItems.map(({ account, txType }, i) => (
-                  <Link
-                    key={`${account.id}-${i}`}
-                    href={`/dashboard/accounts/${account.id}`}
-                    className="flex items-center gap-2 rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-200 dark:hover:bg-stone-800"
-                  >
-                    <AccountIcon account={account} size="sm" />
-                    <div className="flex flex-col items-start min-w-0">
-                      <span className="truncate max-w-full">{account.name}</span>
-                      <div className="flex items-center gap-1.5 text-xs">
-                        {account.accountNumberMasked && (
-                          <>
-                            <span className="text-muted-foreground">{account.accountNumberMasked}</span>
-                            <span aria-hidden className="text-muted-foreground">·</span>
-                          </>
-                        )}
-                        <span
-                          className={
-                            txType === "INCOME"
-                              ? "font-medium text-emerald-600 dark:text-emerald-400"
-                              : txType === "EXPENSE"
-                                ? "font-medium text-red-600 dark:text-red-400"
-                                : "font-medium text-amber-600 dark:text-amber-400"
-                          }
-                        >
-                          {txType === "INCOME" && t("transactions.common.income")}
-                          {txType === "EXPENSE" && t("transactions.common.expense")}
-                          {txType === "TRANSFER" && t("transactions.common.transfer")}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div> */}
+        </div>
+
+        {/* Right column: Transactions Calendar */}
+        <div className="space-y-6">
+          {/* quick actions INCOME & EXPENSE & SLIP UPLOAD */}
+          <div className="hidden xl:flex flex-col sm:flex-row gap-2 h-12">
+            <button
+              type="button"
+              onClick={() => {
+                setFormInitialType("INCOME");
+                setFormOpen(true);
+              }}
+              className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-600/80 bg-emerald-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+            >
+              <ArrowDownCircle className="h-4 w-4 shrink-0" />
+              <span>{t("transactions.common.income")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFormInitialType("EXPENSE");
+                setFormOpen(true);
+              }}
+              className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-red-600/80 bg-red-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+            >
+              <ArrowUpCircle className="h-4 w-4 shrink-0" />
+              <span>{t("transactions.common.expense")}</span>
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+                  aria-label={t("notifications.moreOptions")}
+                >
+                  <MoreHorizontal className="h-4.5 w-4.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: refresh })}>
+                  <ImagePlus className="h-4 w-4" />
+                  {t("dashboard.slipUpload.title")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <TransactionsCalendar showNewTransactionButton={false} showQuickActions={false} />
 
           {summaryLoading ? (
             <div className="rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900/80">
@@ -273,89 +429,6 @@ export default function DashboardPage() {
           ) : (
             <TransactionsList initialData={recentTransactions} />
           )}
-        </div>
-
-        {/* Right column: Income + Expense + Transactions list */}
-        <div className="space-y-6">
-          <div>
-            {/* <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-300">
-              {t("dashboard.summary.title")}
-            </h2> */}
-            {summaryLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {/* Income card skeleton */}
-                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
-                      <ArrowDownCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                      {t("dashboard.summary.income")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-7 w-24" />
-                  </CardContent>
-                </Card>
-
-                {/* Expense card skeleton */}
-                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
-                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
-                      {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-7 w-24" />
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {/* Income card - light green */}
-                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
-                      <ArrowDownCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                      {t("dashboard.summary.income")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
-                      {summary ? formatAmount(summary.income) : "0.00"}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Expense card - light brown/pink */}
-                <Card className="relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
-                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
-                      {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xl font-semibold tabular-nums text-red-800 dark:text-red-200">
-                      {summary ? formatAmount(summary.expense) : "0.00"}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-          <TransactionsCalendar showNewTransactionButton={false} showQuickActions={true} />
         </div>
       </div>
 

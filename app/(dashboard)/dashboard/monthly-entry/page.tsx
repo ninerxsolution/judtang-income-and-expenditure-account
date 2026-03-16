@@ -29,6 +29,13 @@ import {
   type AccountOption,
 } from "@/components/dashboard/account-combobox";
 import { RowSelect } from "@/components/dashboard/row-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -621,30 +628,44 @@ export default function MonthlyEntryPage() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <select
-            className="h-8 min-w-24 appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-foreground"
-            aria-label={t("monthlyEntry.selectMonth")}
-            value={month}
-            onChange={(e) => setMonth(parseInt(e.target.value, 10))}
+          <Select
+            value={String(month)}
+            onValueChange={(v) => setMonth(parseInt(v, 10))}
           >
-            {monthOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <select
-            className="h-8 min-w-[4.5rem] appearance-none bg-transparent px-2 text-sm font-medium outline-none cursor-pointer text-foreground"
-            aria-label={t("monthlyEntry.selectYear")}
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+            <SelectTrigger
+              size="sm"
+              className="h-8 min-w-24 border-0 bg-transparent px-2 shadow-none hover:bg-[#F5F0E8] dark:hover:bg-stone-800 focus:ring-0"
+              aria-label={t("monthlyEntry.selectMonth")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((opt) => (
+                <SelectItem key={opt.value} value={String(opt.value)}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={String(year)}
+            onValueChange={(v) => setYear(parseInt(v, 10))}
           >
-            {yearRange.map((y) => (
-              <option key={y} value={y}>
-                {formatYearForDisplay(y, language)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              size="sm"
+              className="h-8 min-w-18 border-0 bg-transparent px-2 shadow-none hover:bg-[#F5F0E8] dark:hover:bg-stone-800 focus:ring-0"
+              aria-label={t("monthlyEntry.selectYear")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {yearRange.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {formatYearForDisplay(y, language)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="ghost"
             size="icon"
@@ -689,7 +710,7 @@ export default function MonthlyEntryPage() {
             <div
               key={day}
               id={`day-${day}`}
-              className="group scroll-mt-6"
+              className="group scroll-mt-16"
             >
               {/* Day header */}
               <div className="flex items-center justify-between gap-2 py-1">

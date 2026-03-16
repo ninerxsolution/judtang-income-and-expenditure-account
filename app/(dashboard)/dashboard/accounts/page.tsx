@@ -748,7 +748,7 @@ export default function AccountsPage() {
                   {acc.type === "CREDIT_CARD" ? (
                     <>
                       <p className="text-2xl font-bold tabular-nums text-red-700 dark:text-red-300">
-                        {formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
+                        ฿{formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
                       </p>
                       <p className="mt-1 text-xs text-[#A09080] dark:text-stone-400">
                         {t("accounts.currentOutstanding")}
@@ -846,8 +846,14 @@ export default function AccountsPage() {
                     </>
                   ) : (
                     <>
-                      <p className="text-2xl font-bold tabular-nums">
-                        {formatAmount(acc.balance)}
+                      <p
+                        className={`text-2xl font-bold tabular-nums ${
+                          acc.balance < 0
+                            ? "text-red-600 dark:text-red-400"
+                            : ""
+                        }`}
+                      >
+                        ฿{formatAmount(acc.balance)}
                       </p>
                       <CardDescription className="mt-1 text-xs">
                         {t("accounts.lastTransaction")}:{" "}

@@ -301,9 +301,9 @@ function RecurringCard({
 
   return (
     <div
-      className={`rounded-xl border p-4 flex flex-col gap-3 transition-opacity sm:flex-row sm:items-center sm:gap-4 ${
+      className={`rounded-xl border p-4 flex flex-col gap-3 transition-opacity sm:flex-row sm:items-center sm:gap-4 bg-card ${
         showActive && !item.isActive ? "opacity-50" : ""
-      } ${item.isPaid ? "border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/10" : "border-border bg-card"}`}
+      } ${item.isPaid ? "border-emerald-500 dark:border-emerald-900 dark:bg-emerald-950/10" : "border-border bg-card"}`}
     >
       <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
         {/* Paid indicator */}
