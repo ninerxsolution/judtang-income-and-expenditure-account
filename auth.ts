@@ -11,6 +11,7 @@ import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import { resolveUserStatus, finalizeDeletion } from "@/lib/user-status";
 import {
   verifyTurnstileToken,
   shouldSkipTurnstileVerification,
@@ -52,6 +53,16 @@ export const authOptions: AuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: String(credentials.email) },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            image: true,
+            role: true,
+            password: true,
+            status: true,
+            deleteAfter: true,
+          },
         });
         if (!user?.password) return null;
         const ok = await bcrypt.compare(
@@ -59,6 +70,12 @@ export const authOptions: AuthOptions = {
           user.password
         );
         if (!ok) return null;
+        const status = resolveUserStatus(user);
+        if (status === "DELETED") {
+          await finalizeDeletion(user.id);
+          return null;
+        }
+        if (status === "SUSPENDED") return null;
         return {
           id: user.id,
           email: user.email ?? undefined,
@@ -78,6 +95,18 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && user?.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { id: true, status: true, deleteAfter: true },
+        });
+        if (dbUser) {
+          const status = resolveUserStatus(dbUser);
+          if (status === "DELETED") {
+            await finalizeDeletion(dbUser.id);
+            return false;
+          }
+          if (status === "SUSPENDED") return false;
+        }
         await prisma.user.update({
           where: { email: user.email },
           data: { emailVerified: new Date() },
@@ -144,8 +173,22 @@ export const authOptions: AuthOptions = {
         }
         const dbUser = await prisma.user.findUnique({
           where: { id: row.userId },
-          select: { role: true },
+          select: { role: true, status: true, deleteAfter: true },
         });
+        if (dbUser) {
+          const status = resolveUserStatus(dbUser);
+          if (status === "SUSPENDED" || status === "DELETED") {
+            await prisma.userSession.update({
+              where: { sessionId: t.sessionId },
+              data: { revokedAt: new Date() },
+            });
+            delete t.sub;
+            delete t.id;
+            delete t.sessionId;
+            delete t.role;
+            return t as typeof token;
+          }
+        }
         t.role = dbUser?.role ?? "USER";
       }
       return token as typeof token;

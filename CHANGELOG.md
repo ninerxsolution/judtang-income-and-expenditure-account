@@ -2,6 +2,23 @@
 
 ---
 
+# v0.9.22 - 2026-03-16
+
+## Added
+
+- **Account deactivation** — Users can deactivate their account from Settings → Privacy. A grace period (default 30 days, configurable via `ACCOUNT_GRACE_PERIOD_DAYS`) is provided before permanent deletion. During the grace period, all sessions are revoked and login is disabled.
+- **Account restore** — Deactivated accounts can be restored during the grace period via `/restore-account` (email + password). After successful restore, users can sign in again.
+- **Email reuse after deletion** — Once the grace period expires, the original email becomes available for new registrations. Deleted accounts are soft-deleted (email mutated to `deleted_<userId>_<email>`) for analytics and audit retention.
+- **Activity Log actions** — New actions: `ACCOUNT_DEACTIVATE`, `ACCOUNT_RESTORE`, `ACCOUNT_DELETED` for audit trail.
+- **Sign-in page** — Link to "Restore a deactivated account?" and banner when redirecting from deactivation with the restore deadline date.
+
+## Changed
+
+- **Login flow** — Credentials and Google OAuth now check user status; suspended or logically deleted users are denied login. JWT refresh validates status and revokes stale sessions for suspended users.
+- **Registration flow** — Handles existing users in grace period (409) and past grace period (finalizes deletion, then allows new account creation with the same email).
+
+---
+
 # v0.9.21 - 2026-03-15
 
 ## Added

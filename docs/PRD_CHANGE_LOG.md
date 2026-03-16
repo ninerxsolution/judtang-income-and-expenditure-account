@@ -5,6 +5,17 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 16/03/2026 (Account Lifecycle — deactivate, restore)
+
+- docs/feature/account-lifecycle.md — New: Account lifecycle (deactivate, grace period, restore), data model, logic, APIs, UI, Activity Log.
+- docs/INDEX.md — Added reference to account-lifecycle.md.
+- docs/PRD.md — Added §7.7 Account Lifecycle (Deactivate & Restore); updated §1 Overview to mention account deactivation and restore.
+- CHANGELOG.md — Added v0.9.22: Account deactivation, restore, email reuse, Activity Log, sign-in updates.
+- CHANGELOG.th.md — Added v0.9.22 (Thai).
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 15/03/2026 (Go to Top on home page — docs and changelogs)
 
 - docs/feature/public-landing-page.md — Page structure §2: added item 8 Go to Top; §10 Components: added LandingGoToTop; new §11 Go to Top Button (placement, appearance, behaviour); renumbered §12 Visual Guidelines, §13 Non-Goals.

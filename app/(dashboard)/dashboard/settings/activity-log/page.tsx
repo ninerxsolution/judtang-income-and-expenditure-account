@@ -48,6 +48,9 @@ const ACTION_OPTIONS = [
   { value: "FINANCIAL_ACCOUNT_DISABLED", labelKey: "FINANCIAL_ACCOUNT_DISABLED" },
   { value: "FINANCIAL_ACCOUNT_DELETED", labelKey: "FINANCIAL_ACCOUNT_DELETED" },
   { value: "FINANCIAL_ACCOUNT_RESTORED", labelKey: "FINANCIAL_ACCOUNT_RESTORED" },
+  { value: "ACCOUNT_DEACTIVATE", labelKey: "ACCOUNT_DEACTIVATE" },
+  { value: "ACCOUNT_RESTORE", labelKey: "ACCOUNT_RESTORE" },
+  { value: "ACCOUNT_DELETED", labelKey: "ACCOUNT_DELETED" },
 ] as const;
 
 function formatDateTime(iso: string, locale: string) {
@@ -294,6 +297,18 @@ function formatDetails(
     const typeLabel = type ? t(`accounts.type.${type}`) : "";
     if (name) detailLines.push(t("activityLog.details.restored", { name }));
     if (typeLabel) detailLines.push(t("activityLog.details.financialAccountType", { type: typeLabel }));
+    return detailLines;
+  }
+
+  if (action === "ACCOUNT_DEACTIVATE") {
+    const reason = details.reason as string | undefined;
+    if (reason) detailLines.push(t("activityLog.details.accountDeactivateReason", { reason }));
+    return detailLines;
+  }
+
+  if (action === "ACCOUNT_RESTORE") {
+    const restoredBy = details.restoredBy as string | undefined;
+    if (restoredBy) detailLines.push(t("activityLog.details.accountRestoreBy", { by: restoredBy }));
     return detailLines;
   }
 

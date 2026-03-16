@@ -9,7 +9,7 @@ import { authOptions } from "@/auth";
 
 const protectedPathPrefixes = ["/dashboard"];
 const adminPathPrefix = "/admin";
-const publicPathPrefixes = ["/", "/sign-in", "/register", "/api/auth", "/_next", "/favicon"];
+const publicPathPrefixes = ["/", "/sign-in", "/register", "/restore-account", "/api/auth", "/_next", "/favicon"];
 
 function isPublic(pathname: string): boolean {
   if (pathname === "/") return true;

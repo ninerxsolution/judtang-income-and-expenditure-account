@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTools } from "@/components/dashboard/data-tools";
 import { CategorySettings } from "@/components/dashboard/category-settings";
+import { DeactivateAccountSection } from "@/components/dashboard/deactivate-account-section";
 import { useI18n } from "@/hooks/use-i18n";
 import type { Language } from "@/i18n";
 
@@ -137,6 +138,7 @@ export default function SettingsPage() {
     { id: "budget", label: t("settings.budget.title") },
     { id: "data-tools", label: t("dataTools.title") },
     { id: "sessions", label: t("settings.sessions.title") },
+    { id: "privacy", label: t("settings.privacy.title") },
     { id: "feedback", label: t("settings.feedback.title") },
   ];
 
@@ -490,6 +492,14 @@ export default function SettingsPage() {
               </Link>
             </div>
           )}
+        </section>
+
+        {/* Privacy / Deactivate */}
+        <section
+          id="privacy"
+          className="scroll-mt-6 rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30"
+        >
+          <DeactivateAccountSection />
         </section>
 
         {/* Help & Feedback */}

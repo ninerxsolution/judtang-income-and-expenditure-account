@@ -52,6 +52,7 @@ export const enDictionary = {
       registerCta: "Create one",
       forgotPassword: "Forgot password?",
       rememberMe: "Remember me",
+      restoreLink: "Restore a deactivated account?",
     },
     register: {
       title: "Create account",
@@ -115,6 +116,20 @@ export const enDictionary = {
     },
     turnstileRequired: "Please complete the verification",
     turnstileFailed: "Verification failed. Please try again.",
+    restoreAccount: {
+      title: "Restore account",
+      subtitle: "Enter your email and password to restore your deactivated account.",
+      emailLabel: "Email",
+      passwordLabel: "Password",
+      submit: "Restore",
+      pending: "Restoring…",
+      success: "Account restored. You can sign in now.",
+      error: "Restore failed. Please check your credentials.",
+      backToSignIn: "Back to sign in",
+    },
+    deactivate: {
+      scheduledBanner: "Account deactivation scheduled. You can restore until {date}.",
+    },
   },
   dashboard: {
     sidebar: {
@@ -604,6 +619,19 @@ export const enDictionary = {
       errorVerification: "Please complete the verification.",
       errorRateLimit: "Too many reports. Please try again later.",
     },
+    privacy: {
+      title: "Privacy",
+      description: "Manage your account and data.",
+      deactivateAccount: "Deactivate account",
+      deactivateConfirmTitle: "Deactivate account?",
+      deactivateConfirmMessage:
+        "Your account will be permanently deleted in {count} days. You may recover it before that date.",
+      deactivateReasonLabel: "Reason (optional)",
+      deactivateReasonPlaceholder: "Why are you deactivating?",
+      deactivateButton: "Deactivate",
+      deactivating: "Deactivating…",
+      deactivateError: "Failed to deactivate. Please try again.",
+    },
   },
   dataTools: {
     title: "Data tools",
@@ -923,6 +951,9 @@ export const enDictionary = {
       FINANCIAL_ACCOUNT_DISABLED: "Account disabled",
       FINANCIAL_ACCOUNT_DELETED: "Account deleted",
       FINANCIAL_ACCOUNT_RESTORED: "Account restored",
+      ACCOUNT_DEACTIVATE: "Account deactivated",
+      ACCOUNT_RESTORE: "Account restored",
+      ACCOUNT_DELETED: "Account deleted",
       fallback: "Other action",
     },
     loading: "Loading…",
@@ -983,6 +1014,8 @@ export const enDictionary = {
       no: "No",
       restored: "Restored: « {name} »",
       deleted: "Deleted: « {name} »",
+      accountDeactivateReason: "Reason: {reason}",
+      accountRestoreBy: "Restored by: {by}",
       changedField: "{field}: {from} → {to}",
       changedValue: "{from} → {to}",
     },

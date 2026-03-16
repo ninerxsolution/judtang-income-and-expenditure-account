@@ -270,7 +270,7 @@ export default function DashboardPage() {
           {/* Budget overview card — current month */}
           <div className="mt-4">
             {budgetLoading ? (
-              <Card className="border-[#D4C9B0] dark:border-stone-700">
+              <Card className="border-[#D4C9B0] dark:border-stone-700 gap-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-[#5C6B52] dark:text-stone-400" />
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             ) : budgetOverview?.totalBudget != null && budgetOverview.totalBudget > 0 ? (
-              <Card className="border-[#D4C9B0] dark:border-stone-700">
+              <Card className="border-[#D4C9B0] dark:border-stone-700 gap-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Wallet className="h-4 w-4 text-[#5C6B52] dark:text-stone-400" />
@@ -330,7 +330,7 @@ export default function DashboardPage() {
               </Card>
             ) : (
               <Card className="border-[#D4C9B0] dark:border-stone-700">
-                <CardContent className="pt-4">
+                <CardContent className="">
                   <p className="text-sm text-[#6B5E4E] dark:text-stone-400 mb-2">
                     {t("settings.budget.description")}
                   </p>

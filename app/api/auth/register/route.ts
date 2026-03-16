@@ -19,6 +19,7 @@ import {
   verifyTurnstileToken,
   shouldSkipTurnstileVerification,
 } from "@/lib/turnstile";
+import { resolveUserStatus, finalizeDeletion } from "@/lib/user-status";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { ensureUserHasDefaultCategories } from "@/lib/categories";
 import { sendEmailVerification } from "@/lib/email";
@@ -108,12 +109,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const existing = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, status: true, deleteAfter: true },
+    });
     if (existing) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 409 }
-      );
+      const status = resolveUserStatus(existing);
+      if (status === "ACTIVE") {
+        return NextResponse.json(
+          { error: "User with this email already exists" },
+          { status: 409 }
+        );
+      }
+      if (status === "SUSPENDED") {
+        return NextResponse.json(
+          {
+            error: "Account is deactivating; try again after the scheduled deletion date",
+            deleteAfter: existing.deleteAfter?.toISOString(),
+          },
+          { status: 409 }
+        );
+      }
+      if (status === "DELETED") {
+        await finalizeDeletion(existing.id);
+      }
     }
 
     const hashedPassword = await bcrypt.hash(String(password), 10);

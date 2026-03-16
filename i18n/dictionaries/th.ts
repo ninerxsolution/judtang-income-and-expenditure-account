@@ -52,6 +52,7 @@ export const thDictionary = {
       registerCta: "สร้างบัญชีใหม่",
       forgotPassword: "ลืมรหัสผ่าน?",
       rememberMe: "จดจำฉันไว้",
+      restoreLink: "กู้คืนบัญชีที่ถูกระงับ?",
     },
     register: {
       title: "สร้างบัญชีใหม่",
@@ -112,6 +113,20 @@ export const thDictionary = {
     },
     turnstileRequired: "กรุณายืนยันตัวตน",
     turnstileFailed: "ยืนยันตัวตนไม่สำเร็จ โปรดลองใหม่",
+    restoreAccount: {
+      title: "กู้คืนบัญชี",
+      subtitle: "กรอกอีเมลและรหัสผ่านเพื่อกู้คืนบัญชีที่ถูกระงับ",
+      emailLabel: "อีเมล",
+      passwordLabel: "รหัสผ่าน",
+      submit: "กู้คืน",
+      pending: "กำลังกู้คืน…",
+      success: "กู้คืนบัญชีสำเร็จ คุณสามารถเข้าสู่ระบบได้แล้ว",
+      error: "กู้คืนไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน",
+      backToSignIn: "กลับไปเข้าสู่ระบบ",
+    },
+    deactivate: {
+      scheduledBanner: "กำหนดระงับบัญชีแล้ว คุณสามารถกู้คืนได้จนถึง {date}",
+    },
   },
   dashboard: {
     sidebar: {
@@ -590,6 +605,19 @@ export const thDictionary = {
       errorVerification: "กรุณายืนยันตัวตน",
       errorRateLimit: "ส่งรายงานมากเกินไป กรุณาลองใหม่ภายหลัง",
     },
+    privacy: {
+      title: "ความเป็นส่วนตัว",
+      description: "จัดการบัญชีและข้อมูลของคุณ",
+      deactivateAccount: "ระงับบัญชี",
+      deactivateConfirmTitle: "ระงับบัญชี?",
+      deactivateConfirmMessage:
+        "บัญชีของคุณจะถูกลบถาวรภายใน {count} วัน คุณสามารถกู้คืนได้ก่อนวันนั้น",
+      deactivateReasonLabel: "เหตุผล (ไม่บังคับ)",
+      deactivateReasonPlaceholder: "ทำไมคุณถึงต้องการระงับบัญชี?",
+      deactivateButton: "ระงับบัญชี",
+      deactivating: "กำลังระงับ…",
+      deactivateError: "ระงับบัญชีไม่สำเร็จ โปรดลองใหม่อีกครั้ง",
+    },
   },
   dataTools: {
     title: "เครื่องมือข้อมูล",
@@ -907,6 +935,9 @@ export const thDictionary = {
       FINANCIAL_ACCOUNT_DISABLED: "ปิดใช้งานบัญชี",
       FINANCIAL_ACCOUNT_DELETED: "ลบบัญชี",
       FINANCIAL_ACCOUNT_RESTORED: "กู้คืนบัญชี",
+      ACCOUNT_DEACTIVATE: "ระงับบัญชีผู้ใช้",
+      ACCOUNT_RESTORE: "กู้คืนบัญชีผู้ใช้",
+      ACCOUNT_DELETED: "ลบบัญชีผู้ใช้",
       fallback: "กิจกรรมอื่น ๆ",
     },
     loading: "กำลังโหลด…",
@@ -968,6 +999,8 @@ export const thDictionary = {
       no: "ไม่",
       restored: "กู้คืน: « {name} »",
       deleted: "ลบ: « {name} »",
+      accountDeactivateReason: "เหตุผล: {reason}",
+      accountRestoreBy: "กู้คืนโดย: {by}",
       changedField: "{field}: {from} → {to}",
       changedValue: "{from} → {to}",
     },

@@ -127,7 +127,12 @@ describe("POST /api/auth/register", () => {
   });
 
   it("returns 409 when email already exists", async () => {
-    mockFindUnique.mockResolvedValue({ id: "existing", email: "test@example.com" });
+    mockFindUnique.mockResolvedValue({
+      id: "existing",
+      email: "test@example.com",
+      status: "ACTIVE",
+      deleteAfter: null,
+    });
 
     const req = createRequest("http://localhost/api/auth/register", {
       method: "POST",

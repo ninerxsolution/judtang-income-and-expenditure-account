@@ -39,6 +39,12 @@ enum UserRole {
   ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
 enum RecurringFrequency {
   WEEKLY
   MONTHLY
@@ -99,6 +105,10 @@ model User {
   // Active users: last activity timestamp
   lastActiveAt  DateTime?
   role          UserRole  @default(USER)
+  status        UserStatus @default(ACTIVE)
+  suspendedAt   DateTime?
+  deleteAfter   DateTime?
+  deletedAt     DateTime?
   accounts           Account[]
   // JWT session tracking (for list/revoke)
   userSessions       UserSession[]
@@ -112,6 +122,20 @@ model User {
   budgetMonths           BudgetMonth[]
   recurringTransactions  RecurringTransaction[]
   notifications          Notification[]
+  deletionRequests       UserDeletionRequest[]
+}
+
+model UserDeletionRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  reason      String?   @db.Text
+  requestedAt DateTime @default(now())
+  deleteAfter DateTime
+  cancelledAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Tracks active JWT sessions per user (sessionId in JWT cookie).

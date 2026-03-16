@@ -137,9 +137,14 @@ export function SignInForm({ callbackUrl = "/dashboard", error: initialError }: 
           {t("auth.signIn.google")}
       </Button>
       <p className="text-center text-muted-foreground text-sm">
-          {t("auth.signIn.noAccount")}{" "}
+        {t("auth.signIn.noAccount")}{" "}
         <Link href="/register" className="font-medium text-primary underline underline-offset-4">
-            {t("auth.signIn.registerCta")}
+          {t("auth.signIn.registerCta")}
+        </Link>
+      </p>
+      <p className="text-center text-muted-foreground text-sm">
+        <Link href="/restore-account" className="font-medium text-primary underline underline-offset-4">
+          {t("auth.signIn.restoreLink")}
         </Link>
       </p>
     </div>

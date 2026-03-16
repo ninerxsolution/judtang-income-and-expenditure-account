@@ -1,10 +1,10 @@
 /**
- * Sign-in page — form (Credentials + Google) and link to register.
+ * Restore account page — restore a deactivated account during grace period.
  */
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { SignInForm } from "@/components/auth/sign-in-form";
+import { RestoreAccountForm } from "@/components/auth/restore-account-form";
 import {
   Card,
   CardContent,
@@ -13,33 +13,17 @@ import {
 } from "@/components/ui/card";
 import { DEFAULT_LANGUAGE, translate, type Language } from "@/i18n";
 
-type PageProps = {
-  searchParams: Promise<{ callbackUrl?: string; error?: string; lang?: Language; deactivated?: string }>;
-};
-
-const ERROR_MESSAGES: Record<string, keyof typeof errorKeys> = {
-  CredentialsSignin: "credentials",
-  Default: "default",
-};
-
-const errorKeys = {
-  credentials: "auth.signIn.invalidCredentials",
-  default: "auth.signIn.genericError",
-} as const;
-
 export const metadata: Metadata = {
-  title: "Sign in | Judtang",
+  title: "Restore account | Judtang",
 };
 
-export default async function SignInPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const callbackUrl = params.callbackUrl ?? "/dashboard";
-  const rawError = params.error ?? null;
-  const deactivatedDate = params.deactivated ?? null;
-  const lang = (params.lang as Language | undefined) ?? DEFAULT_LANGUAGE;
+type PageProps = {
+  searchParams: Promise<{ lang?: Language }>;
+};
 
-  const errorKey = rawError ? ERROR_MESSAGES[rawError] ?? ERROR_MESSAGES.Default : null;
-  const error = errorKey ? translate(lang, errorKeys[errorKey]) : null;
+export default async function RestoreAccountPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const lang = (params.lang as Language | undefined) ?? DEFAULT_LANGUAGE;
 
   return (
     <div className="auth-page flex min-h-screen flex-col bg-[#F5F0E8] dark:bg-stone-950">
@@ -59,7 +43,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
             Judtang
           </Link>
           <span className="text-sm font-medium text-[#6B5E4E] dark:text-stone-400">
-            {translate(lang, "auth.signIn.title")}
+            {translate(lang, "auth.restoreAccount.title")}
           </span>
         </div>
       </header>
@@ -73,19 +57,17 @@ export default async function SignInPage({ searchParams }: PageProps) {
             className="mx-auto rounded-full"
           />
         </div>
-        {deactivatedDate && (
-          <div className="mb-4 w-full max-w-sm rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-            {translate(lang, "auth.deactivate.scheduledBanner", { date: deactivatedDate })}
-          </div>
-        )}
         <Card className="w-full max-w-sm border-[#D4C9B0] bg-[#FDFAF4] dark:border-stone-800 dark:bg-stone-900">
           <CardHeader>
             <CardTitle className="text-xl text-[#3D3020] dark:text-stone-100">
-              {translate(lang, "auth.signIn.title")}
+              {translate(lang, "auth.restoreAccount.title")}
             </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {translate(lang, "auth.restoreAccount.subtitle")}
+            </p>
           </CardHeader>
           <CardContent>
-            <SignInForm callbackUrl={callbackUrl} error={error} />
+            <RestoreAccountForm />
           </CardContent>
         </Card>
       </main>

@@ -7,7 +7,7 @@
 
 ## 1. Overview
 
-**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), a **Public Privacy Policy** (`/privacy`), a **Public Terms & Conditions** (`/terms`), and **Income & Expense** tracking with multi-account and credit card support.
+**Judtang Financial Engine** provides **user authentication** (sign-in, registration, sessions, account deactivation and restore) and an **Activity Log** for auditing critical events. The product includes a **Public Landing Page** (`/`) for product introduction and entry points, a **Public Releases Page** (`/releases`), a **Public Privacy Policy** (`/privacy`), a **Public Terms & Conditions** (`/terms`), and **Income & Expense** tracking with multi-account and credit card support.
 
 It is built on Next.js with NextAuth and a MySQL database, and is intended for general users and teams who need personal finance management with login and audit trails.
 
@@ -81,6 +81,10 @@ A public Terms & Conditions page at `/terms` (no login required) that defines th
 ### 7.6 Recurring Transactions
 
 Templates for repeating income or expense items (WEEKLY, MONTHLY, YEARLY). Users view items due in a selected month and confirm to create an actual Transaction from a template. See [feature/recurring-transactions.md](feature/recurring-transactions.md) for full spec.
+
+### 7.7 Account Lifecycle (Deactivate & Restore)
+
+Users can deactivate their account from Settings → Privacy. A grace period (default 30 days) is provided before permanent deletion. During the grace period, accounts may be restored via `/restore-account`. After the grace period, the original email becomes reusable for new registrations. See [feature/account-lifecycle.md](feature/account-lifecycle.md) for full spec.
 
 ---
 
