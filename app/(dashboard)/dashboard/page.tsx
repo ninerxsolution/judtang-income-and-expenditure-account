@@ -95,10 +95,10 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="relative">
                   <p
-                    className={`text-3xl sm:text-4xl font-bold tabular-nums ${balance >= 0 ? "text-white" : "text-red-200"
+                    className={`text-3xl sm:text-4xl font-bold tabular-nums ${balance >= 0 ? "text-white" : "text-red-300"
                       }`}
                   >
-                    ฿ {summary ? formatAmount(balance) : "0.00"}
+                    ฿{summary ? formatAmount(balance) : "0.00"}
                   </p>
                 </CardContent>
               </Card>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
-                      {summary ? formatAmount(summary.income) : "0.00"}
+                      ฿{summary ? formatAmount(summary.income) : "0.00"}
                     </p>
                   </CardContent>
                 </Card>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-xl font-semibold tabular-nums text-red-800 dark:text-red-200">
-                      {summary ? formatAmount(summary.expense) : "0.00"}
+                      ฿{summary ? formatAmount(summary.expense) : "0.00"}
                     </p>
                   </CardContent>
                 </Card>

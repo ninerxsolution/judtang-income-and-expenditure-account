@@ -768,15 +768,6 @@ export default function BudgetSettingsPage() {
 
       {/* Templates */}
       <section className="space-y-4">
-        {/* <div className="flex items-center justify-between gap-2 mb-4">
-          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-            {t("settings.budget.templates")}
-          </h2>
-          <Button variant="outline" size="sm" onClick={openCreateTemplate}>
-            <Plus className="h-4 w-4" />
-            {t("settings.budget.addTemplate")}
-          </Button>
-        </div> */}
 
         {/* Apply template row + Settings opens templates dialog */}
         {!loadingTemplates && (
@@ -834,233 +825,238 @@ export default function BudgetSettingsPage() {
         )}
       </section>
 
-      {/* Budget Overview */}
-      <section className="rounded-lg border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-          <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-            {t("settings.budget.totalBudget")}
-          </h2>
-          <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
-            {selectedPeriodLabel}
-          </p>
-        </div>
-
-        {loadingBudget ? (
-          <div className="mt-4 space-y-4">
-            <Skeleton className="h-3 w-full rounded-full" />
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Skeleton className="h-20 rounded-lg" />
-              <Skeleton className="h-20 rounded-lg" />
-              <Skeleton className="h-20 rounded-lg" />
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {totalBudgetNum != null && totalBudgetNum > 0 ? (
-              <>
-                {/* Progress bar */}
-                <div className="space-y-1.5">
-                  <div className="flex items-baseline justify-between text-sm">
-                    <span className="font-medium text-[#3D3020] dark:text-stone-100">
-                      ฿{formatAmount(totalSpent)}
-                    </span>
-                    <span className="text-[#A09080] dark:text-stone-400">
-                      ฿{formatAmount(totalBudgetNum)}
-                    </span>
-                  </div>
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${indicatorColor(budget?.totalIndicator ?? "normal")}`}
-                      style={{
-                        width: `${Math.min(100, (budget?.totalProgress ?? 0) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Stats grid */}
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
-                    <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
-                      {t("settings.budget.totalSpent")}
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-[#3D3020] dark:text-stone-100">
-                      ฿{formatAmount(totalSpent)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
-                    <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
-                      {t("settings.budget.remaining")}
-                    </p>
-                    <p
-                      className={`mt-1 text-lg font-semibold ${remaining != null && remaining < 0
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-[#3D3020] dark:text-stone-100"
-                        }`}
-                    >
-                      ฿
-                      {formatAmount(
-                        remaining != null ? Math.abs(remaining) : 0,
-                      )}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
-                    <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
-                      {t("settings.budget.progress")}
-                    </p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="text-lg font-semibold text-[#3D3020] dark:text-stone-100">
-                        {Math.round(
-                          (budget?.totalProgress ?? 0) * 100,
-                        )}
-                        %
-                      </span>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${indicatorBadgeClass(budget?.totalIndicator ?? "normal")}`}
-                      >
-                        {indicatorLabel(
-                          budget?.totalIndicator ?? "normal",
-                          t,
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
-                {t("settings.budget.setBudget")}
-              </p>
-            )}
-
-            {/* Total budget: open dialog to edit */}
-            <div
-              className={
-                totalBudgetNum != null && totalBudgetNum > 0
-                  ? "border-t border-[#D4C9B0]/50 pt-4 dark:border-stone-700/50"
-                  : ""
-              }
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openEditTotalBudgetDialog}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                {t("settings.budget.editTotalBudget")}
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Category budgets */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div>
+      <div className="space-y-4 flex flex-col xl:flex-row gap-4">
+        {/* Budget Overview */}
+        <section className="rounded-lg xl:w-2/5 w-full border border-[#D4C9B0] bg-[#F5F0E8]/50 p-6 dark:border-stone-700 dark:bg-stone-900/30">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
             <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-              {t("settings.budget.categoryLimit")}
+              {t("settings.budget.totalBudget")}
             </h2>
             <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
               {selectedPeriodLabel}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setAddCategoryOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            {t("settings.budget.addCategoryBudget")}
-          </Button>
-        </div>
 
-        {loadingBudget ? (
-          <div className="space-y-3">
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-          </div>
-        ) : (budget?.categoryBudgets?.length ?? 0) === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#D4C9B0] p-8 text-center dark:border-stone-700">
-            <Wallet className="mx-auto h-8 w-8 text-[#A09080] dark:text-stone-500" />
-            <p className="mt-2 text-sm text-[#6B5E4E] dark:text-stone-400">
-              {t("settings.budget.noCategoryBudgets")}
-            </p>
+          {loadingBudget ? (
+            <div className="mt-4 space-y-4">
+              <Skeleton className="h-3 w-full rounded-full" />
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Skeleton className="h-20 rounded-lg" />
+                <Skeleton className="h-20 rounded-lg" />
+                <Skeleton className="h-20 rounded-lg" />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {totalBudgetNum != null && totalBudgetNum > 0 ? (
+                <>
+                  {/* Progress bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between text-sm">
+                      <span className="font-medium text-[#3D3020] dark:text-stone-100">
+                        ฿{formatAmount(totalSpent)}
+                      </span>
+                      <span className="text-[#A09080] dark:text-stone-400">
+                        ฿{formatAmount(totalBudgetNum)}
+                      </span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${indicatorColor(budget?.totalIndicator ?? "normal")}`}
+                        style={{
+                          width: `${Math.min(100, (budget?.totalProgress ?? 0) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
+                      <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
+                        {t("settings.budget.totalSpent")}
+                      </p>
+                      <p className="mt-1 text-lg font-semibold text-[#3D3020] dark:text-stone-100">
+                        ฿{formatAmount(totalSpent)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
+                      <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
+                        {t("settings.budget.remaining")}
+                      </p>
+                      <p
+                        className={`mt-1 text-lg font-semibold ${budget?.totalIndicator === "over"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-[#3D3020] dark:text-stone-100"
+                          }`}
+                      >
+                        ฿
+                        {formatAmount(
+                          (budget?.totalBudget ?? 0) - (budget?.totalSpent ?? 0),
+                        )}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-[#D4C9B0]/50 bg-[#FDFAF4] p-3 dark:border-stone-700/50 dark:bg-stone-900/40">
+                      <p className="text-xs font-medium text-[#A09080] dark:text-stone-400">
+                        {t("settings.budget.progress")}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-lg font-semibold text-[#3D3020] dark:text-stone-100">
+                          {Math.round(
+                            (budget?.totalProgress ?? 0) * 100,
+                          )}
+                          %
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${indicatorBadgeClass(budget?.totalIndicator ?? "normal")}`}
+                        >
+                          {indicatorLabel(
+                            budget?.totalIndicator ?? "normal",
+                            t,
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+                  {t("settings.budget.setBudget")}
+                </p>
+              )}
+
+              {/* Total budget: open dialog to edit */}
+              <div
+                className={
+                  totalBudgetNum != null && totalBudgetNum > 0
+                    ? "border-t border-[#D4C9B0]/50 pt-4 dark:border-stone-700/50"
+                    : ""
+                }
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openEditTotalBudgetDialog}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  {t("settings.budget.editTotalBudget")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Category budgets */}
+        <section className="space-y-4 xl:w-3/5 w-full">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                {t("settings.budget.categoryLimit")}
+              </h2>
+              <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+                {selectedPeriodLabel}
+              </p>
+            </div>
             <Button
               variant="outline"
               size="sm"
-              className="mt-3"
               onClick={() => setAddCategoryOpen(true)}
             >
               <Plus className="h-4 w-4" />
               {t("settings.budget.addCategoryBudget")}
             </Button>
           </div>
-        ) : (
-          <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {(budget?.categoryBudgets ?? []).map((cb) => (
-              <div
-                key={cb.id}
-                className="flex flex-col justify-between rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] p-4 dark:border-stone-700 dark:bg-stone-900/60 h-full"
+
+          {loadingBudget ? (
+            <div className="space-y-3">
+              <Skeleton className="h-24 w-full rounded-lg" />
+              <Skeleton className="h-24 w-full rounded-lg" />
+            </div>
+          ) : (budget?.categoryBudgets?.length ?? 0) === 0 ? (
+            <div className="rounded-lg border border-dashed border-[#D4C9B0] p-8 text-center dark:border-stone-700">
+              <Wallet className="mx-auto h-8 w-8 text-[#A09080] dark:text-stone-500" />
+              <p className="mt-2 text-sm text-[#6B5E4E] dark:text-stone-400">
+                {t("settings.budget.noCategoryBudgets")}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => setAddCategoryOpen(true)}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
-                    {cb.categoryName ??
-                      t("settings.budget.categoryLimit")}
-                  </h3>
-                  <div className="flex items-center gap-0.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => {
-                        setEditCategoryBudgetId(cb.id);
-                        setEditCategoryBudgetAmount(
-                          formatAmount(cb.limitAmount),
-                        );
+                <Plus className="h-4 w-4" />
+                {t("settings.budget.addCategoryBudget")}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
+              {(budget?.categoryBudgets ?? []).map((cb) => (
+                <div
+                  key={cb.id}
+                  className="flex flex-col justify-between rounded-lg border border-[#D4C9B0] bg-[#FDFAF4] p-4 dark:border-stone-700 dark:bg-stone-900/60 h-full"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-medium text-[#3D3020] dark:text-stone-100">
+                      {cb.categoryName ??
+                        t("settings.budget.categoryLimit")}
+                    </h3>
+                    <div className="flex items-center gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => {
+                          setEditCategoryBudgetId(cb.id);
+                          setEditCategoryBudgetAmount(
+                            formatAmount(cb.limitAmount),
+                          );
+                        }}
+                        aria-label={t("settings.budget.editCategoryBudget")}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950 dark:hover:text-red-400"
+                        onClick={() => setDeleteCategoryId(cb.id)}
+                        aria-label={t("settings.budget.deleteCategoryBudget")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs text-[#6B5E4E] dark:text-stone-400">
+                      ฿{formatAmount(cb.spent)} / ฿
+                      {formatAmount(cb.limitAmount)}
+                    </span>
+
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${indicatorColor(cb.indicator)}`}
+                      style={{
+                        width: `${Math.min(100, cb.progress * 100)}%`,
                       }}
-                      aria-label={t("settings.budget.editCategoryBudget")}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`inline-flex items-center rounded-full mt-0.5 px-2 py-0.5 text-xs font-medium ${indicatorBadgeClass(cb.indicator)}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950 dark:hover:text-red-400"
-                      onClick={() => setDeleteCategoryId(cb.id)}
-                      aria-label={t("settings.budget.deleteCategoryBudget")}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                      {indicatorLabel(cb.indicator, t)}
+                    </span>
+                    <p className="mt-1 text-right text-xs text-[#A09080] dark:text-stone-400">
+                      {Math.round(cb.progress * 100)}%
+                    </p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-[#6B5E4E] dark:text-stone-400">
-                    ฿{formatAmount(cb.spent)} / ฿
-                    {formatAmount(cb.limitAmount)}
-                  </span>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${indicatorBadgeClass(cb.indicator)}`}
-                  >
-                    {indicatorLabel(cb.indicator, t)}
-                  </span>
-                </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${indicatorColor(cb.indicator)}`}
-                    style={{
-                      width: `${Math.min(100, cb.progress * 100)}%`,
-                    }}
-                  />
-                </div>
-                <p className="mt-1 text-right text-xs text-[#A09080] dark:text-stone-400">
-                  {Math.round(cb.progress * 100)}%
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* Create / Edit template dialog */}
       <Dialog
