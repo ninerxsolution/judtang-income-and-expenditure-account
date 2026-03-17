@@ -281,6 +281,8 @@ export const thDictionary = {
     chart: {
       incomeVsExpense: "รายรับ vs รายจ่าย (รายเดือน)",
       expenseByCategory: "รายจ่ายตามหมวดหมู่",
+      netWorthTrend: "ทรัพย์สินสุทธิตามเวลา",
+      netWorthLabel: "ทรัพย์สินสุทธิ",
       noData: "ไม่มีข้อมูล",
     },
   },

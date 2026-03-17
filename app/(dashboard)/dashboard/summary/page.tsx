@@ -14,6 +14,8 @@ import {
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -38,6 +40,7 @@ import { getCategoryDisplayName } from "@/lib/categories-display";
 
 type Summary = { income: number; expense: number; totalBalance?: number } | null;
 type MonthItem = { monthIndex: number; income: number; expense: number };
+type NetWorthItem = { monthIndex: number; netWorth: number };
 type CategoryItem = {
   categoryId: string | null;
   categoryName: string;
@@ -91,6 +94,8 @@ export default function SummaryPage() {
   const [monthLoading, setMonthLoading] = useState(true);
   const [categoryData, setCategoryData] = useState<CategoryItem[]>([]);
   const [categoryLoading, setCategoryLoading] = useState(true);
+  const [netWorthData, setNetWorthData] = useState<NetWorthItem[]>([]);
+  const [netWorthLoading, setNetWorthLoading] = useState(true);
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -162,6 +167,24 @@ export default function SummaryPage() {
     return () => { cancelled = true; };
   }, [from, to, timezone, accountId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    setNetWorthLoading(true);
+    const params = new URLSearchParams();
+    params.set("year", String(year));
+    params.set("timezone", timezone);
+    if (accountId) params.set("financialAccountId", accountId);
+    fetch(`/api/transactions/net-worth-trend?${params.toString()}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: NetWorthItem[]) => {
+        if (!cancelled && Array.isArray(data)) setNetWorthData(data);
+      })
+      .finally(() => {
+        if (!cancelled) setNetWorthLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [year, timezone, accountId]);
+
   const balance = summary ? summary.income - summary.expense : 0;
   const expenseRatio =
     summary && summary.income > 0
@@ -185,6 +208,15 @@ export default function SummaryPage() {
         value: d.amount,
       })),
     [categoryData, language],
+  );
+
+  const netWorthChartData = useMemo(
+    () =>
+      netWorthData.map((d) => ({
+        name: MONTH_NAMES[d.monthIndex] ?? "",
+        netWorth: d.netWorth,
+      })),
+    [netWorthData],
   );
 
   const yearOptions = useMemo(() => {
@@ -422,6 +454,52 @@ export default function SummaryPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t("summary.chart.netWorthTrend")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {netWorthLoading ? (
+            <div className="h-[280px] space-y-2">
+              <Skeleton className="h-[240px] w-full rounded-lg" />
+              <div className="flex gap-2 justify-center">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-4 w-8" />
+                ))}
+              </div>
+            </div>
+          ) : netWorthChartData.length === 0 ? (
+            <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">
+              {t("summary.chart.noData")}
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={netWorthChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatAmount(v)} />
+                <Tooltip
+                  formatter={(value: number | undefined) => formatAmount(value ?? 0)}
+                  contentStyle={{ fontSize: 12 }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="netWorth"
+                  name={t("summary.chart.netWorthLabel")}
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

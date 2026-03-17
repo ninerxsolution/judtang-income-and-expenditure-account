@@ -1,25 +1,41 @@
 import { prisma } from "@/lib/prisma";
 import { TransactionType, TransactionStatus } from "@prisma/client";
 
+const baseWhere = (accountId: string, asOf?: Date) => {
+  const occurredAt = asOf ? { lte: asOf } : undefined;
+  return {
+    financialAccountId: accountId,
+    status: TransactionStatus.POSTED,
+    ...(occurredAt ? { occurredAt } : {}),
+  };
+};
+
 /**
  * Get current outstanding (debt) for a credit card account.
  * Outstanding = sum(EXPENSE + INTEREST) - sum(PAYMENT + ADJUSTMENT + INCOME)
  * INCOME on credit card = refund. Only POSTED transactions, exclude VOID.
  */
 export async function getCurrentOutstanding(accountId: string): Promise<number> {
+  return getOutstandingAsOf(accountId);
+}
+
+/**
+ * Get outstanding (debt) for a credit card account as of a given date.
+ * Only POSTED transactions with occurredAt <= asOf are included.
+ */
+export async function getOutstandingAsOf(
+  accountId: string,
+  asOf?: Date,
+): Promise<number> {
+  const where = baseWhere(accountId, asOf);
   const [expenseInterestSum, paymentAdjustmentIncomeSum] = await Promise.all([
     prisma.transaction.aggregate({
-      where: {
-        financialAccountId: accountId,
-        status: TransactionStatus.POSTED,
-        type: { in: [TransactionType.EXPENSE, TransactionType.INTEREST] },
-      },
+      where: { ...where, type: { in: [TransactionType.EXPENSE, TransactionType.INTEREST] } },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
       where: {
-        financialAccountId: accountId,
-        status: TransactionStatus.POSTED,
+        ...where,
         type: {
           in: [TransactionType.PAYMENT, TransactionType.ADJUSTMENT, TransactionType.INCOME],
         },
