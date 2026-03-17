@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, Upload, Wrench } from "lucide-react";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useI18n } from "@/hooks/use-i18n";
 
 type ImportErrorItem = {
@@ -30,6 +31,7 @@ function getFilenameFromHeaders(headers: Headers): string | null {
 
 export function DataTools() {
   const { t } = useI18n();
+  const { refresh } = useDashboardData();
 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -126,6 +128,7 @@ export function DataTools() {
       }
 
       setImportResult(data as ImportResult);
+      refresh();
     } catch {
       setImportError(t("dataTools.import.failed"));
     } finally {

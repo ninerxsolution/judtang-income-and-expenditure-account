@@ -38,6 +38,7 @@ import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
@@ -132,6 +133,7 @@ function formatDateTime(iso: string, locale: string): string {
 export default function AccountDetailPage() {
   const params = useParams();
   const { t, locale, language } = useI18n();
+  const { refresh } = useDashboardData();
   const { setAccountName } = useAccountDetailBreadcrumb() ?? { setAccountName: () => {} };
   const localeKey = language === "th" ? "th" : "en";
   const accountId = typeof params.id === "string" ? params.id : null;
@@ -372,6 +374,7 @@ export default function AccountDetailPage() {
     void fetchAccount();
     void fetchSummary();
     void fetchTransactions({ offset: txOffset });
+    refresh();
   }
 
   function applyTxFilters() {

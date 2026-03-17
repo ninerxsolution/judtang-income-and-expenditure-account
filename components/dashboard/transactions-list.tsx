@@ -14,7 +14,7 @@ type Transaction = {
   type: "INCOME" | "EXPENSE" | string;
   amount: number;
   financialAccount?: { id: string; name: string } | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;

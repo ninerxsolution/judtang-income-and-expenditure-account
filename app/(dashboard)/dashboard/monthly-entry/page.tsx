@@ -24,6 +24,7 @@ import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
   AccountCombobox,
   AccountIcon,
@@ -136,6 +137,7 @@ function getInitialYearMonth(searchParams: URLSearchParams): { year: number; mon
 
 export default function MonthlyEntryPage() {
   const { t, language } = useI18n();
+  const { refresh } = useDashboardData();
   const localeKey = language === "th" ? "th" : "en";
   const searchParams = useSearchParams();
   const hasScrolledToHighlight = useRef(false);
@@ -487,6 +489,7 @@ export default function MonthlyEntryPage() {
         toast.success(t("monthlyEntry.editSuccess"));
         cancelEditing();
         void fetchExisting();
+        refresh();
       } else {
         toast.error(t("monthlyEntry.editFailed"));
       }
@@ -510,6 +513,7 @@ export default function MonthlyEntryPage() {
         toast.success(t("monthlyEntry.deleteSuccess"));
         cancelEditing();
         void fetchExisting();
+        refresh();
       } else {
         toast.error(t("monthlyEntry.deleteFailed"));
       }
@@ -602,6 +606,7 @@ export default function MonthlyEntryPage() {
         toast.success(t("monthlyEntry.saveSuccess", { count: data.createdCount }));
         setDayRows({});
         void fetchExisting();
+        refresh();
       } else {
         toast.error(t("monthlyEntry.saveFailed"));
       }

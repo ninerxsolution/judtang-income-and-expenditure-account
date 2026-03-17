@@ -368,7 +368,7 @@ export function SlipUploadDialog({
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; nameEn?: string | null }[]>([]);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [batchElapsedMs, setBatchElapsedMs] = useState<number | null>(null);
 
@@ -471,7 +471,11 @@ export function SlipUploadDialog({
           );
           setCategories(
             Array.isArray(catData)
-              ? catData.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))
+              ? catData.map((c: { id: string; name: string; nameEn?: string | null }) => ({
+                  id: c.id,
+                  name: c.name,
+                  nameEn: c.nameEn,
+                }))
               : []
           );
         })

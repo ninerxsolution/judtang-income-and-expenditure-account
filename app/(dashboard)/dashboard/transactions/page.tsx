@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 
@@ -66,6 +67,7 @@ const PAGE_SIZE = 20;
 export default function TransactionsPage() {
   const searchParams = useSearchParams();
   const { t, locale, language } = useI18n();
+  const { refresh } = useDashboardData();
   const localeKey = language === "th" ? "th" : "en";
   const isDesktop = useIsDesktopOrLarger();
 
@@ -81,7 +83,7 @@ export default function TransactionsPage() {
   const [filterSearch, setFilterSearch] = useState("");
   const [offset, setOffset] = useState(0);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; nameEn?: string | null }[]>([]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -177,7 +179,7 @@ export default function TransactionsPage() {
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : []))
-      .then((data: { id: string; name: string }[]) => {
+      .then((data: { id: string; name: string; nameEn?: string | null }[]) => {
         setCategories(Array.isArray(data) ? data : []);
       })
       .catch(() => setCategories([]));
@@ -231,6 +233,7 @@ export default function TransactionsPage() {
 
   function refreshList() {
     void fetchTransactions({ offset });
+    refresh();
   }
 
   return (

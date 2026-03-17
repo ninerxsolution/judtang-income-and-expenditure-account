@@ -25,6 +25,24 @@ const DEFAULT_USER = {
 
 const CUSTOM_CATEGORY_NAMES = ["ของขวัญ", "ค่ารักษาพยาบาล", "เงินออม"] as const;
 
+/** Thai category name -> English name for bilingual display */
+const CATEGORY_NAME_EN: Record<string, string> = {
+  "เงินเดือน": "Salary",
+  "อาหาร": "Food",
+  "ค่าที่พัก": "Housing",
+  "ค่าน้ำค่าไฟ": "Utilities",
+  "ค่าอินเทอร์เน็ต": "Internet",
+  "ค่าสมัครสมาชิก": "Subscriptions",
+  "ช้อปปิ้ง": "Shopping",
+  "อื่นๆ": "Other",
+  "ค่าอื่นๆ": "Other",
+  "ของขวัญ": "Gifts",
+  "ค่ารักษาพยาบาล": "Medical",
+  "เงินออม": "Savings",
+  "ดอกเบี้ย": "Interest",
+  "ปรับยอด": "Adjustment",
+};
+
 const DAYS_BACK = 270;
 const MIN_TX_PER_DAY = 4;
 const MAX_TX_PER_DAY = 8;
@@ -376,8 +394,9 @@ async function seedCategories(
     const existing = await prisma.category.findUnique({
       where: { userId_name: { userId, name } },
     });
+    const nameEn = CATEGORY_NAME_EN[name] ?? null;
     const cat = existing ?? (await prisma.category.create({
-      data: { userId, name, isDefault: true },
+      data: { userId, name, nameEn, isDefault: true },
     }));
     categoryMap[name] = cat;
   }
@@ -386,8 +405,9 @@ async function seedCategories(
       where: { userId_name: { userId, name } },
     });
     if (!existing) {
+      const nameEn = CATEGORY_NAME_EN[name] ?? null;
       const cat = await prisma.category.create({
-        data: { userId, name, isDefault: false },
+        data: { userId, name, nameEn, isDefault: false },
       });
       categoryMap[name] = cat;
     } else {
