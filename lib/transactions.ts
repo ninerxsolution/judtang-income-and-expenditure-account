@@ -266,7 +266,9 @@ export async function listTransactionsByUser(
     searchOr.push({ financialAccount: { name: { contains: q } } });
     searchOr.push({ transferAccount: { name: { contains: q } } });
     searchOr.push({ categoryRef: { name: { contains: q } } });
-    const num = Number.parseFloat(q);
+    // Normalize amount search: strip thousand separators (e.g. "1,545.75" -> "1545.75")
+    const amountStr = q.replace(/,/g, "");
+    const num = Number.parseFloat(amountStr);
     if (Number.isFinite(num) && num > 0) {
       searchOr.push({ amount: { equals: new Prisma.Decimal(num) } });
     }

@@ -118,6 +118,22 @@ function TypeIcon({ type, className }: { type: TransactionType; className?: stri
   }
 }
 
+function getInitialYearMonth(searchParams: URLSearchParams): { year: number; month: number } {
+  const now = new Date();
+  const dateParam = searchParams.get("date");
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateParam);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      if (y && m >= 1 && m <= 12) {
+        return { year: y, month: m - 1 };
+      }
+    }
+  }
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
 export default function MonthlyEntryPage() {
   const { t, language } = useI18n();
   const localeKey = language === "th" ? "th" : "en";
@@ -125,8 +141,8 @@ export default function MonthlyEntryPage() {
   const hasScrolledToHighlight = useRef(false);
 
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
+  const [year, setYear] = useState(() => getInitialYearMonth(searchParams).year);
+  const [month, setMonth] = useState(() => getInitialYearMonth(searchParams).month);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
@@ -199,13 +215,21 @@ export default function MonthlyEntryPage() {
       .finally(() => setLoadingMeta(false));
   }, []);
 
+  // Track current year/month so we ignore stale fetch results (race when date param syncs month)
+  const yearMonthRef = useRef({ year, month });
+  useEffect(() => {
+    yearMonthRef.current = { year, month };
+  }, [year, month]);
+
   // Fetch existing transactions for the selected month
   const fetchExisting = useCallback(async () => {
     setLoadingExisting(true);
+    const fetchYear = year;
+    const fetchMonth = month;
     try {
-      const fromDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-      const lastDay = getDaysInMonth(year, month);
-      const toDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      const fromDate = `${fetchYear}-${String(fetchMonth + 1).padStart(2, "0")}-01`;
+      const lastDay = getDaysInMonth(fetchYear, fetchMonth);
+      const toDate = `${fetchYear}-${String(fetchMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = new URLSearchParams({
         from: fromDate,
@@ -215,6 +239,10 @@ export default function MonthlyEntryPage() {
         offset: "0",
       });
       const res = await fetch(`/api/transactions?${params}`);
+      const current = yearMonthRef.current;
+      if (current.year !== fetchYear || current.month !== fetchMonth) {
+        return; // User changed month; ignore stale result
+      }
       if (res.ok) {
         const data = (await res.json()) as ExistingTransaction[];
         setExistingTransactions(Array.isArray(data) ? data : []);
@@ -222,9 +250,13 @@ export default function MonthlyEntryPage() {
         setExistingTransactions([]);
       }
     } catch {
-      setExistingTransactions([]);
+      if (yearMonthRef.current.year === fetchYear && yearMonthRef.current.month === fetchMonth) {
+        setExistingTransactions([]);
+      }
     } finally {
-      setLoadingExisting(false);
+      if (yearMonthRef.current.year === fetchYear && yearMonthRef.current.month === fetchMonth) {
+        setLoadingExisting(false);
+      }
     }
   }, [year, month]);
 
