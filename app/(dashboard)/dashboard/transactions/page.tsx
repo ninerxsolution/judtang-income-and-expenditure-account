@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowDownCircle,
@@ -19,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
+import { toDateStringInTimezone } from "@/lib/date-range";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
@@ -69,6 +71,7 @@ export default function TransactionsPage() {
 
   const [items, setItems] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paginating, setPaginating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
@@ -90,8 +93,13 @@ export default function TransactionsPage() {
   const [actionMenuTx, setActionMenuTx] = useState<Transaction | null>(null);
   const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
 
-  async function fetchTransactions(overrides?: { offset?: number }) {
-    setLoading(true);
+  async function fetchTransactions(overrides?: { offset?: number; paginating?: boolean }) {
+    const isPaginating = overrides?.paginating ?? false;
+    if (isPaginating) {
+      setPaginating(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     const currentOffset = overrides?.offset ?? offset;
     try {
@@ -123,7 +131,11 @@ export default function TransactionsPage() {
       setError(t("transactions.list.loadFailed"));
       setItems([]);
     } finally {
-      setLoading(false);
+      if (isPaginating) {
+        setPaginating(false);
+      } else {
+        setLoading(false);
+      }
     }
   }
 
@@ -135,13 +147,13 @@ export default function TransactionsPage() {
   function goPrev() {
     const nextOffset = Math.max(0, offset - PAGE_SIZE);
     setOffset(nextOffset);
-    void fetchTransactions({ offset: nextOffset });
+    void fetchTransactions({ offset: nextOffset, paginating: true });
   }
 
   function goNext() {
     const nextOffset = offset + PAGE_SIZE;
     setOffset(nextOffset);
-    void fetchTransactions({ offset: nextOffset });
+    void fetchTransactions({ offset: nextOffset, paginating: true });
   }
 
   useEffect(() => {
@@ -550,7 +562,13 @@ export default function TransactionsPage() {
                     >
                       <td className="px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-100">
                         <div className="flex flex-col gap-0.5">
-                          <span className="whitespace-nowrap">{formatDateTime(tx.occurredAt, locale)}</span>
+                          <Link
+                            href={`/dashboard/monthly-entry?date=${toDateStringInTimezone(new Date(tx.occurredAt), Intl.DateTimeFormat().resolvedOptions().timeZone)}&highlight=${tx.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="whitespace-nowrap text-inherit hover:underline focus:underline focus:outline-none"
+                          >
+                            {formatDateTime(tx.occurredAt, locale)}
+                          </Link>
                           <span className="text-[12px] text-[#A09080] dark:text-stone-400 lg:hidden max-w-[160px] truncate">
                             {isTransfer ? (
                               <>
@@ -661,7 +679,7 @@ export default function TransactionsPage() {
                 variant="outline"
                 size="sm"
                 onClick={goPrev}
-                disabled={offset === 0}
+                disabled={offset === 0 || paginating}
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -671,7 +689,7 @@ export default function TransactionsPage() {
                 variant="outline"
                 size="sm"
                 onClick={goNext}
-                disabled={items.length < PAGE_SIZE}
+                disabled={items.length < PAGE_SIZE || paginating}
                 className="gap-1"
               >
                 {t("transactions.list.next")}
