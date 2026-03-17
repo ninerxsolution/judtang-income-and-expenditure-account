@@ -383,6 +383,7 @@ export const enDictionary = {
     linkedAccountLabel: "Linked bank account",
     linkedAccountPlaceholder: "Select bank account",
     linkedAccountRequired: "Debit card must be linked to a bank account",
+    debitCardLinkedTo: "This card is linked to",
     incompleteAccountCannotUse:
       "Please complete bank and account number before using.",
     hideDefaultAccount: "Hide default account",

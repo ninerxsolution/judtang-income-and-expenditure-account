@@ -10,7 +10,12 @@ import { getCurrentOutstanding } from "@/lib/credit-card";
 export async function getAccountBalance(accountId: string): Promise<number> {
   const account = await prisma.financialAccount.findUnique({
     where: { id: accountId },
-    select: { initialBalance: true, type: true },
+    select: {
+      initialBalance: true,
+      type: true,
+      cardAccountType: true,
+      linkedAccountId: true,
+    },
   });
 
   if (!account) {
@@ -18,6 +23,12 @@ export async function getAccountBalance(accountId: string): Promise<number> {
   }
 
   if (account.type === "CREDIT_CARD") {
+    const isDebit =
+      account.cardAccountType?.toLowerCase() === "debit" &&
+      Boolean(account.linkedAccountId?.trim());
+    if (isDebit) {
+      return getAccountBalance(account.linkedAccountId!);
+    }
     const outstanding = await getCurrentOutstanding(accountId);
     return -outstanding;
   }
@@ -53,15 +64,23 @@ export async function getAccountBalance(accountId: string): Promise<number> {
 /**
  * Total net balance = sum of all active account balances for the user.
  * Asset accounts (BANK, WALLET, CASH, OTHER) contribute positively;
- * CREDIT_CARD contributes negatively (liability).
+ * CREDIT_CARD (credit) contributes negatively (liability).
+ * Debit cards are excluded — their balance is the same as the linked bank account.
  */
 export async function getTotalBalance(userId: string): Promise<number> {
   const accounts = await prisma.financialAccount.findMany({
     where: { userId, isActive: true },
-    select: { id: true },
+    select: { id: true, type: true, cardAccountType: true, linkedAccountId: true },
+  });
+  const toSum = accounts.filter((a) => {
+    if (a.type !== "CREDIT_CARD") return true;
+    const isDebit =
+      a.cardAccountType?.toLowerCase() === "debit" &&
+      Boolean(a.linkedAccountId?.trim());
+    return !isDebit;
   });
   const balances = await Promise.all(
-    accounts.map((a) => getAccountBalance(a.id))
+    toSum.map((a) => getAccountBalance(a.id))
   );
   return balances.reduce((sum, b) => sum + b, 0);
 }

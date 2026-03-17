@@ -17,7 +17,6 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
-  ChevronUp,
   Trash2,
   CheckCircle,
 } from "lucide-react";
@@ -64,6 +63,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { toast } from "sonner";
@@ -136,7 +140,6 @@ export default function AccountsPage() {
   const [paymentAccount, setPaymentAccount] = useState<FinancialAccount | null>(null);
   const [revealedAccountIds, setRevealedAccountIds] = useState<Set<string>>(new Set());
   const [fullAccountNumbers, setFullAccountNumbers] = useState<Record<string, string>>({});
-  const [expandedCreditCardIds, setExpandedCreditCardIds] = useState<Set<string>>(new Set());
   const [deleteAccount, setDeleteAccount] = useState<FinancialAccount | null>(null);
   const [deletePending, setDeletePending] = useState(false);
   const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
@@ -350,15 +353,6 @@ export default function AccountsPage() {
     } catch {
       toast.error(t("accounts.loadFailed"));
     }
-  }
-
-  function toggleCreditCardDetails(accId: string) {
-    setExpandedCreditCardIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(accId)) next.delete(accId);
-      else next.add(accId);
-      return next;
-    });
   }
 
   async function toggleRevealAccountNumber(acc: FinancialAccount) {
@@ -703,24 +697,25 @@ export default function AccountsPage() {
                           )}
                         </DropdownMenuItem>
                       )}
-                      {acc.type === "CREDIT_CARD" && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={() => openPaymentDialog(acc)}
-                            disabled={acc.isIncomplete}
-                          >
-                            <BanknoteIcon className="mr-2 h-4 w-4" />
-                            {t("accounts.pay")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleCloseStatement(acc)}
-                            disabled={acc.isIncomplete}
-                          >
-                            <FileText className="mr-2 h-4 w-4" />
-                            {t("accounts.closeStatement")}
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                      {acc.type === "CREDIT_CARD" &&
+                        acc.cardAccountType?.toLowerCase() !== "debit" && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => openPaymentDialog(acc)}
+                              disabled={acc.isIncomplete}
+                            >
+                              <BanknoteIcon className="mr-2 h-4 w-4" />
+                              {t("accounts.pay")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleCloseStatement(acc)}
+                              disabled={acc.isIncomplete}
+                            >
+                              <FileText className="mr-2 h-4 w-4" />
+                              {t("accounts.closeStatement")}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       <DropdownMenuItem onClick={() => handleCheck(acc)}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         {t("accounts.markChecked")}
@@ -747,7 +742,35 @@ export default function AccountsPage() {
                         : t("accounts.incompleteAccountWarning")}
                     </div>
                   )}
-                  {acc.type === "CREDIT_CARD" ? (
+                  {acc.type === "CREDIT_CARD" &&
+                  acc.cardAccountType?.toLowerCase() === "debit" ? (
+                    <>
+                      <p
+                        className={`text-2xl font-bold tabular-nums ${
+                          acc.balance < 0
+                            ? "text-red-600 dark:text-red-400"
+                            : ""
+                        }`}
+                      >
+                        ฿{formatAmount(acc.balance)}
+                      </p>
+                      <CardDescription className="mt-1 text-xs">
+                        {t("accounts.lastTransaction")}:{" "}
+                        {formatDate(acc.lastTransactionDate, locale)}
+                      </CardDescription>
+                      {acc.lastCheckedAt && (
+                        <CardDescription className="text-xs">
+                          {t("accounts.lastChecked")}:{" "}
+                          {formatDate(acc.lastCheckedAt, locale)}
+                        </CardDescription>
+                      )}
+                      {acc.isDefault && (
+                        <span className="mt-2 inline-block rounded-full bg-[#D4C9B0] px-2 py-0.5 text-xs dark:bg-stone-700">
+                          {t("accounts.default")}
+                        </span>
+                      )}
+                    </>
+                  ) : acc.type === "CREDIT_CARD" ? (
                     <>
                       <p className="text-2xl font-bold tabular-nums text-red-700 dark:text-red-300">
                         ฿{formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
@@ -755,35 +778,23 @@ export default function AccountsPage() {
                       <p className="mt-1 text-xs text-[#A09080] dark:text-stone-400">
                         {t("accounts.currentOutstanding")}
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => toggleCreditCardDetails(acc.id)}
-                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-xs text-[#A09080] transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
-                        title={
-                          expandedCreditCardIds.has(acc.id)
-                            ? t("accounts.hideDetails")
-                            : t("accounts.showDetails")
-                        }
-                      >
-                        {expandedCreditCardIds.has(acc.id) ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                        <span>
-                          {expandedCreditCardIds.has(acc.id)
-                            ? t("accounts.hideDetails")
-                            : t("accounts.showDetails")}
-                        </span>
-                      </button>
-                      <div
-                        className="grid transition-[grid-template-rows] duration-200 ease-in-out"
-                        style={{
-                          gridTemplateRows: expandedCreditCardIds.has(acc.id) ? "1fr" : "0fr",
-                        }}
-                      >
-                        <div className="min-h-0 overflow-hidden">
-                          <div className="mt-2 space-y-1 text-xs">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-xs text-[#A09080] transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
+                            title={t("accounts.showDetails")}
+                          >
+                            <span>{t("accounts.showDetails")}</span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-72 p-3"
+                          align="center"
+                          side="bottom"
+                          sideOffset={8}
+                        >
+                          <div className="space-y-1.5 text-xs">
                             {acc.creditLimit != null && (
                               <p>
                                 {t("accounts.creditLimit")}: {formatAmount(acc.creditLimit)}
@@ -834,17 +845,8 @@ export default function AccountsPage() {
                               </p>
                             )}
                           </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3 w-full"
-                        onClick={() => openPaymentDialog(acc)}
-                        disabled={acc.isIncomplete}
-                      >
-                        {t("accounts.pay")}
-                      </Button>
+                        </PopoverContent>
+                      </Popover>
                     </>
                   ) : (
                     <>

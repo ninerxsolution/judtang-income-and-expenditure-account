@@ -376,6 +376,7 @@ export const thDictionary = {
     linkedAccountLabel: "บัญชีธนาคารที่ผูกกับบัตร",
     linkedAccountPlaceholder: "เลือกบัญชีธนาคาร",
     linkedAccountRequired: "บัตรเดบิตต้องผูกกับบัญชีธนาคาร",
+    debitCardLinkedTo: "บัตรนี้ของบัญชี",
     incompleteAccountCannotUse:
       "กรุณาเติมข้อมูลธนาคารและเลขบัญชีให้ครบก่อนใช้งาน",
     hideDefaultAccount: "ซ่อนบัญชีหลัก",
