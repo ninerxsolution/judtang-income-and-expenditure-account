@@ -10,6 +10,7 @@ type AccountForIncompleteCheck = {
   creditLimit?: number | string | { toNumber?: () => number } | null;
   interestRate?: number | string | { toNumber?: () => number } | null;
   cardAccountType?: string | null;
+  linkedAccountId?: string | null;
 };
 
 function toNum(
@@ -44,12 +45,20 @@ export function isAccountIncomplete(acc: AccountForIncompleteCheck): boolean {
   if (!hasBank || !hasAccountNumber) return true;
 
   if (acc.type === "CREDIT_CARD") {
+    const hasCardAccountType = Boolean(acc.cardAccountType?.trim());
+    if (!hasCardAccountType) return true;
+
+    const isDebit = acc.cardAccountType?.toLowerCase() === "debit";
+    if (isDebit) {
+      const hasLinkedAccount = Boolean(acc.linkedAccountId?.trim());
+      return !hasLinkedAccount;
+    }
+
     const limit = toNum(acc.creditLimit);
     const rate = toNum(acc.interestRate);
     const hasCreditLimit = limit != null && limit >= 0;
     const hasInterestRate = rate != null && rate >= 0;
-    const hasCardAccountType = Boolean(acc.cardAccountType?.trim());
-    return !hasCreditLimit || !hasInterestRate || !hasCardAccountType;
+    return !hasCreditLimit || !hasInterestRate;
   }
 
   return false;

@@ -55,15 +55,17 @@ async function fetchFinancialAccountsList(
           )
         : null;
 
-      const recentlyChecked =
-        acc.lastCheckedAt != null &&
-        (daysSinceLastChecked ?? 999) < DAYS_INACTIVE_WARNING;
+      // needsAttention: show yellow when BOTH (1) no recent activity AND (2) not recently verified.
+      // Recent activity (transactions) = user has been using the account; no need to prompt.
+      // "Mark as verified" updates lastCheckedAt, which clears the yellow border.
+      const hasRecentActivity =
+        daysSinceLastTransaction != null &&
+        daysSinceLastTransaction < DAYS_INACTIVE_WARNING;
+      const recentlyVerified =
+        daysSinceLastChecked != null &&
+        daysSinceLastChecked < DAYS_LAST_CHECKED_WARNING;
       const needsAttention =
-        (daysSinceLastTransaction != null &&
-          daysSinceLastTransaction >= DAYS_INACTIVE_WARNING &&
-          !recentlyChecked) ||
-        (daysSinceLastChecked != null &&
-          daysSinceLastChecked >= DAYS_LAST_CHECKED_WARNING);
+        !hasRecentActivity && !recentlyVerified;
 
       const isIncomplete = isAccountIncomplete(acc);
 
@@ -105,6 +107,7 @@ async function fetchFinancialAccountsList(
           interestRate: acc.interestRate != null ? Number(acc.interestRate) : null,
           cardAccountType: acc.cardAccountType ?? null,
           cardNetwork: acc.cardNetwork ?? null,
+          linkedAccountId: acc.linkedAccountId ?? null,
           currentOutstanding,
           availableCredit,
           latestStatement: latestStatement
@@ -179,6 +182,7 @@ export async function POST(request: Request) {
     bankName?: string | null;
     accountNumber?: string | null;
     accountNumberMode?: string | null;
+    linkedAccountId?: string | null;
   };
   try {
     body = await request.json();
@@ -241,17 +245,53 @@ export async function POST(request: Request) {
           ? body.cardNetwork.trim()
           : null;
     }
+    if (body.linkedAccountId !== undefined) {
+      const linkedId =
+        typeof body.linkedAccountId === "string" && body.linkedAccountId.trim()
+          ? body.linkedAccountId.trim()
+          : null;
+      if (linkedId) {
+        const linked = await prisma.financialAccount.findFirst({
+          where: { id: linkedId, userId, isActive: true },
+        });
+        if (
+          linked &&
+          (linked.type === "BANK" || linked.type === "WALLET") &&
+          !isAccountIncomplete(linked)
+        ) {
+          createData.linkedAccountId = linkedId;
+        } else {
+          createData.linkedAccountId = null;
+        }
+      } else {
+        createData.linkedAccountId = null;
+      }
+    }
   }
   if (body.bankName !== undefined) {
     createData.bankName = typeof body.bankName === "string" && body.bankName.trim() ? body.bankName.trim() : null;
   }
   if (body.accountNumber !== undefined) {
     const mode = body.accountNumberMode === "FULL" ? "FULL" : "LAST_4_ONLY";
-    const { accountNumber: stored, accountNumberMode: storedMode } =
-      processAccountNumberForStorage(body.accountNumber, mode, type);
-    if (stored !== null) {
-      createData.accountNumber = stored;
-      createData.accountNumberMode = storedMode;
+    try {
+      const { accountNumber: stored, accountNumberMode: storedMode } =
+        processAccountNumberForStorage(body.accountNumber, mode, type);
+      if (stored !== null) {
+        createData.accountNumber = stored;
+        createData.accountNumberMode = storedMode;
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("ENCRYPTION_KEY") || msg.includes("encryption")) {
+        return NextResponse.json(
+          {
+            error:
+              "Full account number storage requires ENCRYPTION_KEY to be configured on the server. Please contact support or use last-4-digits mode.",
+          },
+          { status: 400 }
+        );
+      }
+      throw e;
     }
   }
 

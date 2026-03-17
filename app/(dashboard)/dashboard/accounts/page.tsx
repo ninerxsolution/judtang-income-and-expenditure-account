@@ -741,7 +741,9 @@ export default function AccountsPage() {
                   {acc.isIncomplete && (
                     <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950/50 dark:text-red-300">
                       {acc.type === "CREDIT_CARD"
-                        ? t("accounts.incompleteCreditCardWarning")
+                        ? (acc.cardAccountType?.toLowerCase() === "debit"
+                          ? t("accounts.incompleteDebitCardWarning")
+                          : t("accounts.incompleteCreditCardWarning"))
                         : t("accounts.incompleteAccountWarning")}
                     </div>
                   )}

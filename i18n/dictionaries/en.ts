@@ -378,6 +378,11 @@ export const enDictionary = {
       "Please add bank and account/card number before using.",
     incompleteCreditCardWarning:
       "Please add bank, card number, credit limit, interest rate, and card type (credit/debit) before using.",
+    incompleteDebitCardWarning:
+      "Please add bank, card number, card type, and linked bank account for debit card.",
+    linkedAccountLabel: "Linked bank account",
+    linkedAccountPlaceholder: "Select bank account",
+    linkedAccountRequired: "Debit card must be linked to a bank account",
     incompleteAccountCannotUse:
       "Please complete bank and account number before using.",
     hideDefaultAccount: "Hide default account",

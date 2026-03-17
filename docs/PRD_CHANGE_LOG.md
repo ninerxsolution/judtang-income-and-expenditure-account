@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 17/03/2026 (Feedback: accounts yellow border, bank account number, debit card)
+
+- docs/feature/financial-accounts.md — needsAttention logic (last activity + last verified); debit card: optional bill due/interest, linkedAccountId; account number: no silent fallback when encryption fails.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 16/03/2026 (Account Lifecycle — deactivate, restore)
 
 - docs/feature/account-lifecycle.md — New: Account lifecycle (deactivate, grace period, restore), data model, logic, APIs, UI, Activity Log.

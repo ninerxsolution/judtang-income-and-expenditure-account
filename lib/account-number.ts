@@ -53,13 +53,10 @@ export function processAccountNumberForStorage(
   if (type === "BANK" || type === "WALLET") {
     const mode = accountNumberMode === "FULL" ? "FULL" : "LAST_4_ONLY";
     if (mode === "FULL" && digits.length >= 4) {
-      try {
-        const ciphertext = encrypt(digits);
-        return { accountNumber: ciphertext, accountNumberMode: "FULL" };
-      } catch {
-        const last4 = digits.slice(-4);
-        return { accountNumber: last4, accountNumberMode: "LAST_4_ONLY" };
-      }
+      // Do not silently fall back to LAST_4_ONLY when encryption fails.
+      // User explicitly chose full-number storage; failing silently would save wrong format.
+      const ciphertext = encrypt(digits);
+      return { accountNumber: ciphertext, accountNumberMode: "FULL" };
     }
     const last4 = digits.slice(-4);
     return last4.length === 4

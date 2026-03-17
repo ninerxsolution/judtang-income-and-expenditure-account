@@ -371,6 +371,11 @@ export const thDictionary = {
     incompleteAccountWarning: "กรุณาระบุธนาคารและเลขบัญชี/เลขบัตรก่อนใช้งาน",
     incompleteCreditCardWarning:
       "กรุณาระบุธนาคาร เลขบัตร วงเงิน ดอกเบี้ย และประเภทบัตร (เครดิต/เดบิต) ให้ครบก่อนใช้งาน",
+    incompleteDebitCardWarning:
+      "กรุณาระบุธนาคาร เลขบัตร ประเภทบัตร และบัญชีธนาคารที่ผูกกับบัตรเดบิต",
+    linkedAccountLabel: "บัญชีธนาคารที่ผูกกับบัตร",
+    linkedAccountPlaceholder: "เลือกบัญชีธนาคาร",
+    linkedAccountRequired: "บัตรเดบิตต้องผูกกับบัญชีธนาคาร",
     incompleteAccountCannotUse:
       "กรุณาเติมข้อมูลธนาคารและเลขบัญชีให้ครบก่อนใช้งาน",
     hideDefaultAccount: "ซ่อนบัญชีหลัก",
