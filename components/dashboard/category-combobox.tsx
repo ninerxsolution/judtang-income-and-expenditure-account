@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; nameEn?: string | null };
 
 type CategoryComboboxProps = {
   id?: string;
@@ -29,9 +29,11 @@ function filterCategories(
   const q = query.trim().toLowerCase();
   if (!q) return categories;
   return categories.filter((c) => {
-    const displayName = getCategoryDisplayName(c.name, localeKey);
+    const displayName = getCategoryDisplayName(c.name, localeKey, c.nameEn);
     return (
-      displayName.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
+      displayName.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      (c.nameEn?.toLowerCase().includes(q) ?? false)
     );
   });
 }
@@ -58,7 +60,13 @@ export function CategoryCombobox({
 
   const displayValue = open
     ? searchQuery
-    : (selectedCategory && getCategoryDisplayName(selectedCategory.name, localeKey)) ?? "";
+    : (selectedCategory &&
+        getCategoryDisplayName(
+          selectedCategory.name,
+          localeKey,
+          selectedCategory.nameEn
+        )) ??
+      "";
 
   function closeDropdown() {
     setSearchQuery("");
@@ -151,7 +159,7 @@ export function CategoryCombobox({
                       handleSelect(cat.id);
                     }}
                   >
-                    {getCategoryDisplayName(cat.name, localeKey)}
+                    {getCategoryDisplayName(cat.name, localeKey, cat.nameEn)}
                   </button>
                 );
               })}

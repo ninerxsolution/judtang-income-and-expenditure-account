@@ -83,7 +83,7 @@ type Transaction = {
   amount: number;
   financialAccount?: { id: string; name: string } | null;
   transferAccount?: { id: string; name: string } | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -900,7 +900,8 @@ export default function AccountDetailPage() {
                           <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
                             {getCategoryDisplayName(
                               tx.categoryRef?.name ?? tx.category ?? "",
-                              localeKey
+                              localeKey,
+                              tx.categoryRef?.nameEn
                             ) || "—"}
                           </td>
                           <td className="px-4 py-2 text-[#6B5E4E] dark:text-stone-300">

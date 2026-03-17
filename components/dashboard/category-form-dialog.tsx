@@ -18,6 +18,7 @@ type CategoryFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   editId?: string | null;
   editName?: string | null;
+  editNameEn?: string | null;
   onSuccess?: () => void;
 };
 
@@ -26,10 +27,12 @@ export function CategoryFormDialog({
   onOpenChange,
   editId,
   editName,
+  editNameEn,
   onSuccess,
 }: CategoryFormDialogProps) {
   const { t } = useI18n();
   const [name, setName] = useState("");
+  const [nameEn, setNameEn] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,12 +40,14 @@ export function CategoryFormDialog({
     if (!open) return;
     if (!editId) {
       setName("");
+      setNameEn("");
       setError(null);
       return;
     }
     setName(editName ?? "");
+    setNameEn(editNameEn ?? "");
     setError(null);
-  }, [open, editId, editName]);
+  }, [open, editId, editName, editNameEn]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,13 +59,14 @@ export function CategoryFormDialog({
       return;
     }
 
+    const trimmedEn = nameEn.trim() || undefined;
     setPending(true);
     try {
       if (editId) {
         const res = await fetch(`/api/categories/${editId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmed }),
+          body: JSON.stringify({ name: trimmed, nameEn: trimmedEn }),
         });
         const data = (await res.json()) as { error?: string };
         if (!res.ok) {
@@ -70,7 +76,7 @@ export function CategoryFormDialog({
         const res = await fetch("/api/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmed }),
+          body: JSON.stringify({ name: trimmed, nameEn: trimmedEn }),
         });
         const data = (await res.json()) as { error?: string };
         if (!res.ok) {
@@ -95,7 +101,7 @@ export function CategoryFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <DialogBody className="space-y-4">
+          <DialogBody className="space-y-4 pb-2">
           <FormField
             id="category-form-name"
             label={t("settings.categories.addPlaceholder")}
@@ -103,6 +109,13 @@ export function CategoryFormDialog({
             value={name}
             onChange={setName}
             required
+          />
+          <FormField
+            id="category-form-name-en"
+            label={t("settings.categories.nameEnPlaceholder")}
+            type="text"
+            value={nameEn}
+            onChange={setNameEn}
           />
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

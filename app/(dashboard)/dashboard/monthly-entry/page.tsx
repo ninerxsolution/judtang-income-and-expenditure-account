@@ -50,7 +50,7 @@ type RowEntry = {
   note: string;
 };
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; nameEn?: string | null };
 
 type ExistingTransaction = {
   id: string;
@@ -70,7 +70,7 @@ type ExistingTransaction = {
     bankName?: string | null;
     cardNetwork?: string | null;
   } | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -183,7 +183,7 @@ export default function MonthlyEntryPage() {
   }, [localeKey]);
 
   const yearRange = useMemo(() => {
-    const current = now.getFullYear();
+    const current = new Date().getFullYear();
     return Array.from({ length: 11 }, (_, i) => current - 5 + i);
   }, []);
 
@@ -918,7 +918,7 @@ export default function MonthlyEntryPage() {
                               }
                               options={categories.map((c) => ({
                                 value: c.id,
-                                label: getCategoryDisplayName(c.name, language),
+                                label: getCategoryDisplayName(c.name, language, c.nameEn),
                               }))}
                               allowEmpty
                               emptyLabel={t("monthlyEntry.category")}
@@ -1019,7 +1019,11 @@ export default function MonthlyEntryPage() {
                         </span>
                         <span className="text-muted-foreground text-xs truncate">
                           {tx.categoryRef?.name
-                            ? getCategoryDisplayName(tx.categoryRef.name, language)
+                            ? getCategoryDisplayName(
+                                tx.categoryRef.name,
+                                language,
+                                tx.categoryRef.nameEn
+                              )
                             : tx.category ?? ""}
                         </span>
                         {tx.note && (
@@ -1109,7 +1113,7 @@ export default function MonthlyEntryPage() {
                           }
                           options={categories.map((c) => ({
                             value: c.id,
-                            label: getCategoryDisplayName(c.name, language),
+                            label: getCategoryDisplayName(c.name, language, c.nameEn),
                           }))}
                           allowEmpty
                           emptyLabel={t("monthlyEntry.category")}

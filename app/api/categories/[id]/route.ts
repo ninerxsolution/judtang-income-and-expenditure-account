@@ -22,7 +22,7 @@ export async function PATCH(
 
   const { id } = await params;
 
-  let body: { name?: string };
+  let body: { name?: string; nameEn?: string };
   try {
     body = await request.json();
   } catch {
@@ -37,12 +37,14 @@ export async function PATCH(
     );
   }
 
+  const nameEn = typeof body.nameEn === "string" ? body.nameEn : undefined;
   try {
-    const category = await updateCategory(userId, id, name);
-    revalidateTag("categories", "max");
+    const category = await updateCategory(userId, id, name, nameEn);
+    revalidateTag("categories", { expire: 0 });
     return NextResponse.json({
       id: category.id,
       name: category.name,
+      nameEn: category.nameEn,
       createdAt: category.createdAt.toISOString(),
       isDefault: category.isDefault,
     });
@@ -70,7 +72,7 @@ export async function DELETE(
     if (!deleted) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    revalidateTag("categories", "max");
+    revalidateTag("categories", { expire: 0 });
     return NextResponse.json({ ok: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to delete category";

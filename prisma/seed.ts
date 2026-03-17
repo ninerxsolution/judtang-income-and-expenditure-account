@@ -415,7 +415,7 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
   const primaryCard = ctx.creditCards[0]!;
 
   let totalTx = 0;
-  const expenseCategories = ["อาหาร", "ค่าขนส่ง", "ค่าที่พัก", "ค่าน้ำค่าไฟ", "ค่าอินเทอร์เน็ต", "ช้อปปิ้ง", "ค่าอื่นๆ", "ของขวัญ", "ค่ารักษาพยาบาล", "เงินออม"] as const;
+  const expenseCategories = ["อาหาร", "ค่าที่พัก", "ค่าน้ำค่าไฟ", "ค่าอินเทอร์เน็ต", "ช้อปปิ้ง", "ค่าอื่นๆ", "ของขวัญ", "ค่ารักษาพยาบาล", "เงินออม"] as const;
 
   for (let d = 0; d <= DAYS_BACK; d++) {
     const dayStart = addDays(startDate, d);
@@ -508,7 +508,6 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
         const categoryChoice = pick(expenseCategories);
         const range =
           categoryChoice === "อาหาร" ? EXPENSE_RANGES.food
-            : categoryChoice === "ค่าขนส่ง" ? EXPENSE_RANGES.transport
             : categoryChoice === "ช้อปปิ้ง" ? EXPENSE_RANGES.shopping
             : categoryChoice === "เงินออม" ? EXPENSE_RANGES.savings
             : EXPENSE_RANGES.other;
@@ -896,7 +895,6 @@ async function seedBudgets(ctx: SeedContext): Promise<void> {
   const cat = (name: string) => ctx.categoryMap[name]?.id ?? null;
   const standardLimits = [
     { categoryId: cat("อาหาร"), limitAmount: 6000 },
-    { categoryId: cat("ค่าขนส่ง"), limitAmount: 2000 },
     { categoryId: cat("ช้อปปิ้ง"), limitAmount: 3500 },
     { categoryId: cat("ค่าน้ำค่าไฟ"), limitAmount: 1500 },
     { categoryId: cat("ค่าอินเทอร์เน็ต"), limitAmount: 800 },
@@ -905,7 +903,6 @@ async function seedBudgets(ctx: SeedContext): Promise<void> {
 
   const savingLimits = [
     { categoryId: cat("อาหาร"), limitAmount: 4000 },
-    { categoryId: cat("ค่าขนส่ง"), limitAmount: 1500 },
     { categoryId: cat("ช้อปปิ้ง"), limitAmount: 1500 },
     { categoryId: cat("ค่าน้ำค่าไฟ"), limitAmount: 1200 },
     { categoryId: cat("ค่าอินเทอร์เน็ต"), limitAmount: 700 },
@@ -956,7 +953,6 @@ async function seedBudgets(ctx: SeedContext): Promise<void> {
         categoryLimits: [
           { categoryId: cat("อาหาร")!, limitAmount: 2000 },
           { categoryId: cat("ช้อปปิ้ง")!, limitAmount: 500 },
-          { categoryId: cat("ค่าขนส่ง")!, limitAmount: 800 },
         ].filter((r) => r.categoryId != null) as { categoryId: string; limitAmount: number }[],
       });
     } else if (i === 1) {
@@ -966,7 +962,6 @@ async function seedBudgets(ctx: SeedContext): Promise<void> {
         totalBudget: 20000,
         categoryLimits: [
           { categoryId: cat("อาหาร")!, limitAmount: 4500 },
-          { categoryId: cat("ค่าขนส่ง")!, limitAmount: 1500 },
           { categoryId: cat("ช้อปปิ้ง")!, limitAmount: 2500 },
           { categoryId: cat("ค่าน้ำค่าไฟ")!, limitAmount: 1200 },
           { categoryId: cat("ค่าอื่นๆ")!, limitAmount: 1500 },

@@ -522,6 +522,7 @@ export const thDictionary = {
       defaultLabel: "ค่าเริ่มต้น",
       customLabel: "ที่สร้างเอง",
       addPlaceholder: "ชื่อหมวดหมู่",
+      nameEnPlaceholder: "ชื่อหมวดหมู่ (ภาษาอังกฤษ)",
       addButton: "เพิ่ม",
       deletePending: "กำลังลบ…",
       addTitle: "เพิ่มหมวดหมู่",

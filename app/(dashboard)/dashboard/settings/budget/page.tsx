@@ -654,7 +654,7 @@ export default function BudgetSettingsPage() {
 
   const totalBudgetNum = budget?.totalBudget ?? null;
   const totalSpent = budget?.totalSpent ?? 0;
-  const remaining =
+  const _remaining =
     totalBudgetNum != null ? totalBudgetNum - totalSpent : null;
   const selectedMonthLabel = t(`summary.months.${month - 1}`);
   const selectedPeriodLabel = `${selectedMonthLabel} ${formatYearForDisplay(

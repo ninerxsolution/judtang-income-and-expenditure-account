@@ -1488,7 +1488,7 @@ export function SlipUploadDialog({
                                           <option value="">—</option>
                                           {categories.map((category) => (
                                             <option key={category.id} value={category.id}>
-                                              {getCategoryDisplayName(category.name, localeKey)}
+                                              {getCategoryDisplayName(category.name, localeKey, category.nameEn)}
                                             </option>
                                           ))}
                                         </select>

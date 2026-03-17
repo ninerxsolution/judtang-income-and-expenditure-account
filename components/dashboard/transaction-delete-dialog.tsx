@@ -20,6 +20,7 @@ type Transaction = {
   type: "INCOME" | "EXPENSE" | string;
   amount: number;
   category: string | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   note?: string | null;
   occurredAt?: string;
 };
@@ -81,7 +82,15 @@ export function TransactionDeleteDialog({
                     ? t("transactions.common.income")
                     : t("transactions.common.expense")}{" "}
                   {formatAmount(transaction.amount)}
-                  {transaction.category && ` · ${getCategoryDisplayName(transaction.category, localeKey)}`}
+                  {transaction.categoryRef
+                    ? ` · ${getCategoryDisplayName(
+                        transaction.categoryRef.name,
+                        localeKey,
+                        transaction.categoryRef.nameEn
+                      )}`
+                    : transaction.category
+                      ? ` · ${getCategoryDisplayName(transaction.category, localeKey)}`
+                      : null}
                 </span>
               </>
             ) : (

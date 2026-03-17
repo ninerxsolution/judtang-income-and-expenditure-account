@@ -532,6 +532,7 @@ export const enDictionary = {
       defaultLabel: "Default",
       customLabel: "Custom",
       addPlaceholder: "Category name",
+      nameEnPlaceholder: "Category name (English)",
       addButton: "Add",
       deletePending: "Deleting…",
       addTitle: "Add category",

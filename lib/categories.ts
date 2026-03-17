@@ -3,12 +3,12 @@ import { prisma } from "@/lib/prisma";
 export const DEFAULT_CATEGORY_NAMES = [
   "เงินเดือน",
   "อาหาร",
-  "ค่าขนส่ง",
   "ค่าที่พัก",
   "ค่าน้ำค่าไฟ",
   "ค่าอินเทอร์เน็ต",
+  "ค่าสมัครสมาชิก",
   "ช้อปปิ้ง",
-  "ค่าอื่นๆ",
+  "อื่นๆ",
 ] as const;
 
 export async function ensureUserHasDefaultCategories(userId: string): Promise<void> {
@@ -44,7 +44,11 @@ export async function getCategoryById(userId: string, id: string) {
   });
 }
 
-export async function createCategory(userId: string, name: string) {
+export async function createCategory(
+  userId: string,
+  name: string,
+  nameEn?: string | null
+) {
   const trimmed = name.trim();
   if (!trimmed) {
     throw new Error("Category name is required");
@@ -58,12 +62,18 @@ export async function createCategory(userId: string, name: string) {
     throw new Error("Category with this name already exists");
   }
 
+  const trimmedEn = typeof nameEn === "string" ? nameEn.trim() || null : null;
   return prisma.category.create({
-    data: { userId, name: trimmed, isDefault: false },
+    data: { userId, name: trimmed, nameEn: trimmedEn, isDefault: false },
   });
 }
 
-export async function updateCategory(userId: string, id: string, name: string) {
+export async function updateCategory(
+  userId: string,
+  id: string,
+  name: string,
+  nameEn?: string | null
+) {
   const trimmed = name.trim();
   if (!trimmed) {
     throw new Error("Category name is required");
@@ -89,9 +99,10 @@ export async function updateCategory(userId: string, id: string, name: string) {
     throw new Error("Category with this name already exists");
   }
 
+  const trimmedEn = typeof nameEn === "string" ? nameEn.trim() || null : null;
   return prisma.category.update({
     where: { id },
-    data: { name: trimmed },
+    data: { name: trimmed, nameEn: trimmedEn },
   });
 }
 

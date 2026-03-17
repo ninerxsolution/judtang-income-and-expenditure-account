@@ -173,7 +173,11 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
                         {(tx.categoryRef?.name ?? tx.category) ? (
                           <>
                             <span className="text-[#3D3020] dark:text-stone-200">
-                              {getCategoryDisplayName(tx.categoryRef?.name ?? tx.category ?? "", localeKey)}
+                              {getCategoryDisplayName(
+                                tx.categoryRef?.name ?? tx.category ?? "",
+                                localeKey,
+                                tx.categoryRef?.nameEn
+                              )}
                             </span>
                             {tx.financialAccount && (
                               <span className="ml-1.5 text-[#A09080] dark:text-stone-400 text-xs">
@@ -227,7 +231,11 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
                     </span>
                     {(tx.categoryRef?.name ?? tx.category) && (
                       <span className="ml-2 text-[#3D3020] dark:text-stone-200">
-                        · {getCategoryDisplayName(tx.categoryRef?.name ?? tx.category ?? "", localeKey)}
+                        · {getCategoryDisplayName(
+                                tx.categoryRef?.name ?? tx.category ?? "",
+                                localeKey,
+                                tx.categoryRef?.nameEn
+                              )}
                       </span>
                     )}
                     {tx.financialAccount && (

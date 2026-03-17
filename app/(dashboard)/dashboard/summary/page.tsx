@@ -38,7 +38,12 @@ import { getCategoryDisplayName } from "@/lib/categories-display";
 
 type Summary = { income: number; expense: number; totalBalance?: number } | null;
 type MonthItem = { monthIndex: number; income: number; expense: number };
-type CategoryItem = { categoryId: string | null; categoryName: string; amount: number };
+type CategoryItem = {
+  categoryId: string | null;
+  categoryName: string;
+  categoryNameEn?: string | null;
+  amount: number;
+};
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -176,7 +181,7 @@ export default function SummaryPage() {
   const pieData = useMemo(
     () =>
       categoryData.map((d) => ({
-        name: getCategoryDisplayName(d.categoryName, language),
+        name: getCategoryDisplayName(d.categoryName, language, d.categoryNameEn),
         value: d.amount,
       })),
     [categoryData, language],

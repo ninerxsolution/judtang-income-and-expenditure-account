@@ -39,7 +39,7 @@ type Transaction = {
   amount: number;
   financialAccount?: { id: string; name: string } | null;
   transferAccount?: { id: string; name: string } | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -346,7 +346,7 @@ export default function TransactionsPage() {
                   <option value="">{t("dataTools.export.typeAll")}</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                      {getCategoryDisplayName(cat.name, language, cat.nameEn)}
                     </option>
                   ))}
                 </select>
@@ -430,7 +430,7 @@ export default function TransactionsPage() {
                       <option value="">{t("dataTools.export.typeAll")}</option>
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
-                          {cat.name}
+                          {getCategoryDisplayName(cat.name, language, cat.nameEn)}
                         </option>
                       ))}
                     </select>
@@ -532,10 +532,12 @@ export default function TransactionsPage() {
                 {items.map((tx) => {
                   const isIncome = tx.type === "INCOME";
                   const isTransfer = tx.type === "TRANSFER";
-                  const categoryDisplay = getCategoryDisplayName(
-                    tx.categoryRef?.name ?? tx.category ?? "",
-                    localeKey
-                  ) || "";
+                  const categoryDisplay =
+                    getCategoryDisplayName(
+                      tx.categoryRef?.name ?? tx.category ?? "",
+                      localeKey,
+                      tx.categoryRef?.nameEn
+                    ) || "";
                   const accountDisplay = isTransfer && tx.transferAccount
                     ? t("transactions.list.transferTo", {
                         account: tx.transferAccount.name,
