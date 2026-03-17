@@ -86,7 +86,7 @@ describe("createCategory", () => {
       isDefault: false,
     });
     expect(mockCategoryCreate).toHaveBeenCalledWith({
-      data: { userId: "user-1", name: "Custom", isDefault: false },
+      data: { userId: "user-1", name: "Custom", nameEn: null, isDefault: false },
     });
   });
 
@@ -95,7 +95,7 @@ describe("createCategory", () => {
 
     await createCategory("user-1", "  Custom  ");
     expect(mockCategoryCreate).toHaveBeenCalledWith({
-      data: { userId: "user-1", name: "Custom", isDefault: false },
+      data: { userId: "user-1", name: "Custom", nameEn: null, isDefault: false },
     });
   });
 });
@@ -169,7 +169,7 @@ describe("updateCategory", () => {
     });
     expect(mockCategoryUpdate).toHaveBeenCalledWith({
       where: { id: "cat-1" },
-      data: { name: "Updated" },
+      data: { name: "Updated", nameEn: null },
     });
   });
 });

@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Tag, Lock, Plus, Pencil, Trash2, Check } from "lucide-react";
+import { Tag, Plus, Pencil, Trash2, Check, X, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -22,6 +28,7 @@ import { toast } from "sonner";
 type Category = {
   id: string;
   name: string;
+  nameEn?: string | null;
   createdAt: string;
   isDefault?: boolean;
 };
@@ -38,6 +45,7 @@ export function CategorySettings() {
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
   const [formEditName, setFormEditName] = useState<string | null>(null);
+  const [formEditNameEn, setFormEditNameEn] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deletePending, setDeletePending] = useState(false);
 
@@ -92,6 +100,7 @@ export function CategorySettings() {
   function openEdit(cat: Category) {
     setFormEditId(cat.id);
     setFormEditName(cat.name);
+    setFormEditNameEn(cat.nameEn ?? null);
     setFormOpen(true);
   }
 
@@ -173,10 +182,10 @@ export function CategorySettings() {
                 {defaultCategories.map((c) => (
                   <span
                     key={c.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900/60"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#D4C9B0] bg-[#eeeeed] px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900/60"
                   >
-                    <Lock className="h-3.5 w-3.5 shrink-0 text-[#A09080]" />
-                    {getCategoryDisplayName(c.name, localeKey)}
+                    {/* <Lock className="h-3.5 w-3.5 shrink-0 text-[#A09080]" /> */}
+                    {getCategoryDisplayName(c.name, localeKey, c.nameEn)}
                   </span>
                 ))}
               </div>
@@ -199,25 +208,33 @@ export function CategorySettings() {
                   key={c.id}
                   className="inline-flex items-center gap-1 rounded-full border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900/60"
                 >
-                  {getCategoryDisplayName(c.name, localeKey)}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-[#F5F0E8] dark:hover:bg-stone-800"
-                    onClick={() => openEdit(c)}
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 -mr-1 rounded-full text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:hover:text-red-300"
-                    onClick={() => setDeleteId(c.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {getCategoryDisplayName(c.name, localeKey, c.nameEn)}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-[#F5F0E8] dark:hover:bg-stone-800"
+                        aria-label={t("notifications.moreOptions")}
+                      >
+                        <MoreVertical className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEdit(c)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                        {t("common.actions.edit")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setDeleteId(c.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        {t("settings.categories.delete")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </span>
               ))}
 
@@ -242,6 +259,19 @@ export function CategorySettings() {
                       }
                     }}
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 -mr-1 rounded-full hover:bg-muted hover:text-muted-foreground"
+                    onClick={() => {
+                      setAddExpanded(false);
+                      setAddName("");
+                    }}
+                    aria-label={t("common.actions.cancel")}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
@@ -275,10 +305,12 @@ export function CategorySettings() {
           if (!open) {
             setFormEditId(null);
             setFormEditName(null);
+            setFormEditNameEn(null);
           }
         }}
         editId={formEditId}
         editName={formEditName}
+        editNameEn={formEditNameEn}
         onSuccess={fetchCategories}
       />
 

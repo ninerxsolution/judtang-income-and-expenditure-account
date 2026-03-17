@@ -265,7 +265,7 @@ type SerializableTransaction = {
   transferAccountId: string | null;
   transferAccount: { id: string; name: string } | null;
   categoryId: string | null;
-  categoryRef: { id: string; name: string } | null;
+  categoryRef: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -345,7 +345,7 @@ async function fetchTransactionsList(
     const tx = t as TxItem & {
       financialAccount?: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
       transferAccount?: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
-      categoryRef?: { id: string; name: string } | null;
+      categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
     };
     return {
       id: tx.id,

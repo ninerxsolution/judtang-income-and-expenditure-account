@@ -2,6 +2,20 @@
 
 ---
 
+# v0.9.23 - 2026-03-17
+
+## Added
+
+- **Category English name (nameEn)** — Categories now support an optional English name. When the app language is English, category names display in English when `nameEn` is set; default categories fall back to built-in translations (e.g. อาหาร → Food). Custom categories can set `nameEn` when creating or editing in Settings → Categories.
+- **getCategoryDisplayName** — New helper in `lib/categories-display.ts` for locale-aware category display across the app (transaction forms, lists, monthly entry, etc.).
+
+## Changed
+
+- **Category API** — POST and PATCH `/api/categories` now accept optional `nameEn` in the request body.
+- **Category form** — Add/Edit dialog includes an optional "Category name (English)" field.
+
+---
+
 # v0.9.22 - 2026-03-16
 
 ## Added

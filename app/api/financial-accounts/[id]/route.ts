@@ -31,6 +31,9 @@ export async function GET(
 
   const account = await prisma.financialAccount.findFirst({
     where: { id, userId },
+    include: {
+      linkedAccount: { select: { id: true, name: true, bankName: true } },
+    },
   });
 
   if (!account) {
@@ -91,6 +94,15 @@ export async function GET(
       getAvailableCredit(account.id),
       getLatestStatement(account.id),
     ]);
+    const linkedAccount =
+      account.linkedAccount != null
+        ? {
+            id: account.linkedAccount.id,
+            name: account.linkedAccount.name,
+            bankName: account.linkedAccount.bankName ?? null,
+          }
+        : null;
+
     return NextResponse.json({
       ...base,
       creditLimit: account.creditLimit != null ? Number(account.creditLimit) : null,
@@ -100,6 +112,7 @@ export async function GET(
       cardAccountType: account.cardAccountType ?? null,
       cardNetwork: account.cardNetwork ?? null,
       linkedAccountId: account.linkedAccountId ?? null,
+      linkedAccount,
       currentOutstanding,
       availableCredit,
       latestStatement: latestStatement

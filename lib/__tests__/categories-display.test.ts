@@ -18,7 +18,17 @@ describe("categories-display", () => {
       expect(getCategoryDisplayName("อาหาร", "en")).toBe("Food");
     });
     it("returns custom category name as-is for en when not in defaults", () => {
-      expect(getCategoryDisplayName("Custom Category", "en")).toBe("Custom Category");
+      expect(getCategoryDisplayName("Custom Category", "en")).toBe(
+        "Custom Category"
+      );
+    });
+    it("uses nameEn when locale is en and nameEn is provided", () => {
+      expect(
+        getCategoryDisplayName("เงินออม", "en", "Savings")
+      ).toBe("Savings");
+      expect(
+        getCategoryDisplayName("ของขวัญ", "en", "Gift")
+      ).toBe("Gift");
     });
   });
 

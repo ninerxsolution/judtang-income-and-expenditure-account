@@ -101,7 +101,7 @@ async function fetchDashboardInit(userId: string) {
     const t = tx as TxItem & {
       financialAccount?: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
       transferAccount?: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
-      categoryRef?: { id: string; name: string } | null;
+      categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
     };
     return {
       id: t.id,

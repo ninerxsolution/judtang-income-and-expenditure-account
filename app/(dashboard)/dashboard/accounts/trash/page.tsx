@@ -34,6 +34,7 @@ type FinancialAccount = {
   creditLimit?: number | null;
   currentOutstanding?: number;
   availableCredit?: number | null;
+  cardAccountType?: string | null;
 };
 
 const ACCOUNT_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -184,7 +185,9 @@ export default function AccountsTrashPage() {
                       )}
                   </p>
                   <p className="text-lg font-semibold">
-                    {acc.type === "CREDIT_CARD" && acc.currentOutstanding != null
+                    {acc.type === "CREDIT_CARD" &&
+                    acc.cardAccountType?.toLowerCase() !== "debit" &&
+                    acc.currentOutstanding != null
                       ? formatAmount(acc.currentOutstanding)
                       : formatAmount(acc.balance)}
                   </p>

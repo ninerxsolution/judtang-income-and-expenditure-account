@@ -266,7 +266,9 @@ export async function listTransactionsByUser(
     searchOr.push({ financialAccount: { name: { contains: q } } });
     searchOr.push({ transferAccount: { name: { contains: q } } });
     searchOr.push({ categoryRef: { name: { contains: q } } });
-    const num = Number.parseFloat(q);
+    // Normalize amount search: strip thousand separators (e.g. "1,545.75" -> "1545.75")
+    const amountStr = q.replace(/,/g, "");
+    const num = Number.parseFloat(amountStr);
     if (Number.isFinite(num) && num > 0) {
       searchOr.push({ amount: { equals: new Prisma.Decimal(num) } });
     }
@@ -312,7 +314,7 @@ export async function listTransactionsByUser(
           accountNumberMode: true,
         },
       },
-      categoryRef: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true, nameEn: true } },
     },
   });
 }
@@ -324,7 +326,7 @@ export async function getTransactionById(userId: string, id: string) {
     include: {
       financialAccount: { select: { id: true, name: true } },
       transferAccount: { select: { id: true, name: true } },
-      categoryRef: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true, nameEn: true } },
     },
   });
 }
@@ -427,7 +429,7 @@ export async function updateTransaction(
     include: {
       financialAccount: { select: { id: true, name: true } },
       transferAccount: { select: { id: true, name: true } },
-      categoryRef: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true, nameEn: true } },
     },
   });
 
@@ -727,6 +729,7 @@ export type SummaryByCategoryOptions = {
 export type SummaryByCategoryItem = {
   categoryId: string | null;
   categoryName: string;
+  categoryNameEn?: string | null;
   amount: number;
 };
 
@@ -750,16 +753,20 @@ export async function getSummaryByCategory(
       amount: true,
       categoryId: true,
       category: true,
-      categoryRef: { select: { name: true } },
+      categoryRef: { select: { name: true, nameEn: true } },
     },
   });
 
-  const map = new Map<string, { categoryId: string | null; categoryName: string; amount: number }>();
+  const map = new Map<
+    string,
+    { categoryId: string | null; categoryName: string; categoryNameEn?: string | null; amount: number }
+  >();
   for (const tx of transactions) {
     const name =
       tx.categoryRef?.name ??
       (tx.category && tx.category.trim() ? tx.category.trim() : null) ??
       "—";
+    const nameEn = tx.categoryRef?.nameEn ?? null;
     const key = tx.categoryId ?? `str:${name}`;
     const prev = map.get(key);
     const amt = Number(tx.amount) || 0;
@@ -769,6 +776,7 @@ export async function getSummaryByCategory(
       map.set(key, {
         categoryId: tx.categoryId,
         categoryName: name,
+        categoryNameEn: nameEn,
         amount: amt,
       });
     }

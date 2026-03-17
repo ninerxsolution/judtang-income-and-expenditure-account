@@ -10,12 +10,17 @@ import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } fro
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
-async function fetchCategoriesList(userId: string): Promise<{ id: string; name: string; createdAt: string; isDefault: boolean }[]> {
+async function fetchCategoriesList(
+  userId: string
+): Promise<
+  { id: string; name: string; nameEn: string | null; createdAt: string; isDefault: boolean }[]
+> {
   const categories = await listCategoriesByUser(userId);
   type CategoryItem = (typeof categories)[number];
   return categories.map((c: CategoryItem) => ({
     id: c.id,
     name: c.name,
+    nameEn: c.nameEn,
     createdAt: c.createdAt.toISOString(),
     isDefault: c.isDefault,
   }));
@@ -54,7 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { name?: string };
+  let body: { name?: string; nameEn?: string };
   try {
     body = await request.json();
   } catch {
@@ -69,12 +74,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const nameEn = typeof body.nameEn === "string" ? body.nameEn : undefined;
   try {
-    const category = await createCategory(userId, name);
-    revalidateTag("categories", "max");
+    const category = await createCategory(userId, name, nameEn);
+    revalidateTag("categories", { expire: 0 });
     return NextResponse.json({
       id: category.id,
       name: category.name,
+      nameEn: category.nameEn,
       createdAt: category.createdAt.toISOString(),
       isDefault: category.isDefault,
     });

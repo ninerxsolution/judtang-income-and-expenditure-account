@@ -38,6 +38,7 @@ import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
 import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
@@ -73,6 +74,8 @@ type FinancialAccount = {
   cardAccountType?: string | null;
   cardNetwork?: string | null;
   isIncomplete?: boolean;
+  linkedAccountId?: string | null;
+  linkedAccount?: { id: string; name: string; bankName: string | null } | null;
 };
 
 type Transaction = {
@@ -81,7 +84,7 @@ type Transaction = {
   amount: number;
   financialAccount?: { id: string; name: string } | null;
   transferAccount?: { id: string; name: string } | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -130,6 +133,7 @@ function formatDateTime(iso: string, locale: string): string {
 export default function AccountDetailPage() {
   const params = useParams();
   const { t, locale, language } = useI18n();
+  const { refresh } = useDashboardData();
   const { setAccountName } = useAccountDetailBreadcrumb() ?? { setAccountName: () => {} };
   const localeKey = language === "th" ? "th" : "en";
   const accountId = typeof params.id === "string" ? params.id : null;
@@ -370,6 +374,7 @@ export default function AccountDetailPage() {
     void fetchAccount();
     void fetchSummary();
     void fetchTransactions({ offset: txOffset });
+    refresh();
   }
 
   function applyTxFilters() {
@@ -558,30 +563,31 @@ export default function AccountDetailPage() {
             <Pencil className="h-4 w-4" />
             {t("common.actions.edit")}
           </Button>
-          {account.type === "CREDIT_CARD" && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openPaymentDialog}
-                disabled={account.isIncomplete}
-                className="gap-2"
-              >
-                <BanknoteIcon className="h-4 w-4" />
-                {t("accounts.pay")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCloseStatement}
-                disabled={account.isIncomplete}
-                className="gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                {t("accounts.closeStatement")}
-              </Button>
-            </>
-          )}
+          {account.type === "CREDIT_CARD" &&
+            account.cardAccountType?.toLowerCase() !== "debit" && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openPaymentDialog}
+                  disabled={account.isIncomplete}
+                  className="gap-2"
+                >
+                  <BanknoteIcon className="h-4 w-4" />
+                  {t("accounts.pay")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCloseStatement}
+                  disabled={account.isIncomplete}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  {t("accounts.closeStatement")}
+                </Button>
+              </>
+            )}
           <Button variant="outline" size="sm" onClick={handleMarkChecked} className="gap-2">
             <CheckCircle className="h-4 w-4" />
             {t("accounts.markChecked")}
@@ -618,53 +624,79 @@ export default function AccountDetailPage() {
           </div>
         </div>
         <p className="text-sm mb-1 text-[#A09080] dark:text-stone-400">
-          {account.type === "CREDIT_CARD"
+          {account.type === "CREDIT_CARD" &&
+          account.cardAccountType?.toLowerCase() !== "debit"
             ? t("accounts.currentOutstanding")
-            : t("dashboard.summary.balance")} 
+            : t("dashboard.summary.balance")}
         </p>
         <p
           className={`text-3xl font-extrabold tabular-nums tracking-tight ${
-            account.type === "CREDIT_CARD" || (account.balance ?? 0) < 0
+            (account.type === "CREDIT_CARD" &&
+              account.cardAccountType?.toLowerCase() !== "debit") ||
+            (account.balance ?? 0) < 0
               ? "text-red-700 dark:text-red-300"
               : "text-emerald-600 dark:text-emerald-400"
           }`}
         >
           ฿{formatAmount(
-            account.type === "CREDIT_CARD"
+            account.type === "CREDIT_CARD" &&
+              account.cardAccountType?.toLowerCase() !== "debit"
               ? (account.currentOutstanding ?? Math.abs(account.balance))
               : account.balance
-          )} 
+          )}
         </p>
-        {account.type === "CREDIT_CARD" && (
-          <div className="mt-3 grid gap-3 text-base sm:grid-cols-2">
-            {account.creditLimit != null && (
-              <p>
-                <span className="text-sm text-[#A09080] dark:text-stone-400">
-                  {t("accounts.creditLimit")}:
-                </span>{" "}
-                <span className="font-medium">{formatAmount(account.creditLimit)}</span>
-              </p>
-            )}
-            {account.availableCredit != null && (
-              <p>
-                <span className="text-sm text-[#A09080] dark:text-stone-400">
-                  {t("accounts.availableCredit")}:
-                </span>{" "}
-                <span className="font-medium">{formatAmount(account.availableCredit)}</span>
-              </p>
-            )}
-            {account.latestStatement && (
-              <p>
-                <span className="text-sm text-[#A09080] dark:text-stone-400">
-                  {t("accounts.dueDate")}:
-                </span>{" "}
-                <span className="font-medium">{account.latestStatement.dueDate}</span>
-              </p>
-            )}
-          </div>
-        )}
-        {account.type !== "CREDIT_CARD" && (
+        {account.type === "CREDIT_CARD" &&
+          account.cardAccountType?.toLowerCase() !== "debit" && (
+            <div className="mt-3 grid gap-3 text-base sm:grid-cols-2">
+              {account.creditLimit != null && (
+                <p>
+                  <span className="text-sm text-[#A09080] dark:text-stone-400">
+                    {t("accounts.creditLimit")}:
+                  </span>{" "}
+                  <span className="font-medium">{formatAmount(account.creditLimit)}</span>
+                </p>
+              )}
+              {account.availableCredit != null && (
+                <p>
+                  <span className="text-sm text-[#A09080] dark:text-stone-400">
+                    {t("accounts.availableCredit")}:
+                  </span>{" "}
+                  <span className="font-medium">{formatAmount(account.availableCredit)}</span>
+                </p>
+              )}
+              {account.latestStatement && (
+                <p>
+                  <span className="text-sm text-[#A09080] dark:text-stone-400">
+                    {t("accounts.dueDate")}:
+                  </span>{" "}
+                  <span className="font-medium">{account.latestStatement.dueDate}</span>
+                </p>
+              )}
+            </div>
+          )}
+        {(account.type !== "CREDIT_CARD" ||
+          account.cardAccountType?.toLowerCase() === "debit") && (
           <>
+            {account.type === "CREDIT_CARD" &&
+              account.cardAccountType?.toLowerCase() === "debit" &&
+              account.linkedAccount && (
+                <CardDescription className="mt-2 text-sm">
+                  {t("accounts.debitCardLinkedTo")}:{" "}
+                  <Link
+                    href={`/dashboard/accounts/${account.linkedAccount.id}`}
+                    className="font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+                  >
+                    {account.linkedAccount.name}
+                    {account.linkedAccount.bankName && (
+                      <span className="text-[#A09080] dark:text-stone-400">
+                        {" "}
+                        ({getBankDisplayName(account.linkedAccount.bankName, localeKey) ??
+                          account.linkedAccount.bankName})
+                      </span>
+                    )}
+                  </Link>
+                </CardDescription>
+              )}
             {account.lastTransactionDate && (
               <CardDescription className="mt-2 text-sm">
                 {t("accounts.lastTransaction")}:{" "}
@@ -871,7 +903,8 @@ export default function AccountDetailPage() {
                           <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
                             {getCategoryDisplayName(
                               tx.categoryRef?.name ?? tx.category ?? "",
-                              localeKey
+                              localeKey,
+                              tx.categoryRef?.nameEn
                             ) || "—"}
                           </td>
                           <td className="px-4 py-2 text-[#6B5E4E] dark:text-stone-300">
@@ -951,21 +984,22 @@ export default function AccountDetailPage() {
         }}
       />
 
-      {account.type === "CREDIT_CARD" && (
-        <CreditCardPaymentDialog
-          open={paymentDialogOpen}
-          onOpenChange={(open) => {
-            setPaymentDialogOpen(open);
-          }}
-          accountId={account.id}
-          accountName={account.name}
-          maxAmount={account.currentOutstanding}
-          onSuccess={() => {
-            void fetchAccount();
-            void fetchSummary();
-          }}
-        />
-      )}
+      {account.type === "CREDIT_CARD" &&
+        account.cardAccountType?.toLowerCase() !== "debit" && (
+          <CreditCardPaymentDialog
+            open={paymentDialogOpen}
+            onOpenChange={(open) => {
+              setPaymentDialogOpen(open);
+            }}
+            accountId={account.id}
+            accountName={account.name}
+            maxAmount={account.currentOutstanding}
+            onSuccess={() => {
+              void fetchAccount();
+              void fetchSummary();
+            }}
+          />
+        )}
 
       <TransactionFormDialog
         open={txFormOpen}

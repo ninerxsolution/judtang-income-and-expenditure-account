@@ -43,7 +43,7 @@ export type DashboardTransaction = {
   amount: number;
   financialAccount?: DashboardTransactionAccount | null;
   transferAccount?: DashboardTransactionAccount | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;

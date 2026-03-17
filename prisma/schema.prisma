@@ -230,6 +230,7 @@ model FinancialAccount {
 model Category {
   id          String        @id @default(cuid())
   name        String
+  nameEn      String?
   isDefault   Boolean       @default(false)
   createdAt   DateTime      @default(now())
   userId      String

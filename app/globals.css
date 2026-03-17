@@ -276,6 +276,26 @@
   to   { opacity: 0; }
 }
 
+/* Blink highlight: 2 flashes to draw attention to a row (e.g. from transactions list link) */
+@keyframes tx-blink {
+  0%, 100% { background-color: transparent; }
+  25% { background-color: oklch(0.85 0.1 85 / 0.5); }
+  50% { background-color: transparent; }
+  75% { background-color: oklch(0.85 0.1 85 / 0.5); }
+}
+@keyframes tx-blink-dark {
+  0%, 100% { background-color: transparent; }
+  25% { background-color: oklch(0.6 0.15 85 / 0.4); }
+  50% { background-color: transparent; }
+  75% { background-color: oklch(0.6 0.15 85 / 0.4); }
+}
+.tx-blink-once {
+  animation: tx-blink 1s ease-in-out 1;
+}
+.dark .tx-blink-once {
+  animation: tx-blink-dark 1s ease-in-out 1;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root) {
     animation: 180ms ease-out both vt-fade-out;

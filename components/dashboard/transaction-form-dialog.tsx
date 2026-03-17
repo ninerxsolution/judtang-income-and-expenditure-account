@@ -80,12 +80,14 @@ function saveRecentCategoryId(id: string): void {
   }
 }
 
+type CategoryItem = { id: string; name: string; nameEn?: string | null };
+
 function sortCategoriesByRecent(
-  categories: { id: string; name: string }[],
+  categories: CategoryItem[],
   recentIds: string[],
-): { id: string; name: string }[] {
+): CategoryItem[] {
   const byId = new Map(categories.map((c) => [c.id, c]));
-  const ordered: { id: string; name: string }[] = [];
+  const ordered: CategoryItem[] = [];
   for (const id of recentIds) {
     const cat = byId.get(id);
     if (cat) {
@@ -146,7 +148,7 @@ export function TransactionFormDialog({
       cardNetwork?: string | null;
     }[]
   >([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
   const [formDataLoading, setFormDataLoading] = useState(false);
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
@@ -326,9 +328,10 @@ export function TransactionFormDialog({
         );
         setCategories(
           Array.isArray(catData)
-            ? catData.map((c: { id: string; name: string }) => ({
+            ? catData.map((c: { id: string; name: string; nameEn?: string | null }) => ({
                 id: c.id,
                 name: c.name,
+                nameEn: c.nameEn,
               }))
             : []
         );
@@ -744,7 +747,7 @@ export function TransactionFormDialog({
                             setCategory("");
                           } else {
                             setCategoryId(cat.id);
-                            setCategory(getCategoryDisplayName(cat.name, localeKey));
+                            setCategory(getCategoryDisplayName(cat.name, localeKey, cat.nameEn));
                           }
                         }}
                         className={cn(
@@ -755,7 +758,7 @@ export function TransactionFormDialog({
                             : "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
                         )}
                       >
-                        {getCategoryDisplayName(cat.name, localeKey)}
+                        {getCategoryDisplayName(cat.name, localeKey, cat.nameEn)}
                       </button>
                     );
                   })}

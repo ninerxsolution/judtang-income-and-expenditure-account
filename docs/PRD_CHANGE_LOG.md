@@ -5,6 +5,22 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 17/03/2026 (Category English name — nameEn, bilingual display)
+
+- docs/feature/categories.md — Added nameEn field to data model; bilingual display (getCategoryDisplayName, DEFAULT_CATEGORY_TRANSLATIONS); API body nameEn; UI form nameEn; ensureUserHasDefaultCategories note.
+- CHANGELOG.md — Added v0.9.23: Category English name (nameEn), getCategoryDisplayName, API and form changes.
+- CHANGELOG.th.md — Added v0.9.23 (Thai).
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
+## 17/03/2026 (Debit card UI: no outstanding/Pay, hide bank in form)
+
+- docs/feature/financial-accounts.md — Debit card: แสดงยอดคงเหลือแบบบัญชีธนาคาร ไม่แสดงยอดค้างชำระ/ปุ่มชำระ; ฟอร์มแก้ไข: ซ่อนธนาคารเมื่อเลือกบัตรเดบิต, auto-fill bankName จากบัญชีที่ผูก.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 17/03/2026 (Feedback: accounts yellow border, bank account number, debit card)
 
 - docs/feature/financial-accounts.md — needsAttention logic (last activity + last verified); debit card: optional bill due/interest, linkedAccountId; account number: no silent fallback when encryption fails.

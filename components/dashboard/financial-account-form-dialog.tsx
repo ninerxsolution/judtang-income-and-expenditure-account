@@ -363,7 +363,10 @@ export function FinancialAccountFormDialog({
             : null;
       }
     }
-    if (bankId === BANK_OTHER) {
+    if (type === "CREDIT_CARD" && cardAccountType?.toLowerCase() === "debit") {
+      const linkedAcc = bankAccountsForDebit.find((a) => a.id === linkedAccountId);
+      payload.bankName = linkedAcc?.bankName ?? null;
+    } else if (bankId === BANK_OTHER) {
       payload.bankName = customBankName.trim() || null;
     } else if (bankId && bankId !== BANK_OTHER) {
       payload.bankName = bankId;
@@ -513,7 +516,9 @@ export function FinancialAccountFormDialog({
                   })}
                 </div>
               </div>
-              {(type === "BANK" || type === "CREDIT_CARD" || type === "WALLET") && (
+              {(type === "BANK" || type === "WALLET") ||
+              (type === "CREDIT_CARD" &&
+                (cardAccountType?.toLowerCase() ?? "") !== "debit") ? (
                 <>
                   <div>
                     <label
@@ -549,7 +554,7 @@ export function FinancialAccountFormDialog({
                     />
                   )}
                 </>
-              )}
+              ) : null}
               {(type === "BANK" || type === "WALLET") && (
                 <>
                   <div>

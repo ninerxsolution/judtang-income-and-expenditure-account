@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -23,6 +24,7 @@ import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
   AccountCombobox,
   AccountIcon,
@@ -49,7 +51,7 @@ type RowEntry = {
   note: string;
 };
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; nameEn?: string | null };
 
 type ExistingTransaction = {
   id: string;
@@ -69,7 +71,7 @@ type ExistingTransaction = {
     bankName?: string | null;
     cardNetwork?: string | null;
   } | null;
-  categoryRef?: { id: string; name: string } | null;
+  categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
   occurredAt: string;
@@ -117,13 +119,32 @@ function TypeIcon({ type, className }: { type: TransactionType; className?: stri
   }
 }
 
+function getInitialYearMonth(searchParams: URLSearchParams): { year: number; month: number } {
+  const now = new Date();
+  const dateParam = searchParams.get("date");
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateParam);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      if (y && m >= 1 && m <= 12) {
+        return { year: y, month: m - 1 };
+      }
+    }
+  }
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
 export default function MonthlyEntryPage() {
   const { t, language } = useI18n();
+  const { refresh } = useDashboardData();
   const localeKey = language === "th" ? "th" : "en";
+  const searchParams = useSearchParams();
+  const hasScrolledToHighlight = useRef(false);
 
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
+  const [year, setYear] = useState(() => getInitialYearMonth(searchParams).year);
+  const [month, setMonth] = useState(() => getInitialYearMonth(searchParams).month);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
@@ -164,7 +185,7 @@ export default function MonthlyEntryPage() {
   }, [localeKey]);
 
   const yearRange = useMemo(() => {
-    const current = now.getFullYear();
+    const current = new Date().getFullYear();
     return Array.from({ length: 11 }, (_, i) => current - 5 + i);
   }, []);
 
@@ -196,13 +217,21 @@ export default function MonthlyEntryPage() {
       .finally(() => setLoadingMeta(false));
   }, []);
 
+  // Track current year/month so we ignore stale fetch results (race when date param syncs month)
+  const yearMonthRef = useRef({ year, month });
+  useEffect(() => {
+    yearMonthRef.current = { year, month };
+  }, [year, month]);
+
   // Fetch existing transactions for the selected month
   const fetchExisting = useCallback(async () => {
     setLoadingExisting(true);
+    const fetchYear = year;
+    const fetchMonth = month;
     try {
-      const fromDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-      const lastDay = getDaysInMonth(year, month);
-      const toDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      const fromDate = `${fetchYear}-${String(fetchMonth + 1).padStart(2, "0")}-01`;
+      const lastDay = getDaysInMonth(fetchYear, fetchMonth);
+      const toDate = `${fetchYear}-${String(fetchMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const params = new URLSearchParams({
         from: fromDate,
@@ -212,6 +241,10 @@ export default function MonthlyEntryPage() {
         offset: "0",
       });
       const res = await fetch(`/api/transactions?${params}`);
+      const current = yearMonthRef.current;
+      if (current.year !== fetchYear || current.month !== fetchMonth) {
+        return; // User changed month; ignore stale result
+      }
       if (res.ok) {
         const data = (await res.json()) as ExistingTransaction[];
         setExistingTransactions(Array.isArray(data) ? data : []);
@@ -219,9 +252,13 @@ export default function MonthlyEntryPage() {
         setExistingTransactions([]);
       }
     } catch {
-      setExistingTransactions([]);
+      if (yearMonthRef.current.year === fetchYear && yearMonthRef.current.month === fetchMonth) {
+        setExistingTransactions([]);
+      }
     } finally {
-      setLoadingExisting(false);
+      if (yearMonthRef.current.year === fetchYear && yearMonthRef.current.month === fetchMonth) {
+        setLoadingExisting(false);
+      }
     }
   }, [year, month]);
 
@@ -231,6 +268,93 @@ export default function MonthlyEntryPage() {
     setEditingTransaction(null);
     setEditingRow(null);
   }, [fetchExisting]);
+
+  // Sync year/month from ?date=YYYY-MM-DD when navigating from transactions list
+  const dateParam = searchParams.get("date");
+  useEffect(() => {
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return;
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateParam);
+    if (!match) return;
+    const y = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10);
+    if (y && m >= 1 && m <= 12) {
+      setYear(y);
+      setMonth(m - 1);
+    }
+  }, [dateParam]);
+
+  // Scroll to and blink the highlighted transaction when ?highlight=id is present
+  const highlightParam = searchParams.get("highlight");
+  useEffect(() => {
+    hasScrolledToHighlight.current = false;
+  }, [highlightParam]);
+
+  useEffect(() => {
+    if (!highlightParam || loadingExisting || hasScrolledToHighlight.current) return;
+
+    function findScrollParent(el: Element): Element | null {
+      let parent = el.parentElement;
+      while (parent) {
+        const { overflowY } = getComputedStyle(parent);
+        if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
+          return parent;
+        }
+        parent = parent.parentElement;
+      }
+      return null;
+    }
+
+    function doScrollAndBlink(): ReturnType<typeof setTimeout> | null {
+      const el = document.getElementById(`tx-${highlightParam}`);
+      if (el) {
+        hasScrolledToHighlight.current = true;
+        const scrollParent = findScrollParent(el);
+        if (scrollParent) {
+          const elTop = el.getBoundingClientRect().top + scrollParent.scrollTop;
+          const centerOffset = scrollParent.clientHeight / 2 - el.getBoundingClientRect().height / 2;
+          scrollParent.scrollTo({ top: elTop - centerOffset - 96, behavior: "smooth" });
+        } else {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        el.classList.add("tx-blink-once");
+        return setTimeout(() => el.classList.remove("tx-blink-once"), 1100);
+      }
+      // Fallback: scroll to day section if we have date param
+      if (dateParam) {
+        const match = /^\d{4}-\d{2}-\d{2}$/.exec(dateParam);
+        if (match) {
+          const day = parseInt(match[3], 10);
+          const dayEl = document.getElementById(`day-${day}`);
+          if (dayEl) {
+            hasScrolledToHighlight.current = true;
+            const scrollParent = findScrollParent(dayEl);
+            if (scrollParent) {
+              const dayTop = dayEl.getBoundingClientRect().top + scrollParent.scrollTop;
+              scrollParent.scrollTo({ top: dayTop - 96, behavior: "smooth" });
+            } else {
+              dayEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    // Defer scroll: DOM may not be ready after client-side nav; retry if needed
+    let blinkTimer: ReturnType<typeof setTimeout> | null = null;
+    const t = setTimeout(() => {
+      blinkTimer = doScrollAndBlink();
+    }, 100);
+    const retry = setTimeout(() => {
+      if (hasScrolledToHighlight.current) return;
+      blinkTimer = doScrollAndBlink();
+    }, 400);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(retry);
+      if (blinkTimer) clearTimeout(blinkTimer);
+    };
+  }, [highlightParam, loadingExisting, existingTransactions, dateParam]);
 
   // Group existing transactions by day
   const existingByDay = useMemo(() => {
@@ -365,6 +489,7 @@ export default function MonthlyEntryPage() {
         toast.success(t("monthlyEntry.editSuccess"));
         cancelEditing();
         void fetchExisting();
+        refresh();
       } else {
         toast.error(t("monthlyEntry.editFailed"));
       }
@@ -388,6 +513,7 @@ export default function MonthlyEntryPage() {
         toast.success(t("monthlyEntry.deleteSuccess"));
         cancelEditing();
         void fetchExisting();
+        refresh();
       } else {
         toast.error(t("monthlyEntry.deleteFailed"));
       }
@@ -480,6 +606,7 @@ export default function MonthlyEntryPage() {
         toast.success(t("monthlyEntry.saveSuccess", { count: data.createdCount }));
         setDayRows({});
         void fetchExisting();
+        refresh();
       } else {
         toast.error(t("monthlyEntry.saveFailed"));
       }
@@ -678,9 +805,6 @@ export default function MonthlyEntryPage() {
         </div>
       </div>
 
-      {/* Subtitle */}
-      <p className="text-sm text-muted-foreground">{t("monthlyEntry.subtitle")}</p>
-
       {/* Loading existing */}
       {loadingExisting && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -799,7 +923,7 @@ export default function MonthlyEntryPage() {
                               }
                               options={categories.map((c) => ({
                                 value: c.id,
-                                label: getCategoryDisplayName(c.name, language),
+                                label: getCategoryDisplayName(c.name, language, c.nameEn),
                               }))}
                               allowEmpty
                               emptyLabel={t("monthlyEntry.category")}
@@ -885,9 +1009,10 @@ export default function MonthlyEntryPage() {
                     return (
                       <button
                         key={tx.id}
+                        id={`tx-${tx.id}`}
                         type="button"
                         onClick={() => startEditing(tx, day)}
-                        className="flex w-full items-center gap-2 text-sm py-1 px-2 rounded bg-muted/40 hover:bg-muted/60 cursor-pointer text-left transition-colors"
+                        className="scroll-mt-24 flex w-full items-center gap-2 text-sm py-1 px-2 rounded bg-muted/40 hover:bg-muted/60 cursor-pointer text-left transition-colors"
                         aria-label={t("monthlyEntry.editTransaction")}
                       >
                         <TypeIcon
@@ -899,7 +1024,11 @@ export default function MonthlyEntryPage() {
                         </span>
                         <span className="text-muted-foreground text-xs truncate">
                           {tx.categoryRef?.name
-                            ? getCategoryDisplayName(tx.categoryRef.name, language)
+                            ? getCategoryDisplayName(
+                                tx.categoryRef.name,
+                                language,
+                                tx.categoryRef.nameEn
+                              )
                             : tx.category ?? ""}
                         </span>
                         {tx.note && (
@@ -989,7 +1118,7 @@ export default function MonthlyEntryPage() {
                           }
                           options={categories.map((c) => ({
                             value: c.id,
-                            label: getCategoryDisplayName(c.name, language),
+                            label: getCategoryDisplayName(c.name, language, c.nameEn),
                           }))}
                           allowEmpty
                           emptyLabel={t("monthlyEntry.category")}
