@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Landmark,
@@ -145,6 +145,9 @@ export default function AccountsPage() {
   const [deleteExpectedValue, setDeleteExpectedValue] = useState("");
   const [copiedAccountId, setCopiedAccountId] = useState<string | null>(null);
   const [hoveredAccountId, setHoveredAccountId] = useState<string | null>(null);
+  const [openMenuAccountId, setOpenMenuAccountId] = useState<string | null>(null);
+  const [openSectionMenu, setOpenSectionMenu] = useState(false);
+  const touchPreventedRef = useRef(false);
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
@@ -668,9 +671,33 @@ export default function AccountsPage() {
                       </div>
                     )}
                   </div>
-                  <DropdownMenu>
+                  <DropdownMenu
+                    open={openMenuAccountId === acc.id}
+                    onOpenChange={(open) =>
+                      setOpenMenuAccountId(open ? acc.id : null)
+                    }
+                  >
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onPointerDownCapture={(e) => {
+                          if (e.pointerType === "touch") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            touchPreventedRef.current = true;
+                          }
+                        }}
+                        onClick={() => {
+                          if (touchPreventedRef.current) {
+                            touchPreventedRef.current = false;
+                            setOpenMenuAccountId((prev) =>
+                              prev === acc.id ? null : acc.id
+                            );
+                          }
+                        }}
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -888,9 +915,29 @@ export default function AccountsPage() {
                         <Landmark className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
                         {t("accounts.sectionAccounts")}
                       </h2>
-                      <DropdownMenu>
+                      <DropdownMenu
+                        open={openSectionMenu}
+                        onOpenChange={setOpenSectionMenu}
+                      >
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onPointerDownCapture={(e) => {
+                              if (e.pointerType === "touch") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                touchPreventedRef.current = true;
+                              }
+                            }}
+                            onClick={() => {
+                              if (touchPreventedRef.current) {
+                                touchPreventedRef.current = false;
+                                setOpenSectionMenu((prev) => !prev);
+                              }
+                            }}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

@@ -32,6 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { formatAmount } from "@/lib/format";
+import { toDateStringInTimezone } from "@/lib/date-range";
 import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
 import { getCardNetworkDisplayName } from "@/lib/card-types";
 import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
@@ -863,7 +864,13 @@ export default function AccountDetailPage() {
                           className="border-t border-[#D4C9B0] dark:border-stone-800"
                         >
                           <td className="px-4 py-2 text-[#3D3020] dark:text-stone-100">
-                            {formatDateTime(tx.occurredAt, locale)}
+                            <Link
+                              href={`/dashboard/monthly-entry?date=${toDateStringInTimezone(new Date(tx.occurredAt), Intl.DateTimeFormat().resolvedOptions().timeZone)}&highlight=${tx.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="whitespace-nowrap text-inherit hover:underline focus:underline focus:outline-none"
+                            >
+                              {formatDateTime(tx.occurredAt, locale)}
+                            </Link>
                           </td>
                           <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
                             {isTransfer ? (

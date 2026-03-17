@@ -162,9 +162,11 @@ export default function MonthlyEntryPage() {
   } | null>(null);
   const [editingRow, setEditingRow] = useState<RowEntry | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [recentlySavedIds, setRecentlySavedIds] = useState<Set<string>>(new Set());
 
   const defaultAccountId = accounts.length > 0 ? accounts[0].id : "";
   const daysInMonth = getDaysInMonth(year, month);
+  const focusAmountRowIdRef = useRef<string | null>(null);
 
   const monthLabel = useMemo(() => {
     const d = new Date(year, month, 1);
@@ -223,11 +225,12 @@ export default function MonthlyEntryPage() {
     yearMonthRef.current = { year, month };
   }, [year, month]);
 
-  // Fetch existing transactions for the selected month
-  const fetchExisting = useCallback(async () => {
+  // Fetch existing transactions for the selected month. Returns the fetched array (or empty) for callers that need it.
+  const fetchExisting = useCallback(async (): Promise<ExistingTransaction[]> => {
     setLoadingExisting(true);
     const fetchYear = year;
     const fetchMonth = month;
+    let result: ExistingTransaction[] = [];
     try {
       const fromDate = `${fetchYear}-${String(fetchMonth + 1).padStart(2, "0")}-01`;
       const lastDay = getDaysInMonth(fetchYear, fetchMonth);
@@ -240,14 +243,17 @@ export default function MonthlyEntryPage() {
         limit: "200",
         offset: "0",
       });
-      const res = await fetch(`/api/transactions?${params}`);
+      const res = await fetch(`/api/transactions?${params}`, {
+        cache: "no-store",
+      });
       const current = yearMonthRef.current;
       if (current.year !== fetchYear || current.month !== fetchMonth) {
-        return; // User changed month; ignore stale result
+        return result; // User changed month; ignore stale result
       }
       if (res.ok) {
         const data = (await res.json()) as ExistingTransaction[];
-        setExistingTransactions(Array.isArray(data) ? data : []);
+        result = Array.isArray(data) ? data : [];
+        setExistingTransactions(result);
       } else {
         setExistingTransactions([]);
       }
@@ -260,6 +266,7 @@ export default function MonthlyEntryPage() {
         setLoadingExisting(false);
       }
     }
+    return result;
   }, [year, month]);
 
   useEffect(() => {
@@ -267,6 +274,7 @@ export default function MonthlyEntryPage() {
     setDayRows({});
     setEditingTransaction(null);
     setEditingRow(null);
+    setRecentlySavedIds(new Set());
   }, [fetchExisting]);
 
   // Sync year/month from ?date=YYYY-MM-DD when navigating from transactions list
@@ -289,22 +297,51 @@ export default function MonthlyEntryPage() {
     hasScrolledToHighlight.current = false;
   }, [highlightParam]);
 
+  function findScrollParent(el: Element): Element | null {
+    let parent = el.parentElement;
+    while (parent) {
+      const { overflowY } = getComputedStyle(parent);
+      if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  }
+
+  // Scroll to day section when we have dateParam + highlightParam — works even during loading
+  useEffect(() => {
+    if (!dateParam || !highlightParam || loadingMeta || hasScrolledToHighlight.current) return;
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateParam);
+    if (!match) return;
+    const day = parseInt(match[3], 10);
+
+    function scrollToDaySection(): void {
+      const dayEl = document.getElementById(`day-${day}`);
+      if (dayEl) {
+        const scrollParent = findScrollParent(dayEl);
+        if (scrollParent) {
+          const dayTop = dayEl.getBoundingClientRect().top + scrollParent.scrollTop;
+          scrollParent.scrollTo({ top: dayTop - 96, behavior: "smooth" });
+        } else {
+          dayEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    }
+
+    const t = setTimeout(scrollToDaySection, 100);
+    const retry = setTimeout(scrollToDaySection, 500);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(retry);
+    };
+  }, [dateParam, highlightParam, loadingMeta]);
+
+  // Scroll to tx when loading finishes — retry until DOM is ready
   useEffect(() => {
     if (!highlightParam || loadingExisting || hasScrolledToHighlight.current) return;
 
-    function findScrollParent(el: Element): Element | null {
-      let parent = el.parentElement;
-      while (parent) {
-        const { overflowY } = getComputedStyle(parent);
-        if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
-          return parent;
-        }
-        parent = parent.parentElement;
-      }
-      return null;
-    }
-
-    function doScrollAndBlink(): ReturnType<typeof setTimeout> | null {
+    function doScrollAndBlink(): boolean {
       const el = document.getElementById(`tx-${highlightParam}`);
       if (el) {
         hasScrolledToHighlight.current = true;
@@ -317,13 +354,13 @@ export default function MonthlyEntryPage() {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         el.classList.add("tx-blink-once");
-        return setTimeout(() => el.classList.remove("tx-blink-once"), 1100);
+        setTimeout(() => el.classList.remove("tx-blink-once"), 1100);
+        return true;
       }
-      // Fallback: scroll to day section if we have date param
       if (dateParam) {
-        const match = /^\d{4}-\d{2}-\d{2}$/.exec(dateParam);
-        if (match) {
-          const day = parseInt(match[3], 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateParam);
+        if (m) {
+          const day = parseInt(m[3], 10);
           const dayEl = document.getElementById(`day-${day}`);
           if (dayEl) {
             hasScrolledToHighlight.current = true;
@@ -334,26 +371,23 @@ export default function MonthlyEntryPage() {
             } else {
               dayEl.scrollIntoView({ behavior: "smooth", block: "start" });
             }
+            return true;
           }
         }
       }
-      return null;
+      return false;
     }
 
-    // Defer scroll: DOM may not be ready after client-side nav; retry if needed
-    let blinkTimer: ReturnType<typeof setTimeout> | null = null;
-    const t = setTimeout(() => {
-      blinkTimer = doScrollAndBlink();
-    }, 100);
-    const retry = setTimeout(() => {
-      if (hasScrolledToHighlight.current) return;
-      blinkTimer = doScrollAndBlink();
-    }, 400);
-    return () => {
-      clearTimeout(t);
-      clearTimeout(retry);
-      if (blinkTimer) clearTimeout(blinkTimer);
-    };
+    const RETRY_DELAYS = [0, 100, 300, 600, 1000, 1500, 2000];
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (const delay of RETRY_DELAYS) {
+      const id = setTimeout(() => {
+        if (hasScrolledToHighlight.current) return;
+        if (doScrollAndBlink()) return;
+      }, delay);
+      timers.push(id);
+    }
+    return () => timers.forEach((id) => clearTimeout(id));
   }, [highlightParam, loadingExisting, existingTransactions, dateParam]);
 
   // Group existing transactions by day
@@ -391,9 +425,11 @@ export default function MonthlyEntryPage() {
   }
 
   function addRow(day: number) {
+    const newRow = createEmptyRow(defaultAccountId);
+    focusAmountRowIdRef.current = newRow.id;
     setDayRows((prev) => ({
       ...prev,
-      [day]: [...(prev[day] ?? []), createEmptyRow(defaultAccountId)],
+      [day]: [...(prev[day] ?? []), newRow],
     }));
   }
 
@@ -487,6 +523,7 @@ export default function MonthlyEntryPage() {
 
       if (res.ok) {
         toast.success(t("monthlyEntry.editSuccess"));
+        setRecentlySavedIds((prev) => new Set([...prev, editingTransaction.id]));
         cancelEditing();
         void fetchExisting();
         refresh();
@@ -605,7 +642,11 @@ export default function MonthlyEntryPage() {
         const data = (await res.json()) as { createdCount: number };
         toast.success(t("monthlyEntry.saveSuccess", { count: data.createdCount }));
         setDayRows({});
-        void fetchExisting();
+        const prevIds = new Set(existingTransactions.map((t) => t.id));
+        const newData = await fetchExisting();
+        const newIds = new Set(newData.map((t) => t.id));
+        const addedIds = [...newIds].filter((id) => !prevIds.has(id));
+        setRecentlySavedIds((prev) => new Set([...prev, ...addedIds]));
         refresh();
       } else {
         toast.error(t("monthlyEntry.saveFailed"));
@@ -1012,7 +1053,12 @@ export default function MonthlyEntryPage() {
                         id={`tx-${tx.id}`}
                         type="button"
                         onClick={() => startEditing(tx, day)}
-                        className="scroll-mt-24 flex w-full items-center gap-2 text-sm py-1 px-2 rounded bg-muted/40 hover:bg-muted/60 cursor-pointer text-left transition-colors"
+                        className={cn(
+                          "scroll-mt-24 flex w-full items-center gap-2 text-sm py-1 px-2 rounded cursor-pointer text-left transition-colors",
+                          recentlySavedIds.has(tx.id)
+                            ? "bg-emerald-100/50 dark:bg-emerald-950/60 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/60"
+                            : "bg-muted/40 hover:bg-muted/60"
+                        )}
                         aria-label={t("monthlyEntry.editTransaction")}
                       >
                         <TypeIcon
@@ -1098,16 +1144,33 @@ export default function MonthlyEntryPage() {
                       </div>
 
                       {/* Amount */}
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder={t("monthlyEntry.amount")}
-                        value={row.amount}
-                        onChange={(e) =>
-                          updateRow(day, row.id, "amount", e.target.value)
-                        }
-                        className="w-30 h-9 text-xs tabular-nums text-right"
-                      />
+                      <div
+                        ref={(el) => {
+                          if (el && focusAmountRowIdRef.current === row.id) {
+                            focusAmountRowIdRef.current = null;
+                            const input = el.querySelector<HTMLInputElement>("input");
+                            if (input) setTimeout(() => input.focus(), 0);
+                          }
+                        }}
+                        className="contents"
+                      >
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder={t("monthlyEntry.amount")}
+                          value={row.amount}
+                          onChange={(e) =>
+                            updateRow(day, row.id, "amount", e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addRow(day);
+                            }
+                          }}
+                          className="w-30 h-9 text-xs tabular-nums text-right"
+                        />
+                      </div>
 
                       {/* Category */}
                       <div className="w-40">
@@ -1163,6 +1226,12 @@ export default function MonthlyEntryPage() {
                         onChange={(e) =>
                           updateRow(day, row.id, "note", e.target.value)
                         }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addRow(day);
+                          }
+                        }}
                         className="flex-1 min-w-[6rem] h-9 text-xs"
                       />
 
