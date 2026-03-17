@@ -165,7 +165,7 @@ describe("isAccountIncomplete", () => {
         })
       ).toBe(true);
     });
-    it("returns false when all required fields are present", () => {
+    it("returns false when all required fields are present (credit)", () => {
       expect(
         isAccountIncomplete({
           type: "CREDIT_CARD",
@@ -176,14 +176,35 @@ describe("isAccountIncomplete", () => {
           cardAccountType: "credit",
         })
       ).toBe(false);
+    });
+    it("returns true when debit card has no linkedAccountId", () => {
       expect(
         isAccountIncomplete({
           type: "CREDIT_CARD",
           bankName: "bangkok",
           accountNumber: "1234",
-          creditLimit: 0,
-          interestRate: 0,
           cardAccountType: "debit",
+          linkedAccountId: null,
+        })
+      ).toBe(true);
+      expect(
+        isAccountIncomplete({
+          type: "CREDIT_CARD",
+          bankName: "bangkok",
+          accountNumber: "1234",
+          cardAccountType: "debit",
+          linkedAccountId: "",
+        })
+      ).toBe(true);
+    });
+    it("returns false when debit card has linkedAccountId", () => {
+      expect(
+        isAccountIncomplete({
+          type: "CREDIT_CARD",
+          bankName: "bangkok",
+          accountNumber: "1234",
+          cardAccountType: "debit",
+          linkedAccountId: "acc-123",
         })
       ).toBe(false);
     });

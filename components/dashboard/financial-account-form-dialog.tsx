@@ -22,6 +22,7 @@ import {
   CardNetworkSelect,
 } from "@/components/dashboard/card-type-select";
 import { BankCombobox } from "@/components/dashboard/bank-combobox";
+import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ACCOUNT_TYPES = ["BANK", "CREDIT_CARD", "WALLET", "CASH", "OTHER"] as const;
@@ -90,6 +91,11 @@ export function FinancialAccountFormDialog({
   const [interestRate, setInterestRate] = useState("");
   const [cardAccountType, setCardAccountType] = useState<string>("");
   const [cardNetwork, setCardNetwork] = useState<string>("");
+  const [linkedAccountId, setLinkedAccountId] = useState<string>("");
+  const [bankAccountsForDebit, setBankAccountsForDebit] = useState<
+    { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; isDefault?: boolean }[]
+  >([]);
+  const [bankAccountsLoading, setBankAccountsLoading] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<"idle" | "loading" | "done" | "error">(
@@ -119,6 +125,8 @@ export function FinancialAccountFormDialog({
       setInterestRate("");
       setCardAccountType("");
       setCardNetwork("");
+      setLinkedAccountId("");
+      setBankAccountsForDebit([]);
       setLoadState("idle");
       setError(null);
       return;
@@ -167,6 +175,9 @@ export function FinancialAccountFormDialog({
           );
           setCardAccountType(data.cardAccountType ?? "");
           setCardNetwork(data.cardNetwork ?? "");
+          setLinkedAccountId(
+            (data as { linkedAccountId?: string | null }).linkedAccountId ?? ""
+          );
           const bn = data.bankName?.trim() ?? "";
           if (bn && THAI_BANKS.some((b) => b.id === bn)) {
             setBankId(bn);
@@ -191,6 +202,52 @@ export function FinancialAccountFormDialog({
       cancelled = true;
     };
   }, [open, editId, defaultType, t]);
+
+  useEffect(() => {
+    if (!open || type !== "CREDIT_CARD" || cardAccountType !== "debit") {
+      setBankAccountsForDebit([]);
+      return;
+    }
+    setBankAccountsLoading(true);
+    fetch("/api/financial-accounts")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(
+        (data: {
+          id: string;
+          name: string;
+          type: string;
+          bankName?: string | null;
+          isIncomplete?: boolean;
+          isHidden?: boolean;
+          cardNetwork?: string | null;
+          isDefault?: boolean;
+        }[]) => {
+          const bankAccounts = Array.isArray(data)
+            ? data.filter(
+                (a) =>
+                  (a.type === "BANK" || a.type === "WALLET") &&
+                  a.id !== editId &&
+                  !a.isIncomplete &&
+                  a.isHidden !== true
+              )
+            : [];
+          setBankAccountsForDebit(
+            bankAccounts.map((a) => ({
+              id: a.id,
+              name: a.name,
+              type: a.type ?? "BANK",
+              bankName: a.bankName ?? null,
+              cardNetwork: a.cardNetwork ?? null,
+              isDefault: a.isDefault ?? false,
+            }))
+          );
+          setLinkedAccountId((prev) =>
+            prev ? prev : bankAccounts[0]?.id ?? ""
+          );
+        }
+      )
+      .finally(() => setBankAccountsLoading(false));
+  }, [open, type, cardAccountType, editId]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -220,46 +277,54 @@ export function FinancialAccountFormDialog({
         setError(t("accounts.cardNumberExact4Digits"));
         return;
       }
-      const closingDay = statementClosingDay
-        ? Number.parseInt(statementClosingDay, 10)
-        : 0;
-      const dueDayNum = dueDay ? Number.parseInt(dueDay, 10) : 0;
-      if (!statementClosingDay || closingDay < 1 || closingDay > 31) {
-        setError(
-          t("accounts.statementClosingDayRequired") ??
-            "Please select statement closing day (1–31)."
-        );
-        return;
-      }
-      if (!dueDay || dueDayNum < 1 || dueDayNum > 31) {
-        setError(
-          t("accounts.dueDayRequired") ??
-            "Please select payment due day (1–31)."
-        );
-        return;
-      }
-      const creditLimitNum = creditLimit ? Number.parseFloat(creditLimit.replace(/,/g, "")) : NaN;
-      if (!creditLimit || !Number.isFinite(creditLimitNum) || creditLimitNum < 0) {
-        setError(
-          t("accounts.creditLimitRequired") ??
-            "Please enter credit limit."
-        );
-        return;
-      }
-      const interestRateNum = interestRate ? Number.parseFloat(interestRate.replace(/,/g, "")) : NaN;
-      if (!interestRate || !Number.isFinite(interestRateNum) || interestRateNum < 0) {
-        setError(
-          t("accounts.interestRateRequired") ??
-            "Please enter interest rate (%)."
-        );
-        return;
-      }
       if (!cardAccountType?.trim()) {
         setError(
           t("accounts.cardAccountTypeRequired") ??
             "Please select card type (credit/debit/prepaid)."
         );
         return;
+      }
+      const isDebit = cardAccountType.toLowerCase() === "debit";
+      if (isDebit) {
+        if (!linkedAccountId?.trim()) {
+          setError(t("accounts.linkedAccountRequired"));
+          return;
+        }
+      } else {
+        const closingDay = statementClosingDay
+          ? Number.parseInt(statementClosingDay, 10)
+          : 0;
+        const dueDayNum = dueDay ? Number.parseInt(dueDay, 10) : 0;
+        if (!statementClosingDay || closingDay < 1 || closingDay > 31) {
+          setError(
+            t("accounts.statementClosingDayRequired") ??
+              "Please select statement closing day (1–31)."
+          );
+          return;
+        }
+        if (!dueDay || dueDayNum < 1 || dueDayNum > 31) {
+          setError(
+            t("accounts.dueDayRequired") ??
+              "Please select payment due day (1–31)."
+          );
+          return;
+        }
+        const creditLimitNum = creditLimit ? Number.parseFloat(creditLimit.replace(/,/g, "")) : NaN;
+        if (!creditLimit || !Number.isFinite(creditLimitNum) || creditLimitNum < 0) {
+          setError(
+            t("accounts.creditLimitRequired") ??
+              "Please enter credit limit."
+          );
+          return;
+        }
+        const interestRateNum = interestRate ? Number.parseFloat(interestRate.replace(/,/g, "")) : NaN;
+        if (!interestRate || !Number.isFinite(interestRateNum) || interestRateNum < 0) {
+          setError(
+            t("accounts.interestRateRequired") ??
+              "Please enter interest rate (%)."
+          );
+          return;
+        }
       }
     }
 
@@ -277,16 +342,26 @@ export function FinancialAccountFormDialog({
       initialBalance: balance,
     };
     if (type === "CREDIT_CARD") {
-      if (creditLimitNum != null && Number.isFinite(creditLimitNum)) payload.creditLimit = creditLimitNum;
-      if (closingDay != null && closingDay >= 1 && closingDay <= 31) payload.statementClosingDay = closingDay;
-      if (dueDayNum != null && dueDayNum >= 1 && dueDayNum <= 31) payload.dueDay = dueDayNum;
-      const interestRateNum = interestRate ? Number.parseFloat(interestRate.replace(/,/g, "")) : undefined;
-      payload.interestRate =
-        interestRateNum != null && Number.isFinite(interestRateNum) && interestRateNum >= 0
-          ? interestRateNum
-          : null;
+      const isDebit = cardAccountType?.toLowerCase() === "debit";
       payload.cardAccountType = cardAccountType || null;
       payload.cardNetwork = cardNetwork?.trim() || null;
+      if (isDebit) {
+        payload.linkedAccountId = linkedAccountId?.trim() || null;
+        payload.creditLimit = null;
+        payload.statementClosingDay = null;
+        payload.dueDay = null;
+        payload.interestRate = null;
+      } else {
+        payload.linkedAccountId = null;
+        if (creditLimitNum != null && Number.isFinite(creditLimitNum)) payload.creditLimit = creditLimitNum;
+        if (closingDay != null && closingDay >= 1 && closingDay <= 31) payload.statementClosingDay = closingDay;
+        if (dueDayNum != null && dueDayNum >= 1 && dueDayNum <= 31) payload.dueDay = dueDayNum;
+        const interestRateNum = interestRate ? Number.parseFloat(interestRate.replace(/,/g, "")) : undefined;
+        payload.interestRate =
+          interestRateNum != null && Number.isFinite(interestRateNum) && interestRateNum >= 0
+            ? interestRateNum
+            : null;
+      }
     }
     if (bankId === BANK_OTHER) {
       payload.bankName = customBankName.trim() || null;
@@ -589,65 +664,94 @@ export function FinancialAccountFormDialog({
                       localeKey={localeKey}
                     />
                   </div>
-                  <FormField
-                    id="account-form-credit-limit"
-                    label={t("accounts.creditLimitLabel")}
-                    type="text"
-                    value={creditLimit}
-                    onChange={(v) => setCreditLimit(sanitizeAmountInput(v))}
-                    required={type === "CREDIT_CARD"}
-                  />
-                  <FormField
-                    id="account-form-interest-rate"
-                    label={t("accounts.interestRateLabel")}
-                    type="text"
-                    value={interestRate}
-                    onChange={(v) => setInterestRate(sanitizeAmountInput(v))}
-                    placeholder={t("accounts.interestRatePlaceholder")}
-                    required={type === "CREDIT_CARD"}
-                  />
-                  <div>
-                    <label
-                      htmlFor="account-form-closing-day"
-                      className="mb-1 block text-sm font-medium"
-                    >
-                      {t("accounts.statementClosingDayLabel")}
-                    </label>
-                    <select
-                      id="account-form-closing-day"
-                      value={statementClosingDay}
-                      onChange={(e) => setStatementClosingDay(e.target.value)}
-                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                    >
-                      <option value="">—</option>
-                      {DAY_OPTIONS.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="account-form-due-day"
-                      className="mb-1 block text-sm font-medium"
-                    >
-                      {t("accounts.dueDayLabel")}
-                    </label>
-                    <select
-                      id="account-form-due-day"
-                      value={dueDay}
-                      onChange={(e) => setDueDay(e.target.value)}
-                      className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                    >
-                      <option value="">—</option>
-                      {DAY_OPTIONS.map((d) => (
-                        <option key={d} value={d}>
-                          {d}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {(cardAccountType?.toLowerCase() ?? "") === "debit" ? (
+                    <div>
+                      <label
+                        htmlFor="account-form-linked-account"
+                        className="mb-1 block text-sm font-medium"
+                      >
+                        {t("accounts.linkedAccountLabel")}
+                      </label>
+                      {bankAccountsLoading ? (
+                        <Skeleton className="h-10 w-full rounded-md" />
+                      ) : bankAccountsForDebit.length === 0 ? (
+                        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+                          {t("accounts.linkedAccountRequired")}
+                        </p>
+                      ) : (
+                        <AccountCombobox
+                          id="account-form-linked-account"
+                          value={linkedAccountId}
+                          onChange={setLinkedAccountId}
+                          accounts={bankAccountsForDebit}
+                          allowEmpty={false}
+                          className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <FormField
+                        id="account-form-credit-limit"
+                        label={t("accounts.creditLimitLabel")}
+                        type="text"
+                        value={creditLimit}
+                        onChange={(v) => setCreditLimit(sanitizeAmountInput(v))}
+                        required
+                      />
+                      <FormField
+                        id="account-form-interest-rate"
+                        label={t("accounts.interestRateLabel")}
+                        type="text"
+                        value={interestRate}
+                        onChange={(v) => setInterestRate(sanitizeAmountInput(v))}
+                        placeholder={t("accounts.interestRatePlaceholder")}
+                        required
+                      />
+                      <div>
+                        <label
+                          htmlFor="account-form-closing-day"
+                          className="mb-1 block text-sm font-medium"
+                        >
+                          {t("accounts.statementClosingDayLabel")}
+                        </label>
+                        <select
+                          id="account-form-closing-day"
+                          value={statementClosingDay}
+                          onChange={(e) => setStatementClosingDay(e.target.value)}
+                          className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                        >
+                          <option value="">—</option>
+                          {DAY_OPTIONS.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="account-form-due-day"
+                          className="mb-1 block text-sm font-medium"
+                        >
+                          {t("accounts.dueDayLabel")}
+                        </label>
+                        <select
+                          id="account-form-due-day"
+                          value={dueDay}
+                          onChange={(e) => setDueDay(e.target.value)}
+                          className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                        >
+                          <option value="">—</option>
+                          {DAY_OPTIONS.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </>

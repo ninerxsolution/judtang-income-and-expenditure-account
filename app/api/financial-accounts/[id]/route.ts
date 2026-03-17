@@ -99,6 +99,7 @@ export async function GET(
       interestRate: account.interestRate != null ? Number(account.interestRate) : null,
       cardAccountType: account.cardAccountType ?? null,
       cardNetwork: account.cardNetwork ?? null,
+      linkedAccountId: account.linkedAccountId ?? null,
       currentOutstanding,
       availableCredit,
       latestStatement: latestStatement
@@ -154,6 +155,7 @@ export async function PATCH(
     bankName?: string | null;
     accountNumber?: string | null;
     accountNumberMode?: string | null;
+    linkedAccountId?: string | null;
   };
   try {
     body = await request.json();
@@ -178,6 +180,7 @@ export async function PATCH(
     bankName?: string | null;
     accountNumber?: string | null;
     accountNumberMode?: string | null;
+    linkedAccountId?: string | null;
   } = {};
 
   if (typeof body.name === "string" && body.name.trim()) {
@@ -237,16 +240,53 @@ export async function PATCH(
           ? body.cardNetwork.trim()
           : null;
     }
+    if (body.linkedAccountId !== undefined) {
+      const linkedId =
+        typeof body.linkedAccountId === "string" && body.linkedAccountId.trim()
+          ? body.linkedAccountId.trim()
+          : null;
+      if (linkedId) {
+        const linked = await prisma.financialAccount.findFirst({
+          where: { id: linkedId, userId, isActive: true },
+        });
+        if (
+          linked &&
+          linked.id !== id &&
+          (linked.type === "BANK" || linked.type === "WALLET") &&
+          !isAccountIncomplete(linked)
+        ) {
+          data.linkedAccountId = linkedId;
+        } else {
+          data.linkedAccountId = null;
+        }
+      } else {
+        data.linkedAccountId = null;
+      }
+    }
   }
   if (body.bankName !== undefined) {
     data.bankName = typeof body.bankName === "string" && body.bankName.trim() ? body.bankName.trim() : null;
   }
   if (body.accountNumber !== undefined) {
     const mode = body.accountNumberMode === "FULL" ? "FULL" : "LAST_4_ONLY";
-    const { accountNumber: stored, accountNumberMode: storedMode } =
-      processAccountNumberForStorage(body.accountNumber, mode, account.type);
-    data.accountNumber = stored;
-    data.accountNumberMode = storedMode;
+    try {
+      const { accountNumber: stored, accountNumberMode: storedMode } =
+        processAccountNumberForStorage(body.accountNumber, mode, account.type);
+      data.accountNumber = stored;
+      data.accountNumberMode = storedMode;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("ENCRYPTION_KEY") || msg.includes("encryption")) {
+        return NextResponse.json(
+          {
+            error:
+              "Full account number storage requires ENCRYPTION_KEY to be configured on the server. Please contact support or use last-4-digits mode.",
+          },
+          { status: 400 }
+        );
+      }
+      throw e;
+    }
   }
 
   if (Object.keys(data).length === 0) {
@@ -348,6 +388,13 @@ export async function PATCH(
           to: updated.cardNetwork ?? "—",
         });
       }
+      if (data.linkedAccountId !== undefined && (account.linkedAccountId ?? "") !== (updated.linkedAccountId ?? "")) {
+        changes.push({
+          field: "linkedAccountId",
+          from: account.linkedAccountId ?? "—",
+          to: updated.linkedAccountId ?? "—",
+        });
+      }
     }
     if (data.lastCheckedAt !== undefined) {
       const oldVal = account.lastCheckedAt?.toISOString() ?? "—";
@@ -391,6 +438,7 @@ export async function PATCH(
       interestRate: updated.interestRate != null ? Number(updated.interestRate) : null,
       cardAccountType: updated.cardAccountType ?? null,
       cardNetwork: updated.cardNetwork ?? null,
+      linkedAccountId: updated.linkedAccountId ?? null,
       bankName: updated.bankName ?? null,
       accountNumber: accountNumberForForm,
       accountNumberMode: updated.accountNumberMode ?? null,

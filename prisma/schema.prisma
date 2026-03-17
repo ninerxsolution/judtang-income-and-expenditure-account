@@ -217,6 +217,11 @@ model FinancialAccount {
   accountNumber      String?  @db.Text  // ciphertext (FULL) or plain last4 (LAST_4_ONLY)
   accountNumberMode  String?  // "FULL" | "LAST_4_ONLY" (BANK, WALLET)
 
+  // Debit card: links to bank account (money comes from this account)
+  linkedAccountId    String?
+  linkedAccount      FinancialAccount?  @relation("DebitCardLinkedAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
+  linkedDebitCards   FinancialAccount[] @relation("DebitCardLinkedAccount")
+
   @@index([userId])
 }
 

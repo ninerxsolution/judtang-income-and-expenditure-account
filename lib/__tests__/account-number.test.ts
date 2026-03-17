@@ -95,15 +95,14 @@ describe("account-number", () => {
       });
       expect(mockEncrypt).toHaveBeenCalledWith("1234567890");
     });
-    it("for BANK FULL: falls back to LAST_4_ONLY when encrypt throws", () => {
+    it("for BANK FULL: throws when encrypt fails (no silent fallback)", () => {
       mockEncrypt.mockImplementation(() => {
-        throw new Error("encrypt failed");
+        throw new Error("ENCRYPTION_KEY is not set");
       });
 
-      expect(processAccountNumberForStorage("1234567890", "FULL", "BANK")).toEqual({
-        accountNumber: "7890",
-        accountNumberMode: "LAST_4_ONLY",
-      });
+      expect(() =>
+        processAccountNumberForStorage("1234567890", "FULL", "BANK")
+      ).toThrow("ENCRYPTION_KEY");
     });
     it("for WALLET: same behavior as BANK", () => {
       expect(processAccountNumberForStorage("1234567890", "LAST_4_ONLY", "WALLET")).toEqual({
