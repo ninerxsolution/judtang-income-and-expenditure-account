@@ -284,6 +284,8 @@ export const enDictionary = {
     chart: {
       incomeVsExpense: "Income vs Expense (monthly)",
       expenseByCategory: "Expense by category",
+      netWorthTrend: "Net Worth over time",
+      netWorthLabel: "Net Worth",
       noData: "No data",
     },
   },

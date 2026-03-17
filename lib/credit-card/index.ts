@@ -1,5 +1,6 @@
 export {
   getCurrentOutstanding,
+  getOutstandingAsOf,
   getPendingAmount,
   getAvailableCredit,
   recomputeOutstanding,

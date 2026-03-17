@@ -1,7 +1,7 @@
 const mockFindUnique = jest.fn();
 const mockFindMany = jest.fn();
 const mockAggregate = jest.fn();
-const mockGetCurrentOutstanding = jest.fn();
+const mockGetOutstandingAsOf = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -16,7 +16,7 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 jest.mock("@/lib/credit-card", () => ({
-  getCurrentOutstanding: (...args: unknown[]) => mockGetCurrentOutstanding(...args),
+  getOutstandingAsOf: (...args: unknown[]) => mockGetOutstandingAsOf(...args),
 }));
 
 import { getAccountBalance, getTotalBalance } from "../balance";
@@ -34,15 +34,15 @@ describe("getAccountBalance", () => {
 
   it("returns negative outstanding for CREDIT_CARD accounts", async () => {
     mockFindUnique.mockResolvedValue({ initialBalance: 0, type: "CREDIT_CARD" });
-    mockGetCurrentOutstanding.mockResolvedValue(5000);
+    mockGetOutstandingAsOf.mockResolvedValue(5000);
     const result = await getAccountBalance("cc-1");
     expect(result).toBe(-5000);
-    expect(mockGetCurrentOutstanding).toHaveBeenCalledWith("cc-1");
+    expect(mockGetOutstandingAsOf).toHaveBeenCalledWith("cc-1", undefined);
   });
 
   it("returns -0 for CREDIT_CARD with no outstanding", async () => {
     mockFindUnique.mockResolvedValue({ initialBalance: 0, type: "CREDIT_CARD" });
-    mockGetCurrentOutstanding.mockResolvedValue(0);
+    mockGetOutstandingAsOf.mockResolvedValue(0);
     const result = await getAccountBalance("cc-2");
     expect(result).toEqual(-0);
   });
@@ -122,7 +122,7 @@ describe("getTotalBalance", () => {
       .mockResolvedValueOnce({ _sum: { amount: null } })
       .mockResolvedValueOnce({ _sum: { amount: null } });
 
-    mockGetCurrentOutstanding.mockResolvedValue(3000);
+    mockGetOutstandingAsOf.mockResolvedValue(3000);
 
     const result = await getTotalBalance("user-1");
     expect(result).toBe(10000 - 3000);

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { TransactionType } from "@prisma/client";
-import { getCurrentOutstanding } from "@/lib/credit-card";
+import { getOutstandingAsOf } from "@/lib/credit-card";
 
 /**
  * Balance = initialBalance + sum(INCOME) - sum(EXPENSE) + sum(TRANSFER in) - sum(TRANSFER out)
@@ -8,6 +8,17 @@ import { getCurrentOutstanding } from "@/lib/credit-card";
  * For CREDIT_CARD: returns -currentOutstanding (liability as negative from user perspective).
  */
 export async function getAccountBalance(accountId: string): Promise<number> {
+  return getAccountBalanceAsOf(accountId);
+}
+
+/**
+ * Balance of an account as of a given date (occurredAt <= endDate).
+ * For CREDIT_CARD: returns -outstanding as of that date.
+ */
+export async function getAccountBalanceAsOf(
+  accountId: string,
+  endDate?: Date,
+): Promise<number> {
   const account = await prisma.financialAccount.findUnique({
     where: { id: accountId },
     select: {
@@ -27,27 +38,31 @@ export async function getAccountBalance(accountId: string): Promise<number> {
       account.cardAccountType?.toLowerCase() === "debit" &&
       Boolean(account.linkedAccountId?.trim());
     if (isDebit) {
-      return getAccountBalance(account.linkedAccountId!);
+      return getAccountBalanceAsOf(account.linkedAccountId!, endDate);
     }
-    const outstanding = await getCurrentOutstanding(accountId);
+    const outstanding = await getOutstandingAsOf(accountId, endDate);
     return -outstanding;
   }
 
+  const occurredAtFilter = endDate ? { occurredAt: { lte: endDate } } : {};
+  const baseWhere = { financialAccountId: accountId, ...occurredAtFilter };
+  const transferInWhere = { transferAccountId: accountId, type: TransactionType.TRANSFER, ...occurredAtFilter };
+
   const [incomeSum, expenseSum, transferOutSum, transferInSum] = await Promise.all([
     prisma.transaction.aggregate({
-      where: { financialAccountId: accountId, type: TransactionType.INCOME },
+      where: { ...baseWhere, type: TransactionType.INCOME },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
-      where: { financialAccountId: accountId, type: TransactionType.EXPENSE },
+      where: { ...baseWhere, type: TransactionType.EXPENSE },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
-      where: { financialAccountId: accountId, type: TransactionType.TRANSFER },
+      where: { ...baseWhere, type: TransactionType.TRANSFER },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
-      where: { transferAccountId: accountId, type: TransactionType.TRANSFER },
+      where: transferInWhere,
       _sum: { amount: true },
     }),
   ]);
@@ -68,8 +83,35 @@ export async function getAccountBalance(accountId: string): Promise<number> {
  * Debit cards are excluded — their balance is the same as the linked bank account.
  */
 export async function getTotalBalance(userId: string): Promise<number> {
+  return getTotalBalanceAsOf(userId);
+}
+
+export type NetWorthTrendOptions = {
+  year: number;
+  timezone?: string;
+  financialAccountId?: string;
+};
+
+export type NetWorthTrendItem = {
+  monthIndex: number;
+  netWorth: number;
+};
+
+/**
+ * Total net balance as of a given date.
+ * When financialAccountId is provided, returns only that account's balance.
+ */
+export async function getTotalBalanceAsOf(
+  userId: string,
+  endDate?: Date,
+  financialAccountId?: string,
+): Promise<number> {
   const accounts = await prisma.financialAccount.findMany({
-    where: { userId, isActive: true },
+    where: {
+      userId,
+      isActive: true,
+      ...(financialAccountId ? { id: financialAccountId } : {}),
+    },
     select: { id: true, type: true, cardAccountType: true, linkedAccountId: true },
   });
   const toSum = accounts.filter((a) => {
@@ -80,7 +122,31 @@ export async function getTotalBalance(userId: string): Promise<number> {
     return !isDebit;
   });
   const balances = await Promise.all(
-    toSum.map((a) => getAccountBalance(a.id))
+    toSum.map((a) => getAccountBalanceAsOf(a.id, endDate)),
   );
   return balances.reduce((sum, b) => sum + b, 0);
+}
+
+/**
+ * Net worth at end of each month for a given year.
+ * Returns 12 data points for charting.
+ */
+export async function getNetWorthTrend(
+  userId: string,
+  options: NetWorthTrendOptions,
+): Promise<NetWorthTrendItem[]> {
+  const { year, timezone = "Asia/Bangkok", financialAccountId } = options;
+  const { getDateRangeInTimezone } = await import("@/lib/date-range");
+
+  const result: NetWorthTrendItem[] = [];
+  for (let m = 0; m < 12; m++) {
+    const lastDay = new Date(year, m + 1, 0).getDate();
+    const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const range = getDateRangeInTimezone(dateStr, timezone);
+    const endOfMonth = range?.to;
+    if (!endOfMonth) continue;
+    const netWorth = await getTotalBalanceAsOf(userId, endOfMonth, financialAccountId);
+    result.push({ monthIndex: m, netWorth });
+  }
+  return result;
 }
