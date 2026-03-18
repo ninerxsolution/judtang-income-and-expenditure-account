@@ -5,6 +5,21 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 18/03/2026 (Export PDF Statement — implementation)
+
+- app/api/transactions/export/route.ts — Support format=pdf; buildStatementPdfData, renderStatementPdf; Activity Log format field.
+- lib/statement-pdf.tsx — New: PDF document component (header, balance summary, transaction table, footer).
+- lib/statement-pdf-data.ts — New: buildStatementPdfData for opening/closing balance, debit/credit mapping.
+- components/dashboard/data-tools.tsx — Add "Download PDF" button.
+- app/(dashboard)/dashboard/accounts/[id]/page.tsx — Add PDF export button (uses current filters + accountId).
+- i18n/dictionaries/th.ts, en.ts — dataTools.export.buttonPdf, pdfPending, pdfFailed; activityLog transactionExport format.
+- next.config.ts — serverExternalPackages: @react-pdf/renderer.
+- __tests__/api/transactions-export.test.ts — Mock statement-pdf; add PDF format test.
+- docs/feature/export-pdf-statement.md — Update current state.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 18/03/2026 (Export PDF Statement — feature doc, research)
 
 - docs/feature/export-pdf-statement.md — New: Export PDF Statement feature spec; research on bank statement format (header, balance summary, transaction table, footer); proposed structure, API design, library options, UI notes.

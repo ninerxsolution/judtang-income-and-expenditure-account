@@ -2,12 +2,12 @@
 
 Feature สำหรับส่งออกรายการธุรกรรมเป็นไฟล์ PDF ในรูปแบบคล้ายใบยอดบัญชีของธนาคาร (bank statement) เพื่อนำไปแชร์หรือเก็บไว้ใช้
 
-## 1. Current State
+## 1. Current State (Updated)
 
-- **Export:** มีเฉพาะ **CSV** เท่านั้น
-- **API:** `GET /api/transactions/export` — คืน CSV (UTF-8)
+- **Export:** **CSV** และ **PDF** (implemented)
+- **API:** `GET /api/transactions/export` — คืน CSV (default) หรือ PDF เมื่อ `format=pdf`
 - **UI:** Data Tools (`/dashboard/tools`), หน้ารายละเอียดบัญชี (`/dashboard/accounts/[id]`)
-- **Filters:** from, to, type (INCOME/EXPENSE/TRANSFER), financialAccountId
+- **Filters:** from, to, type (INCOME/EXPENSE/TRANSFER), financialAccountId, locale (th/en)
 
 ## 2. Research: Bank Statement PDF Format
 

@@ -203,9 +203,11 @@ function formatDetails(
   if (action === "TRANSACTION_EXPORT") {
     const rowCount = details.rowCount as number | undefined;
     const hasFilter = details.hasFilter as boolean | undefined;
+    const format = (details.format as string | undefined) === "pdf" ? "PDF" : "CSV";
     detailLines.push(
       t("activityLog.details.transactionExport", {
         rowCount: rowCount ?? 0,
+        format,
         hasFilter: hasFilter ? t("activityLog.details.yes") : t("activityLog.details.no"),
       }),
     );
