@@ -56,6 +56,7 @@ import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
 import { getFullCardTypeDisplayName, getCardNetworkDisplayName } from "@/lib/card-types";
 import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { useI18n } from "@/hooks/use-i18n";
+import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -420,10 +421,10 @@ export default function AccountsPage() {
                 {t("accounts.sectionAccounts")}
               </h2>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="relative overflow-hidden">
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <Card key={i} className="relative overflow-hidden py-4 gap-3 md:py-6 md:gap-6">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 pb-1 md:px-6 md:pb-2">
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-8 w-8 rounded-lg" />
@@ -433,9 +434,9 @@ export default function AccountsPage() {
                     </div>
                     <Skeleton className="h-8 w-8 rounded-md" />
                   </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-8 w-32" />
-                    <Skeleton className="mt-2 h-3 w-40" />
+                  <CardContent className="px-4 pt-0 md:px-6">
+                    <Skeleton className="h-6 w-28 md:h-8 md:w-32" />
+                    <Skeleton className="mt-1 h-3 w-36 md:mt-2 md:w-40" />
                   </CardContent>
                 </Card>
               ))}
@@ -446,10 +447,10 @@ export default function AccountsPage() {
               <CreditCard className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
               {t("accounts.sectionCreditCards")}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
               {[1, 2].map((i) => (
-                <Card key={i} className="relative overflow-hidden">
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <Card key={i} className="relative overflow-hidden py-4 gap-3 md:py-6 md:gap-6">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 pb-1 md:px-6 md:pb-2">
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-8 w-8 rounded-lg" />
@@ -459,9 +460,9 @@ export default function AccountsPage() {
                     </div>
                     <Skeleton className="h-8 w-8 rounded-md" />
                   </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-8 w-32" />
-                    <Skeleton className="mt-2 h-3 w-40" />
+                  <CardContent className="px-4 pt-0 md:px-6">
+                    <Skeleton className="h-6 w-28 md:h-8 md:w-32" />
+                    <Skeleton className="mt-1 h-3 w-36 md:mt-2 md:w-40" />
                   </CardContent>
                 </Card>
               ))}
@@ -475,7 +476,7 @@ export default function AccountsPage() {
       )}
 
       {!loading && !error && accounts.length === 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
           <button
             type="button"
             onClick={() => openCreateModal()}
@@ -514,9 +515,11 @@ export default function AccountsPage() {
               return (
               <Card
                 key={acc.id}
-                className={`relative overflow-hidden ${
-                  acc.needsAttention ? "ring-2 ring-amber-400/50 dark:ring-amber-500/50" : ""
-                } ${acc.isIncomplete ? "ring-2 ring-red-400/50 dark:ring-red-500/50" : ""}`}
+                className={cn(
+                  "relative overflow-hidden py-4 gap-3 md:py-6 md:gap-6",
+                  acc.needsAttention && "ring-2 ring-amber-400/50 dark:ring-amber-500/50",
+                  acc.isIncomplete && "ring-2 ring-red-400/50 dark:ring-red-500/50"
+                )}
               >
                 {acc.isIncomplete && (
                   <div
@@ -531,11 +534,11 @@ export default function AccountsPage() {
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
                   </div>
                 )}
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <div className="flex flex-col gap-0.5">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 pb-1 md:px-6 md:pb-2">
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       {bankLogoUrl ? (
-                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-[#E8E0C8] p-1 dark:bg-stone-700">
+                        <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-md bg-[#E8E0C8] p-0.5 md:h-8 md:w-8 md:rounded-lg md:p-1 dark:bg-stone-700">
                           <Image
                             src={bankLogoUrl}
                             alt=""
@@ -545,9 +548,9 @@ export default function AccountsPage() {
                           />
                         </div>
                       ) : (
-                        <TypeIcon className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
+                        <TypeIcon className="h-4 w-4 shrink-0 text-[#A09080] md:h-5 md:w-5 dark:text-stone-400" />
                       )}
-                      <CardTitle className="text-base">
+                      <CardTitle className="min-w-0 truncate text-sm md:text-base">
                         <Link
                           href={`/dashboard/accounts/${acc.id}`}
                           className="hover:underline focus:underline"
@@ -565,13 +568,13 @@ export default function AccountsPage() {
                             ) ?? undefined
                           }
                         >
-                          <CardNetworkIcon id={acc.cardNetwork} size={18} />
+                          <CardNetworkIcon id={acc.cardNetwork} size={16} />
                         </div>
                       )}
                     </div>
                     {(acc.bankName || acc.accountNumberMasked) && (
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-[#A09080] dark:text-stone-400">
+                      <div className="flex items-center gap-1">
+                        <p className="text-[11px] text-[#A09080] md:text-xs dark:text-stone-400">
                           {(() => {
                             const bankLabel =
                               getBankDisplayName(
@@ -653,7 +656,7 @@ export default function AccountsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 shrink-0 text-[#A09080] hover:text-[#3D3020] dark:hover:text-stone-300"
+                              className="h-5 w-5 shrink-0 text-[#A09080] md:h-6 md:w-6 hover:text-[#3D3020] dark:hover:text-stone-300"
                               onClick={() => toggleRevealAccountNumber(acc)}
                               title={
                                 revealedAccountIds.has(acc.id)
@@ -671,6 +674,23 @@ export default function AccountsPage() {
                       </div>
                     )}
                   </div>
+                  <div className="flex shrink-0 items-center gap-1 md:hidden">
+                    {acc.type === "CREDIT_CARD" &&
+                    acc.cardAccountType?.toLowerCase() !== "debit" ? (
+                      <p className="text-base font-bold tabular-nums text-red-700 dark:text-red-300">
+                        ฿{formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
+                      </p>
+                    ) : (
+                      <p
+                        className={cn(
+                          "text-base font-bold tabular-nums",
+                          acc.balance < 0 && "text-red-600 dark:text-red-400"
+                        )}
+                      >
+                        ฿{formatAmount(acc.balance)}
+                      </p>
+                    )}
+                  </div>
                   <DropdownMenu
                     open={openMenuAccountId === acc.id}
                     onOpenChange={(open) =>
@@ -681,7 +701,7 @@ export default function AccountsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-7 w-7 md:h-8 md:w-8"
                         onPointerDownCapture={(e) => {
                           if (e.pointerType === "touch") {
                             e.preventDefault();
@@ -758,9 +778,9 @@ export default function AccountsPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pt-0 md:px-6">
                   {acc.isIncomplete && (
-                    <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950/50 dark:text-red-300">
+                    <div className="mb-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700 md:mb-3 md:px-3 md:py-2 dark:bg-red-950/50 dark:text-red-300">
                       {acc.type === "CREDIT_CARD"
                         ? (acc.cardAccountType?.toLowerCase() === "debit"
                           ? t("accounts.incompleteDebitCardWarning")
@@ -772,43 +792,42 @@ export default function AccountsPage() {
                   acc.cardAccountType?.toLowerCase() === "debit" ? (
                     <>
                       <p
-                        className={`text-2xl font-bold tabular-nums ${
-                          acc.balance < 0
-                            ? "text-red-600 dark:text-red-400"
-                            : ""
-                        }`}
+                        className={cn(
+                          "hidden text-xl font-bold tabular-nums md:block md:text-2xl",
+                          acc.balance < 0 && "text-red-600 dark:text-red-400"
+                        )}
                       >
                         ฿{formatAmount(acc.balance)}
                       </p>
-                      <CardDescription className="mt-1 text-xs">
+                      <CardDescription className="mt-0.5 text-[11px] md:mt-1 md:text-xs">
                         {t("accounts.lastTransaction")}:{" "}
                         {formatDate(acc.lastTransactionDate, locale)}
                       </CardDescription>
                       {acc.lastCheckedAt && (
-                        <CardDescription className="text-xs">
+                        <CardDescription className="text-[11px] md:text-xs">
                           {t("accounts.lastChecked")}:{" "}
                           {formatDate(acc.lastCheckedAt, locale)}
                         </CardDescription>
                       )}
                       {acc.isDefault && (
-                        <span className="mt-2 inline-block rounded-full bg-[#D4C9B0] px-2 py-0.5 text-xs dark:bg-stone-700">
+                        <span className="mt-1.5 inline-block rounded-full bg-[#D4C9B0] px-1.5 py-0.5 text-[10px] md:mt-2 md:px-2 md:text-xs dark:bg-stone-700">
                           {t("accounts.default")}
                         </span>
                       )}
                     </>
                   ) : acc.type === "CREDIT_CARD" ? (
                     <>
-                      <p className="text-2xl font-bold tabular-nums text-red-700 dark:text-red-300">
+                      <p className="hidden text-xl font-bold tabular-nums text-red-700 md:block md:text-2xl dark:text-red-300">
                         ฿{formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
                       </p>
-                      <p className="mt-1 text-xs text-[#A09080] dark:text-stone-400">
+                      <p className="mt-0.5 text-[11px] text-[#A09080] md:mt-1 md:text-xs dark:text-stone-400">
                         {t("accounts.currentOutstanding")}
                       </p>
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
                             type="button"
-                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-xs text-[#A09080] transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
+                            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-md py-1 text-[11px] text-[#A09080] md:mt-2 md:py-1.5 md:text-xs transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
                             title={t("accounts.showDetails")}
                           >
                             <span>{t("accounts.showDetails")}</span>
@@ -877,26 +896,25 @@ export default function AccountsPage() {
                   ) : (
                     <>
                       <p
-                        className={`text-2xl font-bold tabular-nums ${
-                          acc.balance < 0
-                            ? "text-red-600 dark:text-red-400"
-                            : ""
-                        }`}
+                        className={cn(
+                          "hidden text-xl font-bold tabular-nums md:block md:text-2xl",
+                          acc.balance < 0 && "text-red-600 dark:text-red-400"
+                        )}
                       >
                         ฿{formatAmount(acc.balance)}
                       </p>
-                      <CardDescription className="mt-1 text-xs">
+                      <CardDescription className="mt-0.5 text-[11px] md:mt-1 md:text-xs">
                         {t("accounts.lastTransaction")}:{" "}
                         {formatDate(acc.lastTransactionDate, locale)}
                       </CardDescription>
                       {acc.lastCheckedAt && (
-                        <CardDescription className="text-xs">
+                        <CardDescription className="text-[11px] md:text-xs">
                           {t("accounts.lastChecked")}:{" "}
                           {formatDate(acc.lastCheckedAt, locale)}
                         </CardDescription>
                       )}
                       {acc.isDefault && (
-                        <span className="mt-2 inline-block rounded-full bg-[#D4C9B0] px-2 py-0.5 text-xs dark:bg-stone-700">
+                        <span className="mt-1.5 inline-block rounded-full bg-[#D4C9B0] px-1.5 py-0.5 text-[10px] md:mt-2 md:px-2 md:text-xs dark:bg-stone-700">
                           {t("accounts.default")}
                         </span>
                       )}
@@ -960,7 +978,7 @@ export default function AccountsPage() {
                       </DropdownMenu>
                     </div>
                     {regularAccounts.length > 0 && (
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
                         {regularAccounts.map((acc) => renderCard(acc))}
                         <button
                           type="button"
@@ -991,7 +1009,7 @@ export default function AccountsPage() {
                       <CreditCard className="h-5 w-5 text-[#A09080] dark:text-stone-400" />
                       {t("accounts.sectionCreditCards")}
                     </h2>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
                       {creditCards.map((acc) => renderCard(acc))}
                       <button
                         type="button"
