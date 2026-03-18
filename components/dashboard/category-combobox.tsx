@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useDropdownOpenUpward } from "@/hooks/use-dropdown-open-upward";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 
 type Category = { id: string; name: string; nameEn?: string | null };
@@ -53,6 +54,7 @@ export function CategoryCombobox({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const openUpward = useDropdownOpenUpward(containerRef, open);
 
   const filteredCategories = filterCategories(categories, searchQuery, localeKey);
   const showNone = !searchQuery.trim();
@@ -116,7 +118,10 @@ export function CategoryCombobox({
       </button>
       {open && (
         <div
-          className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900"
+          className={cn(
+            "absolute left-0 right-0 z-[100] max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900",
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          )}
           role="listbox"
         >
           {filteredCategories.length === 0 && !showNone ? (

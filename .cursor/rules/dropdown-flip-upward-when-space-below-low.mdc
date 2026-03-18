@@ -1,0 +1,37 @@
+---
+description: Dropdown ควรเปิดขึ้นด้านบนเมื่อพื้นที่ด้านล่างไม่พอ
+alwaysApply: false
+---
+
+# Dropdown: เปิดขึ้นด้านบนเมื่อพื้นที่ด้านล่างไม่พอ
+
+## ปัญหาที่เจอ
+
+- Dropdown/Select ที่เปิดลงด้านล่าง เมื่ออยู่ใกล้ขอบล่างของจอ (เช่น ใน dialog บนมือถือ) จะทะลุออกนอกหน้าจอ
+- ผู้ใช้เห็น options แค่บางส่วน หรือต้อง scroll หน้าจอ
+
+## สาเหตุ
+
+- Dropdown ใช้ `top-full mt-1` ตายตัว — เปิดลงเสมอ
+
+## วิธีแก้
+
+- ใช้ `useDropdownOpenUpward(triggerRef, open)` จาก `@/hooks/use-dropdown-open-upward`
+- เมื่อ `open` เป็น true และพื้นที่ด้านล่าง < 220px ให้ใช้ `bottom-full mb-1` แทน `top-full mt-1`
+
+## Do
+
+- ทุกครั้งที่สร้าง dropdown/select แบบ custom (ไม่ใช้ Radix) ให้ใช้ hook นี้
+- Component ที่ใช้แล้ว: CardDropdown, RowSelect, CategoryCombobox, BankCombobox
+
+## Don't
+
+- อย่าใช้ `top-full` ตายตัวโดยไม่เช็คพื้นที่ด้านล่าง
+
+## อ้างอิง
+
+- `hooks/use-dropdown-open-upward.ts`
+- `components/dashboard/card-type-select.tsx`
+- `components/dashboard/row-select.tsx`
+- `components/dashboard/category-combobox.tsx`
+- `components/dashboard/bank-combobox.tsx`

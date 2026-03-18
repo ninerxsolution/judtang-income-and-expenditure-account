@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDropdownOpenUpward } from "@/hooks/use-dropdown-open-upward";
 
 const DROPDOWN_STYLES =
   "flex w-full items-center justify-between gap-2 rounded-md border border-[#D4C9B0] px-3 py-2 text-left text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 hover:bg-[#F5F0E8] dark:hover:bg-stone-800";
 const OPTION_STYLES =
   "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800";
 const OPTION_SELECTED = "bg-[#EBF4E3] dark:bg-stone-800";
-const POPOVER_STYLES =
-  "absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900";
+const POPOVER_BASE =
+  "absolute left-0 right-0 z-[100] max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900";
 const ICON_BOX =
   "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E8E0C8] dark:bg-stone-700";
 
@@ -44,6 +45,7 @@ export function RowSelect<T = unknown>({
 }: RowSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const openUpward = useDropdownOpenUpward(containerRef, open);
 
   const filteredOptions = options.filter((opt) => !excludeValues.includes(opt.value));
   const found = options.find((o) => o.value === value);
@@ -83,7 +85,13 @@ export function RowSelect<T = unknown>({
         <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
       {open && (
-        <div className={POPOVER_STYLES} role="listbox">
+        <div
+          className={cn(
+            POPOVER_BASE,
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          )}
+          role="listbox"
+        >
           {allowEmpty && (
             <button
               type="button"
