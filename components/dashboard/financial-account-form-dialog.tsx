@@ -478,7 +478,12 @@ export function FinancialAccountFormDialog({
                 <label className="mb-2 block text-sm font-medium">
                   {t("accounts.typeLabel")}
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div
+                  className={cn(
+                    "grid gap-1.5 sm:gap-2",
+                    isMobile ? "grid-cols-5" : "grid-cols-2 sm:grid-cols-3"
+                  )}
+                >
                   {ACCOUNT_TYPES.map((tpe) => {
                     const Icon = ACCOUNT_TYPE_ICONS[tpe];
                     const isSelected = type === tpe;
@@ -487,27 +492,33 @@ export function FinancialAccountFormDialog({
                         key={tpe}
                         type="button"
                         onClick={() => setType(tpe)}
-                        className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition-all hover:border-[#5C6B52] dark:hover:border-stone-500 ${
+                        className={cn(
+                          "flex items-center rounded-xl border text-left transition-all hover:border-[#5C6B52] dark:hover:border-stone-500",
+                          isMobile ? "flex-col gap-1 px-1.5 py-2 sm:flex-row sm:gap-3 sm:px-3 sm:py-3" : "gap-3 px-3 py-3",
                           isSelected
                             ? "border-[#5C6B52] bg-[#EBF4E3] dark:border-stone-500 dark:bg-[#5C6B52]/20"
                             : "border-[#D4C9B0] bg-[#FDFAF4] dark:border-stone-600 dark:bg-stone-900"
-                        }`}
+                        )}
                       >
                         <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                          className={cn(
+                            "flex shrink-0 items-center justify-center rounded-lg",
+                            isMobile ? "h-8 w-8 sm:h-10 sm:w-10" : "h-10 w-10",
                             isSelected
                               ? "bg-[#5C6B52]/20 text-[#5C6B52] dark:bg-[#5C6B52]/40 dark:text-emerald-300"
                               : "bg-[#E8E0C8] text-[#6B5E4E] dark:bg-stone-800 dark:text-stone-400"
-                          }`}
+                          )}
                         >
-                          <Icon className="h-5 w-5" />
+                          <Icon className={cn(isMobile ? "h-4 w-4 sm:h-5 sm:w-5" : "h-5 w-5")} />
                         </div>
                         <span
-                          className={`text-sm font-medium ${
+                          className={cn(
+                            "font-medium break-words",
+                            isMobile ? "text-[10px] leading-tight text-center sm:text-left sm:text-sm" : "text-sm",
                             isSelected
                               ? "text-[#3D3020] dark:text-stone-100"
                               : "text-[#6B5E4E] dark:text-stone-400"
-                          }`}
+                          )}
                         >
                           {t(`accounts.type.${tpe}`)}
                         </span>
