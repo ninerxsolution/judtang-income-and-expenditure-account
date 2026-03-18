@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { RepeatIcon, CheckCircle2Icon, CircleIcon, ChevronRightIcon } from "lucide-react";
+import { RepeatIcon, CircleIcon, ChevronRightIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
@@ -58,7 +58,7 @@ export function RecurringDueWidget() {
   const totalDue = items.filter((i) => !i.isPaid).reduce((s, i) => s + Number(i.amount), 0);
   const allPaid = items.length > 0 && items.every((i) => i.isPaid);
 
-  if (!loading && items.length === 0) return null;
+  if (!loading && (items.length === 0 || allPaid)) return null;
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -88,14 +88,7 @@ export function RecurringDueWidget() {
         </div>
       )}
 
-      {!loading && allPaid && (
-        <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 py-1">
-          <CheckCircle2Icon className="h-4 w-4" />
-          {r.widget.allPaid}
-        </div>
-      )}
-
-      {!loading && !allPaid && (
+      {!loading && (
         <>
           <div className="space-y-1.5">
             {unpaidItems.map((item) => (
