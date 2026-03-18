@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { useI18n } from "@/hooks/use-i18n";
 
 type ReportRow = {
@@ -23,6 +24,13 @@ type ListResponse = {
   total: number;
   page: number;
   limit: number;
+  stats: {
+    total: number;
+    open: number;
+    inReview: number;
+    resolved: number;
+    closed: number;
+  };
 };
 
 const STATUS_OPTIONS = [
@@ -64,6 +72,13 @@ export default function AdminReportsPage() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<{
+    total: number;
+    open: number;
+    inReview: number;
+    resolved: number;
+    closed: number;
+  } | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -85,6 +100,7 @@ export default function AdminReportsPage() {
         if (data) {
           setReports(data.reports);
           setTotal(data.total);
+          setStats(data.stats);
         }
       })
       .catch(() => {})
@@ -101,6 +117,58 @@ export default function AdminReportsPage() {
           {t("admin.reports.subtitle")}
         </p>
       </header>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card className="border-[#D4C9B0] dark:border-stone-700">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs">
+                {t("admin.reports.total")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold">{stats.total}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-[#D4C9B0] dark:border-stone-700">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs">
+                {t("admin.reports.statusOpen")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold text-amber-600 dark:text-amber-400">
+                {stats.open}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-[#D4C9B0] dark:border-stone-700">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs">
+                {t("admin.reports.statusInReview")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                {stats.inReview}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-[#D4C9B0] dark:border-stone-700">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs">
+                {t("admin.reports.statusResolved")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-2xl font-semibold text-green-600 dark:text-green-400">
+                {stats.resolved}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-4">
         <div className="space-y-2">

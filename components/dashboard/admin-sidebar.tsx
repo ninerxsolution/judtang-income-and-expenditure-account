@@ -7,20 +7,15 @@ import { signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   User,
-  Wallet,
-  Landmark,
-  CalendarRange,
   Settings,
   LogOut,
-  Maximize2,
-  Minimize2,
   Moon,
   Sun,
-  BarChart3,
+  FileText,
+  Users,
+  Activity,
+  Shield,
   PanelLeftIcon,
-  Home,
-  RepeatIcon,
-  ClipboardList,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -57,14 +52,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
-import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
-import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
-import { useFullscreen } from "@/components/dashboard/fullscreen-context";
 import { useAdminMode } from "@/components/dashboard/admin-mode-context";
-import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useI18n } from "@/hooks/use-i18n";
 import { useIsSmallScreen } from "@/hooks/use-mobile";
-import { formatAmount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 function getInitials(name: string | null | undefined, email: string | null | undefined) {
@@ -86,18 +76,14 @@ function getInitials(name: string | null | undefined, email: string | null | und
   return "?";
 }
 
-const navItems = [
-  { key: "home", href: "/dashboard", icon: Home },
-  { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
-  { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
-  { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
-  { key: "monthlyEntry", href: "/dashboard/monthly-entry", icon: ClipboardList },
-  { key: "recurring", href: "/dashboard/recurring", icon: RepeatIcon },
-  { key: "budget", href: "/dashboard/settings/budget", icon: Wallet },
-  { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
+const adminNavItems = [
+  { key: "reports", href: "/admin/reports", icon: FileText },
+  { key: "users", href: "/admin/users", icon: Users },
+  { key: "activityLog", href: "/admin/activity-log", icon: Activity },
+  { key: "settings", href: "/admin/settings", icon: Settings },
 ] as const;
 
-export function AppSidebarLayout({
+export function AdminSidebarLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -107,11 +93,7 @@ export function AppSidebarLayout({
   const { data: session } = useSession();
   const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
   const { toggleAdminMode } = useAdminMode();
-  const { user: profile, summary, appInfo } = useDashboardData();
-  const balance =
-    summary?.totalBalance ?? (summary ? summary.income - summary.expense : null);
   const { t } = useI18n();
-  const { fullscreen, toggleFullscreen } = useFullscreen();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const isDark = (resolvedTheme ?? theme) === "dark";
   const isSmallScreen = useIsSmallScreen();
@@ -122,24 +104,32 @@ export function AppSidebarLayout({
     await signOut({ callbackUrl: "/sign-in" });
   }
 
+  if (!isAdmin) {
+    router.push("/dashboard");
+    return null;
+  }
+
   return (
     <>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <Link href="/dashboard" className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0 transition-all">
-            <Image
-              src="/judtang-logo-temp.png"
-              alt={t("common.appName")}
-              width={32}
-              height={32}
-              className="h-8 w-8 min-w-8 min-h-8 shrink-0 rounded-lg object-cover"
-            />
+          <Link href="/admin/reports" className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-0 transition-all">
+            <div className="relative">
+              <Image
+                src="/judtang-logo-temp.png"
+                alt={t("common.appName")}
+                width={32}
+                height={32}
+                className="h-8 w-8 min-w-8 min-h-8 shrink-0 rounded-lg object-cover"
+              />
+              <Shield className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground" />
+            </div>
             <div className="flex flex-col leading-tight group-data-[collapsible=icon]:max-w-0 max-w-full overflow-hidden transition-all">
               <span className="text-sm font-semibold">
                 {t("common.appName")}
               </span>
-              <span className="text-[11px] text-muted-foreground">
-                {t("dashboard.pageTitle.dashboard")}
+              <span className="text-[11px] text-primary">
+                {t("admin.mode.adminMode")}
               </span>
             </div>
           </Link>
@@ -153,25 +143,22 @@ export function AppSidebarLayout({
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {navItems.map((item) => {
+                {adminNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive =
-                    item.href === "/dashboard"
-                      ? pathname === "/dashboard"
-                      : pathname === item.href ||
-                        (pathname?.startsWith(item.href + "/") ?? false);
-
+                    pathname === item.href ||
+                    (pathname?.startsWith(item.href + "/") ?? false);
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
                         asChild
                         isActive={isActive}
-                        tooltip={t(`dashboard.sidebar.${item.key}`)}
+                        tooltip={t(`admin.sidebar.${item.key}`)}
                       >
-                          <Link href={item.href}>
-                            <Icon />
-                            <span>{t(`dashboard.sidebar.${item.key}`)}</span>
-                          </Link>
+                        <Link href={item.href}>
+                          <Icon />
+                          <span>{t(`admin.sidebar.${item.key}`)}</span>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -182,7 +169,7 @@ export function AppSidebarLayout({
         </SidebarContent>
         <SidebarFooter>
           <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-            {appInfo?.fullVersion ?? "—"}
+            Admin Mode
           </div>
         </SidebarFooter>
         <SidebarRail />
@@ -207,17 +194,15 @@ export function AppSidebarLayout({
               <DialogContent className="max-w-[min(90vw,24rem)] gap-4 p-4 rounded-2xl bg-transparent dark:bg-transparent border-none shadow-none" showCloseButton={false}>
                 <DialogHeader>
                   <DialogTitle className="text-white">
-                    {/* {t("dashboard.sidebar.navigation")} */}
-                    </DialogTitle>
+                    {/* Navigation */}
+                  </DialogTitle>
                 </DialogHeader>
                 <nav className="flex flex-col gap-3">
-                  {navItems.map((item) => {
+                  {adminNavItems.map((item) => {
                     const Icon = item.icon;
                     const isActive =
-                      item.href === "/dashboard"
-                        ? pathname === "/dashboard"
-                        : pathname === item.href ||
-                          (pathname?.startsWith(item.href + "/") ?? false);
+                      pathname === item.href ||
+                      (pathname?.startsWith(item.href + "/") ?? false);
                     return (
                       <DialogClose asChild key={item.href}>
                         <Button
@@ -233,7 +218,7 @@ export function AppSidebarLayout({
                           <Link href={item.href}>
                             <Icon className="h-8 w-8 shrink-0" />
                             <span className="text-sm font-medium">
-                              {t(`dashboard.sidebar.${item.key}`)}
+                              {t(`admin.sidebar.${item.key}`)}
                             </span>
                           </Link>
                         </Button>
@@ -246,47 +231,8 @@ export function AppSidebarLayout({
           ) : (
             <SidebarTrigger className="-ml-1" />
           )}
-          <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
-            <span
-              className={cn(
-                "text-sm font-semibold tabular-nums bg-white/50 dark:bg-stone-800 rounded-full px-3 py-1",
-                balance !== null && balance < 0
-                  ? "text-red-600 dark:text-red-300"
-                  : "text-foreground"
-              )}
-            >
-              ฿ {balance !== null ? formatAmount(balance) : "—"}
-            </span>
-          </div>
           <div className="ml-auto flex items-center gap-1 sm:gap-4">
-            <ThemeToggle className="hidden sm:flex"/>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden sm:flex h-8 w-8 rounded-full"
-              aria-label={fullscreen ? t("dashboard.fullscreen.exit") : t("dashboard.fullscreen.enter")}
-              onClick={toggleFullscreen}
-            >
-              <span className="relative inline-flex h-4 w-4" aria-hidden>
-                <Minimize2
-                  className={cn(
-                    "absolute inset-0 h-4 w-4 transition-all duration-200",
-                    fullscreen
-                      ? "scale-100 opacity-100"
-                      : "scale-0 opacity-0 pointer-events-none"
-                  )}
-                />
-                <Maximize2
-                  className={cn(
-                    "absolute inset-0 h-4 w-4 transition-all duration-200",
-                    fullscreen
-                      ? "scale-0 opacity-0 pointer-events-none"
-                      : "scale-100 opacity-100"
-                  )}
-                />
-              </span>
-            </Button>
-            <NotificationsPopover />
+            <ThemeToggle className="hidden sm:flex" />
             <div className="w-px h-8 bg-border mx-1" aria-hidden="true" />
 
             {isSmallScreen ? (
@@ -296,53 +242,33 @@ export function AppSidebarLayout({
                   aria-haspopup="dialog"
                   aria-label={t("dashboard.sidebar.account")}
                 >
-                  <div className="hidden sm:block">
-                    {profile?.name ?? t("dashboard.sidebar.account")}
-                  </div>
                   <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
-                    {getInitials(profile?.name, profile?.email)}
+                    {getInitials(session?.user?.name, session?.user?.email)}
                   </div>
                 </DialogTrigger>
                 <DialogContent className="max-w-[min(90vw,20rem)] gap-0 p-0 rounded-2xl" showCloseButton={true}>
                   <DialogHeader className="p-4 pb-2">
                     <DialogTitle className="text-left">
-                      {profile?.name ?? t("dashboard.sidebar.account")}
+                      {session?.user?.name ?? t("dashboard.sidebar.account")}
                     </DialogTitle>
                     <p className="text-xs leading-none text-muted-foreground text-left mt-1">
-                      {profile?.email ?? "—"}
+                      {session?.user?.email ?? "—"}
                     </p>
                   </DialogHeader>
                   <nav className="flex flex-col py-1">
-                    <DialogClose asChild>
-                      <Link
-                        href="/dashboard/me"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none focus:bg-accent focus:text-accent-foreground"
-                      >
-                        <User className="h-4 w-4 shrink-0" />
-                        <span>{t("dashboard.sidebar.profile")}</span>
-                      </Link>
-                    </DialogClose>
-                    <DialogClose asChild>
-                      <Link
-                        href="/dashboard/settings"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground outline-none focus:bg-accent focus:text-accent-foreground"
-                      >
-                        <Settings className="h-4 w-4 shrink-0" />
-                        <span>{t("dashboard.sidebar.settings")}</span>
-                      </Link>
-                    </DialogClose>
                     {isAdmin && (
                       <>
+                        <div className="my-1 h-px bg-border" />
                         <button
                           type="button"
                           className="flex items-center gap-2 px-4 py-2.5 text-sm cursor-pointer bg-amber-100 text-amber-900 hover:bg-amber-200 outline-none focus:bg-amber-200 focus:text-amber-900 w-full text-left"
                           onClick={() => {
                             toggleAdminMode();
-                            router.push("/admin");
+                            router.push("/dashboard");
                           }}
                         >
                           <User className="h-4 w-4 shrink-0" />
-                          <span>{t("admin.mode.toggleAdmin")}</span>
+                          <span>{t("admin.mode.toggleClient")}</span>
                         </button>
                       </>
                     )}
@@ -377,49 +303,24 @@ export function AppSidebarLayout({
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none flex gap-3 items-center cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-full p-2 px-3 transition-all">
                   <div>
-                    {profile?.name ?? t("dashboard.sidebar.account")}
+                    {session?.user?.name ?? t("dashboard.sidebar.account")}
                   </div>
                   <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors">
-                    {getInitials(profile?.name, profile?.email)}
+                    {getInitials(session?.user?.name, session?.user?.email)}
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {profile?.name ?? t("dashboard.sidebar.account")}
+                        {session?.user?.name ?? t("dashboard.sidebar.account")}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {profile?.email ?? "—"}
+                        {session?.user?.email ?? "—"}
                       </p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/me" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>{t("dashboard.sidebar.profile")}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings" className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>{t("dashboard.sidebar.settings")}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuItem className="cursor-pointer bg-amber-100 text-amber-900 hover:bg-amber-200"
-                    onClick={() => {
-                      toggleAdminMode();
-                      router.push("/admin");
-                    }}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>{t("admin.mode.toggleAdmin")}</span>
-                    </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator className="block sm:hidden"/>
+                  <DropdownMenuSeparator className="block sm:hidden" />
                   <DropdownMenuItem
                     className="cursor-pointer flex sm:hidden"
                     onSelect={(e) => {
@@ -433,6 +334,15 @@ export function AppSidebarLayout({
                       <Moon className="mr-2 h-4 w-4" />
                     )}
                     <span>{t("dashboard.sidebar.theme")}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer bg-amber-100 text-amber-900 hover:bg-amber-200"
+                    onClick={() => {
+                      toggleAdminMode();
+                      router.push("/dashboard");
+                    }}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{t("admin.mode.toggleClient")}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -450,9 +360,7 @@ export function AppSidebarLayout({
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth pb-16 md:pb-0">
           {children}
         </div>
-        <MobileBottomNav />
       </SidebarInset>
     </>
   );
 }
-

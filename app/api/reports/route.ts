@@ -251,7 +251,7 @@ export async function GET(request: Request) {
     ];
   }
 
-  const [reports, total] = await Promise.all([
+  const [reports, total, stats] = await Promise.all([
     prisma.report.findMany({
       where,
       include: {
@@ -262,9 +262,25 @@ export async function GET(request: Request) {
       take: limit,
     }),
     prisma.report.count({ where }),
+    prisma.report.groupBy({
+      by: ["status"],
+      _count: true,
+    }),
   ]);
 
+  const statsMap = stats.reduce((acc, stat) => {
+    acc[stat.status] = stat._count;
+    return acc;
+  }, {} as Record<string, number>);
+
   return NextResponse.json({
+    stats: {
+      total,
+      open: statsMap.OPEN || 0,
+      inReview: statsMap.IN_REVIEW || 0,
+      resolved: statsMap.RESOLVED || 0,
+      closed: statsMap.CLOSED || 0,
+    },
     reports: reports.map((r) => ({
       id: r.id,
       category: r.category,

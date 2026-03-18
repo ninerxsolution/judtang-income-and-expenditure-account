@@ -1,10 +1,10 @@
 /**
- * Dashboard route group layout (protected by proxy).
- * Wraps all dashboard pages.
+ * Admin route group layout (protected by proxy).
+ * Wraps all admin pages.
  */
 import type { Metadata } from "next";
 import { SessionTouch } from "@/components/dashboard/session-touch";
-import { AppSidebarLayout } from "@/components/dashboard/app-sidebar";
+import { AdminSidebarLayout } from "@/components/dashboard/admin-sidebar";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { DashboardPageTitle } from "@/components/dashboard/dashboard-page-title";
@@ -13,14 +13,13 @@ import { SlipUploadProvider } from "@/components/dashboard/slip-upload-context";
 import { TransactionFormProvider } from "@/components/dashboard/transaction-form-context";
 import { FullscreenProvider } from "@/components/dashboard/fullscreen-context";
 import { AdminModeProvider } from "@/components/dashboard/admin-mode-context";
-import { AccountDetailBreadcrumbProvider } from "@/components/dashboard/account-detail-breadcrumb-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Admin Dashboard",
 };
 
-export default function DashboardLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -29,25 +28,23 @@ export default function DashboardLayout({
     <div className="dashboard-page h-dvh min-h-dvh overflow-hidden">
       <SessionTouch />
       <DashboardDataProvider>
-        <SlipUploadProvider>
-          <TransactionFormProvider>
-            <FullscreenProvider>
-              <AdminModeProvider>
-                <AccountDetailBreadcrumbProvider>
+        <AdminModeProvider>
+          <SlipUploadProvider>
+            <TransactionFormProvider>
+              <FullscreenProvider>
                 <SidebarProvider className="h-dvh overflow-hidden">
-                  <AppSidebarLayout>
-                    <DashboardBreadcrumb className="px-4 py-4" />
-                    <DashboardContent>
-                      <DashboardPageTitle />
-                      {children}
-                    </DashboardContent>
-                  </AppSidebarLayout>
+                <AdminSidebarLayout>
+                  <DashboardBreadcrumb className="px-4 py-4" />
+                  <DashboardContent>
+                    <DashboardPageTitle />
+                    {children}
+                  </DashboardContent>
+                </AdminSidebarLayout>
                 </SidebarProvider>
-              </AccountDetailBreadcrumbProvider>
-              </AdminModeProvider>
-            </FullscreenProvider>
-          </TransactionFormProvider>
-        </SlipUploadProvider>
+              </FullscreenProvider>
+            </TransactionFormProvider>
+          </SlipUploadProvider>
+        </AdminModeProvider>
       </DashboardDataProvider>
     </div>
   );
