@@ -33,6 +33,14 @@ jest.mock("@/lib/activity-log", () => ({
   ActivityLogAction: { TRANSACTION_EXPORT: "TRANSACTION_EXPORT" },
 }));
 
+jest.mock("@/lib/statement-pdf-data", () => ({
+  buildStatementPdfData: jest.fn(),
+}));
+
+jest.mock("@/lib/statement-pdf", () => ({
+  renderStatementPdf: jest.fn().mockResolvedValue(Buffer.from("")),
+}));
+
 import { GET } from "@/app/api/transactions/export/route";
 import { createMockSession } from "../helpers/api-helper";
 
@@ -63,5 +71,31 @@ describe("GET /api/transactions/export", () => {
     expect(res.headers.get("Content-Disposition")).toContain("attachment");
     const text = await res.text();
     expect(text).toBe("id,type,amount\n");
+  });
+
+  it("returns 200 with PDF when format=pdf", async () => {
+    const { buildStatementPdfData } = await import("@/lib/statement-pdf-data");
+    const { renderStatementPdf } = await import("@/lib/statement-pdf");
+    (buildStatementPdfData as jest.Mock).mockResolvedValue({
+      user: { name: "Test", email: "test@example.com" },
+      transactions: [],
+      totalCredits: 0,
+      totalDebits: 0,
+      openingBalance: null,
+      closingBalance: null,
+      fromDate: null,
+      toDate: null,
+      generatedAt: new Date(),
+      locale: "th",
+    });
+    (renderStatementPdf as jest.Mock).mockResolvedValue(Buffer.from("%PDF-1.4 mock"));
+
+    mockGetServerSession.mockResolvedValue(createMockSession());
+    const req = new Request("http://localhost/api/transactions/export?format=pdf");
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toContain("application/pdf");
+    expect(res.headers.get("Content-Disposition")).toContain("statement-");
+    expect(res.headers.get("Content-Disposition")).toContain(".pdf");
   });
 });
