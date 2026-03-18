@@ -1,3 +1,4 @@
+import path from "path";
 import React from "react";
 import {
   Document,
@@ -5,14 +6,32 @@ import {
   View,
   Text,
   StyleSheet,
+  Font,
   renderToBuffer,
 } from "@react-pdf/renderer";
 
-// Use Helvetica (default) - supports Latin. Thai may render as boxes.
-// To support Thai, register Sarabun or similar via Font.register with local woff2.
+// Register Sarabun (Thai-supporting font) from @fontsource/sarabun
+const sarabunWoff400 = path.join(
+  process.cwd(),
+  "node_modules/@fontsource/sarabun/files/sarabun-thai-400-normal.woff",
+);
+const sarabunWoff700 = path.join(
+  process.cwd(),
+  "node_modules/@fontsource/sarabun/files/sarabun-thai-700-normal.woff",
+);
+
+Font.register({
+  family: "Sarabun",
+  fonts: [
+    { src: sarabunWoff400, fontWeight: 400 },
+    { src: sarabunWoff700, fontWeight: 700 },
+  ],
+});
+
 const styles = StyleSheet.create({
   page: {
     padding: 40,
+    fontFamily: "Sarabun",
     fontSize: 10,
   },
   header: {
