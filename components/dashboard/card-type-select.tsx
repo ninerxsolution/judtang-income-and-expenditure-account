@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, CreditCard, Landmark, Smartphone, Wallet } from "lucide-react";
+import { useDropdownOpenUpward } from "@/hooks/use-dropdown-open-upward";
 import { PaymentIcon } from "react-svg-credit-card-payment-icons";
 import {
   CARD_ACCOUNT_TYPES,
@@ -66,8 +67,8 @@ const DROPDOWN_STYLES =
 const OPTION_STYLES =
   "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-[#F5F0E8] dark:hover:bg-stone-800";
 const OPTION_SELECTED = "bg-[#EBF4E3] dark:bg-stone-800";
-const POPOVER_STYLES =
-  "absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900";
+const POPOVER_BASE =
+  "absolute left-0 right-0 z-[100] max-h-60 overflow-auto rounded-md border border-[#D4C9B0] bg-[#FDFAF4] p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900";
 const ICON_BOX = "flex h-8 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-[#E8E0C8] dark:bg-stone-700";
 
 type SelectProps = {
@@ -97,6 +98,7 @@ function CardDropdown({
 }: SelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const openUpward = useDropdownOpenUpward(containerRef, open);
 
   const selected = value ? options.find((o) => o.id === value) : null;
   const displayLabel = selected
@@ -138,7 +140,13 @@ function CardDropdown({
         <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
       </button>
       {open && (
-        <div className={POPOVER_STYLES} role="listbox">
+        <div
+          className={cn(
+            POPOVER_BASE,
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          )}
+          role="listbox"
+        >
           {allowEmpty && (
             <button
               type="button"
