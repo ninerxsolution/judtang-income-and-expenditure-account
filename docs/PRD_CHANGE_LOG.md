@@ -5,6 +5,14 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 18/03/2026 (Export PDF Statement — feature doc, research)
+
+- docs/feature/export-pdf-statement.md — New: Export PDF Statement feature spec; research on bank statement format (header, balance summary, transaction table, footer); proposed structure, API design, library options, UI notes.
+- docs/INDEX.md — Added reference to export-pdf-statement.md.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 18/03/2026 (Recurring: action menu, average monthly expense)
 
 - docs/feature/recurring-transactions.md — Action menu (⋯ dropdown สำหรับบันทึกการจ่าย/แก้ไข); Tab "ทั้งหมด" แสดงรายจ่ายต่อเดือนเฉลี่ย (active EXPENSE items แปลงเป็นรายเดือน)
