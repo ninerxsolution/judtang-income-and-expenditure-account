@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -169,6 +170,7 @@ export default function AccountDetailPage() {
   const [txOffset, setTxOffset] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
 
   const fetchAccount = useCallback(async () => {
@@ -409,6 +411,44 @@ export default function AccountDetailPage() {
   function applyTxFilters() {
     setTxOffset(0);
     void fetchTransactions({ offset: 0 });
+  }
+
+  async function handleExportPdf() {
+    if (!accountId) return;
+    setExportingPdf(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("format", "pdf");
+      params.set("financialAccountId", accountId);
+      if (txFilterFrom) params.set("from", txFilterFrom);
+      if (txFilterTo) params.set("to", txFilterTo);
+      if (txFilterFrom || txFilterTo) {
+        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+      }
+      if (txFilterType !== "all") params.set("type", txFilterType);
+      params.set("locale", localeKey);
+      const res = await fetch(`/api/transactions/export?${params.toString()}`);
+      if (!res.ok) {
+        toast.error(t("dataTools.export.pdfFailed"));
+        return;
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get("content-disposition");
+      const match = /filename="([^"]+)"/i.exec(disposition ?? "");
+      const filename = match?.[1] ?? "statement.pdf";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(t("dataTools.export.pdfFailed"));
+    } finally {
+      setExportingPdf(false);
+    }
   }
 
   function goPrev() {
@@ -822,6 +862,16 @@ export default function AccountDetailPage() {
             </div>
             <Button size="sm" onClick={applyTxFilters}>
               {t("transactions.list.applyFilters")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExportPdf}
+              disabled={exportingPdf}
+              className="inline-flex items-center gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              {exportingPdf ? t("dataTools.export.pdfPending") : t("dataTools.export.buttonPdf")}
             </Button>
           </div>
 

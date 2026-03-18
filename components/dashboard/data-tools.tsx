@@ -34,6 +34,7 @@ export function DataTools() {
   const { refresh } = useDashboardData();
 
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportFrom, setExportFrom] = useState("");
   const [exportTo, setExportTo] = useState("");
@@ -44,17 +45,22 @@ export function DataTools() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
+  function buildExportParams(): URLSearchParams {
+    const params = new URLSearchParams();
+    if (exportFrom) params.set("from", exportFrom);
+    if (exportTo) params.set("to", exportTo);
+    if (exportFrom || exportTo) {
+      params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }
+    if (exportType !== "all") params.set("type", exportType);
+    return params;
+  }
+
   async function handleExportClick() {
     setExportError(null);
     setExporting(true);
     try {
-      const params = new URLSearchParams();
-      if (exportFrom) params.set("from", exportFrom);
-      if (exportTo) params.set("to", exportTo);
-      if (exportFrom || exportTo) {
-        params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
-      }
-      if (exportType !== "all") params.set("type", exportType);
+      const params = buildExportParams();
       const query = params.toString();
       const url = query ? `/api/transactions/export?${query}` : "/api/transactions/export";
       const res = await fetch(url);
@@ -85,6 +91,45 @@ export function DataTools() {
       setExportError(t("dataTools.export.failed"));
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleExportPdfClick() {
+    setExportError(null);
+    setExportingPdf(true);
+    try {
+      const params = buildExportParams();
+      params.set("format", "pdf");
+      const query = params.toString();
+      const url = `/api/transactions/export?${query}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        let message = t("dataTools.export.pdfFailed");
+        try {
+          const data = (await res.json()) as { error?: string };
+          if (data.error) {
+            message = data.error;
+          }
+        } catch {
+          // ignore JSON parse errors
+        }
+        setExportError(message);
+        return;
+      }
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = getFilenameFromHeaders(res.headers) ?? "statement.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      setExportError(t("dataTools.export.pdfFailed"));
+    } finally {
+      setExportingPdf(false);
     }
   }
 
@@ -194,11 +239,20 @@ export function DataTools() {
             <button
               type="button"
               onClick={handleExportClick}
-              disabled={exporting}
+              disabled={exporting || exportingPdf}
               className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-4 py-2 text-sm font-medium text-white hover:bg-[#4A5E40] disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
             >
               <Download className="h-4 w-4" />
               {exporting ? t("dataTools.export.pending") : t("dataTools.export.button")}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdfClick}
+              disabled={exporting || exportingPdf}
+              className="inline-flex items-center gap-2 rounded-md border border-[#5C6B52] bg-transparent px-4 py-2 text-sm font-medium text-[#5C6B52] hover:bg-[#5C6B52]/10 disabled:opacity-50 dark:border-stone-400 dark:text-stone-300 dark:hover:bg-stone-700"
+            >
+              <Download className="h-4 w-4" />
+              {exportingPdf ? t("dataTools.export.pdfPending") : t("dataTools.export.buttonPdf")}
             </button>
             {exportError && (
               <p className="text-sm text-red-600 dark:text-red-400">

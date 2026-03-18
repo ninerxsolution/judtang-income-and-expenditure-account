@@ -657,8 +657,11 @@ export const enDictionary = {
       type: "Type",
       typeAll: "All",
       button: "Download CSV",
+      buttonPdf: "Download PDF",
       pending: "Exporting…",
+      pdfPending: "Generating PDF…",
       failed: "Failed to export transactions",
+      pdfFailed: "Failed to generate PDF",
       columns:
         "Columns: id, type, amount, category, note, occurredAt, createdAt.",
     },
@@ -991,7 +994,7 @@ export const enDictionary = {
       transactionDeleted: "Deleted {type} {amount} on {date}",
       creditCardPayment: "Paid {amount} from account {fromAccount} on {date}",
       creditCardInterestApplied: "Interest {amount} applied up to {toDate}",
-      transactionExport: "Exported {rowCount} rows (filtered: {hasFilter})",
+      transactionExport: "Exported {rowCount} rows ({format}) (filtered: {hasFilter})",
       transactionImport:
         "Import: created {createdCount}, updated {updatedCount} from {totalRows} rows",
       changeFieldType: "Type",

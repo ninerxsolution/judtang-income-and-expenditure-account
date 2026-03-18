@@ -642,8 +642,11 @@ export const thDictionary = {
       type: "ประเภท",
       typeAll: "ทั้งหมด",
       button: "ดาวน์โหลด CSV",
+      buttonPdf: "ดาวน์โหลด PDF",
       pending: "กำลังส่งออก…",
+      pdfPending: "กำลังสร้าง PDF…",
       failed: "ไม่สามารถส่งออกข้อมูลได้",
+      pdfFailed: "ไม่สามารถสร้าง PDF ได้",
       columns:
         "คอลัมน์: id, type, amount, category, note, occurredAt, createdAt",
     },
@@ -975,7 +978,7 @@ export const thDictionary = {
       transactionDeleted: "ลบรายการ {type} จำนวน {amount} วันที่ {date}",
       creditCardPayment: "ชำระ {amount} จากบัญชี {fromAccount} วันที่ {date}",
       creditCardInterestApplied: "คิดดอกเบี้ย {amount} ถึงวันที่ {toDate}",
-      transactionExport: "ส่งออก {rowCount} รายการ (มีตัวกรอง: {hasFilter})",
+      transactionExport: "ส่งออก {rowCount} รายการ ({format}) (มีตัวกรอง: {hasFilter})",
       transactionImport:
         "นำเข้า: สร้าง {createdCount} อัปเดต {updatedCount} จาก {totalRows} แถว",
       changeFieldType: "ประเภท",
