@@ -38,12 +38,19 @@ import { getCardNetworkDisplayName } from "@/lib/card-types";
 import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
+import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 type FinancialAccount = {
@@ -149,6 +156,9 @@ export default function AccountDetailPage() {
   const [txFormInitialDate, setTxFormInitialDate] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTransaction, setDeleteTransaction] = useState<Transaction | null>(null);
+  const [actionMenuTx, setActionMenuTx] = useState<Transaction | null>(null);
+
+  const isDesktop = useIsDesktopOrLarger();
 
   const [summary, setSummary] = useState<Summary>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -371,6 +381,24 @@ export default function AccountDetailPage() {
     setDeleteOpen(true);
   }
 
+  function handleRowClick(tx: Transaction) {
+    setActionMenuTx(tx);
+  }
+
+  function handleActionEdit() {
+    if (actionMenuTx) {
+      openTxEdit(actionMenuTx);
+      setActionMenuTx(null);
+    }
+  }
+
+  function handleActionDelete() {
+    if (actionMenuTx) {
+      openTxDelete(actionMenuTx);
+      setActionMenuTx(null);
+    }
+  }
+
   function refreshAll() {
     void fetchAccount();
     void fetchSummary();
@@ -439,22 +467,31 @@ export default function AccountDetailPage() {
           </CardContent>
         </Card>
         <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-xs lg:text-sm">
             <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.date")}</th>
-                <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
-                <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
-                <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
+                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                  <span className="lg:hidden">{t("transactions.list.columns.dateAndAccount")}</span>
+                  <span className="hidden lg:inline">{t("transactions.list.columns.date")}</span>
+                </th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.account")}</th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
+                <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
+                <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.note")}</th>
+                <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("common.actions.edit")} / {t("common.actions.delete")}</th>
               </tr>
             </thead>
             <tbody>
               {[1, 2, 3, 4, 5].map((i) => (
                 <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
-                  <td className="px-4 py-2"><Skeleton className="h-4 w-28" /></td>
-                  <td className="px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
-                  <td className="px-4 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
-                  <td className="px-4 py-2"><Skeleton className="h-4 w-20" /></td>
+                  <td className="px-2 py-2 lg:px-4"><Skeleton className="h-4 w-28" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                  <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
+                  <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
+                  <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
                 </tr>
               ))}
             </tbody>
@@ -794,22 +831,31 @@ export default function AccountDetailPage() {
 
       {txLoading ? (
             <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-xs lg:text-sm">
                 <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.date")}</th>
-                    <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
-                    <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
+                    <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                      <span className="lg:hidden">{t("transactions.list.columns.dateAndAccount")}</span>
+                      <span className="hidden lg:inline">{t("transactions.list.columns.date")}</span>
+                    </th>
+                    <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.account")}</th>
+                    <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
+                    <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                    <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
+                    <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.note")}</th>
+                    <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("common.actions.edit")} / {t("common.actions.delete")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[1, 2, 3, 4, 5].map((i) => (
                     <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
-                      <td className="px-4 py-2"><Skeleton className="h-4 w-28" /></td>
-                      <td className="px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
-                      <td className="px-4 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
-                      <td className="px-4 py-2"><Skeleton className="h-4 w-20" /></td>
+                      <td className="px-2 py-2 lg:px-4"><Skeleton className="h-4 w-28" /></td>
+                      <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
+                      <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                      <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                      <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
+                      <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
+                      <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -822,28 +868,29 @@ export default function AccountDetailPage() {
           ) : (
             <>
               <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700 bg-[#FDFAF4] dark:bg-stone-900/60">
-                <table className="min-w-full text-sm">
+                <table className="min-w-full text-xs lg:text-sm">
                   <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
                     <tr>
-                      <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
-                        {t("transactions.list.columns.date")}
+                      <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        <span className="lg:hidden">{t("transactions.list.columns.dateAndAccount")}</span>
+                        <span className="hidden lg:inline">{t("transactions.list.columns.date")}</span>
                       </th>
-                      <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                      <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                         {t("transactions.list.columns.account")}
                       </th>
-                      <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                      <th className="hidden lg:table-cell w-0 px-1.5 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                         {t("transactions.list.columns.type")}
                       </th>
-                      <th className="px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                      <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
                         {t("transactions.list.columns.amount")}
                       </th>
-                      <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                      <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                         {t("transactions.list.columns.category")}
                       </th>
-                      <th className="px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                      <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                         {t("transactions.list.columns.note")}
                       </th>
-                      <th className="w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                      <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
                         {t("common.actions.edit")} / {t("common.actions.delete")}
                       </th>
                     </tr>
@@ -855,24 +902,56 @@ export default function AccountDetailPage() {
                       const accountDisplay =
                         isTransfer && tx.transferAccount
                           ? t("transactions.list.transferTo", {
-                            account: tx.transferAccount.name,
-                          })
+                              account: tx.transferAccount.name,
+                            })
                           : tx.financialAccount?.name ?? "—";
+                      const categoryDisplay =
+                        getCategoryDisplayName(
+                          tx.categoryRef?.name ?? tx.category ?? "",
+                          localeKey,
+                          tx.categoryRef?.nameEn
+                        ) || "";
                       return (
                         <tr
                           key={tx.id}
-                          className="border-t border-[#D4C9B0] dark:border-stone-800"
+                          {...(!isDesktop && {
+                            role: "button" as const,
+                            tabIndex: 0,
+                            onClick: () => handleRowClick(tx),
+                            onKeyDown: (e: React.KeyboardEvent) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleRowClick(tx);
+                              }
+                            },
+                            "aria-label": t("transactions.list.tapToEditOrDelete"),
+                          })}
+                          className={`border-t border-[#D4C9B0] dark:border-stone-800 ${
+                            !isDesktop ? "cursor-pointer transition-colors hover:bg-[#F5F0E8]/60 dark:hover:bg-stone-800/60" : ""
+                          }`}
                         >
-                          <td className="px-4 py-2 text-[#3D3020] dark:text-stone-100">
-                            <Link
-                              href={`/dashboard/monthly-entry?date=${toDateStringInTimezone(new Date(tx.occurredAt), Intl.DateTimeFormat().resolvedOptions().timeZone)}&highlight=${tx.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="whitespace-nowrap text-inherit hover:underline focus:underline focus:outline-none"
-                            >
-                              {formatDateTime(tx.occurredAt, locale)}
-                            </Link>
+                          <td className="px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-100">
+                            <div className="flex flex-col gap-0.5">
+                              <Link
+                                href={`/dashboard/monthly-entry?date=${toDateStringInTimezone(new Date(tx.occurredAt), Intl.DateTimeFormat().resolvedOptions().timeZone)}&highlight=${tx.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="whitespace-nowrap text-inherit hover:underline focus:underline focus:outline-none"
+                              >
+                                {formatDateTime(tx.occurredAt, locale)}
+                              </Link>
+                              <span className="text-[12px] text-[#A09080] dark:text-stone-400 lg:hidden max-w-[160px] truncate">
+                                {isTransfer ? (
+                                  <>
+                                    {tx.financialAccount?.name ?? "—"} {accountDisplay}
+                                  </>
+                                ) : (
+                                  accountDisplay
+                                )}
+                                {categoryDisplay ? ` · ${categoryDisplay}` : ""}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
+                          <td className="hidden lg:table-cell px-4 py-2 text-[#3D3020] dark:text-stone-200 max-w-[100px] truncate">
                             {isTransfer ? (
                               <>
                                 {tx.financialAccount?.name ?? "—"} → {accountDisplay}
@@ -881,51 +960,67 @@ export default function AccountDetailPage() {
                               accountDisplay
                             )}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="hidden lg:table-cell px-1.5 py-1.5 lg:px-4 lg:py-2">
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${isIncome
+                              className={`inline-flex items-center justify-center gap-1 rounded-full p-0.5 lg:px-2 lg:py-0.5 text-xs font-medium ${
+                                isIncome
                                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                                   : isTransfer
                                     ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                                     : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                                }`}
+                              }`}
+                              title={
+                                isIncome
+                                  ? t("transactions.common.income")
+                                  : isTransfer
+                                    ? t("transactions.common.transfer")
+                                    : t("transactions.common.expense")
+                              }
                             >
                               {isIncome ? (
-                                <ArrowDownCircle className="h-3.5 w-3.5" />
+                                <ArrowDownCircle className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                               ) : isTransfer ? (
-                                <ArrowLeftRight className="h-3.5 w-3.5" />
+                                <ArrowLeftRight className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                               ) : (
-                                <ArrowUpCircle className="h-3.5 w-3.5" />
+                                <ArrowUpCircle className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                               )}
-                              {isIncome
-                                ? t("transactions.common.income")
-                                : isTransfer
-                                  ? t("transactions.common.transfer")
-                                  : t("transactions.common.expense")}
+                              <span className="hidden lg:inline">
+                                {isIncome
+                                  ? t("transactions.common.income")
+                                  : isTransfer
+                                    ? t("transactions.common.transfer")
+                                    : t("transactions.common.expense")}
+                              </span>
                             </span>
                           </td>
-                          <td className="px-4 py-2 text-right tabular-nums text-zinc-900 dark:text-zinc-50">
+                          <td
+                            className={`px-2 py-1.5 lg:px-4 lg:py-2 text-right tabular-nums whitespace-nowrap ${
+                              isIncome
+                                ? "text-emerald-600 dark:text-emerald-300 font-medium lg:text-zinc-900 lg:dark:text-zinc-50 lg:font-normal"
+                                : isTransfer
+                                  ? "text-blue-600 dark:text-blue-300 font-medium lg:text-zinc-900 lg:dark:text-zinc-50 lg:font-normal"
+                                  : "text-red-600 dark:text-red-300 font-medium lg:text-zinc-900 lg:dark:text-zinc-50 lg:font-normal"
+                            }`}
+                          >
+                            <span className="lg:hidden">{isIncome ? "+" : isTransfer ? "" : "-"}</span>
                             {formatAmount(tx.amount)}
                           </td>
-                          <td className="px-4 py-2 text-[#3D3020] dark:text-stone-200">
-                            {getCategoryDisplayName(
-                              tx.categoryRef?.name ?? tx.category ?? "",
-                              localeKey,
-                              tx.categoryRef?.nameEn
-                            ) || "—"}
+                          <td className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-200 max-w-[80px] truncate">
+                            {categoryDisplay || "—"}
                           </td>
-                          <td className="px-4 py-2 text-[#6B5E4E] dark:text-stone-300">
+                          <td className="hidden lg:table-cell px-4 py-2 text-[#6B5E4E] dark:text-stone-300 max-w-[140px] truncate">
                             {tx.note
                               ? tx.note.length > 60
                                 ? `${tx.note.slice(0, 57)}…`
                                 : tx.note
                               : "—"}
                           </td>
-                          <td className="px-2 py-2 text-right">
+                          <td className="hidden lg:table-cell px-2 py-2 text-right">
                             <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="size-9"
                                 onClick={() => openTxEdit(tx)}
                                 aria-label={t("common.actions.edit")}
                               >
@@ -934,9 +1029,9 @@ export default function AccountDetailPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="size-9 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                                 onClick={() => openTxDelete(tx)}
                                 aria-label={t("common.actions.delete")}
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -980,6 +1075,58 @@ export default function AccountDetailPage() {
               </div>
             </>
           )}
+
+      <Dialog open={!!actionMenuTx} onOpenChange={(open) => !open && setActionMenuTx(null)}>
+        <DialogContent showCloseButton={true} className="max-w-xs gap-4 p-4">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              {t("transactions.list.selectAction")}
+            </DialogTitle>
+          </DialogHeader>
+          {actionMenuTx && (
+            <div className="rounded-lg border border-[#E8E0C8] dark:border-stone-700 bg-[#F5F0E8]/50 dark:bg-stone-800/50 px-3 py-2.5 text-sm space-y-1.5">
+              <p className="text-[#3D3020] dark:text-stone-100 font-medium">
+                {formatDateTime(actionMenuTx.occurredAt, locale)}
+              </p>
+              <p className="text-[#6B5E4E] dark:text-stone-300 truncate">
+                {actionMenuTx.type === "TRANSFER" && actionMenuTx.transferAccount
+                  ? `${actionMenuTx.financialAccount?.name ?? "—"} → ${actionMenuTx.transferAccount.name}`
+                  : actionMenuTx.financialAccount?.name ?? "—"}
+              </p>
+              <p
+                className={`tabular-nums font-medium ${
+                  actionMenuTx.type === "INCOME"
+                    ? "text-emerald-600 dark:text-emerald-300"
+                    : actionMenuTx.type === "TRANSFER"
+                      ? "text-blue-600 dark:text-blue-300"
+                      : "text-red-600 dark:text-red-300"
+                }`}
+              >
+                {actionMenuTx.type === "INCOME" ? "+" : actionMenuTx.type === "TRANSFER" ? "" : "-"}
+                {formatAmount(actionMenuTx.amount)}
+              </p>
+            </div>
+          )}
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="outline"
+              className="w-1/2 gap-2"
+              onClick={handleActionEdit}
+            >
+              <Pencil className="h-4 w-4" />
+              {t("common.actions.edit")}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-1/2 gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+              onClick={handleActionDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("common.actions.delete")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <FinancialAccountFormDialog
         open={formOpen}
