@@ -1,0 +1,27 @@
+---
+description: PDF Export — ต้องใช้ฟอนต์ Sarabun สำหรับภาษาไทย
+alwaysApply: false
+---
+
+# PDF Thai Font: Sarabun
+
+## ปัญหาที่เจอ
+
+- PDF statement แสดงตัวอักษรไทยผิดเพี้ยน (เช่น "รายรับ" → "#2"#1", "รายจ่าย" → "#2" H2"")
+- **สาเหตุ:** ฟอนต์ default (Helvetica) ไม่รองรับภาษาไทย → ใช้ glyph ผิด
+
+## วิธีแก้
+
+- ใช้ `@fontsource/sarabun` และ `Font.register` จาก `@react-pdf/renderer`
+- ใช้ไฟล์ `.woff` จาก `node_modules/@fontsource/sarabun/files/` (thai-400, thai-700)
+- ใส่ `fontFamily: "Sarabun"` ใน StyleSheet
+
+## Do
+
+- เมื่อแก้ PDF statement ให้เช็คว่าฟอนต์ Sarabun ยังโหลดได้ (path ถูกต้อง)
+- ใช้ path `process.cwd() + node_modules/...` สำหรับ font file
+
+## Don't
+
+- อย่าใช้ฟอนต์ default โดยไม่มี Font.register เมื่อมีข้อความภาษาไทย
+- อย่าใช้ woff2 ถ้า @react-pdf/renderer ยังไม่รองรับ — ใช้ woff

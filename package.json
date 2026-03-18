@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@fontsource/sarabun": "^5.2.8",
     "@prisma/adapter-mariadb": "^7.4.0",
     "@prisma/client": "^7.3.0",
     "@react-pdf/renderer": "^4.3.2",
