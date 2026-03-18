@@ -2,6 +2,18 @@
 
 ---
 
+# v0.9.24 - 2026-03-18
+
+## Added
+
+- **Average monthly expense** — The "All" tab on `/dashboard/recurring` shows a summary of average monthly expense (sum of active EXPENSE items converted to monthly equivalent by frequency).
+
+## Changed
+
+- **Recurring per-item action menu** — Record payment and Edit buttons are now combined into a dropdown menu (⋯) instead of separate buttons. Click to choose "Record payment" or "Edit".
+
+---
+
 # v0.9.23 - 2026-03-17
 
 ## Added

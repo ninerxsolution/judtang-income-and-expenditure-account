@@ -8,8 +8,15 @@ import {
   CheckCircle2Icon,
   CircleIcon,
   CalendarIcon,
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
@@ -34,6 +41,22 @@ type RecurringItem = {
 };
 
 type ViewMode = "all" | "due";
+
+function amountToMonthlyEquivalent(
+  amount: number,
+  frequency: "WEEKLY" | "MONTHLY" | "YEARLY"
+): number {
+  switch (frequency) {
+    case "WEEKLY":
+      return amount * (52 / 12);
+    case "MONTHLY":
+      return amount;
+    case "YEARLY":
+      return amount / 12;
+    default:
+      return amount;
+  }
+}
 
 function FrequencyBadge({
   item,
@@ -107,6 +130,14 @@ export default function RecurringPage() {
   const unpaidItems = dueItems.filter((i) => !i.isPaid);
   const paidItems = dueItems.filter((i) => i.isPaid);
   const totalDue = unpaidItems.reduce((sum, i) => sum + Number(i.amount), 0);
+
+  const activeExpenseItems = items.filter(
+    (i) => i.type === "EXPENSE" && i.isActive
+  );
+  const averageMonthlyExpense = activeExpenseItems.reduce(
+    (sum, i) => sum + amountToMonthlyEquivalent(Number(i.amount), i.frequency),
+    0
+  );
 
   const monthName = now.toLocaleString(language === "th" ? "th-TH" : "en-US", { month: "long" });
 
@@ -214,6 +245,8 @@ export default function RecurringPage() {
                   key={item.id}
                   item={item}
                   r={r}
+                  editLabel={t("common.actions.edit")}
+                  moreOptionsLabel={t("notifications.moreOptions")}
                   onEdit={() => openEdit(item.id)}
                   onConfirm={() => openConfirm(item)}
                   showConfirm
@@ -230,6 +263,8 @@ export default function RecurringPage() {
                   key={item.id}
                   item={item}
                   r={r}
+                  editLabel={t("common.actions.edit")}
+                  moreOptionsLabel={t("notifications.moreOptions")}
                   onEdit={() => openEdit(item.id)}
                   onConfirm={() => openConfirm(item)}
                   showConfirm={false}
@@ -250,11 +285,23 @@ export default function RecurringPage() {
               <p className="text-muted-foreground/60 text-xs">{r.emptyStateDescription}</p>
             </div>
           )}
+          {items.length > 0 && averageMonthlyExpense > 0 && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">
+                {r.widget.averageMonthlyExpense}
+              </p>
+              <p className="text-sm font-semibold text-red-500">
+                {formatAmount(averageMonthlyExpense)}
+              </p>
+            </div>
+          )}
           {items.map((item) => (
             <RecurringCard
               key={item.id}
               item={item}
               r={r}
+              editLabel={t("common.actions.edit")}
+              moreOptionsLabel={t("notifications.moreOptions")}
               onEdit={() => openEdit(item.id)}
               onConfirm={() => openConfirm(item)}
               showConfirm={false}
@@ -285,6 +332,8 @@ export default function RecurringPage() {
 function RecurringCard({
   item,
   r,
+  editLabel,
+  moreOptionsLabel,
   onEdit,
   onConfirm,
   showConfirm,
@@ -292,6 +341,8 @@ function RecurringCard({
 }: {
   item: RecurringItem;
   r: ReturnType<typeof useI18n>["t"]["recurring"];
+  editLabel: string;
+  moreOptionsLabel: string;
   onEdit: () => void;
   onConfirm: () => void;
   showConfirm: boolean;
@@ -301,7 +352,7 @@ function RecurringCard({
 
   return (
     <div
-      className={`rounded-xl border p-4 flex flex-col gap-3 transition-opacity sm:flex-row sm:items-center sm:gap-4 bg-card ${
+      className={`rounded-xl border p-4 flex gap-3 transition-opacity flex-row items-center sm:gap-4 bg-card ${
         showActive && !item.isActive ? "opacity-50" : ""
       } ${item.isPaid ? "border-emerald-500 dark:border-emerald-900 dark:bg-emerald-950/10" : "border-border bg-card"}`}
     >
@@ -337,7 +388,7 @@ function RecurringCard({
         </div>
       </div>
 
-      <div className="mt-1 flex w-full items-center justify-between gap-3 pl-8 sm:mt-0 sm:w-auto sm:justify-end sm:pl-0">
+      <div className="mt-1 flex items-center justify-between gap-3 pl-8 sm:mt-0 sm:justify-end sm:pl-0">
         {/* Amount */}
         <div>
           <p
@@ -349,21 +400,25 @@ function RecurringCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1">
-          {showConfirm && !item.isPaid && (
-            <Button
-              size="sm"
-              className="h-8 bg-emerald-500 px-3 text-xs text-white hover:bg-emerald-600"
-              onClick={onConfirm}
-            >
-              <CheckCircle2Icon className="h-3 w-3 md:mr-1" />
-              <span className="hidden md:block">{r.widget.confirmPay}</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={moreOptionsLabel}>
+              <MoreVertical className="h-4 w-4" />
             </Button>
-          )}
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onEdit}>
-            <PencilIcon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {showConfirm && !item.isPaid && (
+              <DropdownMenuItem onClick={onConfirm}>
+                <CheckCircle2Icon className="h-3.5 w-3.5" />
+                {r.widget.confirmPay}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={onEdit}>
+              <PencilIcon className="h-3.5 w-3.5" />
+              {editLabel}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

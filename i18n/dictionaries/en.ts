@@ -1343,6 +1343,7 @@ export const enDictionary = {
       empty: "No recurring items this month",
       totalDue: "Estimated total",
       allPaid: "All paid this month 🎉",
+      averageMonthlyExpense: "Average monthly expense",
     },
     badge: {
       active: "Active",
@@ -1364,6 +1365,8 @@ export const enDictionary = {
     selectYear: "Select year",
     addRow: "Add row",
     addDay: "Add day",
+    expandMore: "More",
+    collapse: "Collapse",
     removeRow: "Remove row",
     editTransaction: "Edit transaction",
     saveEdit: "Save edit",

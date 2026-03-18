@@ -5,6 +5,15 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 18/03/2026 (Recurring: action menu, average monthly expense)
+
+- docs/feature/recurring-transactions.md — Action menu (⋯ dropdown สำหรับบันทึกการจ่าย/แก้ไข); Tab "ทั้งหมด" แสดงรายจ่ายต่อเดือนเฉลี่ย (active EXPENSE items แปลงเป็นรายเดือน)
+- CHANGELOG.md — Added v0.9.24: Recurring action menu, average monthly expense in All tab.
+- CHANGELOG.th.md — Added v0.9.24 (Thai).
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 17/03/2026 (Category English name — nameEn, bilingual display)
 
 - docs/feature/categories.md — Added nameEn field to data model; bilingual display (getCategoryDisplayName, DEFAULT_CATEGORY_TRANSLATIONS); API body nameEn; UI form nameEn; ensureUserHasDefaultCategories note.

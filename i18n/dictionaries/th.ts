@@ -1326,6 +1326,7 @@ export const thDictionary = {
       empty: "ไม่มีรายการประจำเดือนนี้",
       totalDue: "ยอดรวมโดยประมาณ",
       allPaid: "จ่ายครบแล้วเดือนนี้ 🎉",
+      averageMonthlyExpense: "รายจ่ายต่อเดือนเฉลี่ย",
     },
     badge: {
       active: "ใช้งาน",
@@ -1347,6 +1348,8 @@ export const thDictionary = {
     selectYear: "เลือกปี",
     addRow: "เพิ่มแถว",
     addDay: "เพิ่มวัน",
+    expandMore: "เพิ่มเติม",
+    collapse: "ย่อ",
     removeRow: "ลบแถว",
     editTransaction: "แก้ไขรายการ",
     saveEdit: "บันทึกการแก้ไข",

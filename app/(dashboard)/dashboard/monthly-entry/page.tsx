@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Plus,
   Trash2,
   Check,
@@ -25,6 +27,7 @@ import { useI18n } from "@/hooks/use-i18n";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AccountCombobox,
   AccountIcon,
@@ -38,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MonthlyEntryEditDialog } from "@/components/dashboard/monthly-entry-edit-dialog";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -163,7 +167,13 @@ export default function MonthlyEntryPage() {
   const [editingRow, setEditingRow] = useState<RowEntry | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [recentlySavedIds, setRecentlySavedIds] = useState<Set<string>>(new Set());
+  const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogTransaction, setEditDialogTransaction] =
+    useState<ExistingTransaction | null>(null);
+  const [editDialogDay, setEditDialogDay] = useState<number | null>(null);
 
+  const isMobile = useIsMobile();
   const defaultAccountId = accounts.length > 0 ? accounts[0].id : "";
   const daysInMonth = getDaysInMonth(year, month);
   const focusAmountRowIdRef = useRef<string | null>(null);
@@ -434,6 +444,11 @@ export default function MonthlyEntryPage() {
   }
 
   function removeRow(day: number, rowId: string) {
+    setExpandedRowIds((prev) => {
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
     setDayRows((prev) => {
       const rows = (prev[day] ?? []).filter((r) => r.id !== rowId);
       const next = { ...prev };
@@ -443,6 +458,38 @@ export default function MonthlyEntryPage() {
         next[day] = rows;
       }
       return next;
+    });
+  }
+
+  function toggleRowExpanded(rowId: string) {
+    setExpandedRowIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowId)) {
+        next.delete(rowId);
+      } else {
+        next.add(rowId);
+      }
+      return next;
+    });
+  }
+
+  function cycleRowType(day: number, rowId: string) {
+    const order: TransactionType[] = ["INCOME", "EXPENSE", "TRANSFER"];
+    setDayRows((prev) => {
+      const rows = prev[day] ?? [];
+      const idx = rows.findIndex((r) => r.id === rowId);
+      if (idx < 0) return prev;
+      const row = rows[idx];
+      const currentIdx = order.indexOf(row.type);
+      const nextIdx = (currentIdx + 1) % order.length;
+      const nextType = order[nextIdx];
+      const next = [...rows];
+      next[idx] = {
+        ...row,
+        type: nextType,
+        ...(nextType !== "TRANSFER" && { transferAccountId: "" }),
+      };
+      return { ...prev, [day]: next };
     });
   }
 
@@ -781,7 +828,7 @@ export default function MonthlyEntryPage() {
       {/* Main content - extra pb so sticky summary bar doesn't cover last day */}
       <div className="min-w-0 flex-1 px-4 pb-0 space-y-4 min-h-0">
       {/* Month/Year navigation */}
-      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-4 px-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-8 px-4">
         <div className="flex items-center gap-2">
           <CalendarRange className="h-5 w-5 text-muted-foreground shrink-0" />
           <h2 className="text-lg font-semibold">{monthLabel}</h2>
@@ -1052,7 +1099,15 @@ export default function MonthlyEntryPage() {
                         key={tx.id}
                         id={`tx-${tx.id}`}
                         type="button"
-                        onClick={() => startEditing(tx, day)}
+                        onClick={() => {
+                          if (isMobile) {
+                            setEditDialogTransaction(tx);
+                            setEditDialogDay(day);
+                            setEditDialogOpen(true);
+                          } else {
+                            startEditing(tx, day);
+                          }
+                        }}
                         className={cn(
                           "scroll-mt-24 flex w-full items-center gap-2 text-sm py-1 px-2 rounded cursor-pointer text-left transition-colors",
                           recentlySavedIds.has(tx.id)
@@ -1106,147 +1161,315 @@ export default function MonthlyEntryPage() {
               {/* New entry rows */}
               {newRows.length > 0 && (
                 <div className="mt-2 space-y-2 mb-1">
-                  {newRows.map((row) => (
-                    <div
-                      key={row.id}
-                      className="flex flex-wrap items-center gap-2"
-                    >
-                      {/* Type select */}
-                      <div className="w-30">
-                        <RowSelect
-                          value={row.type}
-                          onChange={(v) =>
-                            updateRow(day, row.id, "type", v)
-                          }
-                          options={TYPE_OPTIONS.map((t) => ({
-                            value: t,
-                            label:
-                              t === "INCOME"
-                                ? localeKey === "th"
-                                  ? "รายรับ"
-                                  : "Income"
-                                : t === "EXPENSE"
-                                  ? localeKey === "th"
-                                    ? "รายจ่าย"
-                                    : "Expense"
-                                  : localeKey === "th"
-                                    ? "โอน"
-                                    : "Transfer",
-                          }))}
-                          renderOptionIcon={(opt) => (
-                            <TypeIcon
-                              type={opt.value as TransactionType}
-                              className="h-4 w-4"
-                            />
-                          )}
-                          className="h-9 py-1 text-xs"
-                        />
-                      </div>
-
-                      {/* Amount */}
+                  {newRows.map((row) => {
+                    const isExpanded = !isMobile || expandedRowIds.has(row.id);
+                    return (
                       <div
-                        ref={(el) => {
-                          if (el && focusAmountRowIdRef.current === row.id) {
-                            focusAmountRowIdRef.current = null;
-                            const input = el.querySelector<HTMLInputElement>("input");
-                            if (input) setTimeout(() => input.focus(), 0);
-                          }
-                        }}
-                        className="contents"
+                        key={row.id}
+                        className={cn(
+                          "flex gap-2",
+                          isMobile ? "flex-col" : "flex-wrap items-center"
+                        )}
                       >
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder={t("monthlyEntry.amount")}
-                          value={row.amount}
-                          onChange={(e) =>
-                            updateRow(day, row.id, "amount", e.target.value)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              addRow(day);
-                            }
-                          }}
-                          className="w-30 h-9 text-xs tabular-nums text-right"
-                        />
-                      </div>
+                        {/* Row 1: Type + Amount + (Account + Expand for INCOME/EXPENSE only) */}
+                        <div
+                          className={cn(
+                            "flex items-center gap-2",
+                            isMobile &&
+                              (row.type === "INCOME" || row.type === "EXPENSE"
+                                ? "flex-nowrap"
+                                : "flex-wrap")
+                          )}
+                        >
+                          {isMobile ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="shrink-0 h-11 px-3 gap-2 border rounded-md"
+                              onClick={() => cycleRowType(day, row.id)}
+                              aria-label={t("monthlyEntry.type")}
+                            >
+                              <TypeIcon
+                                type={row.type}
+                                className="h-4 w-4 shrink-0"
+                              />
+                              {/* <span className="text-xs">
+                                {row.type === "INCOME"
+                                  ? localeKey === "th"
+                                    ? "รายรับ"
+                                    : "Income"
+                                  : row.type === "EXPENSE"
+                                    ? localeKey === "th"
+                                      ? "รายจ่าย"
+                                      : "Expense"
+                                    : localeKey === "th"
+                                      ? "โอน"
+                                      : "Transfer"}
+                              </span> */}
+                            </Button>
+                          ) : (
+                            <div className="w-30">
+                              <RowSelect
+                                value={row.type}
+                                onChange={(v) =>
+                                  updateRow(day, row.id, "type", v)
+                                }
+                                options={TYPE_OPTIONS.map((t) => ({
+                                  value: t,
+                                  label:
+                                    t === "INCOME"
+                                      ? localeKey === "th"
+                                        ? "รายรับ"
+                                        : "Income"
+                                      : t === "EXPENSE"
+                                        ? localeKey === "th"
+                                          ? "รายจ่าย"
+                                          : "Expense"
+                                        : localeKey === "th"
+                                          ? "โอน"
+                                          : "Transfer",
+                                }))}
+                                renderOptionIcon={(opt) => (
+                                  <TypeIcon
+                                    type={opt.value as TransactionType}
+                                    className="h-4 w-4"
+                                  />
+                                )}
+                                className="h-9 py-1 text-xs"
+                              />
+                            </div>
+                          )}
 
-                      {/* Category */}
-                      <div className="w-40">
-                        <RowSelect
-                          value={row.categoryId}
-                          onChange={(v) =>
-                            updateRow(day, row.id, "categoryId", v)
-                          }
-                          options={categories.map((c) => ({
-                            value: c.id,
-                            label: getCategoryDisplayName(c.name, language, c.nameEn),
-                          }))}
-                          allowEmpty
-                          emptyLabel={t("monthlyEntry.category")}
-                          className="h-9 py-1 text-xs"
-                        />
-                      </div>
+                          <div
+                            ref={(el) => {
+                              if (el && focusAmountRowIdRef.current === row.id) {
+                                focusAmountRowIdRef.current = null;
+                                const input = el.querySelector<HTMLInputElement>("input");
+                                if (input) setTimeout(() => input.focus(), 0);
+                              }
+                            }}
+                            className={isMobile ? "min-w-0 flex-1" : "contents"}
+                          >
+                            <Input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder={t("monthlyEntry.amount")}
+                              value={row.amount}
+                              onChange={(e) =>
+                                updateRow(day, row.id, "amount", e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addRow(day);
+                                }
+                              }}
+                              className={cn(
+                                "text-xs tabular-nums text-right",
+                                isMobile ? "w-full h-11" : "w-30 h-9"
+                              )}
+                            />
+                          </div>
 
-                      {/* Account */}
-                      <div className="w-[15rem]">
-                        <AccountCombobox
-                          value={row.financialAccountId}
-                          onChange={(id) =>
-                            updateRow(day, row.id, "financialAccountId", id)
-                          }
-                          accounts={accounts}
-                          className="!py-1 !text-xs !h-9"
-                        />
-                      </div>
-
-                      {/* Transfer account (only for TRANSFER) */}
-                      {row.type === "TRANSFER" && (
-                        <div className="w-[15rem]">
-                          <AccountCombobox
-                            value={row.transferAccountId}
-                            onChange={(id) =>
-                              updateRow(day, row.id, "transferAccountId", id)
-                            }
-                            accounts={accounts}
-                            excludeIds={row.financialAccountId ? [row.financialAccountId] : []}
-                            allowEmpty
-                            emptyLabel={`→ ${t("transactions.new.toAccount")}`}
-                            className="!py-1 !text-xs !h-9"
-                          />
+                          {isMobile && (row.type === "INCOME" || row.type === "EXPENSE") && (
+                            <>
+                              <div className="min-w-0 flex-1">
+                                <AccountCombobox
+                                  value={row.financialAccountId}
+                                  onChange={(id) =>
+                                    updateRow(day, row.id, "financialAccountId", id)
+                                  }
+                                  accounts={accounts}
+                                  className="!py-1 !text-xs !h-11"
+                                />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="shrink-0 h-11 px-3 text-muted-foreground"
+                                onClick={() => toggleRowExpanded(row.id)}
+                                aria-label={
+                                  isExpanded
+                                    ? t("monthlyEntry.collapse")
+                                    : t("monthlyEntry.expandMore")
+                                }
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </>
+                                )}
+                              </Button>
+                            </>
+                          )}
                         </div>
-                      )}
 
-                      {/* Note */}
-                      <Input
-                        type="text"
-                        placeholder={t("monthlyEntry.note")}
-                        value={row.note}
-                        onChange={(e) =>
-                          updateRow(day, row.id, "note", e.target.value)
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addRow(day);
-                          }
-                        }}
-                        className="flex-1 min-w-[6rem] h-9 text-xs"
-                      />
+                        {/* Row 2 (TRANSFER only): บัญชีต้นทาง + บัญชีปลายทาง + เพิ่มเติม */}
+                        {isMobile && row.type === "TRANSFER" && (
+                          <div className="flex items-center gap-2 flex-nowrap">
+                            <div className="min-w-0 flex-1">
+                              <AccountCombobox
+                                value={row.financialAccountId}
+                                onChange={(id) =>
+                                  updateRow(day, row.id, "financialAccountId", id)
+                                }
+                                accounts={accounts}
+                                className="!py-1 !text-xs !h-11"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <AccountCombobox
+                                value={row.transferAccountId}
+                                onChange={(id) =>
+                                  updateRow(day, row.id, "transferAccountId", id)
+                                }
+                                accounts={accounts}
+                                excludeIds={row.financialAccountId ? [row.financialAccountId] : []}
+                                allowEmpty
+                                emptyLabel={`→ ${t("transactions.new.toAccount")}`}
+                                className="!py-1 !text-xs !h-11"
+                              />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="shrink-0 h-11 px-3 text-muted-foreground"
+                              onClick={() => toggleRowExpanded(row.id)}
+                              aria-label={
+                                isExpanded
+                                  ? t("monthlyEntry.collapse")
+                                  : t("monthlyEntry.expandMore")
+                              }
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4 mr-1" />
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
 
-                      {/* Remove */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => removeRow(day, row.id)}
-                        aria-label={t("monthlyEntry.removeRow")}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
+                          {!isMobile && (
+                            <>
+                              <div className="w-40">
+                                <RowSelect
+                                  value={row.categoryId}
+                                  onChange={(v) =>
+                                    updateRow(day, row.id, "categoryId", v)
+                                  }
+                                  options={categories.map((c) => ({
+                                    value: c.id,
+                                    label: getCategoryDisplayName(c.name, language, c.nameEn),
+                                  }))}
+                                  allowEmpty
+                                  emptyLabel={t("monthlyEntry.category")}
+                                  className="h-9 py-1 text-xs"
+                                />
+                              </div>
+                              <div className="w-[15rem]">
+                                <AccountCombobox
+                                  value={row.financialAccountId}
+                                  onChange={(id) =>
+                                    updateRow(day, row.id, "financialAccountId", id)
+                                  }
+                                  accounts={accounts}
+                                  className="!py-1 !text-xs !h-9"
+                                />
+                              </div>
+                              {row.type === "TRANSFER" && (
+                                <div className="w-[15rem]">
+                                  <AccountCombobox
+                                    value={row.transferAccountId}
+                                    onChange={(id) =>
+                                      updateRow(day, row.id, "transferAccountId", id)
+                                    }
+                                    accounts={accounts}
+                                    excludeIds={row.financialAccountId ? [row.financialAccountId] : []}
+                                    allowEmpty
+                                    emptyLabel={`→ ${t("transactions.new.toAccount")}`}
+                                    className="!py-1 !text-xs !h-9"
+                                  />
+                                </div>
+                              )}
+                              <Input
+                                type="text"
+                                placeholder={t("monthlyEntry.note")}
+                                value={row.note}
+                                onChange={(e) =>
+                                  updateRow(day, row.id, "note", e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addRow(day);
+                                  }
+                                }}
+                                className="flex-1 min-w-[6rem] h-9 text-xs"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                                onClick={() => removeRow(day, row.id)}
+                                aria-label={t("monthlyEntry.removeRow")}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
+
+                        {/* Mobile expanded: Category, Note, Remove */}
+                        {isMobile && isExpanded && (
+                          <div className="flex flex-col gap-2 pl-0">
+                            <RowSelect
+                              value={row.categoryId}
+                              onChange={(v) =>
+                                updateRow(day, row.id, "categoryId", v)
+                              }
+                              options={categories.map((c) => ({
+                                value: c.id,
+                                label: getCategoryDisplayName(c.name, language, c.nameEn),
+                              }))}
+                              allowEmpty
+                              emptyLabel={t("monthlyEntry.category")}
+                              className="h-11 py-1 text-xs"
+                            />
+                            <Input
+                              type="text"
+                              placeholder={t("monthlyEntry.note")}
+                              value={row.note}
+                              onChange={(e) =>
+                                updateRow(day, row.id, "note", e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addRow(day);
+                                }
+                              }}
+                              className="w-full h-11 text-xs"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-fit h-11 px-3 text-muted-foreground hover:text-destructive"
+                              onClick={() => removeRow(day, row.id)}
+                              aria-label={t("monthlyEntry.removeRow")}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {t("monthlyEntry.removeRow")}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -1271,9 +1494,9 @@ export default function MonthlyEntryPage() {
       </div>
 
       {/* Summary + Save */}
-      <div className="sticky bottom-0 bg-background pt-3 pb-2 -mx-4 px-4 space-y-3">
+      <div className="sticky bottom-0 bg-background pt-3 pb-8 -mx-8 -mb-5 px-4 space-y-3">
         {/* Totals */}
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">
             <ArrowDownCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span className="text-muted-foreground">{t("monthlyEntry.totalIncome")}:</span>
@@ -1310,6 +1533,32 @@ export default function MonthlyEntryPage() {
       </div>
 
       </div>
+
+      {/* Edit dialog (mobile only) */}
+      <MonthlyEntryEditDialog
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+          if (!open) {
+            setEditDialogTransaction(null);
+            setEditDialogDay(null);
+          }
+        }}
+        transaction={editDialogTransaction}
+        day={editDialogDay ?? 1}
+        year={year}
+        month={month}
+        defaultAccountId={defaultAccountId}
+        categories={categories}
+        accounts={accounts}
+        onSuccess={() => {
+          if (editDialogTransaction) {
+            setRecentlySavedIds((prev) => new Set([...prev, editDialogTransaction.id]));
+          }
+          void fetchExisting();
+          refresh();
+        }}
+      />
     </div>
   );
 }
