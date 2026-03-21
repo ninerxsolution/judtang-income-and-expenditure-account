@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -40,6 +41,7 @@ export default function AdminAnnouncementSettingsPage() {
   const { status: sessionStatus } = useSession();
   const [dataLoading, setDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [form, setForm] = useState<AdminSiteAnnouncementDto>(DEFAULT_ADMIN_SITE_ANNOUNCEMENT_DTO);
   const [fieldErrors, setFieldErrors] = useState<AnnouncementFieldErrors>({});
 
@@ -200,6 +202,46 @@ export default function AdminAnnouncementSettingsPage() {
       toast.error(t("admin.announcementPage.saveFailed"));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAnnouncementImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/announcement/image", {
+        method: "POST",
+        credentials: "include",
+        body: fd,
+      });
+      const ct = res.headers.get("content-type") ?? "";
+      if (!ct.includes("application/json")) {
+        toast.error(t("admin.announcementPage.imageUploadFailed"));
+        return;
+      }
+      const json = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok) {
+        toast.error(
+          typeof json.error === "string" && json.error.length > 0
+            ? json.error
+            : t("admin.announcementPage.imageUploadFailed")
+        );
+        return;
+      }
+      if (typeof json.url === "string" && json.url.length > 0) {
+        const nextUrl = json.url;
+        setForm((p) => ({ ...p, image: nextUrl }));
+        clearFieldError("image");
+      }
+    } catch {
+      toast.error(t("admin.announcementPage.imageUploadFailed"));
+    } finally {
+      setUploadingImage(false);
     }
   }
 
@@ -368,8 +410,38 @@ export default function AdminAnnouncementSettingsPage() {
               <CardDescription>{t("admin.announcementPage.imageHint")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1 max-w-2xl">
+              <div className="space-y-2 max-w-2xl">
+                <Label htmlFor="ann-image-file">{t("admin.announcementPage.imageChooseFile")}</Label>
                 <Input
+                  id="ann-image-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploadingImage}
+                  onChange={(e) => {
+                    void handleAnnouncementImageFileChange(e);
+                  }}
+                  className="cursor-pointer file:cursor-pointer disabled:opacity-50"
+                />
+                {uploadingImage ? (
+                  <p className="text-sm text-muted-foreground">{t("admin.announcementPage.imageUploading")}</p>
+                ) : null}
+              </div>
+              {form.image ? (
+                <div className="relative w-full max-w-md aspect-4/3 overflow-hidden rounded-md border bg-muted">
+                  <Image
+                    src={form.image}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 28rem) 100vw, 28rem"
+                    unoptimized={form.image.startsWith("http")}
+                  />
+                </div>
+              ) : null}
+              <div className="space-y-1 max-w-2xl">
+                <Label htmlFor="ann-image-url">{t("admin.announcementPage.imageUrlOrPathOptional")}</Label>
+                <Input
+                  id="ann-image-url"
                   value={form.image}
                   onChange={(e) => {
                     setForm((p) => ({ ...p, image: e.target.value }));
@@ -377,6 +449,9 @@ export default function AdminAnnouncementSettingsPage() {
                   }}
                   className={cn("font-mono text-sm", inputErrorClass(Boolean(fieldErrors.image)))}
                   aria-invalid={Boolean(fieldErrors.image)}
+                  placeholder="/announcements/promo.png"
+                  autoComplete="off"
+                  disabled={true}
                 />
                 {fieldErrors.image ? (
                   <p className="text-sm text-destructive" role="alert">

@@ -183,7 +183,10 @@ export function AnnouncementDialog() {
                 fill
                 className="object-cover"
                 onError={() => setImageError(true)}
-                unoptimized={announcement.image.startsWith("http")}
+                unoptimized={
+                  announcement.image.startsWith("http") ||
+                  announcement.image.startsWith("/storage/announcement/image/")
+                }
               />
             </div>
           ) : (
