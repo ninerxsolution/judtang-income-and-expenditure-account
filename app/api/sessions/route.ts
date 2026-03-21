@@ -29,10 +29,17 @@ export async function GET(req: NextRequest) {
   if (currentSessionId) {
     const userAgent = req.headers.get("user-agent") ?? null;
     const ipAddress = getClientIp(req);
-    await prisma.userSession.updateMany({
-      where: { sessionId: currentSessionId, userId, revokedAt: null },
-      data: { lastActiveAt: new Date(), userAgent, ipAddress },
-    });
+    const now = new Date();
+    await prisma.$transaction([
+      prisma.userSession.updateMany({
+        where: { sessionId: currentSessionId, userId, revokedAt: null },
+        data: { lastActiveAt: now, userAgent, ipAddress },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { lastActiveAt: now },
+      }),
+    ]);
   }
 
   const rows = await prisma.userSession.findMany({
@@ -74,11 +81,18 @@ export async function POST(req: NextRequest) {
 
   const userAgent = req.headers.get("user-agent") ?? null;
   const ipAddress = getClientIp(req);
+  const now = new Date();
 
-  await prisma.userSession.updateMany({
-    where: { sessionId: currentSessionId, userId, revokedAt: null },
-    data: { lastActiveAt: new Date(), userAgent, ipAddress },
-  });
+  await prisma.$transaction([
+    prisma.userSession.updateMany({
+      where: { sessionId: currentSessionId, userId, revokedAt: null },
+      data: { lastActiveAt: now, userAgent, ipAddress },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: { lastActiveAt: now },
+    }),
+  ]);
 
   return NextResponse.json({ ok: true });
 }

@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
+import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
 const MAX_FILES_PER_REQUEST = 10;
@@ -876,6 +877,9 @@ export function SlipUploadDialog({
         submitStatus: "success",
         transactionResponse: responseDetail,
       });
+      if (draft.financialAccountId) {
+        saveRecentFinancialAccountId(draft.financialAccountId);
+      }
       return true;
     } catch (error) {
       updateDraft(draft.id, {

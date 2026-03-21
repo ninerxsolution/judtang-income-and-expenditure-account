@@ -1,11 +1,16 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Building2, Banknote, PiggyBank } from "lucide-react";
 import { THAI_BANKS, BANK_OTHER, getBankIconColor, getBankLogoUrl } from "@/lib/thai-banks";
 import { CardNetworkIcon } from "@/components/dashboard/card-type-select";
 import { cn } from "@/lib/utils";
 import { RowSelect, type RowSelectOption } from "@/components/dashboard/row-select";
+import {
+  getRecentFinancialAccountIds,
+  sortAccountsByRecent,
+} from "@/lib/recent-financial-accounts";
 
 export type AccountOption = {
   id: string;
@@ -27,6 +32,8 @@ type AccountComboboxProps = {
   emptyLabel?: string;
   defaultLabel?: string;
   className?: string;
+  /** When true (default), order options by most recently used (localStorage), like categories. */
+  sortByRecent?: boolean;
 };
 
 export function AccountIcon({
@@ -160,17 +167,30 @@ export function AccountCombobox({
   emptyLabel = "—",
   defaultLabel,
   className,
+  sortByRecent = true,
 }: AccountComboboxProps) {
-  const options: RowSelectOption<AccountOption>[] = accounts
-    .filter((acc) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // Defer MRU sort until after mount so server/client markup match (localStorage is client-only).
+    queueMicrotask(() => setMounted(true));
+  }, []);
+
+  const orderedAccounts = useMemo(() => {
+    const filtered = accounts.filter((acc) => {
       if (filterByType && !filterByType(acc.type)) return false;
       return true;
-    })
-    .map((acc) => ({
-      value: acc.id,
-      label: `${acc.name}${acc.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}`,
-      ...acc,
-    }));
+    });
+    if (!sortByRecent || !mounted) {
+      return filtered;
+    }
+    return sortAccountsByRecent(filtered, getRecentFinancialAccountIds());
+  }, [accounts, filterByType, sortByRecent, mounted]);
+
+  const options: RowSelectOption<AccountOption>[] = orderedAccounts.map((acc) => ({
+    value: acc.id,
+    label: `${acc.name}${acc.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}`,
+    ...acc,
+  }));
 
   return (
     <RowSelect<AccountOption>

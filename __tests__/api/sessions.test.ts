@@ -6,6 +6,8 @@ const mockFindMany = jest.fn();
 const mockUpdateMany = jest.fn();
 const mockFindFirst = jest.fn();
 const mockUpdate = jest.fn();
+const mockUserUpdate = jest.fn();
+const mockTransaction = jest.fn();
 
 jest.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
@@ -23,6 +25,10 @@ jest.mock("@/lib/prisma", () => ({
       findFirst: (...args: unknown[]) => mockFindFirst(...args),
       update: (...args: unknown[]) => mockUpdate(...args),
     },
+    user: {
+      update: (...args: unknown[]) => mockUserUpdate(...args),
+    },
+    $transaction: (...args: unknown[]) => mockTransaction(...args),
   },
 }));
 
@@ -33,7 +39,7 @@ jest.mock("@/lib/activity-log", () => ({
 
 import type { NextRequest } from "next/server";
 import { GET, POST, DELETE } from "@/app/api/sessions/route";
-import { createMockSession } from "../helpers/api-helper";
+import { createMockSession, TEST_USER_ID } from "../helpers/api-helper";
 
 function asNextRequest(req: Request): NextRequest {
   return req as unknown as NextRequest;
@@ -42,6 +48,11 @@ function asNextRequest(req: Request): NextRequest {
 beforeEach(() => {
   jest.clearAllMocks();
   mockUpdateMany.mockResolvedValue({});
+  mockUserUpdate.mockResolvedValue({});
+  mockTransaction.mockImplementation((ops: unknown) => {
+    const arr = ops as Promise<unknown>[];
+    return Promise.all(arr);
+  });
   mockFindMany.mockResolvedValue([
     {
       sessionId: "test-session-id",
@@ -76,6 +87,11 @@ describe("GET /api/sessions", () => {
     expect(data).toHaveProperty("sessions");
     expect(data).toHaveProperty("currentSessionId");
     expect(Array.isArray(data.sessions)).toBe(true);
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    expect(mockUserUpdate).toHaveBeenCalledWith({
+      where: { id: TEST_USER_ID },
+      data: { lastActiveAt: expect.any(Date) as Date },
+    });
   });
 });
 
@@ -100,6 +116,11 @@ describe("POST /api/sessions", () => {
 
     expect(res.status).toBe(200);
     expect(data).toEqual({ ok: true });
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    expect(mockUserUpdate).toHaveBeenCalledWith({
+      where: { id: TEST_USER_ID },
+      data: { lastActiveAt: expect.any(Date) as Date },
+    });
   });
 });
 

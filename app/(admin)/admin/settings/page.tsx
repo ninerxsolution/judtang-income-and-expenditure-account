@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,6 @@ import { toast } from "sonner";
 
 type Settings = {
   maintenanceMode: boolean;
-  announcement: string | null;
   adminReportEmail: string | null;
 };
 
@@ -19,7 +19,6 @@ export default function AdminSettingsPage() {
   const { t } = useI18n();
   const [settings, setSettings] = useState<Settings>({
     maintenanceMode: false,
-    announcement: null,
     adminReportEmail: null,
   });
   const [loading, setLoading] = useState(true);
@@ -30,7 +29,6 @@ export default function AdminSettingsPage() {
     // For now, we'll use environment variables
     setSettings({
       maintenanceMode: process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true",
-      announcement: process.env.NEXT_PUBLIC_ANNOUNCEMENT ?? null,
       adminReportEmail: process.env.ADMIN_REPORT_EMAIL ?? null,
     });
     setLoading(false);
@@ -112,25 +110,16 @@ export default function AdminSettingsPage() {
               </CardContent>
             </Card>
 
-            {/* System Announcement */}
+            {/* Home announcement (DB) */}
             <Card>
               <CardHeader>
                 <CardTitle>{t("admin.settings.announcement")}</CardTitle>
-                <CardDescription>
-                  {t("admin.settings.announcementDesc")}
-                </CardDescription>
+                <CardDescription>{t("admin.settings.manageAnnouncementDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <Input
-                    placeholder={t("admin.settings.announcementPlaceholder")}
-                    value={settings.announcement ?? ""}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, announcement: e.target.value || null }))
-                    }
-                    disabled
-                  />
-                </div>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/admin/settings/announcement">{t("admin.settings.manageAnnouncement")}</Link>
+                </Button>
               </CardContent>
             </Card>
 

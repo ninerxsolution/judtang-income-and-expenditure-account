@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthlyEntryEditDialog } from "@/components/dashboard/monthly-entry-edit-dialog";
+import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -687,6 +688,14 @@ export default function MonthlyEntryPage() {
 
       if (res.ok) {
         const data = (await res.json()) as { createdCount: number };
+        for (const tx of transactions) {
+          if (tx.financialAccountId) {
+            saveRecentFinancialAccountId(tx.financialAccountId);
+          }
+          if (tx.transferAccountId) {
+            saveRecentFinancialAccountId(tx.transferAccountId);
+          }
+        }
         toast.success(t("monthlyEntry.saveSuccess", { count: data.createdCount }));
         setDayRows({});
         const prevIds = new Set(existingTransactions.map((t) => t.id));

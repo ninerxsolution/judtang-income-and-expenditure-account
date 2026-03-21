@@ -139,6 +139,10 @@ export const authOptions: AuthOptions = {
           await prisma.userSession.create({
             data: { sessionId, userId: user.id, rememberMe, expiresAt },
           });
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastActiveAt: new Date() },
+          });
           t.sessionId = sessionId;
           t.rememberMe = rememberMe;
           void createActivityLog({

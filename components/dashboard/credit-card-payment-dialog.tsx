@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useI18n } from "@/hooks/use-i18n";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 
 function sanitizeAmountInput(value: string): string {
   const noComma = value.replace(/,/g, "");
@@ -72,6 +73,7 @@ export function CreditCardPaymentDialog({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accountsLoading, setAccountsLoading] = useState(false);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -116,6 +118,14 @@ export function CreditCardPaymentDialog({
       )
       .finally(() => setAccountsLoading(false));
   }, [open, accountId]);
+
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => {
+      amountInputRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
   const amountNum = Number.parseFloat(amount.replace(/,/g, ""));
   const amountValid = Number.isFinite(amountNum) && amountNum > 0;
@@ -185,6 +195,9 @@ export function CreditCardPaymentDialog({
         setError(data.error ?? t("common.errors.generic"));
         return;
       }
+      if (fromAccountId) {
+        saveRecentFinancialAccountId(fromAccountId);
+      }
       onOpenChange(false);
       onSuccess?.();
     } catch {
@@ -196,7 +209,12 @@ export function CreditCardPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+        }}
+        className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+      >
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("accounts.paymentDialogTitle")}</DialogTitle>
           <p className="text-sm text-[#A09080] dark:text-stone-400">{accountName}</p>
@@ -211,6 +229,7 @@ export function CreditCardPaymentDialog({
             onChange={handleAmountChange}
             required
             inputMode="decimal"
+            inputRef={amountInputRef}
           />
           {maxAmount != null && (
             <div className="space-y-1">

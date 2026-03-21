@@ -181,6 +181,38 @@ model ActivityLog {
   @@index([createdAt])
 }
 
+// Singleton row (id = "default"): home-page announcement popup (admin-editable).
+model SiteAnnouncement {
+  id String @id @default("default")
+
+  enabled Boolean @default(false)
+  /// Dismissal key in localStorage (`announcement.dismissed.<keySlug>`); change when replacing a campaign.
+  keySlug String @default("default")
+
+  titleTh   String
+  titleEn   String
+  contentTh String? @db.Text
+  contentEn String? @db.Text
+
+  image String
+
+  imageAltTh String?
+  imageAltEn String?
+
+  startAt DateTime? @db.Date
+  endAt   DateTime? @db.Date
+
+  showOnce    Boolean @default(false)
+  dismissible Boolean @default(true)
+
+  actionUrl String? @db.Text
+
+  actionLabelTh String?
+  actionLabelEn String?
+
+  updatedAt DateTime @updatedAt
+}
+
 // --- Financial Accounts (Book Bank) ---
 
 model FinancialAccount {

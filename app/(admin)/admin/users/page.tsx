@@ -55,13 +55,16 @@ const STATUS_OPTIONS = [
   { value: "DELETED", labelKey: "statusDeleted" as const },
 ];
 
-function formatDate(dateStr: string | null): string {
+function formatDateTime(dateStr: string | null, locale: string): string {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString();
+  return new Date(dateStr).toLocaleString(locale, {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 export default function AdminUsersPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -312,7 +315,7 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[#6B5E4E] dark:text-stone-400">
-                      {formatDate(u.lastActiveAt)}
+                      {formatDateTime(u.lastActiveAt, locale)}
                     </td>
                     <td className="px-4 py-3 text-[#6B5E4E] dark:text-stone-400">
                       {u.transactionCount}

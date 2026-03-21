@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.25 - 2026-03-21
+
+## Changed
+
+- **Home announcement popup** — Configuration moved from `data/announcement.json` and `NEXT_PUBLIC_ANNOUNCEMENT_ENABLED` to the `SiteAnnouncement` database table. Admins edit content at `/admin/settings/announcement`. Public `GET /api/announcement` behaviour (date range, dismiss, localStorage key) is unchanged.
+
+---
+
 # v0.9.24 - 2026-03-18
 
 ## Added

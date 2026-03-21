@@ -1,30 +1,25 @@
 /**
- * GET: returns the active announcement config from data/announcement.json.
- * Returns null if disabled, file missing, or outside the date range.
+ * GET: active announcement for the home page (public). Stored in DB (SiteAnnouncement).
  */
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import type { Announcement } from "@/lib/announcement";
+import { prisma } from "@/lib/prisma";
+import { rowToPublicAnnouncement } from "@/lib/site-announcement";
+
+/** Always read DB; avoid CDN/browser caching stale config after admin saves. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, must-revalidate",
+} as const;
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), "data", "announcement.json");
-
-  let data: Announcement;
-  try {
-    const raw = fs.readFileSync(filePath, "utf-8");
-    data = JSON.parse(raw) as Announcement;
-  } catch {
-    return NextResponse.json(null);
+  const row = await prisma.siteAnnouncement.findUnique({
+    where: { id: "default" },
+  });
+  if (!row) {
+    return NextResponse.json(null, { headers: NO_STORE_HEADERS });
   }
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (data.start_at && today < data.start_at) {
-    return NextResponse.json(null);
-  }
-  if (data.end_at && today > data.end_at) {
-    return NextResponse.json(null);
-  }
-
-  return NextResponse.json(data);
+  const payload = rowToPublicAnnouncement(row);
+  return NextResponse.json(payload, { headers: NO_STORE_HEADERS });
 }
