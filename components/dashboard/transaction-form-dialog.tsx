@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
 import {
   Dialog,
@@ -21,6 +21,11 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  getRecentFinancialAccountIds,
+  pickPreferredAccountId,
+  saveRecentFinancialAccountId,
+} from "@/lib/recent-financial-accounts";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -153,6 +158,7 @@ export function TransactionFormDialog({
   const [formDataLoading, setFormDataLoading] = useState(false);
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>([]);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isMobile = useIsMobile();
 
@@ -174,6 +180,14 @@ export function TransactionFormDialog({
       setCategoriesExpanded(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || (loadState !== "idle" && loadState !== "done")) return;
+    const id = window.setTimeout(() => {
+      amountInputRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open, loadState]);
   const viewport = useVisualViewport(open && isMobile);
 
   const amountError = useMemo(() => {
@@ -336,17 +350,47 @@ export function TransactionFormDialog({
             : []
         );
         if (!editId && accs.length > 0) {
-          const defaultAcc =
-            accs.find(
-              (a: { isDefault?: boolean; isHidden?: boolean }) =>
-                a.isDefault && a.isHidden !== true
-            ) ?? accs[0];
-          setFinancialAccountId(defaultAcc.id);
-          const transferable = accs.filter((a: { type?: string }) => a.type !== "CREDIT_CARD");
-          const secondTransferable = transferable.find(
-            (a: { id: string }) => a.id !== defaultAcc.id
-          );
-          if (secondTransferable) setTransferAccountId(secondTransferable.id);
+          const recent = getRecentFinancialAccountIds();
+          const txTypeInitial = initialType ?? "EXPENSE";
+
+          if (txTypeInitial === "TRANSFER") {
+            const transferable = accs.filter(
+              (a: { type?: string }) => a.type !== "CREDIT_CARD",
+            );
+            if (transferable.length > 0) {
+              const fromAcc =
+                pickPreferredAccountId(transferable, recent) ??
+                transferable.find(
+                  (a: { isDefault?: boolean }) => a.isDefault,
+                ) ??
+                transferable[0];
+              setFinancialAccountId(fromAcc.id);
+              const others = transferable.filter(
+                (a: { id: string }) => a.id !== fromAcc.id,
+              );
+              const toAcc =
+                pickPreferredAccountId(others, recent) ?? others[0];
+              if (toAcc) setTransferAccountId(toAcc.id);
+            }
+          } else {
+            const chosen =
+              pickPreferredAccountId(accs, recent) ??
+              accs.find(
+                (a: { isDefault?: boolean; isHidden?: boolean }) =>
+                  a.isDefault && a.isHidden !== true,
+              ) ??
+              accs[0];
+            setFinancialAccountId(chosen.id);
+            const transferable = accs.filter(
+              (a: { type?: string }) => a.type !== "CREDIT_CARD",
+            );
+            const secondTransferable =
+              pickPreferredAccountId(
+                transferable.filter((a: { id: string }) => a.id !== chosen.id),
+                recent,
+              ) ?? transferable.find((a: { id: string }) => a.id !== chosen.id);
+            if (secondTransferable) setTransferAccountId(secondTransferable.id);
+          }
         }
       })
       .finally(() => {
@@ -355,7 +399,7 @@ export function TransactionFormDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, editId]);
+  }, [open, editId, initialType]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -441,6 +485,12 @@ export function TransactionFormDialog({
         if (type !== "TRANSFER" && categoryId) {
           saveRecentCategoryId(categoryId);
         }
+        if (financialAccountId) {
+          saveRecentFinancialAccountId(financialAccountId);
+        }
+        if (type === "TRANSFER" && transferAccountId) {
+          saveRecentFinancialAccountId(transferAccountId);
+        }
         onOpenChange(false);
         onSuccess?.();
       } else {
@@ -463,6 +513,12 @@ export function TransactionFormDialog({
         if (type !== "TRANSFER" && categoryId) {
           saveRecentCategoryId(categoryId);
         }
+        if (financialAccountId) {
+          saveRecentFinancialAccountId(financialAccountId);
+        }
+        if (type === "TRANSFER" && transferAccountId) {
+          saveRecentFinancialAccountId(transferAccountId);
+        }
         setAmount("");
         setCategoryId("");
         setCategory("");
@@ -483,6 +539,9 @@ export function TransactionFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+        }}
         className={cn(
           "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
@@ -716,6 +775,7 @@ export function TransactionFormDialog({
             onChange={(v) => setAmount(sanitizeAmountInput(v))}
             error={amountError}
             inputMode="decimal"
+            inputRef={amountInputRef}
           />
 
           {type !== "TRANSFER" &&

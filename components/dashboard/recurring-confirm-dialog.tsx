@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AccountCombobox } from "@/components/dashboard/account-combobox";
 import { useI18n } from "@/hooks/use-i18n";
 import type { AccountOption } from "@/components/dashboard/account-combobox";
+import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 
 type RecurringItem = {
   id: string;
@@ -127,6 +128,10 @@ export function RecurringConfirmDialog({
         const data = await res.json();
         setError(data.error ?? r.confirmError);
         return;
+      }
+
+      if (financialAccountId) {
+        saveRecentFinancialAccountId(financialAccountId);
       }
 
       onOpenChange(false);

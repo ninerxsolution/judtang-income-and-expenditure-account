@@ -51,30 +51,59 @@ export function AnnouncementDialog() {
   const [imageError, setImageError] = useState(false);
   const [dontShowToday, setDontShowToday] = useState(false);
 
-  const enabled = process.env.NEXT_PUBLIC_ANNOUNCEMENT_ENABLED === "true";
   const isHomePage = pathname === "/";
 
   useEffect(() => {
-    if (!enabled || !isHomePage) return;
+    if (!isHomePage) return;
 
-    void (async () => {
+    let cancelled = false;
+
+    const load = async () => {
       try {
-        const res = await fetch("/api/announcement");
+        const res = await fetch("/api/announcement", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
         if (!res.ok) return;
         const data: Announcement | null = (await res.json()) as Announcement | null;
-        if (!data) return;
+        if (cancelled) return;
 
-        if (shouldSkip(data.id, data.show_once)) return;
+        if (!data) {
+          setAnnouncement(null);
+          setOpen(false);
+          return;
+        }
 
+        if (shouldSkip(data.id, data.show_once)) {
+          setAnnouncement(null);
+          setOpen(false);
+          return;
+        }
+
+        setImageError(false);
         setAnnouncement(data);
         setOpen(true);
       } catch {
-        // ignore — no announcement shown on error
+        if (!cancelled) {
+          // ignore — no announcement shown on error
+        }
       }
-    })();
-  // Only run once on mount for the home page
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    };
+
+    void load();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void load();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isHomePage]);
 
   function handleDismiss() {
     if (!announcement) return;
@@ -84,6 +113,10 @@ export function AnnouncementDialog() {
       saveDismissed(announcement.id, false);
     }
     setOpen(false);
+  }
+
+  if (!isHomePage) {
+    return null;
   }
 
   if (!announcement) return null;
@@ -150,7 +183,10 @@ export function AnnouncementDialog() {
                 fill
                 className="object-cover"
                 onError={() => setImageError(true)}
-                unoptimized={announcement.image.startsWith("http")}
+                unoptimized={
+                  announcement.image.startsWith("http") ||
+                  announcement.image.startsWith("/storage/announcement/image/")
+                }
               />
             </div>
           ) : (

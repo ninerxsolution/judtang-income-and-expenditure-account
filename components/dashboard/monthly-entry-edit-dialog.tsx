@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { AccountCombobox, type AccountOption } from "@/components/dashboard/account-combobox";
+import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 import { RowSelect } from "@/components/dashboard/row-select";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/hooks/use-i18n";
@@ -160,6 +161,13 @@ export function MonthlyEntryEditDialog({
       });
 
       if (res.ok) {
+        const fid = financialAccountId || defaultAccountId;
+        if (fid) {
+          saveRecentFinancialAccountId(fid);
+        }
+        if (type === "TRANSFER" && transferAccountId) {
+          saveRecentFinancialAccountId(transferAccountId);
+        }
         toast.success(t("monthlyEntry.editSuccess"));
         onSuccess?.();
         onOpenChange(false);

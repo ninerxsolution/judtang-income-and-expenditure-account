@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.25 - 2026-03-21
+
+## Changed
+
+- **ป๊อปอัปประกาศหน้าแรก** — ย้ายการตั้งค่าจาก `data/announcement.json` และ `NEXT_PUBLIC_ANNOUNCEMENT_ENABLED` ไปเก็บในตาราง `SiteAnnouncement` แอดมินแก้ไขได้ที่ `/admin/settings/announcement` พฤติกรรม `GET /api/announcement` ด้านผู้ใช้ (ช่วงวันที่, การปิด, คีย์ localStorage) เหมือนเดิม
+
+---
+
 # v0.9.24 - 2026-03-18
 
 ## Added

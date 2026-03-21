@@ -14,6 +14,8 @@ import {
   FileText,
   Users,
   Activity,
+  LineChart,
+  Megaphone,
   Shield,
   PanelLeftIcon,
 } from "lucide-react";
@@ -76,11 +78,19 @@ function getInitials(name: string | null | undefined, email: string | null | und
   return "?";
 }
 
+function isAdminNavActive(pathname: string | null, href: string): boolean {
+  if (pathname === href) return true;
+  if (href === "/admin/settings") return false;
+  return pathname?.startsWith(`${href}/`) ?? false;
+}
+
 const adminNavItems = [
   { key: "reports", href: "/admin/reports", icon: FileText },
   { key: "users", href: "/admin/users", icon: Users },
+  { key: "transactionUsage", href: "/admin/transaction-usage", icon: LineChart },
   { key: "activityLog", href: "/admin/activity-log", icon: Activity },
   { key: "settings", href: "/admin/settings", icon: Settings },
+  { key: "announcement", href: "/admin/settings/announcement", icon: Megaphone },
 ] as const;
 
 export function AdminSidebarLayout({
@@ -145,9 +155,7 @@ export function AdminSidebarLayout({
               <SidebarMenu>
                 {adminNavItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive =
-                    pathname === item.href ||
-                    (pathname?.startsWith(item.href + "/") ?? false);
+                  const isActive = isAdminNavActive(pathname, item.href);
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
@@ -200,9 +208,7 @@ export function AdminSidebarLayout({
                 <nav className="flex flex-col gap-3">
                   {adminNavItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive =
-                      pathname === item.href ||
-                      (pathname?.startsWith(item.href + "/") ?? false);
+                    const isActive = isAdminNavActive(pathname, item.href);
                     return (
                       <DialogClose asChild key={item.href}>
                         <Button

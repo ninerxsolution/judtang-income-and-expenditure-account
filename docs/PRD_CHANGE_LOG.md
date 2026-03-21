@@ -5,6 +5,13 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 21/03/2026 (Announcement: DB + admin settings)
+
+- docs/feature/announcement-popup.md — Storage moved from `data/announcement.json` to `SiteAnnouncement`; admin UI at `/admin/settings/announcement`; API and behaviour notes updated.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 18/03/2026 (PDF Thai font fix)
 
 - lib/statement-pdf.tsx — Register Sarabun font from @fontsource/sarabun for Thai text; add fontFamily to styles.

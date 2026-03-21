@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { RepeatIcon } from "lucide-react";
 import {
   Dialog,
@@ -76,6 +76,7 @@ export function RecurringTransactionFormDialog({
   const [loadState, setLoadState] = useState<"idle" | "loading" | "done" | "error">(
     editId ? "loading" : "idle",
   );
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!editId;
 
@@ -143,6 +144,14 @@ export function RecurringTransactionFormDialog({
       setLoadState("idle");
     }
   }, [open, editId, isEdit]);
+
+  useEffect(() => {
+    if (!open || loadState === "loading") return;
+    const id = window.setTimeout(() => {
+      amountInputRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [open, loadState]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -248,6 +257,9 @@ export function RecurringTransactionFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+        }}
         className={cn(
           "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
@@ -306,6 +318,7 @@ export function RecurringTransactionFormDialog({
             <div className="space-y-1.5">
               <Label htmlFor="recurring-amount">{r.form.amount}</Label>
               <input
+                ref={amountInputRef}
                 id="recurring-amount"
                 type="text"
                 inputMode="decimal"

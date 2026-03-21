@@ -22,6 +22,7 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
     tools: "Tools",
     calendar: "Calendar",
     "activity-log": "Activity log",
+    "transaction-usage": "Transaction usage",
     accounts: "Accounts",
     "monthly-entry": "Monthly Entry",
   };

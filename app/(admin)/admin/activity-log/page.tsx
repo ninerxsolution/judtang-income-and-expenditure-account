@@ -102,15 +102,15 @@ export default function AdminActivityLogPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label>{t("dashboard.settings.dateRange")}</Label>
           <DateRangePicker
             id="date-range"
-            label={t("dashboard.settings.dateRange")}
+            label={t("dataTools.export.dateRange")}
             value={{ from: dateRange.from || undefined, to: dateRange.to || undefined }}
             onChange={(value) => {
               setDateRange({ from: value?.from ?? "", to: value?.to ?? "" });
               setPage(1);
             }}
+            placeholder={t("dataTools.export.dateRangePlaceholder")}
           />
         </div>
         <div className="space-y-2">

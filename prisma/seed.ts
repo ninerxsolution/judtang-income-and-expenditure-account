@@ -14,6 +14,7 @@ import {
 import { ensureUserHasDefaultFinancialAccount } from "../lib/financial-accounts";
 import { DEFAULT_CATEGORY_NAMES } from "../lib/categories";
 import { createActivityLog } from "../lib/activity-log";
+import { getAccountBalance } from "../lib/balance";
 
 const RESET_FLAG = process.argv.includes("--reset");
 
@@ -92,6 +93,37 @@ function randomAccountNumber(digits: number): string {
 /** Last 4 digits only (for CREDIT_CARD, BANK/WALLET in LAST_4_ONLY mode) */
 function randomLast4(): string {
   return randomAccountNumber(4);
+}
+
+async function seedSiteAnnouncement(): Promise<void> {
+  const existing = await prisma.siteAnnouncement.findUnique({
+    where: { id: "default" },
+  });
+  if (existing) {
+    return;
+  }
+  await prisma.siteAnnouncement.create({
+    data: {
+      id: "default",
+      enabled: false,
+      keySlug: "promo-2026-03",
+      titleTh: "โปรโมชั่นใหม่",
+      titleEn: "New Promotion",
+      contentTh: "ข้อความตัวอย่างที่แสดงใน overlay ด้านล่าง",
+      contentEn: "Optional text shown in dim overlay at bottom.",
+      image: "/announcements/promo.png",
+      imageAltTh: "แบนเนอร์โปรโมชั่น",
+      imageAltEn: "Promotion banner",
+      startAt: new Date("2026-03-01T00:00:00.000Z"),
+      endAt: new Date("2026-03-31T00:00:00.000Z"),
+      showOnce: false,
+      dismissible: true,
+      actionUrl: null,
+      actionLabelTh: "ดูรายละเอียด",
+      actionLabelEn: "Learn more",
+    },
+  });
+  console.log("Seeded SiteAnnouncement (default row).");
 }
 
 async function seedRootAdmin(): Promise<void> {
@@ -200,7 +232,7 @@ async function seedFinancialAccounts(
           bankName: bank.id,
           accountNumber: randomLast4(),
           accountNumberMode: "LAST_4_ONLY",
-          initialBalance: randomAmount(20000, 80000),
+          initialBalance: randomAmount(80000, 150000),
           isActive: true,
           isDefault: false,
         },
@@ -227,7 +259,7 @@ async function seedFinancialAccounts(
         bankName: bank.id,
         accountNumber: randomLast4(),
         accountNumberMode: "LAST_4_ONLY",
-        initialBalance: randomAmount(20000, 80000),
+        initialBalance: randomAmount(80000, 150000),
         isActive: true,
         isDefault: false,
       },
@@ -305,7 +337,7 @@ async function seedFinancialAccounts(
           bankName: w.bankName,
           accountNumber: randomLast4(),
           accountNumberMode: "LAST_4_ONLY",
-          initialBalance: randomAmount(500, 5000),
+          initialBalance: randomAmount(2000, 8000),
           isActive: true,
           isDefault: false,
         },
@@ -322,7 +354,7 @@ async function seedFinancialAccounts(
         bankName: "truemoney",
         accountNumber: randomLast4(),
         accountNumberMode: "LAST_4_ONLY",
-        initialBalance: randomAmount(1000, 3000),
+        initialBalance: randomAmount(2000, 6000),
         isActive: true,
         isDefault: false,
       },
@@ -418,17 +450,56 @@ async function seedCategories(
   return categoryMap;
 }
 
+/**
+ * After random transaction generation, asset accounts (BANK/WALLET/CASH/OTHER) can still
+ * go negative (e.g. wallets drained by transfers). Add a small INCOME so demo balances stay >= 0.
+ */
+async function ensureNonNegativeAssetBalances(ctx: Pick<SeedContext, "userId" | "categoryMap">): Promise<number> {
+  const categoryId = ctx.categoryMap["อื่นๆ"]?.id ?? null;
+  const accounts = await prisma.financialAccount.findMany({
+    where: { userId: ctx.userId, type: { not: "CREDIT_CARD" } },
+    select: { id: true },
+  });
+  let adjustments = 0;
+  const now = new Date();
+  for (const acc of accounts) {
+    const balance = await getAccountBalance(acc.id);
+    if (balance >= -0.005) continue;
+    const bump = Math.round(-balance * 100) / 100;
+    if (bump <= 0) continue;
+    await prisma.transaction.create({
+      data: {
+        userId: ctx.userId,
+        type: TransactionType.INCOME,
+        status: TransactionStatus.POSTED,
+        amount: bump,
+        financialAccountId: acc.id,
+        category: "อื่นๆ",
+        categoryId,
+        note: "ปรับยอดหลัง seed ให้ยอดบัญชีไม่ติดลบ",
+        occurredAt: now,
+        postedDate: now,
+      },
+    });
+    adjustments++;
+  }
+  if (adjustments > 0) {
+    console.log(`Topped up ${adjustments} asset account(s) so balances are not negative.`);
+  }
+  return adjustments;
+}
+
 async function seedTransactions(ctx: SeedContext): Promise<number> {
   const today = startOfDay(new Date());
   const startDate = subDays(today, DAYS_BACK);
   const salaryAmount = randomAmount(25000, 45000);
   const rentAmount = randomAmount(EXPENSE_RANGES.housing.min, EXPENSE_RANGES.housing.max);
 
+  /** Exclude default CASH (often 0 initial) — transfer out would drive it negative. */
   const transferableAccounts = [
     ...ctx.bankAccounts,
     ...ctx.walletAccounts,
     ...ctx.otherAccounts,
-    ctx.defaultAccount,
   ].filter((a) => !ctx.disabledAccountIds.includes(a.id));
 
   const primaryBank = ctx.bankAccounts[0]!;
@@ -523,7 +594,7 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
           });
         }
       } else {
-        const useCreditCard = Math.random() < 0.4 && ctx.creditCards.length > 0;
+        const useCreditCard = Math.random() < 0.55 && ctx.creditCards.length > 0;
         const accountId = useCreditCard ? primaryCard.id : primaryBank.id;
         const categoryChoice = pick(expenseCategories);
         const range =
@@ -1046,6 +1117,7 @@ async function resetSeedData(userId: string): Promise<void> {
 
 async function main() {
   await seedRootAdmin();
+  await seedSiteAnnouncement();
   const user = await seedUsers();
   const userId = user.id;
 
@@ -1076,12 +1148,16 @@ async function main() {
   };
 
   const totalTx = await seedTransactions(ctx);
+  const balanceTopUps = await ensureNonNegativeAssetBalances(ctx);
   await seedDisabledAccounts(ctx);
   await seedTermsAcceptance(userId);
   await seedRecurringTransactions(ctx);
   await seedBudgets(ctx);
 
-  console.log(`Seed done: ${totalTx} transactions over ${DAYS_BACK} days, budgets, recurring templates, terms.`);
+  const topUpNote = balanceTopUps > 0 ? `, ${balanceTopUps} non-negative balance top-up(s)` : "";
+  console.log(
+    `Seed done: ${totalTx} transactions${topUpNote} over ${DAYS_BACK} days, budgets, recurring templates, terms.`,
+  );
 }
 
 main()

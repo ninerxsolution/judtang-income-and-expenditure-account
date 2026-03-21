@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@react-pdf/renderer"],
+  async rewrites() {
+    return [
+      {
+        source: "/storage/announcement/image/:filename",
+        destination: "/api/announcement/image/:filename",
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

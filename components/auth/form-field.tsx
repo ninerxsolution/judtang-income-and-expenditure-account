@@ -18,6 +18,7 @@ type FormFieldProps = {
   maxLength?: number;
   inputMode?: React.InputHTMLAttributes<HTMLInputElement>["inputMode"];
   placeholder?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 };
 
 export function FormField({
@@ -32,11 +33,13 @@ export function FormField({
   maxLength,
   inputMode,
   placeholder,
+  inputRef,
 }: FormFieldProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <Input
+        ref={inputRef}
         id={id}
         type={type}
         required={required}
