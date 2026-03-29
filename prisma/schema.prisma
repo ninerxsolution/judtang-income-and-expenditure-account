@@ -67,6 +67,14 @@ enum ReportStatus {
   CLOSED
 }
 
+enum ContactTopic {
+  GENERAL
+  ACCOUNT_HELP
+  PRODUCT_FEEDBACK
+  PARTNERSHIP_OR_PRESS
+  OTHER
+}
+
 enum NotificationType {
   EVENT_SLIP_DONE
   EVENT_IMPORT_DONE
@@ -462,6 +470,22 @@ model Report {
   @@index([status])
   @@index([createdAt])
   @@index([userId])
+}
+
+model ContactMessage {
+  id           String       @id @default(cuid())
+  senderEmail  String       @db.VarChar(255)
+  senderName   String?      @db.VarChar(200)
+  topic        ContactTopic
+  subject      String       @db.VarChar(200)
+  message      String       @db.Text
+  uiLanguage   String       @db.VarChar(10)
+  ipAddress    String?      @db.VarChar(45)
+  browserInfo  String?      @db.Text
+  emailSentAt  DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([createdAt])
 }
 
 // --- In-App Notifications (event-based, persisted per user) ---

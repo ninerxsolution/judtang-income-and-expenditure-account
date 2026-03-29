@@ -1,3 +1,5 @@
+import type { Language } from "@/i18n";
+
 /**
  * Base URL and path helpers for links embedded in transactional emails.
  *
@@ -41,19 +43,34 @@ export function getEmailResetPasswordPath(): string {
   return normalizeEmailPath(process.env.EMAIL_RESET_PASSWORD_URL, "/reset-password");
 }
 
-export function buildVerifyEmailUrl(token: string): string {
+export function buildVerifyEmailUrl(token: string, lang?: Language): string {
   const base = getEmailAppBaseUrl();
   const path = getEmailVerifyPath();
-  return `${base}${path}?token=${encodeURIComponent(token)}`;
+  const params = new URLSearchParams();
+  params.set("token", token);
+  if (lang === "en" || lang === "th") {
+    params.set("lang", lang);
+  }
+  return `${base}${path}?${params.toString()}`;
 }
 
-export function buildResetPasswordUrl(token: string): string {
+export function buildResetPasswordUrl(token: string, lang?: Language): string {
   const base = getEmailAppBaseUrl();
   const path = getEmailResetPasswordPath();
-  return `${base}${path}?token=${encodeURIComponent(token)}`;
+  const params = new URLSearchParams();
+  params.set("token", token);
+  if (lang === "en" || lang === "th") {
+    params.set("lang", lang);
+  }
+  return `${base}${path}?${params.toString()}`;
 }
 
 export function buildAdminReportDetailUrl(reportId: string): string {
   const base = getEmailAppBaseUrl();
   return `${base}/admin/reports/${encodeURIComponent(reportId)}`;
+}
+
+export function buildAdminContactMessageDetailUrl(messageId: string): string {
+  const base = getEmailAppBaseUrl();
+  return `${base}/admin/contact-messages/${encodeURIComponent(messageId)}`;
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/validation";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { buildResetPasswordUrl } from "@/lib/email-config";
+import { coalesceEmailLanguage } from "@/lib/email-i18n";
 import { passwordResetIdentifierForEmail } from "@/lib/password-reset-token";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import {
@@ -31,12 +32,14 @@ function getClientIp(request: Request): string | null {
 
 export async function POST(request: Request) {
   try {
-    let body: { email?: string; turnstileToken?: string };
+    let body: { email?: string; turnstileToken?: string; language?: unknown };
     try {
       body = await request.json();
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
+
+    const emailLang = coalesceEmailLanguage(body.language);
 
     if (!shouldSkipTurnstileVerification(request)) {
       const { turnstileToken } = body;
@@ -106,9 +109,9 @@ export async function POST(request: Request) {
         },
       });
 
-      const resetUrl = buildResetPasswordUrl(token);
+      const resetUrl = buildResetPasswordUrl(token, emailLang);
       try {
-        await sendPasswordResetEmail(normalizedEmail, resetUrl);
+        await sendPasswordResetEmail(normalizedEmail, resetUrl, emailLang);
       } catch (emailErr) {
         console.error("[forgot-password] send failed:", emailErr);
         throw emailErr;

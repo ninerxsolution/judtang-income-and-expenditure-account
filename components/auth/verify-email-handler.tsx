@@ -22,10 +22,13 @@ export function VerifyEmailHandler({ token }: VerifyEmailHandlerProps) {
       .catch(() => setStatus("error"));
   }, [token]);
 
+  const linkClass =
+    "font-medium text-[#3D3020] underline underline-offset-4 dark:text-stone-100";
+
   if (status === "loading") {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+      <div className="flex items-center gap-2 text-sm text-[#6B5E4E] dark:text-stone-400">
+        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
         <p>{t("auth.verifyEmail.verifying")}</p>
       </div>
     );
@@ -34,21 +37,15 @@ export function VerifyEmailHandler({ token }: VerifyEmailHandlerProps) {
   if (status === "success") {
     return (
       <div className="space-y-4">
-        <p className="text-green-600 dark:text-green-400 text-sm">
+        <p className="text-sm text-green-600 dark:text-green-400">
           {t("auth.verifyEmail.success")}
         </p>
-        <p className="text-center text-sm">
-          <Link
-            href="/dashboard/me"
-            className="font-medium text-primary underline underline-offset-4"
-          >
+        <p className="text-center text-sm text-[#6B5E4E] dark:text-stone-400">
+          <Link href="/dashboard/me" className={linkClass}>
             {t("auth.verifyEmail.goToProfile")}
           </Link>
           {" · "}
-          <Link
-            href="/sign-in"
-            className="font-medium text-primary underline underline-offset-4"
-          >
+          <Link href="/sign-in" className={linkClass}>
             {t("auth.verifyEmail.backToSignIn")}
           </Link>
         </p>
@@ -61,18 +58,12 @@ export function VerifyEmailHandler({ token }: VerifyEmailHandlerProps) {
       <p className="text-destructive text-sm">
         {t("auth.verifyEmail.invalidOrExpired")}
       </p>
-      <p className="text-center text-sm">
-        <Link
-          href="/dashboard/me"
-          className="font-medium text-primary underline underline-offset-4"
-        >
+      <p className="text-center text-sm text-[#6B5E4E] dark:text-stone-400">
+        <Link href="/dashboard/me" className={linkClass}>
           {t("auth.verifyEmail.goToProfileToResend")}
         </Link>
         {" · "}
-        <Link
-          href="/sign-in"
-          className="font-medium text-primary underline underline-offset-4"
-        >
+        <Link href="/sign-in" className={linkClass}>
           {t("auth.verifyEmail.backToSignIn")}
         </Link>
       </p>

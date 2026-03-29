@@ -4,6 +4,7 @@ import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendReportNotificationEmail } from "@/lib/email";
 import { buildAdminReportDetailUrl } from "@/lib/email-config";
+import { coalesceEmailLanguage } from "@/lib/email-i18n";
 import {
   verifyTurnstileToken,
   shouldSkipTurnstileVerification,
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
   const category = formData.get("category");
   const title = formData.get("title");
   const description = formData.get("description");
+  const emailLang = coalesceEmailLanguage(formData.get("language"));
 
   if (
     !category ||
@@ -216,7 +218,8 @@ export async function POST(request: Request) {
           userEmail,
           description: descStr,
         },
-        adminDetailUrl
+        adminDetailUrl,
+        emailLang
       );
     } catch {
       // Don't fail the request if email fails

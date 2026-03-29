@@ -75,7 +75,7 @@ export async function PATCH(
       updateData.role = newRole;
     }
 
-    if (statusValid && newStatus !== "DELETED") {
+    if (statusValid) {
       updateData.status = newStatus;
       if (newStatus === "SUSPENDED") {
         updateData.suspendedAt = new Date();

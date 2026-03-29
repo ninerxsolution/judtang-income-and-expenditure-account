@@ -27,6 +27,12 @@ export function LandingFooter({ language, version }: LandingFooterProps) {
               {translate(language, "home.footer.releaseNotes")}
             </Link>
             <Link
+              href="/contact"
+              className="hover:text-[#3D3020] dark:hover:text-stone-100"
+            >
+              {translate(language, "home.footer.contact")}
+            </Link>
+            <Link
               href="/privacy"
               className="hover:text-[#3D3020] dark:hover:text-stone-100"
             >

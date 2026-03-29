@@ -111,7 +111,8 @@ describe("POST /api/auth/forgot-password", () => {
     );
     expect(sendPasswordResetEmail).toHaveBeenCalledWith(
       "user@example.com",
-      expect.stringContaining("reset-password")
+      expect.stringContaining("reset-password"),
+      "th"
     );
   });
 

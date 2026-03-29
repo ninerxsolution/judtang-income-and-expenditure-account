@@ -3,8 +3,15 @@
  */
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
+import { DEFAULT_LANGUAGE, type Language } from "@/i18n";
+import {
+  buildContactNotificationEmail,
+  buildPasswordResetEmail,
+  buildReportNotificationEmail as buildReportEmailBody,
+  buildVerificationEmail,
+} from "@/lib/email-i18n";
 
-type EmailKind = "auth" | "report";
+type EmailKind = "auth" | "report" | "contact";
 
 function resolveFrom(kind: EmailKind): string {
   if (kind === "report") {
@@ -54,9 +61,11 @@ async function sendHtmlEmail(options: {
   subject: string;
   html: string;
   kind: EmailKind;
+  /** When set, used instead of EMAIL_REPLY_TO (e.g. public contact submitter). */
+  replyTo?: string;
 }): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY?.trim();
-  const replyTo = getReplyTo();
+  const replyTo = options.replyTo?.trim() || getReplyTo();
 
   if (resendKey) {
     const from = resolveFrom(options.kind);
@@ -95,7 +104,7 @@ async function sendHtmlEmail(options: {
     to: options.to,
     subject: options.subject,
     html: options.html,
-    ...(replyTo ? { replyTo } : {}),
+    ...(replyTo ? { replyTo: replyTo } : {}),
   });
 
   console.info("[email] sent", {
@@ -111,18 +120,15 @@ async function sendHtmlEmail(options: {
  */
 export async function sendPasswordResetEmail(
   to: string,
-  resetUrl: string
+  resetUrl: string,
+  lang: Language = DEFAULT_LANGUAGE
 ): Promise<void> {
+  const { subject, html } = buildPasswordResetEmail(lang, resetUrl);
   await sendHtmlEmail({
     to,
     kind: "auth",
-    subject: "Reset your password",
-    html: `
-      <p>You requested a password reset.</p>
-      <p>Click the link below to reset your password:</p>
-      <p><a href="${resetUrl}">${resetUrl}</a></p>
-      <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
-    `.trim(),
+    subject,
+    html,
   });
 }
 
@@ -132,18 +138,15 @@ export async function sendPasswordResetEmail(
  */
 export async function sendEmailVerification(
   to: string,
-  verifyUrl: string
+  verifyUrl: string,
+  lang: Language = DEFAULT_LANGUAGE
 ): Promise<void> {
+  const { subject, html } = buildVerificationEmail(lang, verifyUrl);
   await sendHtmlEmail({
     to,
     kind: "auth",
-    subject: "Verify your email address",
-    html: `
-      <p>Thank you for signing up.</p>
-      <p>Please verify your email address by clicking the link below:</p>
-      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-      <p>This link expires in 24 hours. If you did not create an account, you can ignore this email.</p>
-    `.trim(),
+    subject,
+    html,
   });
 }
 
@@ -162,34 +165,65 @@ type ReportNotificationPayload = {
 export async function sendReportNotificationEmail(
   to: string,
   report: ReportNotificationPayload,
-  adminDetailUrl: string
+  adminDetailUrl: string,
+  lang: Language = DEFAULT_LANGUAGE
 ): Promise<void> {
-  const descTruncated =
-    report.description.length > 500
-      ? report.description.slice(0, 500) + "..."
-      : report.description;
-  const escapedDesc = descTruncated
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  const { subject, html } = buildReportEmailBody(
+    lang,
+    {
+      category: report.category,
+      title: report.title,
+      userEmail: report.userEmail,
+      description: report.description,
+    },
+    adminDetailUrl
+  );
   await sendHtmlEmail({
     to,
     kind: "report",
-    subject: `[Report] ${report.category}: ${report.title}`,
-    html: `
-      <p>A new report has been submitted.</p>
-      <dl>
-        <dt>Category</dt>
-        <dd>${report.category}</dd>
-        <dt>Title</dt>
-        <dd>${report.title}</dd>
-        <dt>User</dt>
-        <dd>${report.userEmail}</dd>
-        <dt>Description</dt>
-        <dd><pre style="white-space:pre-wrap;font-family:inherit;">${escapedDesc}</pre></dd>
-      </dl>
-      <p><a href="${adminDetailUrl}">View in Admin</a></p>
-    `.trim(),
+    subject,
+    html,
+  });
+}
+
+type ContactNotificationPayload = {
+  id: string;
+  topic: string;
+  senderName: string | null;
+  senderEmail: string;
+  subject: string;
+  message: string;
+  uiLanguage: string;
+  submittedAtIso: string;
+};
+
+/**
+ * Notifies team inbox about a public contact form submission (Thai + English body).
+ * @throws If send fails
+ */
+export async function sendContactNotificationEmail(
+  to: string,
+  payload: ContactNotificationPayload,
+  adminDetailUrl: string,
+  replyToSubmitter: string
+): Promise<void> {
+  const { subject, html } = buildContactNotificationEmail(
+    {
+      topic: payload.topic,
+      senderName: payload.senderName,
+      senderEmail: payload.senderEmail,
+      subject: payload.subject,
+      message: payload.message,
+      uiLanguage: payload.uiLanguage,
+      submittedAtIso: payload.submittedAtIso,
+    },
+    adminDetailUrl
+  );
+  await sendHtmlEmail({
+    to,
+    kind: "contact",
+    subject,
+    html,
+    replyTo: replyToSubmitter,
   });
 }

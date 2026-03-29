@@ -1,4 +1,5 @@
 import {
+  buildAdminContactMessageDetailUrl,
   buildAdminReportDetailUrl,
   buildResetPasswordUrl,
   buildVerifyEmailUrl,
@@ -80,6 +81,16 @@ describe("buildVerifyEmailUrl", () => {
       "https://app.test/auth/confirm-email?token=abc"
     );
   });
+
+  it("appends lang when provided", () => {
+    process.env = { ...originalEnv };
+    delete process.env.APP_BASE_URL;
+    process.env.NEXTAUTH_URL = "https://app.test";
+    delete process.env.EMAIL_VERIFY_URL;
+    expect(buildVerifyEmailUrl("tok", "en")).toBe(
+      "https://app.test/verify-email?token=tok&lang=en"
+    );
+  });
 });
 
 describe("buildResetPasswordUrl", () => {
@@ -93,6 +104,17 @@ describe("buildResetPasswordUrl", () => {
       "https://x.com/new-password?token=t"
     );
   });
+
+  it("appends lang when provided", () => {
+    process.env = {
+      ...originalEnv,
+      APP_BASE_URL: "https://x.com",
+      EMAIL_RESET_PASSWORD_URL: "/new-password",
+    };
+    expect(buildResetPasswordUrl("t", "th")).toBe(
+      "https://x.com/new-password?token=t&lang=th"
+    );
+  });
 });
 
 describe("buildAdminReportDetailUrl", () => {
@@ -100,6 +122,15 @@ describe("buildAdminReportDetailUrl", () => {
     process.env = { ...originalEnv, APP_BASE_URL: "https://x.com" };
     expect(buildAdminReportDetailUrl("r-1")).toBe(
       "https://x.com/admin/reports/r-1"
+    );
+  });
+});
+
+describe("buildAdminContactMessageDetailUrl", () => {
+  it("encodes message id in path", () => {
+    process.env = { ...originalEnv, APP_BASE_URL: "https://x.com" };
+    expect(buildAdminContactMessageDetailUrl("abc123")).toBe(
+      "https://x.com/admin/contact-messages/abc123"
     );
   });
 });

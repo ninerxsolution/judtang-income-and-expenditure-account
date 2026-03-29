@@ -5,6 +5,24 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 29/03/2026 (Public contact form)
+
+- prisma/schema.prisma — `ContactTopic` enum, `ContactMessage` model.
+- app/api/contact/route.ts — POST public submit; Turnstile + IP rate limit; optional `sendContactNotificationEmail`.
+- app/api/admin/contact-messages/route.ts, `[id]/route.ts` — ADMIN list/detail.
+- app/contact/page.tsx, components/public/public-contact-form.tsx — public UI.
+- app/(admin)/admin/contact-messages/page.tsx, `[id]/page.tsx` — admin UI.
+- lib/contact-rate-limit.ts, lib/email.ts, lib/email-i18n.ts, lib/email-config.ts — contact email (Thai + English body, Reply-To submitter), admin URL helper.
+- components/landing/landing-footer.tsx — link to /contact.
+- components/dashboard/admin-sidebar.tsx, dashboard-breadcrumb.tsx — admin nav.
+- i18n/dictionaries/en.ts, th.ts — `publicContact`, `admin.contactMessages`, `email.contact`, privacy contact copy, `home.footer.contact`.
+- .env.example — `PUBLIC_CONTACT_TO`.
+- docs/feature/public-contact.md, docs/INDEX.md — documentation.
+- __tests__/api/contact.test.ts, __tests__/api/admin/contact-messages.test.ts — API tests; lib/__tests__/email.test.ts, email-config.test.ts extended.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 21/03/2026 (Announcement: DB + admin settings)
 
 - docs/feature/announcement-popup.md — Storage moved from `data/announcement.json` to `SiteAnnouncement`; admin UI at `/admin/settings/announcement`; API and behaviour notes updated.

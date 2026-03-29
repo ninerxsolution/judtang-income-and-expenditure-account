@@ -38,7 +38,7 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 |---|---|
 | Install deps | `npm install` (postinstall runs `prisma generate`) |
 | Lint | `npm run lint` |
-| Test | `npm test` (Jest, 261 tests, all unit/integration — no DB needed) |
+| Test | `npm test` (Jest, 667 tests, all unit/integration — no DB needed) |
 | Dev server | `npm run dev` |
 | Push schema | `npm run db:push` |
 | Seed data | `npm run db:seed` |
@@ -54,3 +54,7 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 - Cloudflare Turnstile is auto-disabled on `localhost` / `APP_ENV=development`, so no Turnstile keys are needed locally.
 - The test suite (Jest) uses mocks and does not require a running database.
 - The app UI defaults to Thai. Language can be switched via the header.
+
+## Learned User Preferences
+
+- Do not paste live `.env` values, database URLs, or third-party API keys into chat; if they are exposed, rotate those credentials.
