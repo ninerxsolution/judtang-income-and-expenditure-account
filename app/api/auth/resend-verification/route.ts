@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmailVerification } from "@/lib/email";
+import { buildVerifyEmailUrl } from "@/lib/email-config";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -52,8 +53,7 @@ export async function POST() {
     data: { identifier, token, expires },
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
-  const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+  const verifyUrl = buildVerifyEmailUrl(token);
   await sendEmailVerification(user.email, verifyUrl);
 
   return NextResponse.json({ ok: true });

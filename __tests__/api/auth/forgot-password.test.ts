@@ -102,10 +102,34 @@ describe("POST /api/auth/forgot-password", () => {
     const data = await res.json();
     expect(res.status).toBe(200);
     expect(data).toEqual({ ok: true });
-    expect(mockVerificationTokenCreate).toHaveBeenCalled();
+    expect(mockVerificationTokenCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          identifier: "password_reset:user@example.com",
+        }),
+      })
+    );
     expect(sendPasswordResetEmail).toHaveBeenCalledWith(
       "user@example.com",
       expect.stringContaining("reset-password")
     );
+  });
+
+  it("returns 200 and does not send email when user has no password (OAuth-only)", async () => {
+    const { sendPasswordResetEmail } = await import("@/lib/email");
+    mockUserFindUnique.mockResolvedValue({
+      id: "user-1",
+      password: null,
+    });
+    const req = createRequest("http://localhost/api/auth/forgot-password", {
+      method: "POST",
+      body: { email: "oauth@example.com" },
+    });
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ ok: true });
+    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
+    expect(mockVerificationTokenCreate).not.toHaveBeenCalled();
   });
 });

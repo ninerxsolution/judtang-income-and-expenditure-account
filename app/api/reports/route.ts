@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendReportNotificationEmail } from "@/lib/email";
+import { buildAdminReportDetailUrl } from "@/lib/email-config";
 import {
   verifyTurnstileToken,
   shouldSkipTurnstileVerification,
@@ -200,10 +201,11 @@ export async function POST(request: Request) {
 
   incrementReportRateLimit(userId);
 
-  const adminEmail = process.env.ADMIN_REPORT_EMAIL;
+  const adminEmail =
+    process.env.ADMIN_REPORT_EMAIL?.trim() ||
+    process.env.ADMIN_EMAIL?.trim();
   if (adminEmail) {
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
-    const adminDetailUrl = `${baseUrl}/admin/reports/${report.id}`;
+    const adminDetailUrl = buildAdminReportDetailUrl(report.id);
     try {
       await sendReportNotificationEmail(
         adminEmail,

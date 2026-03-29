@@ -12,6 +12,8 @@ import {
   EMAIL_MAX_LENGTH,
 } from "@/lib/validation";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { buildResetPasswordUrl } from "@/lib/email-config";
+import { passwordResetIdentifierForEmail } from "@/lib/password-reset-token";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import {
   verifyTurnstileToken,
@@ -80,24 +82,37 @@ export async function POST(request: Request) {
       select: { id: true, password: true },
     });
 
-    if (user?.password) {
+    if (!user) {
+      console.warn(
+        "[forgot-password] no reset email sent: no account for this email (enumeration-safe response)"
+      );
+    } else if (!user.password) {
+      console.warn(
+        "[forgot-password] no reset email sent: account has no password (e.g. Google sign-in only)"
+      );
+    } else {
       const token = randomBytes(32).toString("hex");
       const expires = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+      const identifier = passwordResetIdentifierForEmail(normalizedEmail);
 
       await prisma.verificationToken.deleteMany({
-        where: { identifier: normalizedEmail },
+        where: { identifier },
       });
       await prisma.verificationToken.create({
         data: {
-          identifier: normalizedEmail,
+          identifier,
           token,
           expires,
         },
       });
 
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
-      const resetUrl = `${baseUrl}/reset-password?token=${token}`;
-      await sendPasswordResetEmail(normalizedEmail, resetUrl);
+      const resetUrl = buildResetPasswordUrl(token);
+      try {
+        await sendPasswordResetEmail(normalizedEmail, resetUrl);
+      } catch (emailErr) {
+        console.error("[forgot-password] send failed:", emailErr);
+        throw emailErr;
+      }
       void createActivityLog({
         userId: user.id,
         action: ActivityLogAction.USER_PASSWORD_RESET_REQUESTED,

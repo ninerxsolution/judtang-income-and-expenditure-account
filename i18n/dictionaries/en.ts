@@ -79,6 +79,8 @@ export const enDictionary = {
       title: "Forgot password",
       subtitle:
         "Enter your email and we'll send you a link to reset your password.",
+      oauthHint:
+        "If you created your account with Google, sign in with Google instead. Password reset emails are only sent for accounts that use an email and password.",
       emailLabel: "Email",
       submit: "Send reset link",
       pending: "Sending…",

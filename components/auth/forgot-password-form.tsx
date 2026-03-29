@@ -80,6 +80,9 @@ export function ForgotPasswordForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-muted-foreground text-sm">
+          {t("auth.forgotPassword.oauthHint")}
+        </p>
         <FormField
           id="forgot-email"
           label={t("auth.forgotPassword.emailLabel")}

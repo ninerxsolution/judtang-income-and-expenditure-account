@@ -22,7 +22,7 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 | Service | Port | How to run |
 |---|---|---|
 | MariaDB | 3306 | `sudo service mariadb start` |
-| Next.js dev server | 3000 | `npm run dev` |
+| Next.js dev server | 3910 | `npm run dev` (`next dev -p 3910`) |
 
 ### Database
 
@@ -47,6 +47,10 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 
 - `npm install` (postinstall) requires `DATABASE_URL` in `.env` because `prisma generate` reads `prisma.config.ts` which resolves this env var. Create `.env` from `.env.example` before installing.
 - `NEXTAUTH_SECRET` and `ENCRYPTION_KEY` must be set for auth and encryption to work. Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
+- Outbound email: with `RESEND_API_KEY`, the app sends via Resend (auth flows need `EMAIL_FROM`); without it, configure `SMTP_*` for Nodemailer fallback.
+- Links inside transactional email use `lib/email-config.ts` (`getEmailAppBaseUrl`): in development (`NODE_ENV=development` or `APP_ENV=development`), `NEXTAUTH_URL` is preferred over `APP_BASE_URL` so verify/reset links stay on the local dev origin; in production, optional `APP_BASE_URL` can override when the public link base should differ from NextAuth.
+- Forgot-password sends a reset email only when the user has a password credential; OAuth-only accounts still get a generic success response (enumeration-safe).
+- When an admin sets a user to `DELETED`, the API runs `finalizeDeletion` so the real email is replaced with a `deleted_<userId>_...` placeholder and the address can be reused; restoring to active may recover the original email when the row still matches that placeholder pattern.
 - Cloudflare Turnstile is auto-disabled on `localhost` / `APP_ENV=development`, so no Turnstile keys are needed locally.
 - The test suite (Jest) uses mocks and does not require a running database.
 - The app UI defaults to Thai. Language can be switched via the header.

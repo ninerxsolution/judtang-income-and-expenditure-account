@@ -23,6 +23,7 @@ import { resolveUserStatus, finalizeDeletion } from "@/lib/user-status";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { ensureUserHasDefaultCategories } from "@/lib/categories";
 import { sendEmailVerification } from "@/lib/email";
+import { buildVerifyEmailUrl } from "@/lib/email-config";
 
 const VERIFY_TOKEN_EXPIRY_HOURS = 24;
 
@@ -172,8 +173,7 @@ export async function POST(request: Request) {
       data: { identifier, token, expires },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
-    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+    const verifyUrl = buildVerifyEmailUrl(token);
     try {
       await sendEmailVerification(normalizedEmail, verifyUrl);
     } catch (emailErr) {

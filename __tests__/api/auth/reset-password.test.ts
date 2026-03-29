@@ -107,9 +107,25 @@ describe("POST /api/auth/reset-password", () => {
     expect(data.error).toBeDefined();
   });
 
-  it("returns 200 and updates password on success", async () => {
+  it("returns 400 when token row is email verification not password reset", async () => {
     mockVerificationTokenFindFirst.mockResolvedValue({
-      identifier: "user@example.com",
+      identifier: "email_verify:user@example.com",
+      token: "wrong-kind",
+    });
+    const req = createRequest("http://localhost/api/auth/reset-password", {
+      method: "POST",
+      body: { token: "wrong-kind", newPassword: "newPassword123" },
+    });
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toContain("Invalid or expired");
+    expect(mockUserFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("returns 200 and updates password on success (prefixed identifier)", async () => {
+    mockVerificationTokenFindFirst.mockResolvedValue({
+      identifier: "password_reset:user@example.com",
       token: "valid-token",
     });
     mockUserFindUnique.mockResolvedValue({ id: "user-1", password: "oldHash" });
@@ -127,5 +143,21 @@ describe("POST /api/auth/reset-password", () => {
       data: { password: "newHashedPassword" },
     });
     expect(mockVerificationTokenDeleteMany).toHaveBeenCalled();
+  });
+
+  it("returns 200 with legacy bare-email identifier", async () => {
+    mockVerificationTokenFindFirst.mockResolvedValue({
+      identifier: "user@example.com",
+      token: "legacy-token",
+    });
+    mockUserFindUnique.mockResolvedValue({ id: "user-1", password: "oldHash" });
+    const req = createRequest("http://localhost/api/auth/reset-password", {
+      method: "POST",
+      body: { token: "legacy-token", newPassword: "newPassword123" },
+    });
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ ok: true });
   });
 });

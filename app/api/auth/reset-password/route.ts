@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
 import { validatePasswordLength } from "@/lib/validation";
+import { emailFromPasswordResetVerificationIdentifier } from "@/lib/password-reset-token";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import {
   verifyTurnstileToken,
@@ -82,8 +83,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const resetEmail = emailFromPasswordResetVerificationIdentifier(vt.identifier);
+    if (!resetEmail) {
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 400 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email: vt.identifier },
+      where: { email: resetEmail },
       select: { id: true, password: true },
     });
 
