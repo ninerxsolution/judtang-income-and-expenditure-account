@@ -27,26 +27,33 @@ jest.mock("@/lib/email", () => ({
 import { POST } from "@/app/api/auth/resend-verification/route";
 import { createMockSession } from "../../helpers/api-helper";
 
+function resendRequest(init?: RequestInit): Request {
+  return new Request("http://localhost/api/auth/resend-verification", {
+    method: "POST",
+    ...init,
+  });
+}
+
 beforeEach(() => jest.clearAllMocks());
 
 describe("POST /api/auth/resend-verification", () => {
   it("returns 401 when not authenticated", async () => {
     mockGetServerSession.mockResolvedValue(null);
-    const res = await POST();
+    const res = await POST(resendRequest());
     expect(res.status).toBe(401);
   });
 
   it("returns 400 when no email", async () => {
     mockGetServerSession.mockResolvedValue(createMockSession());
     mockUserFindUnique.mockResolvedValue({ email: null, emailVerified: null });
-    const res = await POST();
+    const res = await POST(resendRequest());
     expect(res.status).toBe(400);
   });
 
   it("returns 400 when already verified", async () => {
     mockGetServerSession.mockResolvedValue(createMockSession());
     mockUserFindUnique.mockResolvedValue({ email: "test@example.com", emailVerified: new Date() });
-    const res = await POST();
+    const res = await POST(resendRequest());
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toContain("already verified");
@@ -59,7 +66,7 @@ describe("POST /api/auth/resend-verification", () => {
     mockTokenCreate.mockResolvedValue({});
     mockSendEmailVerification.mockResolvedValue(undefined);
 
-    const res = await POST();
+    const res = await POST(resendRequest());
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.ok).toBe(true);

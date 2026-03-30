@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendReportNotificationEmail } from "@/lib/email";
+import { buildAdminReportDetailUrl } from "@/lib/email-config";
+import { coalesceEmailLanguage } from "@/lib/email-i18n";
 import {
   verifyTurnstileToken,
   shouldSkipTurnstileVerification,
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
   const category = formData.get("category");
   const title = formData.get("title");
   const description = formData.get("description");
+  const emailLang = coalesceEmailLanguage(formData.get("language"));
 
   if (
     !category ||
@@ -200,10 +203,11 @@ export async function POST(request: Request) {
 
   incrementReportRateLimit(userId);
 
-  const adminEmail = process.env.ADMIN_REPORT_EMAIL;
+  const adminEmail =
+    process.env.ADMIN_REPORT_EMAIL?.trim() ||
+    process.env.ADMIN_EMAIL?.trim();
   if (adminEmail) {
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
-    const adminDetailUrl = `${baseUrl}/admin/reports/${report.id}`;
+    const adminDetailUrl = buildAdminReportDetailUrl(report.id);
     try {
       await sendReportNotificationEmail(
         adminEmail,
@@ -214,7 +218,8 @@ export async function POST(request: Request) {
           userEmail,
           description: descStr,
         },
-        adminDetailUrl
+        adminDetailUrl,
+        emailLang
       );
     } catch {
       // Don't fail the request if email fails

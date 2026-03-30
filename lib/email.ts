@@ -1,62 +1,152 @@
 /**
- * Email sending via SMTP (e.g. Gmail). Used for password reset and email verification.
+ * Transactional email: Resend API when RESEND_API_KEY is set, else Nodemailer (SMTP).
  */
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
+import { DEFAULT_LANGUAGE, type Language } from "@/i18n";
+import {
+  buildContactNotificationEmail,
+  buildPasswordResetEmail,
+  buildReportNotificationEmail as buildReportEmailBody,
+  buildVerificationEmail,
+} from "@/lib/email-i18n";
 
-const port = Number(process.env.SMTP_PORT) ?? 587;
-const secure = process.env.SMTP_PORT === "465";
+type EmailKind = "auth" | "report" | "contact";
 
-export const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST ?? "smtp.gmail.com",
-  port,
-  secure,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+function resolveFrom(kind: EmailKind): string {
+  if (kind === "report") {
+    return (
+      process.env.EMAIL_REPORT_FROM?.trim() ||
+      process.env.EMAIL_FROM?.trim() ||
+      ""
+    );
+  }
+  return process.env.EMAIL_FROM?.trim() || "";
+}
+
+function resolveSmtpFrom(kind: EmailKind): string {
+  const configured = resolveFrom(kind);
+  if (configured) return configured;
+  return process.env.SMTP_USER ?? "noreply@example.com";
+}
+
+function getReplyTo(): string | undefined {
+  const v = process.env.EMAIL_REPLY_TO?.trim();
+  return v || undefined;
+}
+
+function createSmtpTransport(): nodemailer.Transporter {
+  const portRaw = process.env.SMTP_PORT;
+  const port =
+    portRaw !== undefined && portRaw !== ""
+      ? Number(portRaw)
+      : 587;
+  const effectivePort = Number.isFinite(port) ? port : 587;
+  const secure =
+    process.env.SMTP_SECURE === "true" || effectivePort === 465;
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST ?? "smtp.gmail.com",
+    port: effectivePort,
+    secure,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+}
+
+async function sendHtmlEmail(options: {
+  to: string;
+  subject: string;
+  html: string;
+  kind: EmailKind;
+  /** When set, used instead of EMAIL_REPLY_TO (e.g. public contact submitter). */
+  replyTo?: string;
+}): Promise<void> {
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  const replyTo = options.replyTo?.trim() || getReplyTo();
+
+  if (resendKey) {
+    const from = resolveFrom(options.kind);
+    if (!from) {
+      const msg = "[email] RESEND_API_KEY is set but EMAIL_FROM is missing";
+      console.error(msg);
+      throw new Error(msg);
+    }
+
+    const resend = new Resend(resendKey);
+    const result = await resend.emails.send({
+      from,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      ...(replyTo ? { replyTo } : {}),
+    });
+
+    if (result.error) {
+      console.error("[email] Resend send failed:", result.error);
+      throw new Error(result.error.message);
+    }
+
+    console.info("[email] sent", {
+      provider: "resend",
+      to: options.to,
+      id: result.data?.id,
+    });
+    return;
+  }
+
+  const from = resolveSmtpFrom(options.kind);
+  const transport = createSmtpTransport();
+  const info = await transport.sendMail({
+    from,
+    to: options.to,
+    subject: options.subject,
+    html: options.html,
+    ...(replyTo ? { replyTo: replyTo } : {}),
+  });
+
+  console.info("[email] sent", {
+    provider: "smtp",
+    to: options.to,
+    messageId: info.messageId,
+  });
+}
 
 /**
  * Sends a password reset email with the given reset URL.
- * @throws If SMTP send fails
+ * @throws If send fails
  */
 export async function sendPasswordResetEmail(
   to: string,
-  resetUrl: string
+  resetUrl: string,
+  lang: Language = DEFAULT_LANGUAGE
 ): Promise<void> {
-  const from = process.env.SMTP_USER ?? "noreply@example.com";
-  await transporter.sendMail({
-    from,
+  const { subject, html } = buildPasswordResetEmail(lang, resetUrl);
+  await sendHtmlEmail({
     to,
-    subject: "Reset your password",
-    html: `
-      <p>You requested a password reset.</p>
-      <p>Click the link below to reset your password:</p>
-      <p><a href="${resetUrl}">${resetUrl}</a></p>
-      <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
-    `.trim(),
+    kind: "auth",
+    subject,
+    html,
   });
 }
 
 /**
  * Sends an email verification link.
- * @throws If SMTP send fails
+ * @throws If send fails
  */
 export async function sendEmailVerification(
   to: string,
-  verifyUrl: string
+  verifyUrl: string,
+  lang: Language = DEFAULT_LANGUAGE
 ): Promise<void> {
-  const from = process.env.SMTP_USER ?? "noreply@example.com";
-  await transporter.sendMail({
-    from,
+  const { subject, html } = buildVerificationEmail(lang, verifyUrl);
+  await sendHtmlEmail({
     to,
-    subject: "Verify your email address",
-    html: `
-      <p>Thank you for signing up.</p>
-      <p>Please verify your email address by clicking the link below:</p>
-      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-      <p>This link expires in 24 hours. If you did not create an account, you can ignore this email.</p>
-    `.trim(),
+    kind: "auth",
+    subject,
+    html,
   });
 }
 
@@ -70,40 +160,70 @@ type ReportNotificationPayload = {
 
 /**
  * Sends a report notification email to admin.
- * @throws If SMTP send fails
+ * @throws If send fails
  */
 export async function sendReportNotificationEmail(
   to: string,
   report: ReportNotificationPayload,
-  adminDetailUrl: string
+  adminDetailUrl: string,
+  lang: Language = DEFAULT_LANGUAGE
 ): Promise<void> {
-  const from = process.env.SMTP_USER ?? "noreply@example.com";
-  const descTruncated =
-    report.description.length > 500
-      ? report.description.slice(0, 500) + "..."
-      : report.description;
-  const escapedDesc = descTruncated
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-  await transporter.sendMail({
-    from,
+  const { subject, html } = buildReportEmailBody(
+    lang,
+    {
+      category: report.category,
+      title: report.title,
+      userEmail: report.userEmail,
+      description: report.description,
+    },
+    adminDetailUrl
+  );
+  await sendHtmlEmail({
     to,
-    subject: `[Report] ${report.category}: ${report.title}`,
-    html: `
-      <p>A new report has been submitted.</p>
-      <dl>
-        <dt>Category</dt>
-        <dd>${report.category}</dd>
-        <dt>Title</dt>
-        <dd>${report.title}</dd>
-        <dt>User</dt>
-        <dd>${report.userEmail}</dd>
-        <dt>Description</dt>
-        <dd><pre style="white-space:pre-wrap;font-family:inherit;">${escapedDesc}</pre></dd>
-      </dl>
-      <p><a href="${adminDetailUrl}">View in Admin</a></p>
-    `.trim(),
+    kind: "report",
+    subject,
+    html,
+  });
+}
+
+type ContactNotificationPayload = {
+  id: string;
+  topic: string;
+  senderName: string | null;
+  senderEmail: string;
+  subject: string;
+  message: string;
+  uiLanguage: string;
+  submittedAtIso: string;
+};
+
+/**
+ * Notifies team inbox about a public contact form submission (Thai + English body).
+ * @throws If send fails
+ */
+export async function sendContactNotificationEmail(
+  to: string,
+  payload: ContactNotificationPayload,
+  adminDetailUrl: string,
+  replyToSubmitter: string
+): Promise<void> {
+  const { subject, html } = buildContactNotificationEmail(
+    {
+      topic: payload.topic,
+      senderName: payload.senderName,
+      senderEmail: payload.senderEmail,
+      subject: payload.subject,
+      message: payload.message,
+      uiLanguage: payload.uiLanguage,
+      submittedAtIso: payload.submittedAtIso,
+    },
+    adminDetailUrl
+  );
+  await sendHtmlEmail({
+    to,
+    kind: "contact",
+    subject,
+    html,
+    replyTo: replyToSubmitter,
   });
 }

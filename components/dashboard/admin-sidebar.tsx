@@ -12,6 +12,7 @@ import {
   Moon,
   Sun,
   FileText,
+  Mail,
   Users,
   Activity,
   LineChart,
@@ -86,6 +87,7 @@ function isAdminNavActive(pathname: string | null, href: string): boolean {
 
 const adminNavItems = [
   { key: "reports", href: "/admin/reports", icon: FileText },
+  { key: "contactMessages", href: "/admin/contact-messages", icon: Mail },
   { key: "users", href: "/admin/users", icon: Users },
   { key: "transactionUsage", href: "/admin/transaction-usage", icon: LineChart },
   { key: "activityLog", href: "/admin/activity-log", icon: Activity },

@@ -105,7 +105,7 @@ export default function UserPage() {
 
   const [resendPending, setResendPending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   async function fetchProfile() {
     const res = await fetch("/api/users/me");
@@ -163,7 +163,11 @@ export default function UserPage() {
     if (profile?.emailVerified || resendPending || resendCooldown > 0) return;
     setResendPending(true);
     try {
-      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language }),
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? t("common.errors.generic"));

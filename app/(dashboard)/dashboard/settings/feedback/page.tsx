@@ -27,7 +27,7 @@ const MAX_IMAGES = 3;
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 export default function FeedbackPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const isLocalhost = useIsLocalhost();
   const sitekey = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITEKEY;
   const requiresTurnstile = !!sitekey && !isLocalhost;
@@ -99,6 +99,7 @@ export default function FeedbackPage() {
       formData.set("category", category);
       formData.set("title", title.trim());
       formData.set("description", description.trim());
+      formData.set("language", language);
       if (requiresTurnstile && turnstileToken) {
         formData.set("turnstileToken", turnstileToken);
       }

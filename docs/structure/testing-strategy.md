@@ -60,6 +60,8 @@
 - **__tests__/api/transactions-summary.test.ts** — GET /api/transactions/summary
 - **__tests__/api/credit-card.test.ts** — payment, apply-interest, close-statement
 - **__tests__/api/reports.test.ts** — POST (401, 400 invalid category/title, 200 create)
+- **__tests__/api/contact.test.ts** — POST /api/contact validation and email when `PUBLIC_CONTACT_TO` set
+- **__tests__/api/admin/contact-messages.test.ts** — GET list/detail (403 non-admin, 200 admin)
 
 ## Deferred
 

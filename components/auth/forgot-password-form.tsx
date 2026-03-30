@@ -11,7 +11,7 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useIsLocalhost } from "@/hooks/use-is-localhost";
 
 export function ForgotPasswordForm() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [email, setEmail] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +39,7 @@ export function ForgotPasswordForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
+          language,
           ...(requiresTurnstile && { turnstileToken }),
         }),
       });
@@ -80,6 +81,9 @@ export function ForgotPasswordForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-muted-foreground text-sm">
+          {t("auth.forgotPassword.oauthHint")}
+        </p>
         <FormField
           id="forgot-email"
           label={t("auth.forgotPassword.emailLabel")}

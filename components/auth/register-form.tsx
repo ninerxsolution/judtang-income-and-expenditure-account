@@ -21,7 +21,7 @@ import { TERMS_VERSION } from "@/lib/terms";
 
 export function RegisterForm() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -74,6 +74,7 @@ export function RegisterForm() {
           password,
           name: name || undefined,
           termsVersion: TERMS_VERSION,
+          language,
           ...(requiresTurnstile && { turnstileToken }),
         }),
       });

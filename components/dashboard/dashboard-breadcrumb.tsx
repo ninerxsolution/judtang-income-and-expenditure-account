@@ -12,6 +12,7 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
     dashboard: "Dashboard",
     admin: "Admin",
     reports: "Reports",
+    "contact-messages": "Contact messages",
     user: "User profile",
     me: "User profile",
     sessions: "Sessions",
@@ -31,6 +32,10 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
 
   if (/^[a-z0-9]{20,}$/i.test(segment) && _allSegments?.includes("reports")) {
     return "Report";
+  }
+
+  if (/^[a-z0-9]{20,}$/i.test(segment) && _allSegments?.includes("contact-messages")) {
+    return "Message";
   }
 
   return segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");

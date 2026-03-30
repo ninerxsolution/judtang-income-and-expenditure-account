@@ -88,7 +88,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   }
 
   return (
-    <div className="w-full max-w-sm space-y-6">
+    <div className="w-full space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField
           id="reset-new-password"
@@ -122,8 +122,11 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           {pending ? t("auth.resetPassword.pending") : t("auth.resetPassword.submit")}
         </Button>
       </form>
-      <p className="text-center text-muted-foreground text-sm">
-        <Link href="/sign-in" className="font-medium text-primary underline underline-offset-4">
+      <p className="text-center text-sm text-[#6B5E4E] dark:text-stone-400">
+        <Link
+          href="/sign-in"
+          className="font-medium text-[#3D3020] underline underline-offset-4 dark:text-stone-100"
+        >
           {t("auth.resetPassword.backToSignIn")}
         </Link>
       </p>

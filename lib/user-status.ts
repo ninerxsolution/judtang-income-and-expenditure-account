@@ -4,6 +4,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
+import { buildDeletedUserEmail } from "@/lib/deleted-email-placeholder";
 
 export type ResolvedUserStatus = "ACTIVE" | "SUSPENDED" | "DELETED";
 
@@ -47,11 +48,14 @@ export async function finalizeDeletion(userId: string): Promise<void> {
     select: { email: true, status: true },
   });
   if (!user) return;
-  if (user.status === "DELETED") return; // already finalized
 
-  const mutatedEmail = user.email
-    ? `deleted_${userId}_${user.email}`
-    : `deleted_${userId}_noemail`;
+  // Skip only when deletion was fully applied (email freed for re-registration).
+  // Admin may set status=DELETED without mutating email; we must still run below.
+  const emailAlreadyFreed =
+    user.email != null && user.email.startsWith(`deleted_${userId}_`);
+  if (user.status === "DELETED" && emailAlreadyFreed) return;
+
+  const mutatedEmail = buildDeletedUserEmail(userId, user.email);
 
   await prisma.$transaction([
     prisma.user.update({

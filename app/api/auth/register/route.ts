@@ -23,6 +23,8 @@ import { resolveUserStatus, finalizeDeletion } from "@/lib/user-status";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { ensureUserHasDefaultCategories } from "@/lib/categories";
 import { sendEmailVerification } from "@/lib/email";
+import { buildVerifyEmailUrl } from "@/lib/email-config";
+import { coalesceEmailLanguage } from "@/lib/email-i18n";
 
 const VERIFY_TOKEN_EXPIRY_HOURS = 24;
 
@@ -42,13 +44,16 @@ export async function POST(request: Request) {
       name,
       termsVersion,
       turnstileToken,
+      language,
     } = body as {
       email?: string;
       password?: string;
       name?: string;
       termsVersion?: string;
       turnstileToken?: string;
+      language?: unknown;
     };
+    const emailLang = coalesceEmailLanguage(language);
     if (!email || !password) {
       return NextResponse.json(
         { error: "email and password required" },
@@ -172,10 +177,9 @@ export async function POST(request: Request) {
       data: { identifier, token, expires },
     });
 
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3910";
-    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+    const verifyUrl = buildVerifyEmailUrl(token, emailLang);
     try {
-      await sendEmailVerification(normalizedEmail, verifyUrl);
+      await sendEmailVerification(normalizedEmail, verifyUrl, emailLang);
     } catch (emailErr) {
       // User is created; do not fail registration if SMTP fails (e.g. staging).
       // User can sign in and resend verification from profile.
