@@ -246,41 +246,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* quick actions INCOME & EXPENSE & SLIP UPLOAD */}
-            {/* <div className="flex flex-col flex-wrap gap-2 w-full">
-              <button
-                type="button"
-                onClick={() => {
-                  setFormInitialType("INCOME");
-                  setFormOpen(true);
-                }}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-600/80 bg-emerald-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
-              >
-                <ArrowDownCircle className="h-4 w-4 shrink-0" />
-                <span>{t("transactions.common.income")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormInitialType("EXPENSE");
-                  setFormOpen(true);
-                }}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-red-600/80 bg-red-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
-              >
-                <ArrowUpCircle className="h-4 w-4 shrink-0" />
-                <span>{t("transactions.common.expense")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openSlipUpload({ onSuccess: refresh })}
-                aria-label={t("dashboard.slipUpload.title")}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-blue-600/80 bg-blue-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-transparent dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
-              >
-                <ImagePlus className="h-4 w-4 shrink-0" />
-                <span>{t("dashboard.slipUpload.title")}</span>
-              </button>
-            </div> */}
-
           </div>
 
           <div className="mt-4">
