@@ -37,3 +37,6 @@ next-env.d.ts
 
 # report image uploads
 /storage/
+
+# Cursor IDE — hook runtime state (local; changes every session)
+.cursor/hooks/state/
