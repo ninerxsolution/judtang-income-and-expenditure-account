@@ -19,10 +19,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
-import { getCategoryDisplayName } from "@/lib/categories-display";
 import { AccountCombobox, type AccountOption } from "@/components/dashboard/account-combobox";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 import { RowSelect } from "@/components/dashboard/row-select";
+import { CategoryRowSelect } from "@/components/dashboard/category-row-select";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -102,7 +102,7 @@ export function MonthlyEntryEditDialog({
   onSuccess,
 }: MonthlyEntryEditDialogProps) {
   const { t, language } = useI18n();
-  const localeKey = language === "th" ? "th" : "en";
+  const localeKey: "th" | "en" = language === "th" ? "th" : "en";
 
   const [type, setType] = useState<TransactionType>("EXPENSE");
   const [amount, setAmount] = useState("");
@@ -255,13 +255,11 @@ export function MonthlyEntryEditDialog({
 
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("monthlyEntry.category")}</label>
-              <RowSelect
+              <CategoryRowSelect
                 value={categoryId}
                 onChange={setCategoryId}
-                options={categories.map((c) => ({
-                  value: c.id,
-                  label: getCategoryDisplayName(c.name, language, c.nameEn),
-                }))}
+                categories={categories}
+                language={localeKey}
                 allowEmpty
                 emptyLabel={t("monthlyEntry.category")}
                 className="h-11 py-1 text-sm"

@@ -34,6 +34,7 @@ import {
   type AccountOption,
 } from "@/components/dashboard/account-combobox";
 import { RowSelect } from "@/components/dashboard/row-select";
+import { CategoryRowSelect } from "@/components/dashboard/category-row-select";
 import {
   Select,
   SelectContent,
@@ -178,6 +179,7 @@ export default function MonthlyEntryPage() {
   const defaultAccountId = accounts.length > 0 ? accounts[0].id : "";
   const daysInMonth = getDaysInMonth(year, month);
   const focusAmountRowIdRef = useRef<string | null>(null);
+  const stickySummaryRef = useRef<HTMLDivElement | null>(null);
 
   const monthLabel = useMemo(() => {
     const d = new Date(year, month, 1);
@@ -318,6 +320,32 @@ export default function MonthlyEntryPage() {
       parent = parent.parentElement;
     }
     return null;
+  }
+
+  /** Keep focused inputs visible above the sticky summary bar (scroll parent does not subtract it). */
+  function scrollFieldClearStickySummary(
+    field: HTMLElement,
+    stickySummaryEl: HTMLElement | null,
+  ): void {
+    const scrollParent = findScrollParent(field);
+    const insetPx =
+      stickySummaryEl != null ? stickySummaryEl.offsetHeight + 12 : 140;
+    const margin = 8;
+    if (!scrollParent) {
+      field.scrollIntoView({ block: "nearest", behavior: "auto" });
+      return;
+    }
+    const fieldRect = field.getBoundingClientRect();
+    const parentRect = scrollParent.getBoundingClientRect();
+    const safeBottom = parentRect.bottom - insetPx - margin;
+    if (fieldRect.bottom > safeBottom) {
+      scrollParent.scrollTop += fieldRect.bottom - safeBottom;
+    }
+    const nextTop = field.getBoundingClientRect().top;
+    const safeTop = parentRect.top + margin;
+    if (nextTop < safeTop) {
+      scrollParent.scrollTop += nextTop - safeTop;
+    }
   }
 
   // Scroll to day section when we have dateParam + highlightParam — works even during loading
@@ -834,8 +862,8 @@ export default function MonthlyEntryPage() {
         </div>
       </nav>
 
-      {/* Main content - extra pb so sticky summary bar doesn't cover last day */}
-      <div className="min-w-0 flex-1 px-4 pb-0 space-y-4 min-h-0">
+      {/* Main content — days list uses pb so last rows can sit above sticky summary when scrolled */}
+      <div className="min-w-0 flex-1 space-y-4 px-4 pb-0 min-h-0">
       {/* Month/Year navigation */}
       <div className="flex flex-wrap items-center justify-between gap-2 sticky top-0 z-10 bg-background py-2 -mx-8 px-4">
         <div className="flex items-center gap-2">
@@ -911,7 +939,7 @@ export default function MonthlyEntryPage() {
       )}
 
       {/* Days */}
-      <div className="space-y-3">
+      <div className="space-y-3 pb-10">
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
           const existing = existingByDay[day] ?? [];
           const newRows = dayRows[day] ?? [];
@@ -1013,15 +1041,13 @@ export default function MonthlyEntryPage() {
                             className="w-30 h-9 text-xs tabular-nums text-right"
                           />
                           <div className="w-40">
-                            <RowSelect
+                            <CategoryRowSelect
                               value={editingRow.categoryId}
                               onChange={(v) =>
                                 updateEditingRow("categoryId", v)
                               }
-                              options={categories.map((c) => ({
-                                value: c.id,
-                                label: getCategoryDisplayName(c.name, language, c.nameEn),
-                              }))}
+                              categories={categories}
+                              language={localeKey}
                               allowEmpty
                               emptyLabel={t("monthlyEntry.category")}
                               className="h-9 py-1 text-xs"
@@ -1255,7 +1281,16 @@ export default function MonthlyEntryPage() {
                               if (el && focusAmountRowIdRef.current === row.id) {
                                 focusAmountRowIdRef.current = null;
                                 const input = el.querySelector<HTMLInputElement>("input");
-                                if (input) setTimeout(() => input.focus(), 0);
+                                if (!input) return;
+                                requestAnimationFrame(() => {
+                                  input.focus({ preventScroll: true });
+                                  requestAnimationFrame(() => {
+                                    scrollFieldClearStickySummary(
+                                      input,
+                                      stickySummaryRef.current,
+                                    );
+                                  });
+                                });
                               }
                             }}
                             className={isMobile ? "min-w-0 flex-1" : "contents"}
@@ -1367,15 +1402,13 @@ export default function MonthlyEntryPage() {
                           {!isMobile && (
                             <>
                               <div className="w-40">
-                                <RowSelect
+                                <CategoryRowSelect
                                   value={row.categoryId}
                                   onChange={(v) =>
                                     updateRow(day, row.id, "categoryId", v)
                                   }
-                                  options={categories.map((c) => ({
-                                    value: c.id,
-                                    label: getCategoryDisplayName(c.name, language, c.nameEn),
-                                  }))}
+                                  categories={categories}
+                                  language={localeKey}
                                   allowEmpty
                                   emptyLabel={t("monthlyEntry.category")}
                                   className="h-9 py-1 text-xs"
@@ -1436,15 +1469,13 @@ export default function MonthlyEntryPage() {
                         {/* Mobile expanded: Category, Note, Remove */}
                         {isMobile && isExpanded && (
                           <div className="flex flex-col gap-2 pl-0">
-                            <RowSelect
+                            <CategoryRowSelect
                               value={row.categoryId}
                               onChange={(v) =>
                                 updateRow(day, row.id, "categoryId", v)
                               }
-                              options={categories.map((c) => ({
-                                value: c.id,
-                                label: getCategoryDisplayName(c.name, language, c.nameEn),
-                              }))}
+                              categories={categories}
+                              language={localeKey}
                               allowEmpty
                               emptyLabel={t("monthlyEntry.category")}
                               className="h-11 py-1 text-xs"
@@ -1503,7 +1534,10 @@ export default function MonthlyEntryPage() {
       </div>
 
       {/* Summary + Save */}
-      <div className="sticky bottom-0 bg-background pt-3 pb-8 -mx-8 -mb-5 px-4 space-y-3">
+      <div
+        ref={stickySummaryRef}
+        className="sticky bottom-0 -mx-8 -mb-5 space-y-3 bg-background px-4 pt-3 pb-8"
+      >
         {/* Totals */}
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">

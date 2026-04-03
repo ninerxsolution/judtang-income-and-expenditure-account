@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
 import { toDateStringInTimezone } from "@/lib/date-range";
 import { getCategoryDisplayName } from "@/lib/categories-display";
+import { getRecentCategoryIds, sortCategoriesByRecent } from "@/lib/recent-categories";
 import { useI18n } from "@/hooks/use-i18n";
 import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import {
@@ -84,6 +85,11 @@ export default function TransactionsPage() {
   const [offset, setOffset] = useState(0);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string; nameEn?: string | null }[]>([]);
+
+  const sortedFilterCategories = useMemo(
+    () => sortCategoriesByRecent(categories, getRecentCategoryIds()),
+    [categories],
+  );
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -347,7 +353,7 @@ export default function TransactionsPage() {
                   className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
                 >
                   <option value="">{t("dataTools.export.typeAll")}</option>
-                  {categories.map((cat) => (
+                  {sortedFilterCategories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {getCategoryDisplayName(cat.name, language, cat.nameEn)}
                     </option>
@@ -431,7 +437,7 @@ export default function TransactionsPage() {
                       className="h-8 w-full rounded-md border border-[#D4C9B0] px-2.5 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 sm:h-9 sm:px-3"
                     >
                       <option value="">{t("dataTools.export.typeAll")}</option>
-                      {categories.map((cat) => (
+                      {sortedFilterCategories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
                           {getCategoryDisplayName(cat.name, language, cat.nameEn)}
                         </option>

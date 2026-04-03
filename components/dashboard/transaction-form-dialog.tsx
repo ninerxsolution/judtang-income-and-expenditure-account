@@ -26,6 +26,11 @@ import {
   pickPreferredAccountId,
   saveRecentFinancialAccountId,
 } from "@/lib/recent-financial-accounts";
+import {
+  getRecentCategoryIds,
+  saveRecentCategoryId,
+  sortCategoriesByRecent,
+} from "@/lib/recent-categories";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -55,54 +60,9 @@ function formatDateToInput(iso: string): string {
   return `${year}-${month}-${day}`;
 }
 
-const RECENT_CATEGORIES_KEY = "judtang_recent_categories";
-const MAX_RECENT_CATEGORIES = 20;
 const INITIAL_CATEGORY_COUNT = 3;
 
-function getRecentCategoryIds(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECENT_CATEGORIES_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((x): x is string => typeof x === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecentCategoryId(id: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const recent = getRecentCategoryIds();
-    const filtered = recent.filter((x) => x !== id);
-    const updated = [id, ...filtered].slice(0, MAX_RECENT_CATEGORIES);
-    window.localStorage.setItem(RECENT_CATEGORIES_KEY, JSON.stringify(updated));
-  } catch {
-    // Ignore localStorage errors
-  }
-}
-
 type CategoryItem = { id: string; name: string; nameEn?: string | null };
-
-function sortCategoriesByRecent(
-  categories: CategoryItem[],
-  recentIds: string[],
-): CategoryItem[] {
-  const byId = new Map(categories.map((c) => [c.id, c]));
-  const ordered: CategoryItem[] = [];
-  for (const id of recentIds) {
-    const cat = byId.get(id);
-    if (cat) {
-      ordered.push(cat);
-      byId.delete(id);
-    }
-  }
-  const rest = Array.from(byId.values());
-  return [...ordered, ...rest];
-}
 
 type TransactionFormDialogProps = {
   open: boolean;
@@ -157,14 +117,21 @@ export function TransactionFormDialog({
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
   const [formDataLoading, setFormDataLoading] = useState(false);
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-  const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>([]);
+  /** Bumps after open / chip select so sortedCategories re-reads localStorage MRU. */
+  const [categoryMruTick, setCategoryMruTick] = useState(0);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isMobile = useIsMobile();
 
+  const categoryRecentIds = useMemo(
+    () => getRecentCategoryIds(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-snapshot MRU after open or chip select
+    [categories, categoryMruTick],
+  );
+
   const sortedCategories = useMemo(
-    () => sortCategoriesByRecent(categories, recentCategoryIds),
-    [categories, recentCategoryIds],
+    () => sortCategoriesByRecent(categories, categoryRecentIds),
+    [categories, categoryRecentIds],
   );
 
   const visibleCategories = categoriesExpanded
@@ -174,7 +141,7 @@ export function TransactionFormDialog({
 
   useEffect(() => {
     if (open && typeof window !== "undefined") {
-      setRecentCategoryIds(getRecentCategoryIds());
+      setCategoryMruTick((t) => t + 1);
     }
     if (!open) {
       setCategoriesExpanded(false);
@@ -808,6 +775,8 @@ export function TransactionFormDialog({
                           } else {
                             setCategoryId(cat.id);
                             setCategory(getCategoryDisplayName(cat.name, localeKey, cat.nameEn));
+                            saveRecentCategoryId(cat.id);
+                            setCategoryMruTick((t) => t + 1);
                           }
                         }}
                         className={cn(

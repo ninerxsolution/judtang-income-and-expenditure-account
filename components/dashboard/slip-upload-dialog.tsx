@@ -1,7 +1,7 @@
 "use client";
 
 import NextImage from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   AlertCircle,
   ArrowDownCircle,
@@ -32,6 +32,11 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
+import {
+  getRecentCategoryIds,
+  saveRecentCategoryId,
+  sortCategoriesByRecent,
+} from "@/lib/recent-categories";
 
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
 const MAX_FILES_PER_REQUEST = 10;
@@ -370,8 +375,20 @@ export function SlipUploadDialog({
 
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string; nameEn?: string | null }[]>([]);
+  const [categoryMruTick, setCategoryMruTick] = useState(0);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [batchElapsedMs, setBatchElapsedMs] = useState<number | null>(null);
+
+  const categoryRecentIds = useMemo(
+    () => getRecentCategoryIds(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-snapshot MRU after picker change
+    [categories, categoryMruTick],
+  );
+
+  const sortedCategories = useMemo(
+    () => sortCategoriesByRecent(categories, categoryRecentIds),
+    [categories, categoryRecentIds],
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const requestControllersRef = useRef(new Map<string, AbortableRequest>());
@@ -1488,13 +1505,18 @@ export function SlipUploadDialog({
                                         </label>
                                         <select
                                           value={draft.categoryId}
-                                          onChange={(e) =>
-                                            updateDraft(draft.id, { categoryId: e.target.value })
-                                          }
+                                          onChange={(e) => {
+                                            const v = e.target.value;
+                                            if (v.trim()) {
+                                              saveRecentCategoryId(v);
+                                              setCategoryMruTick((t) => t + 1);
+                                            }
+                                            updateDraft(draft.id, { categoryId: v });
+                                          }}
                                           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                         >
                                           <option value="">—</option>
-                                          {categories.map((category) => (
+                                          {sortedCategories.map((category) => (
                                             <option key={category.id} value={category.id}>
                                               {getCategoryDisplayName(category.name, localeKey, category.nameEn)}
                                             </option>

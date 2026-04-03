@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -45,6 +45,11 @@ import { useI18n } from "@/hooks/use-i18n";
 import { formatAmount } from "@/lib/format";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { cn } from "@/lib/utils";
+import {
+  getRecentCategoryIds,
+  saveRecentCategoryId,
+  sortCategoriesByRecent,
+} from "@/lib/recent-categories";
 
 type BudgetTemplate = {
   id: string;
@@ -166,6 +171,7 @@ export default function BudgetSettingsPage() {
   const [budget, setBudget] = useState<BudgetResponse | null>(null);
   const [coverage, setCoverage] = useState<BudgetCoverageResponse | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryMruTick, setCategoryMruTick] = useState(0);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [loadingBudget, setLoadingBudget] = useState(true);
   const [loadingCoverage, setLoadingCoverage] = useState(true);
@@ -306,11 +312,27 @@ export default function BudgetSettingsPage() {
   }, [initializedFromQuery, month, pathname, router, year]);
 
   const budgetMonthId = budget?.budgetMonth?.id;
-  const existingCategoryIds = new Set(
-    (budget?.categoryBudgets ?? [])
-      .map((cb) => cb.categoryId)
-      .filter(Boolean),
+
+  const categoryRecentIds = useMemo(
+    () => getRecentCategoryIds(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- categories + tick re-snapshot MRU from localStorage
+    [categories, categoryMruTick],
   );
+
+  const sortedCategoriesForPicker = useMemo(
+    () => sortCategoriesByRecent(categories, categoryRecentIds),
+    [categories, categoryRecentIds],
+  );
+
+  const sortedAvailableCategoriesForBudget = useMemo(() => {
+    const ids = new Set(
+      (budget?.categoryBudgets ?? [])
+        .map((cb) => cb.categoryId)
+        .filter((id): id is string => Boolean(id)),
+    );
+    const available = categories.filter((c) => !ids.has(c.id));
+    return sortCategoriesByRecent(available, categoryRecentIds);
+  }, [categories, budget, categoryRecentIds]);
 
   function goToPreviousMonth() {
     if (month === 1) {
@@ -447,6 +469,10 @@ export default function BudgetSettingsPage() {
     field: "categoryId" | "limitAmount",
     value: string,
   ) {
+    if (field === "categoryId" && value.trim()) {
+      saveRecentCategoryId(value);
+      setCategoryMruTick((t) => t + 1);
+    }
     setTemplateFormCategoryLimits((prev) =>
       prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
     );
@@ -1174,7 +1200,7 @@ export default function BudgetSettingsPage() {
                       className="h-9 flex-1 min-w-[120px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring"
                     >
                       <option value="">—</option>
-                      {categories.map((c) => (
+                      {sortedCategoriesForPicker.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name}
                         </option>
@@ -1364,19 +1390,24 @@ export default function BudgetSettingsPage() {
               <Label>{t("settings.categories.title")}</Label>
               <select
                 value={newCategoryId}
-                onChange={(e) => setNewCategoryId(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v.trim()) {
+                    saveRecentCategoryId(v);
+                    setCategoryMruTick((t) => t + 1);
+                  }
+                  setNewCategoryId(v);
+                }}
                 className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">
                   {t("settings.budget.categoryLimit")}
                 </option>
-                {categories
-                  .filter((c) => !existingCategoryIds.has(c.id))
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                {sortedAvailableCategoriesForBudget.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="space-y-2">
