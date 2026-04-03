@@ -38,6 +38,7 @@ export async function recordPayment(params: RecordPaymentParams) {
       interestRate: true,
       cardAccountType: true,
       cardNetwork: true,
+      linkedAccountId: true,
     },
   });
 

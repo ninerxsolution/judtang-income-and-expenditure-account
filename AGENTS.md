@@ -54,6 +54,8 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 - Cloudflare Turnstile is auto-disabled on `localhost` / `APP_ENV=development`, so no Turnstile keys are needed locally.
 - The test suite (Jest) uses mocks and does not require a running database.
 - The app UI defaults to Thai. Language can be switched via the header.
+- `.cursor/hooks/state/` is local Cursor hook runtime (e.g. continual-learning index); do not commit it. Keep it gitignored so it does not churn `git status`.
+- `isAccountIncomplete` for debit `CREDIT_CARD` rows requires `linkedAccountId`. Any Prisma `select` passed into that check must include `linkedAccountId` or alerts and API guards can falsely treat valid debit cards as incomplete.
 
 ## Learned User Preferences
 
