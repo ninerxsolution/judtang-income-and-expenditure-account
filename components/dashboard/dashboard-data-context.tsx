@@ -57,6 +57,9 @@ export type DashboardData = {
   accountCount: number;
   loading: boolean;
   refresh: () => void;
+  /** บวกทุกครั้งที่ควร refetch มุมมองที่ผูกกับธุรกรรม (เช่น ปฏิทิน) — ไม่เกี่ยวกับการโหลด dashboard/init */
+  transactionViewsEpoch: number;
+  invalidateTransactionViews: () => void;
 };
 
 const DashboardDataContext = createContext<DashboardData | null>(null);
@@ -82,6 +85,11 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
   >([]);
   const [accountCount, setAccountCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [transactionViewsEpoch, setTransactionViewsEpoch] = useState(0);
+
+  const invalidateTransactionViews = useCallback(() => {
+    setTransactionViewsEpoch((n) => n + 1);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -148,6 +156,8 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     accountCount,
     loading,
     refresh: load,
+    transactionViewsEpoch,
+    invalidateTransactionViews,
   };
 
   return (

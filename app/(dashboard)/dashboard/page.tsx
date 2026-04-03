@@ -32,7 +32,14 @@ import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigge
 
 export default function DashboardPage() {
   const { t } = useI18n();
-  const { summary, recentTransactions, accountCount, loading: summaryLoading, refresh } = useDashboardData();
+  const {
+    summary,
+    recentTransactions,
+    accountCount,
+    loading: summaryLoading,
+    refresh,
+    invalidateTransactionViews,
+  } = useDashboardData();
   const balance =
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
 
@@ -65,8 +72,9 @@ export default function DashboardPage() {
       .finally(() => setBudgetLoading(false));
   }, []);
 
-  function handleFormSuccess() {
+  function handleAfterTransactionChange() {
     refresh();
+    invalidateTransactionViews();
   }
 
   return (
@@ -152,7 +160,7 @@ export default function DashboardPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: refresh })}>
+                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
                   <ImagePlus className="h-4 w-4" />
                   {t("dashboard.slipUpload.title")}
                 </DropdownMenuItem>
@@ -384,7 +392,7 @@ export default function DashboardPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: refresh })}>
+                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
                   <ImagePlus className="h-4 w-4" />
                   {t("dashboard.slipUpload.title")}
                 </DropdownMenuItem>
@@ -434,7 +442,7 @@ export default function DashboardPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         initialType={formInitialType}
-        onSuccess={handleFormSuccess}
+        onSuccess={handleAfterTransactionChange}
       />
     </div>
   );
