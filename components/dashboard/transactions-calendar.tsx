@@ -370,6 +370,11 @@ export function TransactionsCalendar({
   const [dailyItems, setDailyItems] = useState<DailyTransaction[]>([]);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [dailyError, setDailyError] = useState<string | null>(null);
+  const selectedDateRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedDateRef.current = selectedDate;
+  }, [selectedDate]);
 
   // Load summary when month (day view) or week (week view) changes.
   useEffect(() => {
@@ -632,6 +637,7 @@ export function TransactionsCalendar({
 
   async function openDay(dateIso: string) {
     setSelectedDate(dateIso);
+    selectedDateRef.current = dateIso;
     setDailyItems([]);
     setDailyError(null);
     setDailyLoading(true);
@@ -642,6 +648,9 @@ export function TransactionsCalendar({
       params.set("limit", "200");
       params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
       const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
       if (!res.ok) {
         if (res.status === 401) {
           setDailyError(t("common.errors.unauthenticated"));
@@ -653,23 +662,68 @@ export function TransactionsCalendar({
       }
 
       const data = (await res.json()) as DailyTransaction[] | unknown;
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
       if (Array.isArray(data)) {
         setDailyItems(data);
       } else {
         setDailyItems([]);
       }
     } catch {
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
       setDailyError(t("calendar.errors.loadDaily"));
       setDailyItems([]);
     } finally {
-      setDailyLoading(false);
+      if (selectedDateRef.current === dateIso) {
+        setDailyLoading(false);
+      }
+    }
+  }
+
+  async function refetchDayDetailQuiet(dateIso: string): Promise<void> {
+    try {
+      const params = new URLSearchParams();
+      params.set("date", dateIso);
+      params.set("limit", "200");
+      params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+      const res = await fetch(`/api/transactions?${params.toString()}`, {
+        cache: "no-store",
+      });
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
+      if (!res.ok) {
+        if (res.status === 401) {
+          setDailyError(t("common.errors.unauthenticated"));
+        } else {
+          setDailyError(t("calendar.errors.loadDaily"));
+        }
+        return;
+      }
+
+      const data = (await res.json()) as DailyTransaction[] | unknown;
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
+      setDailyError(null);
+      setDailyItems(Array.isArray(data) ? data : []);
+    } catch {
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
+      setDailyError(t("calendar.errors.loadDaily"));
     }
   }
 
   function closeDay() {
     setSelectedDate(null);
+    selectedDateRef.current = null;
     setDailyItems([]);
     setDailyError(null);
+    setDailyLoading(false);
   }
 
   function goToToday() {
@@ -756,7 +810,7 @@ export function TransactionsCalendar({
 
   function refreshDailyItems() {
     if (selectedDate) {
-      void openDay(selectedDate);
+      void refetchDayDetailQuiet(selectedDate);
     }
   }
 
@@ -841,7 +895,7 @@ export function TransactionsCalendar({
 
   const dayDetailContent = (
     <>
-      {dailyLoading && (
+      {dailyLoading && dailyItems.length === 0 && (
         <div className="animate-in fade-in-0 space-y-2 duration-200">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-md" />
