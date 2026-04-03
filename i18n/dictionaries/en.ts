@@ -677,6 +677,12 @@ export const enDictionary = {
       applyTemplateSuccess: "Template applied.",
       saveSuccess: "Saved.",
       deleteSuccess: "Deleted.",
+      errorTotalBudgetNonNegative:
+        "Total budget must be a valid non-negative number.",
+      errorSelectTemplate: "Select a template to apply.",
+      errorTemplateNameRequired: "Template name is required.",
+      errorCategoryLimitPositive: "Category limit must be a positive number.",
+      errorCategoryBudgetAdd: "Choose a category and enter a positive amount.",
     },
     feedback: {
       title: "Help & Feedback",

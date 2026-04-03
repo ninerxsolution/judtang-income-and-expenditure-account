@@ -22,6 +22,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
+import type { BudgetProgressIndicator } from "@/lib/budget-shared";
+import {
+  budgetIndicatorMetaTextClass,
+  budgetIndicatorProgressBarClass,
+} from "@/lib/budget-indicator-ui";
 import { useI18n } from "@/hooks/use-i18n";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -38,7 +43,7 @@ export default function DashboardPage() {
     totalSpent: number;
     totalBudget: number | null;
     totalProgress: number;
-    totalIndicator: "normal" | "warning" | "critical" | "over";
+    totalIndicator: BudgetProgressIndicator;
   } | null>(null);
   const [budgetLoading, setBudgetLoading] = useState(true);
 
@@ -47,7 +52,14 @@ export default function DashboardPage() {
     fetch(`/api/budgets?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { totalSpent: number; totalBudget: number | null; totalProgress: number; totalIndicator: string } | null) => {
-        if (data) setBudgetOverview({ totalSpent: data.totalSpent, totalBudget: data.totalBudget, totalProgress: data.totalProgress, totalIndicator: data.totalIndicator as "normal" | "warning" | "critical" | "over" });
+        if (data) {
+          setBudgetOverview({
+            totalSpent: data.totalSpent,
+            totalBudget: data.totalBudget,
+            totalProgress: data.totalProgress,
+            totalIndicator: data.totalIndicator as BudgetProgressIndicator,
+          });
+        }
       })
       .catch(() => { })
       .finally(() => setBudgetLoading(false));
@@ -301,28 +313,14 @@ export default function DashboardPage() {
                   <p className="text-lg font-semibold tabular-nums">
                     ฿ {formatAmount(budgetOverview.totalSpent)} / ฿ {formatAmount(budgetOverview.totalBudget)}
                     <span
-                      className={`ml-2 text-sm font-normal ${budgetOverview.totalIndicator === "over"
-                        ? "text-red-600 dark:text-red-400"
-                        : budgetOverview.totalIndicator === "critical"
-                          ? "text-orange-600 dark:text-orange-400"
-                          : budgetOverview.totalIndicator === "warning"
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-[#6B5E4E] dark:text-stone-400"
-                        }`}
+                      className={`ml-2 text-sm font-normal ${budgetIndicatorMetaTextClass(budgetOverview.totalIndicator)}`}
                     >
                       ({Math.round(budgetOverview.totalProgress * 100)}%)
                     </span>
                   </p>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
                     <div
-                      className={`h-full ${budgetOverview.totalIndicator === "over"
-                        ? "bg-red-500"
-                        : budgetOverview.totalIndicator === "critical"
-                          ? "bg-orange-500"
-                          : budgetOverview.totalIndicator === "warning"
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
-                        }`}
+                      className={`h-full ${budgetIndicatorProgressBarClass(budgetOverview.totalIndicator)}`}
                       style={{ width: `${Math.min(100, budgetOverview.totalProgress * 100)}%` }}
                     />
                   </div>

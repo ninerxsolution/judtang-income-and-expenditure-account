@@ -664,6 +664,11 @@ export const thDictionary = {
       applyTemplateSuccess: "ใช้เทมเพลตแล้ว",
       saveSuccess: "บันทึกแล้ว",
       deleteSuccess: "ลบแล้ว",
+      errorTotalBudgetNonNegative: "งบรวมต้องเป็นตัวเลขที่ไม่ติดลบ",
+      errorSelectTemplate: "กรุณาเลือกเทมเพลตที่จะใช้",
+      errorTemplateNameRequired: "กรุณากรอกชื่อเทมเพลต",
+      errorCategoryLimitPositive: "งบต่อหมวดหมู่ต้องเป็นตัวเลขมากกว่า 0",
+      errorCategoryBudgetAdd: "เลือกหมวดหมู่และกรอกจำนวนเงินที่มากกว่า 0",
     },
     feedback: {
       title: "ช่วยเหลือและความคิดเห็น",
