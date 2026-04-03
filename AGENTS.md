@@ -60,3 +60,9 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 ## Learned User Preferences
 
 - Do not paste live `.env` values, database URLs, or third-party API keys into chat; if they are exposed, rotate those credentials.
+- Never claim to autonomously accept or merge code diffs into the editor. Explain that applying code requires the user to click 'Accept' in the Cursor UI.
+
+## Learned Workspace Facts
+
+- Category and Financial Account pickers use an MRU (Most Recently Used) pattern backed by `localStorage` keys like `judtang_recent_categories`. Always use shared components like `CategoryRowSelect`, `CategoryCombobox`, or `AccountCombobox` to maintain this behavior.
+- In `DashboardDataProvider`, `refresh()` updates data silently (without toggling the global loading skeleton). To show the loading overlay, use `load({ showLoadingOverlay: true })`.

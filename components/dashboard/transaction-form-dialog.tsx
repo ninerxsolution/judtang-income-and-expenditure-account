@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Search, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { getCategoryDisplayName } from "@/lib/categories-display";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import { AccountCombobox, AccountIcon, type AccountOption } from "@/components/dashboard/account-combobox";
 import { cn } from "@/lib/utils";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
@@ -25,6 +25,7 @@ import {
   getRecentFinancialAccountIds,
   pickPreferredAccountId,
   saveRecentFinancialAccountId,
+  sortAccountsByRecent,
 } from "@/lib/recent-financial-accounts";
 import {
   getRecentCategoryIds,
@@ -73,6 +74,45 @@ type TransactionFormDialogProps = {
   onSuccess?: () => void;
 };
 
+function AccountSelectorButton({
+  label,
+  account,
+  onClick,
+  disabled,
+  defaultLabel,
+}: {
+  label: string;
+  account?: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; isDefault: boolean } | null;
+  onClick: () => void;
+  disabled?: boolean;
+  defaultLabel?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium">{label}</label>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="flex w-full items-center justify-between rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 hover:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 transition-all text-left"
+      >
+        {account ? (
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <AccountIcon account={account} size="sm" />
+            <span className="font-medium text-[#3D3020] dark:text-stone-200 truncate">
+              {account.name}
+              {account.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}
+            </span>
+          </div>
+        ) : (
+          <span className="text-[#6B5E4E] dark:text-stone-400">เลือกบัญชี...</span>
+        )}
+        <ChevronRight className="h-5 w-5 shrink-0 text-[#6B5E4E] dark:text-stone-400" />
+      </button>
+    </div>
+  );
+}
+
 export function TransactionFormDialog({
   open,
   onOpenChange,
@@ -102,6 +142,9 @@ export function TransactionFormDialog({
   const [loadState, setLoadState] = useState<
     "idle" | "loading" | "done" | "error"
   >(editId ? "loading" : "idle");
+
+  const [currentView, setCurrentView] = useState<"form" | "select-from" | "select-to">("form");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [accounts, setAccounts] = useState<
     {
@@ -145,6 +188,8 @@ export function TransactionFormDialog({
     }
     if (!open) {
       setCategoriesExpanded(false);
+      setCurrentView("form");
+      setSearchTerm("");
     }
   }, [open]);
 
@@ -503,6 +548,105 @@ export function TransactionFormDialog({
 
   const isEdit = Boolean(editId);
 
+  const renderSelectionView = (view: "select-from" | "select-to") => {
+    const isFrom = view === "select-from";
+    const selectedValue = isFrom ? financialAccountId : transferAccountId;
+    
+    let filtered = accounts.filter((acc) => {
+      // Exclude credit cards if transfer
+      if (type === "TRANSFER" && acc.type === "CREDIT_CARD") return false;
+      // If selecting "to", exclude the "from" account
+      if (!isFrom && acc.id === financialAccountId) return false;
+      // Search
+      if (searchTerm && !acc.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      return true;
+    });
+
+    const recentIds = getRecentFinancialAccountIds();
+    const sortedAccounts = sortAccountsByRecent(filtered, recentIds);
+
+    return (
+      <div className="absolute inset-0 z-10 flex flex-col w-full bg-[#FDFAF4] dark:bg-stone-950 animate-in slide-in-from-right-8 duration-200">
+        <div className="flex items-center px-4 py-4 border-b border-[#D4C9B0] dark:border-stone-700 shrink-0 bg-[#FDFAF4] dark:bg-stone-950">
+          <button 
+            type="button"
+            onClick={() => {
+              setCurrentView("form");
+              setSearchTerm("");
+            }}
+            className="p-2 -ml-2 text-[#6B5E4E] hover:text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800 rounded-full transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <h2 className="text-lg font-bold text-[#3D3020] dark:text-stone-100 ml-2">
+            {isFrom ? (type === "INCOME" ? t("transactions.new.accountLabel") : t("transactions.new.fromAccount")) : t("transactions.new.toAccount")}
+          </h2>
+        </div>
+
+        <div className="p-4 border-b border-[#D4C9B0] dark:border-stone-700 shrink-0 bg-[#FDFAF4] dark:bg-stone-950">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-5 h-5 text-stone-400" />
+            <input
+              type="text"
+              placeholder={t("accounts.bankSearchPlaceholder") || "ค้นหาบัญชี..."}
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#D4C9B0] rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all dark:bg-stone-900 dark:border-stone-600 dark:text-stone-100 text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2 bg-[#FDFAF4] dark:bg-stone-950">
+          {sortedAccounts.length > 0 ? (
+            <ul className="space-y-1">
+              {sortedAccounts.map((account) => {
+                const isSelected = selectedValue === account.id;
+                
+                return (
+                  <li key={account.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isFrom) {
+                          setFinancialAccountId(account.id);
+                        } else {
+                          setTransferAccountId(account.id);
+                        }
+                        saveRecentFinancialAccountId(account.id);
+                        setCurrentView("form");
+                        setSearchTerm("");
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all border",
+                        isSelected 
+                          ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900" 
+                          : "border-transparent hover:bg-[#F5F0E8] dark:hover:bg-stone-800"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <AccountIcon account={account} size="md" />
+                        <span className={cn("font-medium", isSelected ? "text-emerald-800 dark:text-emerald-300" : "text-[#3D3020] dark:text-stone-200")}>
+                          {account.name}
+                          {account.isDefault ? ` (${t("accounts.default")})` : ""}
+                        </span>
+                      </div>
+                      {isSelected && <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="text-center py-10 text-stone-500 text-sm">
+              {t("accounts.bankNoResults") || "ไม่พบบัญชีที่ค้นหา"}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -525,17 +669,23 @@ export function TransactionFormDialog({
             : undefined
         }
       >
-        <DialogHeader className="shrink-0">
-          <DialogTitle>
+        <DialogTitle className="sr-only">
+          {isEdit
+            ? t("transactions.edit.title")
+            : t("dashboard.pageTitle.transactionsNew")}
+        </DialogTitle>
+
+        <DialogHeader className={cn("shrink-0", currentView !== "form" && "invisible pointer-events-none")}>
+          <h2 className="text-lg font-semibold leading-none tracking-tight">
             {isEdit
               ? t("transactions.edit.title")
               : t("dashboard.pageTitle.transactionsNew")}
-          </DialogTitle>
+          </h2>
         </DialogHeader>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-1 flex-col min-h-0 overflow-hidden"
+          className={cn("flex flex-1 flex-col min-h-0 overflow-hidden", currentView !== "form" && "invisible pointer-events-none")}
         >
           <DialogBody className="space-y-4">
             {loadState === "loading" && (
@@ -649,52 +799,26 @@ export function TransactionFormDialog({
             </>
           ) : type === "TRANSFER" ? (
             <>
-              <div>
-                <label htmlFor="transaction-modal-from-account" className="mb-1 block text-sm font-medium">
-                  {t("transactions.new.fromAccount")}
-                </label>
-                <AccountCombobox
-                  id="transaction-modal-from-account"
-                  value={financialAccountId}
-                  onChange={setFinancialAccountId}
-                  accounts={accounts}
-                  filterByType={(accType) => accType !== "CREDIT_CARD"}
-                  defaultLabel={t("accounts.default")}
-                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                />
-              </div>
-              <div>
-                <label htmlFor="transaction-modal-to-account" className="mb-1 block text-sm font-medium">
-                  {t("transactions.new.toAccount")}
-                </label>
-                <AccountCombobox
-                  id="transaction-modal-to-account"
-                  value={transferAccountId}
-                  onChange={setTransferAccountId}
-                  accounts={accounts}
-                  excludeIds={[financialAccountId]}
-                  filterByType={(accType) => accType !== "CREDIT_CARD"}
-                  allowEmpty
-                  emptyLabel="—"
-                  defaultLabel={t("accounts.default")}
-                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                />
-              </div>
+              <AccountSelectorButton
+                label={t("transactions.new.fromAccount")}
+                account={accounts.find((a) => a.id === financialAccountId)}
+                onClick={() => setCurrentView("select-from")}
+                defaultLabel={t("accounts.default")}
+              />
+              <AccountSelectorButton
+                label={t("transactions.new.toAccount")}
+                account={accounts.find((a) => a.id === transferAccountId)}
+                onClick={() => setCurrentView("select-to")}
+                defaultLabel={t("accounts.default")}
+              />
             </>
           ) : (
-            <div>
-              <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
-                {t("transactions.new.accountLabel")}
-              </label>
-              <AccountCombobox
-                id="transaction-modal-account"
-                value={financialAccountId}
-                onChange={setFinancialAccountId}
-                accounts={accounts}
-                defaultLabel={t("accounts.default")}
-                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-              />
-            </div>
+            <AccountSelectorButton
+              label={t("transactions.new.accountLabel")}
+              account={accounts.find((a) => a.id === financialAccountId)}
+              onClick={() => setCurrentView("select-from")}
+              defaultLabel={t("accounts.default")}
+            />
           )}
 
           {(() => {
@@ -857,6 +981,7 @@ export function TransactionFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        {currentView !== "form" && renderSelectionView(currentView)}
       </DialogContent>
     </Dialog>
   );
