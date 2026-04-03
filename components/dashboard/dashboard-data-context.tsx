@@ -91,8 +91,13 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     setTransactionViewsEpoch((n) => n + 1);
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  type LoadOptions = { showLoadingOverlay?: boolean };
+
+  const load = useCallback(async (options?: LoadOptions) => {
+    const showLoadingOverlay = options?.showLoadingOverlay !== false;
+    if (showLoadingOverlay) {
+      setLoading(true);
+    }
     try {
       const res = await fetch("/api/dashboard/init", { cache: "no-store" });
       if (!res.ok) {
@@ -140,12 +145,18 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
       setRecentTransactions([]);
       setAccountCount(0);
     } finally {
-      setLoading(false);
+      if (showLoadingOverlay) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    load();
+    void load({ showLoadingOverlay: true });
+  }, [load]);
+
+  const refresh = useCallback(() => {
+    void load({ showLoadingOverlay: false });
   }, [load]);
 
   const value: DashboardData = {
@@ -155,7 +166,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     recentTransactions,
     accountCount,
     loading,
-    refresh: load,
+    refresh,
     transactionViewsEpoch,
     invalidateTransactionViews,
   };
