@@ -1,5 +1,10 @@
 import { Prisma, TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  getDateRangeInTimezone,
+  getWeekDateStringsMondayToSunday,
+  toDateStringInTimezone,
+} from "@/lib/date-range";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { recomputeOutstanding } from "@/lib/credit-card";
 
@@ -647,6 +652,93 @@ export async function getTransactionsSummary(
   const income = Number(incomeRows._sum.amount ?? 0);
   const expense = Number(expenseRows._sum.amount ?? 0);
   return { income, expense };
+}
+
+export type DashboardExpenseWeekDay = {
+  date: string;
+  spent: number;
+  isToday: boolean;
+};
+
+export type DashboardExpenseWeekOverview = {
+  todayExpense: number;
+  weekTotalExpense: number;
+  weekDays: DashboardExpenseWeekDay[];
+};
+
+/**
+ * Expense + interest totals by local day (Asia/Bangkok week Mon–Sun), aligned with getTransactionsSummary expense types.
+ */
+export async function getExpenseWeekOverview(
+  userId: string,
+  options?: { at?: Date; timezone?: string },
+): Promise<DashboardExpenseWeekOverview> {
+  if (!userId) {
+    throw new Error("userId is required");
+  }
+  const timezone = options?.timezone ?? "Asia/Bangkok";
+  const at = options?.at ?? new Date();
+  const weekDateStrings = getWeekDateStringsMondayToSunday(at, timezone);
+  if (!weekDateStrings || weekDateStrings.length !== 7) {
+    return {
+      todayExpense: 0,
+      weekTotalExpense: 0,
+      weekDays: Array.from({ length: 7 }, () => ({
+        date: "",
+        spent: 0,
+        isToday: false,
+      })),
+    };
+  }
+
+  const firstRange = getDateRangeInTimezone(weekDateStrings[0], timezone);
+  const lastRange = getDateRangeInTimezone(weekDateStrings[6], timezone);
+  if (!firstRange || !lastRange) {
+    return {
+      todayExpense: 0,
+      weekTotalExpense: 0,
+      weekDays: weekDateStrings.map((date) => ({
+        date,
+        spent: 0,
+        isToday: false,
+      })),
+    };
+  }
+
+  const todayStr = toDateStringInTimezone(at, timezone);
+
+  const rows = await prisma.transaction.findMany({
+    where: {
+      userId,
+      occurredAt: { gte: firstRange.from, lte: lastRange.to },
+      type: {
+        in: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST],
+      },
+    },
+    select: { occurredAt: true, amount: true },
+  });
+
+  const byDay = new Map<string, number>();
+  for (const row of rows) {
+    const key = toDateStringInTimezone(row.occurredAt, timezone);
+    const amt =
+      typeof row.amount === "object" && row.amount != null && "toNumber" in row.amount
+        ? (row.amount as { toNumber: () => number }).toNumber()
+        : Number(row.amount);
+    if (!Number.isFinite(amt)) continue;
+    byDay.set(key, (byDay.get(key) ?? 0) + amt);
+  }
+
+  const weekDays: DashboardExpenseWeekDay[] = weekDateStrings.map((date) => ({
+    date,
+    spent: byDay.get(date) ?? 0,
+    isToday: date === todayStr,
+  }));
+
+  const weekTotalExpense = weekDays.reduce((s, d) => s + d.spent, 0);
+  const todayExpense = byDay.get(todayStr) ?? 0;
+
+  return { todayExpense, weekTotalExpense, weekDays };
 }
 
 export type SummaryByMonthOptions = {

@@ -3,6 +3,7 @@ import {
   formatCardNumber,
   formatBankAccountNumber,
   formatAmount,
+  formatAmountCompact,
 } from "../format";
 
 describe("format", () => {
@@ -90,6 +91,24 @@ describe("format", () => {
     });
     it("handles negative", () => {
       expect(formatAmount(-1000)).toBe("-1,000.00");
+    });
+  });
+
+  describe("formatAmountCompact", () => {
+    it("returns em dash for zero and non-finite", () => {
+      expect(formatAmountCompact(0)).toBe("—");
+      expect(formatAmountCompact(NaN)).toBe("—");
+    });
+    it("returns integer string under 1000", () => {
+      expect(formatAmountCompact(42)).toBe("42");
+      expect(formatAmountCompact(999)).toBe("999");
+    });
+    it("uses k suffix from 1000", () => {
+      expect(formatAmountCompact(1500)).toBe("1.5k");
+      expect(formatAmountCompact(2000)).toBe("2k");
+    });
+    it("uses M suffix from 1e6", () => {
+      expect(formatAmountCompact(1_500_000)).toBe("1.5M");
     });
   });
 });

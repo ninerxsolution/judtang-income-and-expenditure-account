@@ -7,7 +7,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getTransactionsSummary, listTransactionsByUser } from "@/lib/transactions";
+import {
+  getExpenseWeekOverview,
+  getTransactionsSummary,
+  listTransactionsByUser,
+} from "@/lib/transactions";
 import { getTotalBalance } from "@/lib/balance";
 import { maskAccountNumber } from "@/lib/format";
 import { getAccountNumberForMasking } from "@/lib/account-number";
@@ -55,7 +59,7 @@ function getCurrentMonthRange(timezone: string): { from: Date; to: Date } {
 async function fetchDashboardInit(userId: string) {
   const monthRange = getCurrentMonthRange(DASHBOARD_TIMEZONE);
 
-  const [user, summaryResult, transactions, accountCount] = await Promise.all([
+  const [user, summaryResult, transactions, accountCount, spendingOverview] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true, image: true },
@@ -69,6 +73,7 @@ async function fetchDashboardInit(userId: string) {
     })(),
     listTransactionsByUser(userId, { limit: 8, offset: 0 }),
     prisma.financialAccount.count({ where: { userId, isActive: true } }),
+    getExpenseWeekOverview(userId, { timezone: DASHBOARD_TIMEZONE }),
   ]);
 
   const appName = process.env.APP_NAME ?? "Judtang";
@@ -131,6 +136,7 @@ async function fetchDashboardInit(userId: string) {
     appInfo,
     recentTransactions,
     accountCount,
+    spendingOverview,
   };
 }
 

@@ -12,6 +12,7 @@ import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { RecurringDueWidget } from "@/components/dashboard/recurring-due-widget";
+import { DashboardSpendingOverview } from "@/components/dashboard/dashboard-spending-overview";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
   Card,
@@ -247,6 +248,8 @@ export default function DashboardPage() {
             )}
 
           </div>
+
+          <DashboardSpendingOverview />
 
           <div className="mt-4">
             <RecurringDueWidget />

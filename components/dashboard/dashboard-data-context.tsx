@@ -49,12 +49,25 @@ export type DashboardTransaction = {
   occurredAt: string;
 };
 
+export type DashboardSpendingOverviewDay = {
+  date: string;
+  spent: number;
+  isToday: boolean;
+};
+
+export type DashboardSpendingOverview = {
+  todayExpense: number;
+  weekTotalExpense: number;
+  weekDays: DashboardSpendingOverviewDay[];
+};
+
 export type DashboardData = {
   user: DashboardUser | null;
   summary: DashboardSummary;
   appInfo: DashboardAppInfo;
   recentTransactions: DashboardTransaction[];
   accountCount: number;
+  spendingOverview: DashboardSpendingOverview | null;
   loading: boolean;
   refresh: () => void;
   /** บวกทุกครั้งที่ควร refetch มุมมองที่ผูกกับธุรกรรม (เช่น ปฏิทิน) — ไม่เกี่ยวกับการโหลด dashboard/init */
@@ -84,6 +97,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     DashboardTransaction[]
   >([]);
   const [accountCount, setAccountCount] = useState(0);
+  const [spendingOverview, setSpendingOverview] = useState<DashboardSpendingOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [transactionViewsEpoch, setTransactionViewsEpoch] = useState(0);
 
@@ -104,8 +118,9 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
         setUser(null);
         setSummary(null);
       setAppInfo(null);
-      setRecentTransactions([]);
+        setRecentTransactions([]);
       setAccountCount(0);
+      setSpendingOverview(null);
       return;
       }
       const data = (await res.json()) as {
@@ -114,6 +129,11 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
         appInfo?: DashboardAppInfo;
         recentTransactions?: DashboardTransaction[] | unknown;
         accountCount?: number;
+        spendingOverview?: {
+          todayExpense?: number;
+          weekTotalExpense?: number;
+          weekDays?: unknown;
+        } | null;
       };
       setUser(
         data.user
@@ -138,12 +158,40 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
         Array.isArray(data.recentTransactions) ? data.recentTransactions : []
       );
       setAccountCount(typeof data.accountCount === "number" ? data.accountCount : 0);
+      const so = data.spendingOverview;
+      if (
+        so &&
+        typeof so === "object" &&
+        typeof so.todayExpense === "number" &&
+        typeof so.weekTotalExpense === "number" &&
+        Array.isArray(so.weekDays) &&
+        so.weekDays.length === 7
+      ) {
+        const weekDays: DashboardSpendingOverviewDay[] = so.weekDays.map((d) => {
+          if (d && typeof d === "object") {
+            const row = d as Record<string, unknown>;
+            const date = typeof row.date === "string" ? row.date : "";
+            const spent = typeof row.spent === "number" && Number.isFinite(row.spent) ? row.spent : 0;
+            const isToday = row.isToday === true;
+            return { date, spent, isToday };
+          }
+          return { date: "", spent: 0, isToday: false };
+        });
+        setSpendingOverview({
+          todayExpense: so.todayExpense,
+          weekTotalExpense: so.weekTotalExpense,
+          weekDays,
+        });
+      } else {
+        setSpendingOverview(null);
+      }
     } catch {
       setUser(null);
       setSummary(null);
       setAppInfo(null);
       setRecentTransactions([]);
       setAccountCount(0);
+      setSpendingOverview(null);
     } finally {
       if (showLoadingOverlay) {
         setLoading(false);
@@ -165,6 +213,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     appInfo,
     recentTransactions,
     accountCount,
+    spendingOverview,
     loading,
     refresh,
     transactionViewsEpoch,

@@ -262,6 +262,17 @@ export const thDictionary = {
       recentAccountActivityEmpty: "ยังไม่มีธุรกรรม",
     },
     recentTransactions: "รายการล่าสุด",
+    spendingOverview: {
+      todayTitle: "วันนี้ใช้ไปแล้ว",
+      weekTitle: "สัปดาห์นี้ (จ. - อา.)",
+      dayMon: "จ",
+      dayTue: "อ",
+      dayWed: "พ",
+      dayThu: "พฤ",
+      dayFri: "ศ",
+      daySat: "ส",
+      daySun: "อา",
+    },
     activityHeatmap: {
       totalContributions: "{count} ธุรกรรมในปีที่ผ่านมา",
       noContributions: "ไม่มีธุรกรรม",

@@ -101,3 +101,59 @@ export function toDateStringInTimezone(d: Date, timezone: string): string {
   const day = parts.find((p) => p.type === "day")?.value ?? "01";
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Add calendar days to a YYYY-MM-DD string in the given timezone (Bangkok has no DST; safe for Asia/Bangkok).
+ */
+export function addCalendarDaysInTimezone(
+  dateStr: string,
+  deltaDays: number,
+  timezone: string = "Asia/Bangkok",
+): string | null {
+  const range = getDateRangeInTimezone(dateStr, timezone);
+  if (!range) return null;
+  const next = new Date(range.from.getTime() + deltaDays * 86400000);
+  return toDateStringInTimezone(next, timezone);
+}
+
+/**
+ * Monday-start week: return the YYYY-MM-DD (in `timezone`) for the Monday of the week that contains `dateStr`.
+ */
+export function getMondayDateStringInSameWeek(
+  dateStr: string,
+  timezone: string = "Asia/Bangkok",
+): string | null {
+  let cur = dateStr;
+  for (let i = 0; i < 7; i++) {
+    const r = getDateRangeInTimezone(cur, timezone);
+    if (!r) return null;
+    const wd = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "short",
+    }).format(r.from);
+    if (wd === "Mon") return cur;
+    const prev = addCalendarDaysInTimezone(cur, -1, timezone);
+    if (!prev) return null;
+    cur = prev;
+  }
+  return null;
+}
+
+/**
+ * Seven calendar dates Monday → Sunday in `timezone` for the week containing `referenceDate`.
+ */
+export function getWeekDateStringsMondayToSunday(
+  referenceDate: Date,
+  timezone: string = "Asia/Bangkok",
+): string[] | null {
+  const todayStr = toDateStringInTimezone(referenceDate, timezone);
+  const monday = getMondayDateStringInSameWeek(todayStr, timezone);
+  if (!monday) return null;
+  const out: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = addCalendarDaysInTimezone(monday, i, timezone);
+    if (!d) return null;
+    out.push(d);
+  }
+  return out;
+}

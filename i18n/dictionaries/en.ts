@@ -264,6 +264,17 @@ export const enDictionary = {
       recentAccountActivityEmpty: "No transactions yet",
     },
     recentTransactions: "Recent transactions",
+    spendingOverview: {
+      todayTitle: "Spent today",
+      weekTitle: "This week (Mon–Sun)",
+      dayMon: "Mo",
+      dayTue: "Tu",
+      dayWed: "We",
+      dayThu: "Th",
+      dayFri: "Fr",
+      daySat: "Sa",
+      daySun: "Su",
+    },
     activityHeatmap: {
       totalContributions: "{count} transactions in the last year",
       noContributions: "No transactions",
