@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { formatAmount, formatAmountCompact } from "@/lib/format";
 import { useI18n } from "@/hooks/use-i18n";
+import { cn } from "@/lib/utils";
 
 const WEEK_DAY_KEYS = [
   "dashboard.spendingOverview.dayMon",
@@ -49,7 +50,7 @@ export function DashboardSpendingOverview() {
               {WEEK_DAY_KEYS.map((key) => (
                 <div
                   key={key}
-                  className="flex flex-col items-center justify-center rounded-md border border-[#E8E0C8] bg-[#FDFAF4]/80 px-0.5 py-1 dark:border-stone-800 dark:bg-stone-900/50"
+                  className="flex flex-col items-center justify-center rounded-md border border-[#E8E0C8] bg-[#FDFAF4]/50 px-0.5 py-1 dark:border-stone-800 dark:bg-stone-900/40"
                 >
                   <span className="text-[9px] font-medium leading-none text-[#6B5E4E] dark:text-stone-500">
                     {t(key)}
@@ -106,29 +107,23 @@ export function DashboardSpendingOverview() {
                 <div
                   key={key}
                   title={dateLabel || undefined}
-                  className={`flex flex-col items-center justify-center rounded-md border px-0.5 py-1 ${
+                  className={cn(
+                    "flex flex-col items-center justify-center rounded-md border bg-[#FDFAF4]/50 px-0.5 py-1 dark:bg-stone-900/40",
                     isToday
-                      ? "border-sky-200 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/30"
-                      : "border-[#E8E0C8] bg-[#FDFAF4]/50 dark:border-stone-800 dark:bg-stone-900/40"
-                  }`}
+                      ? "border-[#3D4A3A] dark:border-stone-100"
+                      : "border-[#E8E0C8] dark:border-stone-800",
+                  )}
                 >
-                  <span
-                    className={`text-[9px] font-medium leading-none ${
-                      isToday
-                        ? "text-sky-600 dark:text-sky-400"
-                        : "text-[#6B5E4E] dark:text-stone-500"
-                    }`}
-                  >
+                  <span className="text-[9px] font-medium leading-none text-[#6B5E4E] dark:text-stone-500">
                     {t(key)}
                   </span>
                   <span
-                    className={`mt-0.5 text-[9px] font-semibold leading-none tabular-nums sm:text-[10px] ${
+                    className={cn(
+                      "mt-0.5 text-[9px] font-semibold leading-none tabular-nums sm:text-[10px]",
                       spent > 0
-                        ? isToday
-                          ? "text-sky-800 dark:text-sky-200"
-                          : "text-[#3D3020] dark:text-stone-200"
-                        : "text-[#C4B8A8] dark:text-stone-600"
-                    }`}
+                        ? "text-[#3D3020] dark:text-stone-200"
+                        : "text-[#C4B8A8] dark:text-stone-600",
+                    )}
                   >
                     {formatAmountCompact(spent)}
                   </span>

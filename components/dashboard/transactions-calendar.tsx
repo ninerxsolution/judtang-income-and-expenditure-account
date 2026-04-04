@@ -1346,7 +1346,7 @@ export function TransactionsCalendar({
                           </span>
                         )}
                         {day.isToday && (
-                          <span className="rounded-full bg-[#5C6B52] px-2 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
+                          <span className="text-[10px] font-medium text-[#3D4A3A] dark:text-stone-300">
                             {t("calendar.today")}
                           </span>
                         )}
