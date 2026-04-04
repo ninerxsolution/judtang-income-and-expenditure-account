@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
-import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Search, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,24 +14,19 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { getCategoryDisplayName } from "@/lib/categories-display";
-import { AccountCombobox, AccountIcon, type AccountOption } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
 import { cn } from "@/lib/utils";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  getRecentFinancialAccountIds,
-  pickPreferredAccountId,
-  saveRecentFinancialAccountId,
-  sortAccountsByRecent,
-} from "@/lib/recent-financial-accounts";
-import {
-  getRecentCategoryIds,
-  saveRecentCategoryId,
-  sortCategoriesByRecent,
-} from "@/lib/recent-categories";
+import { getRecentFinancialAccountIds, pickPreferredAccountId, saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
+import { saveRecentCategoryId } from "@/lib/recent-categories";
+import { CategoryCapsulePicker } from "@/components/dashboard/category-capsule-picker";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -61,8 +56,6 @@ function formatDateToInput(iso: string): string {
   return `${year}-${month}-${day}`;
 }
 
-const INITIAL_CATEGORY_COUNT = 3;
-
 type CategoryItem = { id: string; name: string; nameEn?: string | null };
 
 type TransactionFormDialogProps = {
@@ -73,45 +66,6 @@ type TransactionFormDialogProps = {
   initialType?: "INCOME" | "EXPENSE" | "TRANSFER";
   onSuccess?: () => void;
 };
-
-function AccountSelectorButton({
-  label,
-  account,
-  onClick,
-  disabled,
-  defaultLabel,
-}: {
-  label: string;
-  account?: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; isDefault: boolean } | null;
-  onClick: () => void;
-  disabled?: boolean;
-  defaultLabel?: string;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-sm font-medium">{label}</label>
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={disabled}
-        className="flex w-full items-center justify-between rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100 hover:border-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 transition-all text-left"
-      >
-        {account ? (
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <AccountIcon account={account} size="sm" />
-            <span className="font-medium text-[#3D3020] dark:text-stone-200 truncate">
-              {account.name}
-              {account.isDefault && defaultLabel ? ` (${defaultLabel})` : ""}
-            </span>
-          </div>
-        ) : (
-          <span className="text-[#6B5E4E] dark:text-stone-400">เลือกบัญชี...</span>
-        )}
-        <ChevronRight className="h-5 w-5 shrink-0 text-[#6B5E4E] dark:text-stone-400" />
-      </button>
-    </div>
-  );
-}
 
 export function TransactionFormDialog({
   open,
@@ -144,7 +98,6 @@ export function TransactionFormDialog({
   >(editId ? "loading" : "idle");
 
   const [currentView, setCurrentView] = useState<"form" | "select-from" | "select-to">("form");
-  const [searchTerm, setSearchTerm] = useState("");
 
   const [accounts, setAccounts] = useState<
     {
@@ -159,37 +112,13 @@ export function TransactionFormDialog({
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
   const [formDataLoading, setFormDataLoading] = useState(false);
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-  /** Bumps after open / chip select so sortedCategories re-reads localStorage MRU. */
-  const [categoryMruTick, setCategoryMruTick] = useState(0);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isMobile = useIsMobile();
 
-  const categoryRecentIds = useMemo(
-    () => getRecentCategoryIds(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-snapshot MRU after open or chip select
-    [categories, categoryMruTick],
-  );
-
-  const sortedCategories = useMemo(
-    () => sortCategoriesByRecent(categories, categoryRecentIds),
-    [categories, categoryRecentIds],
-  );
-
-  const visibleCategories = categoriesExpanded
-    ? sortedCategories
-    : sortedCategories.slice(0, INITIAL_CATEGORY_COUNT);
-  const hasMoreCategories = sortedCategories.length > INITIAL_CATEGORY_COUNT;
-
   useEffect(() => {
-    if (open && typeof window !== "undefined") {
-      setCategoryMruTick((t) => t + 1);
-    }
     if (!open) {
-      setCategoriesExpanded(false);
       setCurrentView("form");
-      setSearchTerm("");
     }
   }, [open]);
 
@@ -214,6 +143,18 @@ export function TransactionFormDialog({
   const transferableAccounts = useMemo(
     () => accounts.filter((a) => a.type !== "CREDIT_CARD"),
     [accounts],
+  );
+
+  const accountsForFromPicker = useMemo(() => {
+    if (type === "TRANSFER") {
+      return accounts.filter((a) => a.type !== "CREDIT_CARD");
+    }
+    return accounts;
+  }, [accounts, type]);
+
+  const accountsForToPicker = useMemo(
+    () => accounts.filter((a) => a.type !== "CREDIT_CARD" && a.id !== financialAccountId),
+    [accounts, financialAccountId],
   );
 
   useEffect(() => {
@@ -548,105 +489,6 @@ export function TransactionFormDialog({
 
   const isEdit = Boolean(editId);
 
-  const renderSelectionView = (view: "select-from" | "select-to") => {
-    const isFrom = view === "select-from";
-    const selectedValue = isFrom ? financialAccountId : transferAccountId;
-    
-    let filtered = accounts.filter((acc) => {
-      // Exclude credit cards if transfer
-      if (type === "TRANSFER" && acc.type === "CREDIT_CARD") return false;
-      // If selecting "to", exclude the "from" account
-      if (!isFrom && acc.id === financialAccountId) return false;
-      // Search
-      if (searchTerm && !acc.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-      return true;
-    });
-
-    const recentIds = getRecentFinancialAccountIds();
-    const sortedAccounts = sortAccountsByRecent(filtered, recentIds);
-
-    return (
-      <div className="absolute inset-0 z-10 flex flex-col w-full bg-[#FDFAF4] dark:bg-stone-950 animate-in slide-in-from-right-8 duration-200">
-        <div className="flex items-center px-4 py-4 border-b border-[#D4C9B0] dark:border-stone-700 shrink-0 bg-[#FDFAF4] dark:bg-stone-950">
-          <button 
-            type="button"
-            onClick={() => {
-              setCurrentView("form");
-              setSearchTerm("");
-            }}
-            className="p-2 -ml-2 text-[#6B5E4E] hover:text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800 rounded-full transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <h2 className="text-lg font-bold text-[#3D3020] dark:text-stone-100 ml-2">
-            {isFrom ? (type === "INCOME" ? t("transactions.new.accountLabel") : t("transactions.new.fromAccount")) : t("transactions.new.toAccount")}
-          </h2>
-        </div>
-
-        <div className="p-4 border-b border-[#D4C9B0] dark:border-stone-700 shrink-0 bg-[#FDFAF4] dark:bg-stone-950">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-5 h-5 text-stone-400" />
-            <input
-              type="text"
-              placeholder={t("accounts.bankSearchPlaceholder") || "ค้นหาบัญชี..."}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#D4C9B0] rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all dark:bg-stone-900 dark:border-stone-600 dark:text-stone-100 text-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              autoFocus
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-2 bg-[#FDFAF4] dark:bg-stone-950">
-          {sortedAccounts.length > 0 ? (
-            <ul className="space-y-1">
-              {sortedAccounts.map((account) => {
-                const isSelected = selectedValue === account.id;
-                
-                return (
-                  <li key={account.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isFrom) {
-                          setFinancialAccountId(account.id);
-                        } else {
-                          setTransferAccountId(account.id);
-                        }
-                        saveRecentFinancialAccountId(account.id);
-                        setCurrentView("form");
-                        setSearchTerm("");
-                      }}
-                      className={cn(
-                        "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all border",
-                        isSelected 
-                          ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900" 
-                          : "border-transparent hover:bg-[#F5F0E8] dark:hover:bg-stone-800"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <AccountIcon account={account} size="md" />
-                        <span className={cn("font-medium", isSelected ? "text-emerald-800 dark:text-emerald-300" : "text-[#3D3020] dark:text-stone-200")}>
-                          {account.name}
-                          {account.isDefault ? ` (${t("accounts.default")})` : ""}
-                        </span>
-                      </div>
-                      {isSelected && <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="text-center py-10 text-stone-500 text-sm">
-              {t("accounts.bankNoResults") || "ไม่พบบัญชีที่ค้นหา"}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -675,8 +517,9 @@ export function TransactionFormDialog({
             : t("dashboard.pageTitle.transactionsNew")}
         </DialogTitle>
 
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
         <DialogHeader className={cn("shrink-0", currentView !== "form" && "invisible pointer-events-none")}>
-          <h2 className="text-lg font-semibold leading-none tracking-tight">
+          <h2 className="text-lg font-semibold leading-snug tracking-tight px-4 py-0.5">
             {isEdit
               ? t("transactions.edit.title")
               : t("dashboard.pageTitle.transactionsNew")}
@@ -799,25 +642,28 @@ export function TransactionFormDialog({
             </>
           ) : type === "TRANSFER" ? (
             <>
-              <AccountSelectorButton
+              <AccountSelectorTrigger
                 label={t("transactions.new.fromAccount")}
                 account={accounts.find((a) => a.id === financialAccountId)}
                 onClick={() => setCurrentView("select-from")}
                 defaultLabel={t("accounts.default")}
+                selectPlaceholder={t("accounts.selectAccountPlaceholder")}
               />
-              <AccountSelectorButton
+              <AccountSelectorTrigger
                 label={t("transactions.new.toAccount")}
                 account={accounts.find((a) => a.id === transferAccountId)}
                 onClick={() => setCurrentView("select-to")}
                 defaultLabel={t("accounts.default")}
+                selectPlaceholder={t("accounts.selectAccountPlaceholder")}
               />
             </>
           ) : (
-            <AccountSelectorButton
+            <AccountSelectorTrigger
               label={t("transactions.new.accountLabel")}
               account={accounts.find((a) => a.id === financialAccountId)}
               onClick={() => setCurrentView("select-from")}
               defaultLabel={t("accounts.default")}
+              selectPlaceholder={t("accounts.selectAccountPlaceholder")}
             />
           )}
 
@@ -869,76 +715,31 @@ export function TransactionFormDialog({
             inputRef={amountInputRef}
           />
 
-          {type !== "TRANSFER" &&
-            (formDataLoading ? (
-              <div>
-                <Skeleton className="mb-1 h-4 w-20" />
-                <Skeleton className="h-10 w-full rounded-md" />
-              </div>
-            ) : (
-              <div>
-                <span className="mb-1 block text-sm font-medium">
-                  {t("transactions.new.categoryLabel")}
-                </span>
-                <div
-                  id="transaction-modal-category"
-                  className="flex flex-wrap gap-2"
-                  role="group"
-                  aria-label={t("transactions.new.categoryLabel")}
-                >
-                  {visibleCategories.map((cat) => {
-                    const isSelected = categoryId === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            setCategoryId("");
-                            setCategory("");
-                          } else {
-                            setCategoryId(cat.id);
-                            setCategory(getCategoryDisplayName(cat.name, localeKey, cat.nameEn));
-                            saveRecentCategoryId(cat.id);
-                            setCategoryMruTick((t) => t + 1);
-                          }
-                        }}
-                        className={cn(
-                          "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-all",
-                          "border-[#D4C9B0] dark:border-stone-700",
-                          isSelected
-                            ? "bg-[#5C6B52] text-white border-[#5C6B52] dark:bg-stone-600 dark:border-stone-600"
-                            : "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
-                        )}
-                      >
-                        {getCategoryDisplayName(cat.name, localeKey, cat.nameEn)}
-                      </button>
-                    );
-                  })}
-                  {hasMoreCategories && (
-                    <button
-                      type="button"
-                      onClick={() => setCategoriesExpanded((e) => !e)}
-                      className={cn(
-                        "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-all",
-                        "border-[#D4C9B0] dark:border-stone-700",
-                        "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
-                      )}
-                      aria-expanded={categoriesExpanded}
-                      aria-label={
-                        categoriesExpanded
-                          ? t("transactions.new.categoryShowLess")
-                          : t("transactions.new.categoryShowMore")
-                      }
-                    >
-                      {categoriesExpanded
-                        ? t("transactions.new.categoryShowLess")
-                        : t("transactions.new.categoryShowMore")}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+          {type !== "TRANSFER" ? (
+            <CategoryCapsulePicker
+              categories={categories}
+              value={categoryId}
+              onValueChange={(id) => {
+                setCategoryId(id);
+                if (!id) {
+                  setCategory("");
+                  return;
+                }
+                const cat = categories.find((c) => c.id === id);
+                setCategory(
+                  cat
+                    ? getCategoryDisplayName(cat.name, localeKey, cat.nameEn)
+                    : "",
+                );
+              }}
+              localeKey={localeKey}
+              loading={formDataLoading}
+              dialogOpen={open}
+              id="transaction-modal-category"
+              ariaLabel={t("transactions.new.categoryLabel")}
+              label={t("transactions.new.categoryLabel")}
+            />
+          ) : null}
 
           <div>
             <label
@@ -981,7 +782,41 @@ export function TransactionFormDialog({
             </Button>
           </DialogFooter>
         </form>
-        {currentView !== "form" && renderSelectionView(currentView)}
+        {currentView === "select-from" ? (
+          <AccountSlidePickerPanel
+            accounts={accountsForFromPicker}
+            selectedId={financialAccountId}
+            onSelect={(id) => {
+              setFinancialAccountId(id);
+              setCurrentView("form");
+            }}
+            onBack={() => setCurrentView("form")}
+            title={
+              type === "INCOME"
+                ? t("transactions.new.accountLabel")
+                : t("transactions.new.fromAccount")
+            }
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        {currentView === "select-to" ? (
+          <AccountSlidePickerPanel
+            accounts={accountsForToPicker}
+            selectedId={transferAccountId}
+            onSelect={(id) => {
+              setTransferAccountId(id);
+              setCurrentView("form");
+            }}
+            onBack={() => setCurrentView("form")}
+            title={t("transactions.new.toAccount")}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

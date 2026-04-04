@@ -13,9 +13,13 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useI18n } from "@/hooks/use-i18n";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
+import { cn } from "@/lib/utils";
 
 function sanitizeAmountInput(value: string): string {
   const noComma = value.replace(/,/g, "");
@@ -73,10 +77,14 @@ export function CreditCardPaymentDialog({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setAccountPickerOpen(false);
+      return;
+    }
     setAmount("");
     setOccurredAt(formatTodayAsInputDate());
     setError(null);
@@ -215,11 +223,23 @@ export function CreditCardPaymentDialog({
         }}
         className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
       >
-        <DialogHeader className="shrink-0">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+        <DialogHeader
+          className={cn(
+            "shrink-0",
+            accountPickerOpen && "pointer-events-none invisible",
+          )}
+        >
           <DialogTitle>{t("accounts.paymentDialogTitle")}</DialogTitle>
           <p className="text-sm text-[#A09080] dark:text-stone-400">{accountName}</p>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            "flex flex-1 flex-col min-h-0 overflow-hidden",
+            accountPickerOpen && "pointer-events-none invisible",
+          )}
+        >
           <DialogBody className="space-y-4">
           <FormField
             id="payment-amount"
@@ -263,21 +283,13 @@ export function CreditCardPaymentDialog({
               <Skeleton className="h-10 w-full rounded-md" />
             </div>
           ) : accounts.length > 0 ? (
-            <div>
-              <label htmlFor="payment-from-account" className="mb-1 block text-sm font-medium">
-                {t("accounts.paymentFromAccountLabel")}
-              </label>
-              <AccountCombobox
-                id="payment-from-account"
-                value={fromAccountId}
-                onChange={setFromAccountId}
-                accounts={accounts}
-                allowEmpty
-                emptyLabel="—"
-                defaultLabel={t("accounts.default")}
-                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-              />
-            </div>
+            <AccountSelectorTrigger
+              label={t("accounts.paymentFromAccountLabel")}
+              account={accounts.find((a) => a.id === fromAccountId)}
+              onClick={() => setAccountPickerOpen(true)}
+              defaultLabel={t("accounts.default")}
+              selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+            />
           ) : null}
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -297,6 +309,24 @@ export function CreditCardPaymentDialog({
             </Button>
           </DialogFooter>
         </form>
+        {accountPickerOpen ? (
+          <AccountSlidePickerPanel
+            accounts={accounts}
+            selectedId={fromAccountId}
+            allowEmpty
+            emptyLabel="—"
+            onSelect={(id) => {
+              setFromAccountId(id);
+              setAccountPickerOpen(false);
+            }}
+            onBack={() => setAccountPickerOpen(false)}
+            title={t("accounts.paymentFromAccountLabel")}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

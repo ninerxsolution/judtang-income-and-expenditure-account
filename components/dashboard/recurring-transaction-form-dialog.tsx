@@ -13,8 +13,11 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
-import { CategoryCombobox } from "@/components/dashboard/category-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
+import { CategoryCapsulePicker } from "@/components/dashboard/category-capsule-picker";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { useI18n } from "@/hooks/use-i18n";
 import type { AccountOption } from "@/components/dashboard/account-combobox";
@@ -67,12 +70,15 @@ export function RecurringTransactionFormDialog({
   const [isActive, setIsActive] = useState(true);
 
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<
+    { id: string; name: string; nameEn?: string | null }[]
+  >([]);
 
   const [pending, setPending] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountSubView, setAccountSubView] = useState<"form" | "pick-account">("form");
   const [loadState, setLoadState] = useState<"idle" | "loading" | "done" | "error">(
     editId ? "loading" : "idle",
   );
@@ -84,6 +90,7 @@ export function RecurringTransactionFormDialog({
     if (!open) {
       setDeleteConfirm(false);
       setError(null);
+      setAccountSubView("form");
       return;
     }
 
@@ -97,7 +104,16 @@ export function RecurringTransactionFormDialog({
         (a: { isActive: boolean }) => a.isActive,
       );
       setAccounts(activeAccounts);
-      setCategories(catData.categories ?? catData ?? []);
+      const rawCats = catData.categories ?? catData ?? [];
+      setCategories(
+        Array.isArray(rawCats)
+          ? rawCats.map((c: { id: string; name: string; nameEn?: string | null }) => ({
+              id: c.id,
+              name: c.name,
+              nameEn: c.nameEn,
+            }))
+          : [],
+      );
     }
 
     async function loadEditData() {
@@ -265,13 +281,25 @@ export function RecurringTransactionFormDialog({
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
         )}
       >
-        <DialogHeader className="shrink-0">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+        <DialogHeader
+          className={cn(
+            "shrink-0",
+            accountSubView !== "form" && "pointer-events-none invisible",
+          )}
+        >
           <DialogTitle className="flex items-center gap-2">
             <RepeatIcon className="h-4 w-4 text-muted-foreground" />
             {isEdit ? r.form.titleEdit : r.form.titleCreate}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            "flex flex-1 flex-col min-h-0 overflow-hidden",
+            accountSubView !== "form" && "pointer-events-none invisible",
+          )}
+        >
           <DialogBody className="space-y-4 pb-2">
             {/* Type toggle */}
             <div className="flex rounded-lg overflow-hidden border border-border">
@@ -331,30 +359,24 @@ export function RecurringTransactionFormDialog({
             </div>
 
             {/* Account */}
-            <div className="space-y-1.5">
-              <Label>{r.form.account}</Label>
-              <AccountCombobox
-                value={financialAccountId}
-                onChange={setFinancialAccountId}
-                accounts={accounts}
-                allowEmpty
-                emptyLabel={language === "th" ? "ไม่ระบุบัญชี" : "No account"}
-              />
-            </div>
+            <AccountSelectorTrigger
+              label={r.form.account}
+              account={accounts.find((a) => a.id === financialAccountId)}
+              onClick={() => setAccountSubView("pick-account")}
+              defaultLabel={t("accounts.default")}
+              selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+            />
 
             {/* Category */}
-            <div className="space-y-1.5">
-              <Label>{r.form.category}</Label>
-              <CategoryCombobox
-                value={categoryId}
-                onChange={setCategoryId}
-                categories={categories}
-                localeKey={localeKey}
-                noneLabel={language === "th" ? "ไม่มีหมวดหมู่" : "No category"}
-                placeholder={language === "th" ? "ค้นหาหมวดหมู่…" : "Search category…"}
-                noResultsText={language === "th" ? "ไม่พบหมวดหมู่" : "No category found"}
-              />
-            </div>
+            <CategoryCapsulePicker
+              categories={categories}
+              value={categoryId}
+              onValueChange={setCategoryId}
+              localeKey={localeKey}
+              dialogOpen={open}
+              ariaLabel={r.form.category}
+              label={r.form.category}
+            />
 
             {/* Frequency */}
             <div className="space-y-1.5">
@@ -527,6 +549,24 @@ export function RecurringTransactionFormDialog({
             )}
           </DialogFooter>
         </form>
+        {accountSubView === "pick-account" ? (
+          <AccountSlidePickerPanel
+            accounts={accounts}
+            selectedId={financialAccountId}
+            allowEmpty
+            emptyLabel={language === "th" ? "ไม่ระบุบัญชี" : "No account"}
+            onSelect={(id) => {
+              setFinancialAccountId(id);
+              setAccountSubView("form");
+            }}
+            onBack={() => setAccountSubView("form")}
+            title={r.form.account}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

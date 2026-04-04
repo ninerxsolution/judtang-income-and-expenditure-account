@@ -22,7 +22,10 @@ import {
   CardNetworkSelect,
 } from "@/components/dashboard/card-type-select";
 import { BankCombobox } from "@/components/dashboard/bank-combobox";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ACCOUNT_TYPES = ["BANK", "CREDIT_CARD", "WALLET", "CASH", "OTHER"] as const;
@@ -101,12 +104,16 @@ export function FinancialAccountFormDialog({
   const [loadState, setLoadState] = useState<"idle" | "loading" | "done" | "error">(
     editId ? "loading" : "idle"
   );
+  const [linkedAccountPickerOpen, setLinkedAccountPickerOpen] = useState(false);
 
   const isMobile = useIsMobile();
   const viewport = useVisualViewport(open && isMobile);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setLinkedAccountPickerOpen(false);
+      return;
+    }
     if (!editId) {
       setName("");
       setType(
@@ -430,12 +437,24 @@ export function FinancialAccountFormDialog({
             : undefined
         }
       >
-        <DialogHeader className="shrink-0">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+        <DialogHeader
+          className={cn(
+            "shrink-0",
+            linkedAccountPickerOpen && "pointer-events-none invisible",
+          )}
+        >
           <DialogTitle>
             {editId ? t("accounts.editTitle") : t("accounts.createTitle")}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            "flex flex-1 flex-col min-h-0 overflow-hidden",
+            linkedAccountPickerOpen && "pointer-events-none invisible",
+          )}
+        >
           <DialogBody className="space-y-4">
             {loadState === "loading" && (
               <div className="space-y-4">
@@ -682,12 +701,6 @@ export function FinancialAccountFormDialog({
                   </div>
                   {(cardAccountType?.toLowerCase() ?? "") === "debit" ? (
                     <div>
-                      <label
-                        htmlFor="account-form-linked-account"
-                        className="mb-1 block text-sm font-medium"
-                      >
-                        {t("accounts.linkedAccountLabel")}
-                      </label>
                       {bankAccountsLoading ? (
                         <Skeleton className="h-10 w-full rounded-md" />
                       ) : bankAccountsForDebit.length === 0 ? (
@@ -695,13 +708,12 @@ export function FinancialAccountFormDialog({
                           {t("accounts.linkedAccountRequired")}
                         </p>
                       ) : (
-                        <AccountCombobox
-                          id="account-form-linked-account"
-                          value={linkedAccountId}
-                          onChange={setLinkedAccountId}
-                          accounts={bankAccountsForDebit}
-                          allowEmpty={false}
-                          className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
+                        <AccountSelectorTrigger
+                          label={t("accounts.linkedAccountLabel")}
+                          account={bankAccountsForDebit.find((a) => a.id === linkedAccountId)}
+                          onClick={() => setLinkedAccountPickerOpen(true)}
+                          defaultLabel={t("accounts.default")}
+                          selectPlaceholder={t("accounts.linkedAccountPlaceholder")}
                         />
                       )}
                     </div>
@@ -797,6 +809,22 @@ export function FinancialAccountFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        {linkedAccountPickerOpen && bankAccountsForDebit.length > 0 ? (
+          <AccountSlidePickerPanel
+            accounts={bankAccountsForDebit}
+            selectedId={linkedAccountId}
+            onSelect={(id) => {
+              setLinkedAccountId(id);
+              setLinkedAccountPickerOpen(false);
+            }}
+            onBack={() => setLinkedAccountPickerOpen(false)}
+            title={t("accounts.linkedAccountLabel")}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

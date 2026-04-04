@@ -424,6 +424,7 @@ export const enDictionary = {
     bankNamePlaceholder: "Select bank",
     bankSearchPlaceholder: "Type to search bank",
     bankNoResults: "No bank found",
+    selectAccountPlaceholder: "Select account…",
     bankNone: "—",
     bankOther: "Other",
     accountNumberLabel: "Account number",
@@ -654,6 +655,7 @@ export const enDictionary = {
       warning: "Warning",
       critical: "Critical",
       overBudget: "Over budget",
+      budgetFull: "On budget",
       setBudget: "Set budget for this month",
       applyTemplate: "Apply template",
       templates: "Templates",
@@ -1520,6 +1522,7 @@ export const enDictionary = {
       ALERT_BUDGET: "Budget over limit",
       ALERT_BUDGET_body_over: "Budget exceeded for {label}",
       ALERT_BUDGET_body_near: "Budget nearly full for {label} ({pct}%)",
+      ALERT_BUDGET_body_full: "You have used the full budget for {label}.",
       ALERT_BUDGET_label_total: "this month",
       ALERT_INCOMPLETE_ACCOUNT: "Account incomplete",
       ALERT_INCOMPLETE_ACCOUNT_body:

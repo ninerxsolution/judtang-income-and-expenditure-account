@@ -23,8 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { getCategoryDisplayName } from "@/lib/categories-display";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
+import { CategoryCapsulePicker } from "@/components/dashboard/category-capsule-picker";
 import type { AccountOption } from "@/components/dashboard/account-combobox";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { cn } from "@/lib/utils";
@@ -32,11 +35,6 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
-import {
-  getRecentCategoryIds,
-  saveRecentCategoryId,
-  sortCategoriesByRecent,
-} from "@/lib/recent-categories";
 
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
 const MAX_FILES_PER_REQUEST = 10;
@@ -378,16 +376,11 @@ export function SlipUploadDialog({
   const [categoryMruTick, setCategoryMruTick] = useState(0);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [batchElapsedMs, setBatchElapsedMs] = useState<number | null>(null);
+  const [accountPickerDraftId, setAccountPickerDraftId] = useState<string | null>(null);
 
-  const categoryRecentIds = useMemo(
-    () => getRecentCategoryIds(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-snapshot MRU after picker change
-    [categories, categoryMruTick],
-  );
-
-  const sortedCategories = useMemo(
-    () => sortCategoriesByRecent(categories, categoryRecentIds),
-    [categories, categoryRecentIds],
+  const slipAccountsNonCard = useMemo(
+    () => accounts.filter((a) => a.type !== "CREDIT_CARD"),
+    [accounts],
   );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -406,6 +399,7 @@ export function SlipUploadDialog({
     setPreviewDraftId(null);
     setEditingDraftIds([]);
     setBatchElapsedMs(null);
+    setAccountPickerDraftId(null);
     setFileInputKey((k) => k + 1);
     if (!options?.preserveStep) {
       setStep("select");
@@ -449,6 +443,7 @@ export function SlipUploadDialog({
       setResponseDraftId(null);
       setPreviewDraftId(null);
       setEditingDraftIds([]);
+      setAccountPickerDraftId(null);
       return;
     }
 
@@ -1162,11 +1157,22 @@ export function SlipUploadDialog({
               : undefined
           }
         >
-          <DialogHeader className="shrink-0">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+          <DialogHeader
+            className={cn(
+              "shrink-0",
+              accountPickerDraftId !== null && "pointer-events-none invisible",
+            )}
+          >
             <DialogTitle>{t("dashboard.slipUpload.title")}</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          <div
+            className={cn(
+              "flex flex-1 flex-col min-h-0 overflow-hidden",
+              accountPickerDraftId !== null && "pointer-events-none invisible",
+            )}
+          >
             <DialogBody className="space-y-4">
               <input
                 key={fileInputKey}
@@ -1472,21 +1478,15 @@ export function SlipUploadDialog({
                                           {t("transactions.new.expense")}
                                         </button>
                                       </div>
-                                      <div>
-                                        <label className="mb-1 block text-sm font-medium">
-                                          {t("transactions.new.accountLabel")}
-                                        </label>
-                                        <AccountCombobox
-                                          value={draft.financialAccountId}
-                                          onChange={(id) =>
-                                            updateDraft(draft.id, { financialAccountId: id })
-                                          }
-                                          accounts={accounts}
-                                          filterByType={(type) => type !== "CREDIT_CARD"}
-                                          defaultLabel={t("accounts.default")}
-                                          className="w-full rounded-md border border-input px-3 py-2 text-sm"
-                                        />
-                                      </div>
+                                      <AccountSelectorTrigger
+                                        label={t("transactions.new.accountLabel")}
+                                        account={slipAccountsNonCard.find(
+                                          (a) => a.id === draft.financialAccountId,
+                                        )}
+                                        onClick={() => setAccountPickerDraftId(draft.id)}
+                                        defaultLabel={t("accounts.default")}
+                                        selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+                                      />
                                       <div>
                                         <DatePicker
                                           id={`slip-draft-date-${idx}`}
@@ -1499,30 +1499,21 @@ export function SlipUploadDialog({
                                           placeholder={t("transactions.new.dateSelectPlaceholder")}
                                         />
                                       </div>
-                                      <div>
-                                        <label className="mb-1 block text-sm font-medium">
-                                          {t("transactions.new.categoryLabel")}
-                                        </label>
-                                        <select
-                                          value={draft.categoryId}
-                                          onChange={(e) => {
-                                            const v = e.target.value;
-                                            if (v.trim()) {
-                                              saveRecentCategoryId(v);
-                                              setCategoryMruTick((t) => t + 1);
-                                            }
-                                            updateDraft(draft.id, { categoryId: v });
-                                          }}
-                                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                        >
-                                          <option value="">—</option>
-                                          {sortedCategories.map((category) => (
-                                            <option key={category.id} value={category.id}>
-                                              {getCategoryDisplayName(category.name, localeKey, category.nameEn)}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </div>
+                                      <CategoryCapsulePicker
+                                        categories={categories}
+                                        value={draft.categoryId}
+                                        onValueChange={(id) =>
+                                          updateDraft(draft.id, { categoryId: id })
+                                        }
+                                        localeKey={localeKey}
+                                        dialogOpen={open}
+                                        ariaLabel={t("transactions.new.categoryLabel")}
+                                        label={t("transactions.new.categoryLabel")}
+                                        resortRevision={categoryMruTick}
+                                        onRecentCategoryUsed={() =>
+                                          setCategoryMruTick((tick) => tick + 1)
+                                        }
+                                      />
                                       <div>
                                         <label className="mb-1 block text-sm font-medium">
                                           {t("transactions.new.noteLabel")}
@@ -1585,6 +1576,24 @@ export function SlipUploadDialog({
                 </>
               )}
             </DialogFooter>
+          </div>
+          {accountPickerDraftId !== null ? (
+            <AccountSlidePickerPanel
+              accounts={slipAccountsNonCard}
+              selectedId={
+                drafts.find((d) => d.id === accountPickerDraftId)?.financialAccountId ?? ""
+              }
+              onSelect={(id) => {
+                updateDraft(accountPickerDraftId, { financialAccountId: id });
+                setAccountPickerDraftId(null);
+              }}
+              onBack={() => setAccountPickerDraftId(null)}
+              title={t("transactions.new.accountLabel")}
+              searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+              noResultsText={t("accounts.bankNoResults")}
+              defaultLabel={t("accounts.default")}
+            />
+          ) : null}
           </div>
         </DialogContent>
       </Dialog>

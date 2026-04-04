@@ -6,6 +6,7 @@ import type { BudgetProgressIndicator } from "@/lib/budget-shared";
 function normalizeIndicator(indicator: string): BudgetProgressIndicator {
   if (
     indicator === "over" ||
+    indicator === "full" ||
     indicator === "critical" ||
     indicator === "warning" ||
     indicator === "normal"
@@ -20,6 +21,8 @@ export function budgetIndicatorProgressBarClass(indicator: string): string {
   switch (normalizeIndicator(indicator)) {
     case "over":
       return "bg-red-500 dark:bg-red-600";
+    case "full":
+      return "bg-emerald-500 dark:bg-emerald-600";
     case "critical":
       return "bg-orange-500 dark:bg-orange-600";
     case "warning":
@@ -34,6 +37,8 @@ export function budgetIndicatorBadgeClass(indicator: string): string {
   switch (normalizeIndicator(indicator)) {
     case "over":
       return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400";
+    case "full":
+      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400";
     case "critical":
       return "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400";
     case "warning":
@@ -55,6 +60,8 @@ export function budgetIndicatorMetaTextClass(indicator: string): string {
   switch (normalizeIndicator(indicator)) {
     case "over":
       return "text-red-600 dark:text-red-400";
+    case "full":
+      return "text-emerald-600 dark:text-emerald-400";
     case "critical":
       return "text-orange-600 dark:text-orange-400";
     case "warning":
@@ -84,6 +91,8 @@ export function budgetIndicatorLabel(
   switch (normalizeIndicator(indicator)) {
     case "over":
       return t("settings.budget.overBudget");
+    case "full":
+      return t("settings.budget.budgetFull");
     case "critical":
       return t("settings.budget.critical");
     case "warning":

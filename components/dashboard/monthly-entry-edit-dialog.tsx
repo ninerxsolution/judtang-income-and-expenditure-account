@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   ArrowDownCircle,
@@ -19,10 +19,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/auth/form-field";
-import { AccountCombobox, type AccountOption } from "@/components/dashboard/account-combobox";
+import type { AccountOption } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 import { RowSelect } from "@/components/dashboard/row-select";
-import { CategoryRowSelect } from "@/components/dashboard/category-row-select";
+import { CategoryCapsulePicker } from "@/components/dashboard/category-capsule-picker";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/hooks/use-i18n";
 
@@ -112,9 +116,18 @@ export function MonthlyEntryEditDialog({
   const [note, setNote] = useState("");
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [accountPickView, setAccountPickView] = useState<"none" | "from" | "to">("none");
+
+  const accountsForToPicker = useMemo(
+    () => accounts.filter((a) => a.id !== financialAccountId),
+    [accounts, financialAccountId],
+  );
 
   useEffect(() => {
-    if (!open || !transaction) return;
+    if (!open || !transaction) {
+      setAccountPickView("none");
+      return;
+    }
     setType(transaction.type as TransactionType);
     setAmount(String(transaction.amount));
     setCategoryId(transaction.categoryRef?.id ?? "");
@@ -147,7 +160,7 @@ export function MonthlyEntryEditDialog({
         amount: amt,
         financialAccountId: financialAccountId || defaultAccountId,
         occurredAt: dateObj.toISOString(),
-        categoryId: categoryId || null,
+        categoryId: type === "TRANSFER" ? null : categoryId || null,
         note: note.trim() || null,
         ...(type === "TRANSFER" && {
           transferAccountId: transferAccountId || null,
@@ -207,19 +220,34 @@ export function MonthlyEntryEditDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none">
-        <DialogHeader className="shrink-0">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+        <DialogHeader
+          className={cn(
+            "shrink-0",
+            accountPickView !== "none" && "pointer-events-none invisible",
+          )}
+        >
           <DialogTitle>{t("monthlyEntry.editTransaction")}</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSave}
-          className="flex flex-1 flex-col min-h-0 overflow-hidden"
+          className={cn(
+            "flex flex-1 flex-col min-h-0 overflow-hidden",
+            accountPickView !== "none" && "pointer-events-none invisible",
+          )}
         >
           <DialogBody className="space-y-4 pb-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t("monthlyEntry.type")}</label>
               <RowSelect
                 value={type}
-                onChange={(v) => setType(v as TransactionType)}
+                onChange={(v) => {
+                  const next = v as TransactionType;
+                  setType(next);
+                  if (next === "TRANSFER") {
+                    setCategoryId("");
+                  }
+                }}
                 options={TYPE_OPTIONS.map((opt) => ({
                   value: opt,
                   label:
@@ -253,44 +281,34 @@ export function MonthlyEntryEditDialog({
               required
             />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t("monthlyEntry.category")}</label>
-              <CategoryRowSelect
-                value={categoryId}
-                onChange={setCategoryId}
+            {type !== "TRANSFER" ? (
+              <CategoryCapsulePicker
                 categories={categories}
-                language={localeKey}
-                allowEmpty
-                emptyLabel={t("monthlyEntry.category")}
-                className="h-11 py-1 text-sm"
+                value={categoryId}
+                onValueChange={setCategoryId}
+                localeKey={localeKey}
+                dialogOpen={open}
+                ariaLabel={t("monthlyEntry.category")}
+                label={t("monthlyEntry.category")}
               />
-            </div>
+            ) : null}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t("monthlyEntry.account")}</label>
-              <AccountCombobox
-                value={financialAccountId}
-                onChange={setFinancialAccountId}
-                accounts={accounts}
-                className="!py-1 !text-sm !h-11"
-              />
-            </div>
+            <AccountSelectorTrigger
+              label={t("monthlyEntry.account")}
+              account={accounts.find((a) => a.id === financialAccountId)}
+              onClick={() => setAccountPickView("from")}
+              defaultLabel={t("accounts.default")}
+              selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+            />
 
             {type === "TRANSFER" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t("transactions.new.toAccount")}
-                </label>
-                <AccountCombobox
-                  value={transferAccountId}
-                  onChange={setTransferAccountId}
-                  accounts={accounts}
-                  excludeIds={financialAccountId ? [financialAccountId] : []}
-                  allowEmpty
-                  emptyLabel={`→ ${t("transactions.new.toAccount")}`}
-                  className="!py-1 !text-sm !h-11"
-                />
-              </div>
+              <AccountSelectorTrigger
+                label={t("transactions.new.toAccount")}
+                account={accounts.find((a) => a.id === transferAccountId)}
+                onClick={() => setAccountPickView("to")}
+                defaultLabel={t("accounts.default")}
+                selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+              />
             )}
 
             <FormField
@@ -337,6 +355,39 @@ export function MonthlyEntryEditDialog({
             </div>
           </DialogFooter>
         </form>
+        {accountPickView === "from" ? (
+          <AccountSlidePickerPanel
+            accounts={accounts}
+            selectedId={financialAccountId}
+            onSelect={(id) => {
+              setFinancialAccountId(id);
+              setAccountPickView("none");
+            }}
+            onBack={() => setAccountPickView("none")}
+            title={t("monthlyEntry.account")}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        {accountPickView === "to" ? (
+          <AccountSlidePickerPanel
+            accounts={accountsForToPicker}
+            selectedId={transferAccountId}
+            allowEmpty
+            emptyLabel={`→ ${t("transactions.new.toAccount")}`}
+            onSelect={(id) => {
+              setTransferAccountId(id);
+              setAccountPickView("none");
+            }}
+            onBack={() => setAccountPickView("none")}
+            title={t("transactions.new.toAccount")}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -10,6 +10,7 @@ import {
 describe("budget-indicator-ui", () => {
   it("budgetIndicatorProgressBarClass maps known indicators", () => {
     expect(budgetIndicatorProgressBarClass("over")).toContain("red");
+    expect(budgetIndicatorProgressBarClass("full")).toContain("emerald");
     expect(budgetIndicatorProgressBarClass("critical")).toContain("orange");
     expect(budgetIndicatorProgressBarClass("warning")).toContain("amber");
     expect(budgetIndicatorProgressBarClass("normal")).toContain("emerald");
@@ -22,7 +23,7 @@ describe("budget-indicator-ui", () => {
   });
 
   it("budgetIndicatorBadgeClass returns non-empty for each state", () => {
-    for (const ind of ["normal", "warning", "critical", "over"] as const) {
+    for (const ind of ["normal", "warning", "critical", "full", "over"] as const) {
       expect(budgetIndicatorBadgeClass(ind).length).toBeGreaterThan(10);
     }
   });
