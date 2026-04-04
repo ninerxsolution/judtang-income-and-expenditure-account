@@ -12,6 +12,7 @@ import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { RecurringDueWidget } from "@/components/dashboard/recurring-due-widget";
+import { DashboardSpendingOverview } from "@/components/dashboard/dashboard-spending-overview";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import {
   Card,
@@ -22,12 +23,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
+import type { BudgetProgressIndicator } from "@/lib/budget-shared";
+import {
+  budgetIndicatorMetaTextClass,
+  budgetIndicatorProgressBarClass,
+} from "@/lib/budget-indicator-ui";
 import { useI18n } from "@/hooks/use-i18n";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function DashboardPage() {
   const { t } = useI18n();
-  const { summary, recentTransactions, accountCount, loading: summaryLoading, refresh } = useDashboardData();
+  const {
+    summary,
+    recentTransactions,
+    accountCount,
+    loading: summaryLoading,
+    refresh,
+    invalidateTransactionViews,
+  } = useDashboardData();
   const balance =
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
 
@@ -38,7 +51,7 @@ export default function DashboardPage() {
     totalSpent: number;
     totalBudget: number | null;
     totalProgress: number;
-    totalIndicator: "normal" | "warning" | "critical" | "over";
+    totalIndicator: BudgetProgressIndicator;
   } | null>(null);
   const [budgetLoading, setBudgetLoading] = useState(true);
 
@@ -47,14 +60,22 @@ export default function DashboardPage() {
     fetch(`/api/budgets?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { totalSpent: number; totalBudget: number | null; totalProgress: number; totalIndicator: string } | null) => {
-        if (data) setBudgetOverview({ totalSpent: data.totalSpent, totalBudget: data.totalBudget, totalProgress: data.totalProgress, totalIndicator: data.totalIndicator as "normal" | "warning" | "critical" | "over" });
+        if (data) {
+          setBudgetOverview({
+            totalSpent: data.totalSpent,
+            totalBudget: data.totalBudget,
+            totalProgress: data.totalProgress,
+            totalIndicator: data.totalIndicator as BudgetProgressIndicator,
+          });
+        }
       })
       .catch(() => { })
       .finally(() => setBudgetLoading(false));
   }, []);
 
-  function handleFormSuccess() {
+  function handleAfterTransactionChange() {
     refresh();
+    invalidateTransactionViews();
   }
 
   return (
@@ -140,7 +161,7 @@ export default function DashboardPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: refresh })}>
+                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
                   <ImagePlus className="h-4 w-4" />
                   {t("dashboard.slipUpload.title")}
                 </DropdownMenuItem>
@@ -226,42 +247,9 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* quick actions INCOME & EXPENSE & SLIP UPLOAD */}
-            {/* <div className="flex flex-col flex-wrap gap-2 w-full">
-              <button
-                type="button"
-                onClick={() => {
-                  setFormInitialType("INCOME");
-                  setFormOpen(true);
-                }}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-600/80 bg-emerald-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 dark:border-transparent dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
-              >
-                <ArrowDownCircle className="h-4 w-4 shrink-0" />
-                <span>{t("transactions.common.income")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormInitialType("EXPENSE");
-                  setFormOpen(true);
-                }}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-red-600/80 bg-red-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:border-transparent dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
-              >
-                <ArrowUpCircle className="h-4 w-4 shrink-0" />
-                <span>{t("transactions.common.expense")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => openSlipUpload({ onSuccess: refresh })}
-                aria-label={t("dashboard.slipUpload.title")}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-blue-600/80 bg-blue-600/80 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 dark:border-transparent dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
-              >
-                <ImagePlus className="h-4 w-4 shrink-0" />
-                <span>{t("dashboard.slipUpload.title")}</span>
-              </button>
-            </div> */}
-
           </div>
+
+          <DashboardSpendingOverview />
 
           <div className="mt-4">
             <RecurringDueWidget />
@@ -301,28 +289,14 @@ export default function DashboardPage() {
                   <p className="text-lg font-semibold tabular-nums">
                     ฿ {formatAmount(budgetOverview.totalSpent)} / ฿ {formatAmount(budgetOverview.totalBudget)}
                     <span
-                      className={`ml-2 text-sm font-normal ${budgetOverview.totalIndicator === "over"
-                        ? "text-red-600 dark:text-red-400"
-                        : budgetOverview.totalIndicator === "critical"
-                          ? "text-orange-600 dark:text-orange-400"
-                          : budgetOverview.totalIndicator === "warning"
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-[#6B5E4E] dark:text-stone-400"
-                        }`}
+                      className={`ml-2 text-sm font-normal ${budgetIndicatorMetaTextClass(budgetOverview.totalIndicator)}`}
                     >
                       ({Math.round(budgetOverview.totalProgress * 100)}%)
                     </span>
                   </p>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
                     <div
-                      className={`h-full ${budgetOverview.totalIndicator === "over"
-                        ? "bg-red-500"
-                        : budgetOverview.totalIndicator === "critical"
-                          ? "bg-orange-500"
-                          : budgetOverview.totalIndicator === "warning"
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
-                        }`}
+                      className={`h-full ${budgetIndicatorProgressBarClass(budgetOverview.totalIndicator)}`}
                       style={{ width: `${Math.min(100, budgetOverview.totalProgress * 100)}%` }}
                     />
                   </div>
@@ -386,7 +360,7 @@ export default function DashboardPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: refresh })}>
+                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
                   <ImagePlus className="h-4 w-4" />
                   {t("dashboard.slipUpload.title")}
                 </DropdownMenuItem>
@@ -436,7 +410,7 @@ export default function DashboardPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         initialType={formInitialType}
-        onSuccess={handleFormSuccess}
+        onSuccess={handleAfterTransactionChange}
       />
     </div>
   );

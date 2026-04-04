@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { RowSelect, type RowSelectOption } from "@/components/dashboard/row-select";
 import {
   getRecentFinancialAccountIds,
+  saveRecentFinancialAccountId,
   sortAccountsByRecent,
 } from "@/lib/recent-financial-accounts";
 
@@ -170,10 +171,20 @@ export function AccountCombobox({
   sortByRecent = true,
 }: AccountComboboxProps) {
   const [mounted, setMounted] = useState(false);
+  const [mruTick, setMruTick] = useState(0);
   useEffect(() => {
     // Defer MRU sort until after mount so server/client markup match (localStorage is client-only).
     queueMicrotask(() => setMounted(true));
   }, []);
+
+  const recentIds = useMemo(
+    () => {
+      if (!sortByRecent || !mounted) return [];
+      return getRecentFinancialAccountIds();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mruTick remaps list after MRU write
+    [sortByRecent, mounted, mruTick, accounts],
+  );
 
   const orderedAccounts = useMemo(() => {
     const filtered = accounts.filter((acc) => {
@@ -183,8 +194,8 @@ export function AccountCombobox({
     if (!sortByRecent || !mounted) {
       return filtered;
     }
-    return sortAccountsByRecent(filtered, getRecentFinancialAccountIds());
-  }, [accounts, filterByType, sortByRecent, mounted]);
+    return sortAccountsByRecent(filtered, recentIds);
+  }, [accounts, filterByType, sortByRecent, mounted, recentIds]);
 
   const options: RowSelectOption<AccountOption>[] = orderedAccounts.map((acc) => ({
     value: acc.id,
@@ -192,11 +203,19 @@ export function AccountCombobox({
     ...acc,
   }));
 
+  function handleAccountChange(accountId: string) {
+    if (sortByRecent && accountId.trim()) {
+      saveRecentFinancialAccountId(accountId);
+      setMruTick((t) => t + 1);
+    }
+    onChange(accountId);
+  }
+
   return (
     <RowSelect<AccountOption>
       id={id}
       value={value}
-      onChange={onChange}
+      onChange={handleAccountChange}
       options={options}
       excludeValues={excludeIds}
       allowEmpty={allowEmpty}

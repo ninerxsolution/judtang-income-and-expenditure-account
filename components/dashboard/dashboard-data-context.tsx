@@ -49,14 +49,30 @@ export type DashboardTransaction = {
   occurredAt: string;
 };
 
+export type DashboardSpendingOverviewDay = {
+  date: string;
+  spent: number;
+  isToday: boolean;
+};
+
+export type DashboardSpendingOverview = {
+  todayExpense: number;
+  weekTotalExpense: number;
+  weekDays: DashboardSpendingOverviewDay[];
+};
+
 export type DashboardData = {
   user: DashboardUser | null;
   summary: DashboardSummary;
   appInfo: DashboardAppInfo;
   recentTransactions: DashboardTransaction[];
   accountCount: number;
+  spendingOverview: DashboardSpendingOverview | null;
   loading: boolean;
   refresh: () => void;
+  /** บวกทุกครั้งที่ควร refetch มุมมองที่ผูกกับธุรกรรม (เช่น ปฏิทิน) — ไม่เกี่ยวกับการโหลด dashboard/init */
+  transactionViewsEpoch: number;
+  invalidateTransactionViews: () => void;
 };
 
 const DashboardDataContext = createContext<DashboardData | null>(null);
@@ -81,18 +97,30 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     DashboardTransaction[]
   >([]);
   const [accountCount, setAccountCount] = useState(0);
+  const [spendingOverview, setSpendingOverview] = useState<DashboardSpendingOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [transactionViewsEpoch, setTransactionViewsEpoch] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const invalidateTransactionViews = useCallback(() => {
+    setTransactionViewsEpoch((n) => n + 1);
+  }, []);
+
+  type LoadOptions = { showLoadingOverlay?: boolean };
+
+  const load = useCallback(async (options?: LoadOptions) => {
+    const showLoadingOverlay = options?.showLoadingOverlay !== false;
+    if (showLoadingOverlay) {
+      setLoading(true);
+    }
     try {
       const res = await fetch("/api/dashboard/init", { cache: "no-store" });
       if (!res.ok) {
         setUser(null);
         setSummary(null);
       setAppInfo(null);
-      setRecentTransactions([]);
+        setRecentTransactions([]);
       setAccountCount(0);
+      setSpendingOverview(null);
       return;
       }
       const data = (await res.json()) as {
@@ -101,6 +129,11 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
         appInfo?: DashboardAppInfo;
         recentTransactions?: DashboardTransaction[] | unknown;
         accountCount?: number;
+        spendingOverview?: {
+          todayExpense?: number;
+          weekTotalExpense?: number;
+          weekDays?: unknown;
+        } | null;
       };
       setUser(
         data.user
@@ -125,19 +158,53 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
         Array.isArray(data.recentTransactions) ? data.recentTransactions : []
       );
       setAccountCount(typeof data.accountCount === "number" ? data.accountCount : 0);
+      const so = data.spendingOverview;
+      if (
+        so &&
+        typeof so === "object" &&
+        typeof so.todayExpense === "number" &&
+        typeof so.weekTotalExpense === "number" &&
+        Array.isArray(so.weekDays) &&
+        so.weekDays.length === 7
+      ) {
+        const weekDays: DashboardSpendingOverviewDay[] = so.weekDays.map((d) => {
+          if (d && typeof d === "object") {
+            const row = d as Record<string, unknown>;
+            const date = typeof row.date === "string" ? row.date : "";
+            const spent = typeof row.spent === "number" && Number.isFinite(row.spent) ? row.spent : 0;
+            const isToday = row.isToday === true;
+            return { date, spent, isToday };
+          }
+          return { date: "", spent: 0, isToday: false };
+        });
+        setSpendingOverview({
+          todayExpense: so.todayExpense,
+          weekTotalExpense: so.weekTotalExpense,
+          weekDays,
+        });
+      } else {
+        setSpendingOverview(null);
+      }
     } catch {
       setUser(null);
       setSummary(null);
       setAppInfo(null);
       setRecentTransactions([]);
       setAccountCount(0);
+      setSpendingOverview(null);
     } finally {
-      setLoading(false);
+      if (showLoadingOverlay) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    load();
+    void load({ showLoadingOverlay: true });
+  }, [load]);
+
+  const refresh = useCallback(() => {
+    void load({ showLoadingOverlay: false });
   }, [load]);
 
   const value: DashboardData = {
@@ -146,8 +213,11 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
     appInfo,
     recentTransactions,
     accountCount,
+    spendingOverview,
     loading,
-    refresh: load,
+    refresh,
+    transactionViewsEpoch,
+    invalidateTransactionViews,
   };
 
   return (

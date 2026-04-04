@@ -196,6 +196,14 @@ describe("isAccountIncomplete", () => {
           linkedAccountId: "",
         })
       ).toBe(true);
+      expect(
+        isAccountIncomplete({
+          type: "CREDIT_CARD",
+          bankName: "bangkok",
+          accountNumber: "1234",
+          cardAccountType: "debit",
+        })
+      ).toBe(true);
     });
     it("returns false when debit card has linkedAccountId", () => {
       expect(

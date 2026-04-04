@@ -190,6 +190,7 @@ export async function computeVirtualAlerts(userId: string): Promise<VirtualNotif
         dueDay: true,
         interestRate: true,
         cardAccountType: true,
+        linkedAccountId: true,
       },
     }),
   ]);

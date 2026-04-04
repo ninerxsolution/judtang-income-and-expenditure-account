@@ -4,6 +4,12 @@
  */
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  getBudgetIndicator,
+  type BudgetProgressIndicator,
+} from "@/lib/budget-shared";
+
+export { getBudgetIndicator, type BudgetProgressIndicator } from "@/lib/budget-shared";
 
 const EXPENSE = "EXPENSE" as const;
 
@@ -54,16 +60,6 @@ export async function getExpenseByCategoryForMonth(
     map.set(key, Number(r._sum.amount ?? 0));
   }
   return map;
-}
-
-export type BudgetProgressIndicator = "normal" | "warning" | "critical" | "over";
-
-/** Progress = spent / limit. PRD: <70% normal, 70–90% warning, >90% critical, >100% over. */
-export function getBudgetIndicator(progress: number): BudgetProgressIndicator {
-  if (progress >= 1) return "over";
-  if (progress >= 0.9) return "critical";
-  if (progress >= 0.7) return "warning";
-  return "normal";
 }
 
 export type CategoryBudgetWithActual = {

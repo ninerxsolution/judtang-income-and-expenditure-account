@@ -101,6 +101,7 @@ export async function POST(request: Request) {
       interestRate: true,
       cardAccountType: true,
       cardNetwork: true,
+      linkedAccountId: true,
     },
   });
   if (!accountForTx) {

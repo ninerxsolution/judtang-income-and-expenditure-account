@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useDropdownOpenUpward } from "@/hooks/use-dropdown-open-upward";
 import { getCategoryDisplayName } from "@/lib/categories-display";
+import {
+  getRecentCategoryIds,
+  saveRecentCategoryId,
+  sortCategoriesByRecent,
+} from "@/lib/recent-categories";
 
 type Category = { id: string; name: string; nameEn?: string | null };
 
@@ -53,10 +58,30 @@ export function CategoryCombobox({
 }: CategoryComboboxProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [mruTick, setMruTick] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const openUpward = useDropdownOpenUpward(containerRef, open);
 
-  const filteredCategories = filterCategories(categories, searchQuery, localeKey);
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
+
+  const recentIds = useMemo(
+    () => {
+      if (!mounted) return [];
+      return getRecentCategoryIds();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mruTick remaps list after MRU write
+    [mounted, mruTick, categories],
+  );
+
+  const orderedCategories = useMemo(() => {
+    if (!mounted) return categories;
+    return sortCategoriesByRecent(categories, recentIds);
+  }, [categories, mounted, recentIds]);
+
+  const filteredCategories = filterCategories(orderedCategories, searchQuery, localeKey);
   const showNone = !searchQuery.trim();
   const selectedCategory = categories.find((c) => c.id === value);
 
@@ -76,6 +101,10 @@ export function CategoryCombobox({
   }
 
   function handleSelect(categoryId: string) {
+    if (categoryId.trim()) {
+      saveRecentCategoryId(categoryId);
+      setMruTick((t) => t + 1);
+    }
     onChange(categoryId);
     closeDropdown();
   }

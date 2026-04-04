@@ -45,3 +45,22 @@ export function formatAmount(value: number | string | { toNumber?: () => number 
   const withCommas = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return decPart !== undefined ? `${withCommas}.${decPart}` : withCommas;
 }
+
+/** Compact amount for tight UI (e.g. week grid); uses k / M suffixes. */
+export function formatAmountCompact(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const n = Math.round(value);
+  if (n === 0) return "—";
+  const abs = Math.abs(n);
+  if (abs < 1000) return String(n);
+  if (abs < 1_000_000) {
+    const k = n / 1000;
+    const rounded = Math.round(k * 10) / 10;
+    const s = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    return `${s}k`;
+  }
+  const m = n / 1_000_000;
+  const roundedM = Math.round(m * 10) / 10;
+  const sM = Number.isInteger(roundedM) ? String(roundedM) : roundedM.toFixed(1);
+  return `${sM}M`;
+}

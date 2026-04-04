@@ -54,7 +54,18 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 - Cloudflare Turnstile is auto-disabled on `localhost` / `APP_ENV=development`, so no Turnstile keys are needed locally.
 - The test suite (Jest) uses mocks and does not require a running database.
 - The app UI defaults to Thai. Language can be switched via the header.
+- `.cursor/hooks/state/` is local Cursor hook runtime (e.g. continual-learning index); do not commit it. Keep it gitignored so it does not churn `git status`.
+- `isAccountIncomplete` for debit `CREDIT_CARD` rows requires `linkedAccountId`. Any Prisma `select` passed into that check must include `linkedAccountId` or alerts and API guards can falsely treat valid debit cards as incomplete.
 
 ## Learned User Preferences
 
 - Do not paste live `.env` values, database URLs, or third-party API keys into chat; if they are exposed, rotate those credentials.
+- Never claim to autonomously accept or merge code diffs into the editor. Explain that applying code requires the user to click 'Accept' in the Cursor UI.
+- For budgets, spending exactly up to the monthly limit should read as on track or full, not as over budget; only spend above the limit should read as over.
+
+## Learned Workspace Facts
+
+- Category and Financial Account pickers use an MRU (Most Recently Used) pattern backed by `localStorage` keys like `judtang_recent_categories`. Always use shared components like `CategoryRowSelect`, `CategoryCombobox`, or `AccountCombobox` to maintain this behavior.
+- In `DashboardDataProvider`, `refresh()` updates data silently (without toggling the global loading skeleton). To show the loading overlay, use `load({ showLoadingOverlay: true })`.
+- Budget progress: `getBudgetIndicator` in `lib/budget-shared.ts` treats exactly 100% of limit as indicator `full`; `over` applies only when progress is greater than 1.
+- Modal financial-account selection should follow the drill-down slide picker pattern used in `transaction-form-dialog` (`AccountSlidePicker`); reset that picker navigation state when the dialog closes so reopening starts on the main form, not on the account list.

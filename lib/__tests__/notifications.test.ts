@@ -33,7 +33,8 @@ jest.mock("@/lib/recurring-transactions", () => ({
 jest.mock("@/lib/budget", () => ({
   getBudgetForMonth: jest.fn(),
   getBudgetIndicator: (progress: number) => {
-    if (progress >= 1) return "over";
+    if (progress > 1) return "over";
+    if (progress >= 1) return "full";
     if (progress >= 0.9) return "critical";
     if (progress >= 0.7) return "warning";
     return "normal";

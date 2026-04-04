@@ -193,6 +193,12 @@ function useNotificationBody(
           label,
         );
       }
+      if (String(p.indicator ?? "") === "full") {
+        return t("notifications.types.ALERT_BUDGET_body_full").replace(
+          "{label}",
+          label,
+        );
+      }
       return t("notifications.types.ALERT_BUDGET_body_near")
         .replace("{label}", label)
         .replace("{pct}", String(pct));

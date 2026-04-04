@@ -34,7 +34,9 @@ function toNum(
 /**
  * Returns true if the account is incomplete and cannot be used.
  * BANK/WALLET: requires bank + account number.
- * CREDIT_CARD: requires bank + account number + credit limit + interest rate + card type.
+ * CREDIT_CARD (credit): bank + account number + card type + credit limit + interest rate.
+ * CREDIT_CARD (debit): bank + account number + card type + linked bank/wallet account id.
+ * Callers that pass a partial Prisma select must include `linkedAccountId` when type may be debit.
  */
 export function isAccountIncomplete(acc: AccountForIncompleteCheck): boolean {
   if (!REQUIRES_BANK_AND_NUMBER.includes(acc.type)) return false;

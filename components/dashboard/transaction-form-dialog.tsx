@@ -14,18 +14,19 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FormField } from "@/components/auth/form-field";
 import { getCategoryDisplayName } from "@/lib/categories-display";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
 import { cn } from "@/lib/utils";
 import { MAX_NOTE_LENGTH } from "@/lib/validation";
 import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  getRecentFinancialAccountIds,
-  pickPreferredAccountId,
-  saveRecentFinancialAccountId,
-} from "@/lib/recent-financial-accounts";
+import { getRecentFinancialAccountIds, pickPreferredAccountId, saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
+import { saveRecentCategoryId } from "@/lib/recent-categories";
+import { CategoryCapsulePicker } from "@/components/dashboard/category-capsule-picker";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -55,54 +56,7 @@ function formatDateToInput(iso: string): string {
   return `${year}-${month}-${day}`;
 }
 
-const RECENT_CATEGORIES_KEY = "judtang_recent_categories";
-const MAX_RECENT_CATEGORIES = 20;
-const INITIAL_CATEGORY_COUNT = 3;
-
-function getRecentCategoryIds(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECENT_CATEGORIES_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((x): x is string => typeof x === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecentCategoryId(id: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const recent = getRecentCategoryIds();
-    const filtered = recent.filter((x) => x !== id);
-    const updated = [id, ...filtered].slice(0, MAX_RECENT_CATEGORIES);
-    window.localStorage.setItem(RECENT_CATEGORIES_KEY, JSON.stringify(updated));
-  } catch {
-    // Ignore localStorage errors
-  }
-}
-
 type CategoryItem = { id: string; name: string; nameEn?: string | null };
-
-function sortCategoriesByRecent(
-  categories: CategoryItem[],
-  recentIds: string[],
-): CategoryItem[] {
-  const byId = new Map(categories.map((c) => [c.id, c]));
-  const ordered: CategoryItem[] = [];
-  for (const id of recentIds) {
-    const cat = byId.get(id);
-    if (cat) {
-      ordered.push(cat);
-      byId.delete(id);
-    }
-  }
-  const rest = Array.from(byId.values());
-  return [...ordered, ...rest];
-}
 
 type TransactionFormDialogProps = {
   open: boolean;
@@ -143,6 +97,8 @@ export function TransactionFormDialog({
     "idle" | "loading" | "done" | "error"
   >(editId ? "loading" : "idle");
 
+  const [currentView, setCurrentView] = useState<"form" | "select-from" | "select-to">("form");
+
   const [accounts, setAccounts] = useState<
     {
       id: string;
@@ -156,28 +112,13 @@ export function TransactionFormDialog({
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [status, setStatus] = useState<"PENDING" | "POSTED">("POSTED");
   const [formDataLoading, setFormDataLoading] = useState(false);
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-  const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>([]);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isMobile = useIsMobile();
 
-  const sortedCategories = useMemo(
-    () => sortCategoriesByRecent(categories, recentCategoryIds),
-    [categories, recentCategoryIds],
-  );
-
-  const visibleCategories = categoriesExpanded
-    ? sortedCategories
-    : sortedCategories.slice(0, INITIAL_CATEGORY_COUNT);
-  const hasMoreCategories = sortedCategories.length > INITIAL_CATEGORY_COUNT;
-
   useEffect(() => {
-    if (open && typeof window !== "undefined") {
-      setRecentCategoryIds(getRecentCategoryIds());
-    }
     if (!open) {
-      setCategoriesExpanded(false);
+      setCurrentView("form");
     }
   }, [open]);
 
@@ -202,6 +143,18 @@ export function TransactionFormDialog({
   const transferableAccounts = useMemo(
     () => accounts.filter((a) => a.type !== "CREDIT_CARD"),
     [accounts],
+  );
+
+  const accountsForFromPicker = useMemo(() => {
+    if (type === "TRANSFER") {
+      return accounts.filter((a) => a.type !== "CREDIT_CARD");
+    }
+    return accounts;
+  }, [accounts, type]);
+
+  const accountsForToPicker = useMemo(
+    () => accounts.filter((a) => a.type !== "CREDIT_CARD" && a.id !== financialAccountId),
+    [accounts, financialAccountId],
   );
 
   useEffect(() => {
@@ -558,17 +511,24 @@ export function TransactionFormDialog({
             : undefined
         }
       >
-        <DialogHeader className="shrink-0">
-          <DialogTitle>
+        <DialogTitle className="sr-only">
+          {isEdit
+            ? t("transactions.edit.title")
+            : t("dashboard.pageTitle.transactionsNew")}
+        </DialogTitle>
+
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+        <DialogHeader className={cn("shrink-0", currentView !== "form" && "invisible pointer-events-none")}>
+          <h2 className="text-lg font-semibold leading-snug tracking-tight px-4 py-0.5">
             {isEdit
               ? t("transactions.edit.title")
               : t("dashboard.pageTitle.transactionsNew")}
-          </DialogTitle>
+          </h2>
         </DialogHeader>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-1 flex-col min-h-0 overflow-hidden"
+          className={cn("flex flex-1 flex-col min-h-0 overflow-hidden", currentView !== "form" && "invisible pointer-events-none")}
         >
           <DialogBody className="space-y-4">
             {loadState === "loading" && (
@@ -682,52 +642,29 @@ export function TransactionFormDialog({
             </>
           ) : type === "TRANSFER" ? (
             <>
-              <div>
-                <label htmlFor="transaction-modal-from-account" className="mb-1 block text-sm font-medium">
-                  {t("transactions.new.fromAccount")}
-                </label>
-                <AccountCombobox
-                  id="transaction-modal-from-account"
-                  value={financialAccountId}
-                  onChange={setFinancialAccountId}
-                  accounts={accounts}
-                  filterByType={(accType) => accType !== "CREDIT_CARD"}
-                  defaultLabel={t("accounts.default")}
-                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                />
-              </div>
-              <div>
-                <label htmlFor="transaction-modal-to-account" className="mb-1 block text-sm font-medium">
-                  {t("transactions.new.toAccount")}
-                </label>
-                <AccountCombobox
-                  id="transaction-modal-to-account"
-                  value={transferAccountId}
-                  onChange={setTransferAccountId}
-                  accounts={accounts}
-                  excludeIds={[financialAccountId]}
-                  filterByType={(accType) => accType !== "CREDIT_CARD"}
-                  allowEmpty
-                  emptyLabel="—"
-                  defaultLabel={t("accounts.default")}
-                  className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-                />
-              </div>
+              <AccountSelectorTrigger
+                label={t("transactions.new.fromAccount")}
+                account={accounts.find((a) => a.id === financialAccountId)}
+                onClick={() => setCurrentView("select-from")}
+                defaultLabel={t("accounts.default")}
+                selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+              />
+              <AccountSelectorTrigger
+                label={t("transactions.new.toAccount")}
+                account={accounts.find((a) => a.id === transferAccountId)}
+                onClick={() => setCurrentView("select-to")}
+                defaultLabel={t("accounts.default")}
+                selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+              />
             </>
           ) : (
-            <div>
-              <label htmlFor="transaction-modal-account" className="mb-1 block text-sm font-medium">
-                {t("transactions.new.accountLabel")}
-              </label>
-              <AccountCombobox
-                id="transaction-modal-account"
-                value={financialAccountId}
-                onChange={setFinancialAccountId}
-                accounts={accounts}
-                defaultLabel={t("accounts.default")}
-                className="w-full rounded-md border border-[#D4C9B0] px-3 py-2 text-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
-              />
-            </div>
+            <AccountSelectorTrigger
+              label={t("transactions.new.accountLabel")}
+              account={accounts.find((a) => a.id === financialAccountId)}
+              onClick={() => setCurrentView("select-from")}
+              defaultLabel={t("accounts.default")}
+              selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+            />
           )}
 
           {(() => {
@@ -778,74 +715,31 @@ export function TransactionFormDialog({
             inputRef={amountInputRef}
           />
 
-          {type !== "TRANSFER" &&
-            (formDataLoading ? (
-              <div>
-                <Skeleton className="mb-1 h-4 w-20" />
-                <Skeleton className="h-10 w-full rounded-md" />
-              </div>
-            ) : (
-              <div>
-                <span className="mb-1 block text-sm font-medium">
-                  {t("transactions.new.categoryLabel")}
-                </span>
-                <div
-                  id="transaction-modal-category"
-                  className="flex flex-wrap gap-2"
-                  role="group"
-                  aria-label={t("transactions.new.categoryLabel")}
-                >
-                  {visibleCategories.map((cat) => {
-                    const isSelected = categoryId === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            setCategoryId("");
-                            setCategory("");
-                          } else {
-                            setCategoryId(cat.id);
-                            setCategory(getCategoryDisplayName(cat.name, localeKey, cat.nameEn));
-                          }
-                        }}
-                        className={cn(
-                          "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-all",
-                          "border-[#D4C9B0] dark:border-stone-700",
-                          isSelected
-                            ? "bg-[#5C6B52] text-white border-[#5C6B52] dark:bg-stone-600 dark:border-stone-600"
-                            : "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
-                        )}
-                      >
-                        {getCategoryDisplayName(cat.name, localeKey, cat.nameEn)}
-                      </button>
-                    );
-                  })}
-                  {hasMoreCategories && (
-                    <button
-                      type="button"
-                      onClick={() => setCategoriesExpanded((e) => !e)}
-                      className={cn(
-                        "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-all",
-                        "border-[#D4C9B0] dark:border-stone-700",
-                        "bg-[#FDFAF4] text-[#3D3020] hover:bg-[#F5F0E8] dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800",
-                      )}
-                      aria-expanded={categoriesExpanded}
-                      aria-label={
-                        categoriesExpanded
-                          ? t("transactions.new.categoryShowLess")
-                          : t("transactions.new.categoryShowMore")
-                      }
-                    >
-                      {categoriesExpanded
-                        ? t("transactions.new.categoryShowLess")
-                        : t("transactions.new.categoryShowMore")}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+          {type !== "TRANSFER" ? (
+            <CategoryCapsulePicker
+              categories={categories}
+              value={categoryId}
+              onValueChange={(id) => {
+                setCategoryId(id);
+                if (!id) {
+                  setCategory("");
+                  return;
+                }
+                const cat = categories.find((c) => c.id === id);
+                setCategory(
+                  cat
+                    ? getCategoryDisplayName(cat.name, localeKey, cat.nameEn)
+                    : "",
+                );
+              }}
+              localeKey={localeKey}
+              loading={formDataLoading}
+              dialogOpen={open}
+              id="transaction-modal-category"
+              ariaLabel={t("transactions.new.categoryLabel")}
+              label={t("transactions.new.categoryLabel")}
+            />
+          ) : null}
 
           <div>
             <label
@@ -888,6 +782,41 @@ export function TransactionFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        {currentView === "select-from" ? (
+          <AccountSlidePickerPanel
+            accounts={accountsForFromPicker}
+            selectedId={financialAccountId}
+            onSelect={(id) => {
+              setFinancialAccountId(id);
+              setCurrentView("form");
+            }}
+            onBack={() => setCurrentView("form")}
+            title={
+              type === "INCOME"
+                ? t("transactions.new.accountLabel")
+                : t("transactions.new.fromAccount")
+            }
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        {currentView === "select-to" ? (
+          <AccountSlidePickerPanel
+            accounts={accountsForToPicker}
+            selectedId={transferAccountId}
+            onSelect={(id) => {
+              setTransferAccountId(id);
+              setCurrentView("form");
+            }}
+            onBack={() => setCurrentView("form")}
+            title={t("transactions.new.toAccount")}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,11 @@
-import { getDateRangeInTimezone, toDateStringInTimezone, parseOccurredAt } from "../date-range";
+import {
+  addCalendarDaysInTimezone,
+  getDateRangeInTimezone,
+  getMondayDateStringInSameWeek,
+  getWeekDateStringsMondayToSunday,
+  toDateStringInTimezone,
+  parseOccurredAt,
+} from "../date-range";
 
 describe("date-range", () => {
   describe("getDateRangeInTimezone", () => {
@@ -46,6 +53,45 @@ describe("date-range", () => {
       const d = new Date("2025-03-15T20:00:00Z");
       const result = toDateStringInTimezone(d, "Asia/Bangkok");
       expect(result).toBe("2025-03-16");
+    });
+  });
+
+  describe("addCalendarDaysInTimezone", () => {
+    it("adds days within Bangkok calendar", () => {
+      expect(addCalendarDaysInTimezone("2026-04-05", 1, "Asia/Bangkok")).toBe("2026-04-06");
+      expect(addCalendarDaysInTimezone("2026-04-05", -1, "Asia/Bangkok")).toBe("2026-04-04");
+    });
+    it("returns null for invalid date string", () => {
+      expect(addCalendarDaysInTimezone("invalid", 1)).toBe(null);
+    });
+  });
+
+  describe("getMondayDateStringInSameWeek", () => {
+    it("returns same string when already Monday (Bangkok)", () => {
+      const mon = new Date("2026-03-30T12:00:00+07:00");
+      const ymd = toDateStringInTimezone(mon, "Asia/Bangkok");
+      expect(getMondayDateStringInSameWeek(ymd, "Asia/Bangkok")).toBe("2026-03-30");
+    });
+    it("returns Monday for a Sunday in Bangkok", () => {
+      const sun = new Date("2026-04-05T12:00:00+07:00");
+      const ymd = toDateStringInTimezone(sun, "Asia/Bangkok");
+      expect(getMondayDateStringInSameWeek(ymd, "Asia/Bangkok")).toBe("2026-03-30");
+    });
+  });
+
+  describe("getWeekDateStringsMondayToSunday", () => {
+    it("returns seven dates Mon through Sun for week containing date", () => {
+      const sun = new Date("2026-04-05T12:00:00+07:00");
+      const week = getWeekDateStringsMondayToSunday(sun, "Asia/Bangkok");
+      expect(week).toEqual([
+        "2026-03-30",
+        "2026-03-31",
+        "2026-04-01",
+        "2026-04-02",
+        "2026-04-03",
+        "2026-04-04",
+        "2026-04-05",
+      ]);
     });
   });
 

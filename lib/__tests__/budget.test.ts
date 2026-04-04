@@ -50,8 +50,12 @@ describe("budget", () => {
       expect(getBudgetIndicator(0.99)).toBe("critical");
     });
 
-    it("returns over when progress >= 1", () => {
-      expect(getBudgetIndicator(1)).toBe("over");
+    it("returns full when progress is exactly 1", () => {
+      expect(getBudgetIndicator(1)).toBe("full");
+    });
+
+    it("returns over when progress > 1", () => {
+      expect(getBudgetIndicator(1.01)).toBe("over");
       expect(getBudgetIndicator(1.2)).toBe("over");
     });
   });

@@ -33,6 +33,15 @@ jest.mock("@/lib/transactions", () => ({
     totalAdjustment: 0,
   }),
   listTransactionsByUser: jest.fn().mockResolvedValue([]),
+  getExpenseWeekOverview: jest.fn().mockResolvedValue({
+    todayExpense: 0,
+    weekTotalExpense: 0,
+    weekDays: Array.from({ length: 7 }, (_, i) => ({
+      date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+      spent: 0,
+      isToday: i === 3,
+    })),
+  }),
 }));
 
 jest.mock("@/lib/balance", () => ({
@@ -74,6 +83,7 @@ describe("GET /api/dashboard/init", () => {
     expect(data).toHaveProperty("appInfo");
     expect(data).toHaveProperty("recentTransactions");
     expect(data).toHaveProperty("accountCount");
+    expect(data).toHaveProperty("spendingOverview");
     expect(data.accountCount).toBe(1);
   });
 });

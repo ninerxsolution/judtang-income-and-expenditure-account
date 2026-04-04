@@ -4,6 +4,7 @@ import {
   type KeyboardEvent,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -282,6 +283,11 @@ export function TransactionsCalendar({
 }: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
   const { openSlipUpload } = useSlipUpload();
+  const {
+    refresh: refreshDashboard,
+    invalidateTransactionViews,
+    transactionViewsEpoch,
+  } = useDashboardData();
   const localeKey = language === "th" ? "th" : "en";
 
   const [formOpen, setFormOpen] = useState(false);
@@ -328,7 +334,9 @@ export function TransactionsCalendar({
     null,
   );
 
-  const [refreshKey, setRefreshKey] = useState(0);
+  const summaryScopeKeyRef = useRef<string | null>(null);
+  const monthSummaryScopeKeyRef = useRef<string | null>(null);
+  const yearSummaryScopeKeyRef = useRef<string | null>(null);
 
   const [{ days, from, to }, calendarReady] = useMemo(() => {
     try {
@@ -362,6 +370,11 @@ export function TransactionsCalendar({
   const [dailyItems, setDailyItems] = useState<DailyTransaction[]>([]);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [dailyError, setDailyError] = useState<string | null>(null);
+  const selectedDateRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    selectedDateRef.current = selectedDate;
+  }, [selectedDate]);
 
   // Load summary when month (day view) or week (week view) changes.
   useEffect(() => {
@@ -371,9 +384,15 @@ export function TransactionsCalendar({
     const controller = new AbortController();
     const rangeFrom = viewMode === "week" ? weekFrom : from;
     const rangeTo = viewMode === "week" ? weekTo : to;
+    const summaryScopeKey = `${viewMode}:${rangeFrom}|${rangeTo}`;
+    const summaryScopeChanged =
+      summaryScopeKeyRef.current !== summaryScopeKey;
+    summaryScopeKeyRef.current = summaryScopeKey;
 
     async function load() {
-      setSummaryLoading(true);
+      if (summaryScopeChanged) {
+        setSummaryLoading(true);
+      }
       setSummaryError(null);
       try {
         const params = new URLSearchParams();
@@ -430,22 +449,40 @@ export function TransactionsCalendar({
         setSummaryError(t("calendar.errors.loadCalendar"));
         setSummary([]);
       } finally {
-        setSummaryLoading(false);
+        if (summaryScopeChanged) {
+          setSummaryLoading(false);
+        }
       }
     }
 
     void load();
 
     return () => controller.abort();
-  }, [from, to, weekFrom, weekTo, calendarReady, viewMode, t, refreshKey]);
+  }, [
+    from,
+    to,
+    weekFrom,
+    weekTo,
+    calendarReady,
+    viewMode,
+    t,
+    transactionViewsEpoch,
+  ]);
 
   // Month summary (per year) for Month view.
   useEffect(() => {
     if (viewMode !== "month") return;
 
     const controller = new AbortController();
+    const monthScopeKey = `month:${year}`;
+    const monthScopeChanged =
+      monthSummaryScopeKeyRef.current !== monthScopeKey;
+    monthSummaryScopeKeyRef.current = monthScopeKey;
+
     async function load() {
-      setMonthSummaryLoading(true);
+      if (monthScopeChanged) {
+        setMonthSummaryLoading(true);
+      }
       setMonthSummaryError(null);
       try {
         const params = new URLSearchParams();
@@ -501,14 +538,16 @@ export function TransactionsCalendar({
         setMonthSummaryError(t("calendar.errors.loadMonthSummary"));
         setMonthSummary([]);
       } finally {
-        setMonthSummaryLoading(false);
+        if (monthScopeChanged) {
+          setMonthSummaryLoading(false);
+        }
       }
     }
 
     void load();
 
     return () => controller.abort();
-  }, [viewMode, year, t, refreshKey]);
+  }, [viewMode, year, t, transactionViewsEpoch]);
 
   // Year summary (multi-year) for Year view.
   const yearRangeEnd = useMemo(
@@ -520,8 +559,15 @@ export function TransactionsCalendar({
     if (viewMode !== "year") return;
 
     const controller = new AbortController();
+    const yearScopeKey = `year:${yearRangeStart}|${yearRangeEnd}`;
+    const yearScopeChanged =
+      yearSummaryScopeKeyRef.current !== yearScopeKey;
+    yearSummaryScopeKeyRef.current = yearScopeKey;
+
     async function load() {
-      setYearSummaryLoading(true);
+      if (yearScopeChanged) {
+        setYearSummaryLoading(true);
+      }
       setYearSummaryError(null);
       try {
         const params = new URLSearchParams();
@@ -578,17 +624,20 @@ export function TransactionsCalendar({
         setYearSummaryError(t("calendar.errors.loadYearSummary"));
         setYearSummary([]);
       } finally {
-        setYearSummaryLoading(false);
+        if (yearScopeChanged) {
+          setYearSummaryLoading(false);
+        }
       }
     }
 
     void load();
 
     return () => controller.abort();
-  }, [viewMode, yearRangeStart, yearRangeEnd, t, refreshKey]);
+  }, [viewMode, yearRangeStart, yearRangeEnd, t, transactionViewsEpoch]);
 
   async function openDay(dateIso: string) {
     setSelectedDate(dateIso);
+    selectedDateRef.current = dateIso;
     setDailyItems([]);
     setDailyError(null);
     setDailyLoading(true);
@@ -599,6 +648,9 @@ export function TransactionsCalendar({
       params.set("limit", "200");
       params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
       const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
       if (!res.ok) {
         if (res.status === 401) {
           setDailyError(t("common.errors.unauthenticated"));
@@ -610,23 +662,68 @@ export function TransactionsCalendar({
       }
 
       const data = (await res.json()) as DailyTransaction[] | unknown;
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
       if (Array.isArray(data)) {
         setDailyItems(data);
       } else {
         setDailyItems([]);
       }
     } catch {
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
       setDailyError(t("calendar.errors.loadDaily"));
       setDailyItems([]);
     } finally {
-      setDailyLoading(false);
+      if (selectedDateRef.current === dateIso) {
+        setDailyLoading(false);
+      }
+    }
+  }
+
+  async function refetchDayDetailQuiet(dateIso: string): Promise<void> {
+    try {
+      const params = new URLSearchParams();
+      params.set("date", dateIso);
+      params.set("limit", "200");
+      params.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+      const res = await fetch(`/api/transactions?${params.toString()}`, {
+        cache: "no-store",
+      });
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
+      if (!res.ok) {
+        if (res.status === 401) {
+          setDailyError(t("common.errors.unauthenticated"));
+        } else {
+          setDailyError(t("calendar.errors.loadDaily"));
+        }
+        return;
+      }
+
+      const data = (await res.json()) as DailyTransaction[] | unknown;
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
+      setDailyError(null);
+      setDailyItems(Array.isArray(data) ? data : []);
+    } catch {
+      if (selectedDateRef.current !== dateIso) {
+        return;
+      }
+      setDailyError(t("calendar.errors.loadDaily"));
     }
   }
 
   function closeDay() {
     setSelectedDate(null);
+    selectedDateRef.current = null;
     setDailyItems([]);
     setDailyError(null);
+    setDailyLoading(false);
   }
 
   function goToToday() {
@@ -713,14 +810,12 @@ export function TransactionsCalendar({
 
   function refreshDailyItems() {
     if (selectedDate) {
-      void openDay(selectedDate);
+      void refetchDayDetailQuiet(selectedDate);
     }
   }
 
-  const { refresh: refreshDashboard } = useDashboardData();
-
   function refreshCalendar() {
-    setRefreshKey((k) => k + 1);
+    invalidateTransactionViews();
     refreshDailyItems();
     refreshDashboard();
   }
@@ -800,7 +895,7 @@ export function TransactionsCalendar({
 
   const dayDetailContent = (
     <>
-      {dailyLoading && (
+      {dailyLoading && dailyItems.length === 0 && (
         <div className="animate-in fade-in-0 space-y-2 duration-200">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-md" />
@@ -1251,7 +1346,7 @@ export function TransactionsCalendar({
                           </span>
                         )}
                         {day.isToday && (
-                          <span className="rounded-full bg-[#5C6B52] px-2 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
+                          <span className="text-[10px] font-medium text-[#3D4A3A] dark:text-stone-300">
                             {t("calendar.today")}
                           </span>
                         )}

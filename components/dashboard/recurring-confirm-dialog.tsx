@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { AccountCombobox } from "@/components/dashboard/account-combobox";
+import {
+  AccountSelectorTrigger,
+  AccountSlidePickerPanel,
+} from "@/components/dashboard/account-slide-picker";
 import { useI18n } from "@/hooks/use-i18n";
 import type { AccountOption } from "@/components/dashboard/account-combobox";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
@@ -66,9 +69,13 @@ export function RecurringConfirmDialog({
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
 
   useEffect(() => {
-    if (!open || !item) return;
+    if (!open || !item) {
+      setAccountPickerOpen(false);
+      return;
+    }
 
     setAmount(String(item.amount ?? ""));
     setFinancialAccountId(item.financialAccountId ?? "");
@@ -153,12 +160,24 @@ export function RecurringConfirmDialog({
           "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
         )}
       >
-        <DialogHeader className="shrink-0">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-visible">
+        <DialogHeader
+          className={cn(
+            "shrink-0",
+            accountPickerOpen && "pointer-events-none invisible",
+          )}
+        >
           <DialogTitle className="flex items-center gap-2">
             {r.confirmDialog.title}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className={cn(
+            "flex flex-1 flex-col min-h-0 overflow-hidden",
+            accountPickerOpen && "pointer-events-none invisible",
+          )}
+        >
           <DialogBody className="space-y-4 pb-2">
             <p className="text-sm text-muted-foreground">
               {r.confirmDialog.description.replace("{name}", item.name)}
@@ -191,14 +210,13 @@ export function RecurringConfirmDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>{r.confirmDialog.account}</Label>
-              <AccountCombobox
-                value={financialAccountId}
-                onChange={setFinancialAccountId}
-                accounts={accounts}
-              />
-            </div>
+            <AccountSelectorTrigger
+              label={r.confirmDialog.account}
+              account={accounts.find((a) => a.id === financialAccountId)}
+              onClick={() => setAccountPickerOpen(true)}
+              defaultLabel={t("accounts.default")}
+              selectPlaceholder={t("accounts.selectAccountPlaceholder")}
+            />
 
             <div className="space-y-1.5">
               <Label htmlFor="confirm-note">{r.confirmDialog.note}</Label>
@@ -228,6 +246,22 @@ export function RecurringConfirmDialog({
             </Button>
           </DialogFooter>
         </form>
+        {accountPickerOpen ? (
+          <AccountSlidePickerPanel
+            accounts={accounts}
+            selectedId={financialAccountId}
+            onSelect={(id) => {
+              setFinancialAccountId(id);
+              setAccountPickerOpen(false);
+            }}
+            onBack={() => setAccountPickerOpen(false)}
+            title={r.confirmDialog.account}
+            searchPlaceholder={t("accounts.bankSearchPlaceholder")}
+            noResultsText={t("accounts.bankNoResults")}
+            defaultLabel={t("accounts.default")}
+          />
+        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );
