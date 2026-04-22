@@ -36,7 +36,7 @@ async function fetchCalendarSummary(
       occurredAt: { gte: fromRange.from, lte: toRange.to },
       ...(financialAccountId ? { financialAccountId } : {}),
     },
-    select: { occurredAt: true, type: true },
+    select: { occurredAt: true, type: true, transferLeg: true },
   });
 
   const summaryMap = new Map<
@@ -55,7 +55,9 @@ async function fetchCalendarSummary(
     const typeUpper = String(tx.type).toUpperCase();
     const isIncome = typeUpper === "INCOME";
     const isExpense = typeUpper === "EXPENSE";
-    const isTransfer = typeUpper === "TRANSFER";
+    const isTransfer =
+      typeUpper === "TRANSFER" &&
+      (tx.transferLeg == null || tx.transferLeg === "OUT");
     summaryMap.set(dateIso, {
       count: prev.count + 1,
       incomeCount: prev.incomeCount + (isIncome ? 1 : 0),

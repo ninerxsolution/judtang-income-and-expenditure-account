@@ -1,5 +1,12 @@
 "use client";
 
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatAmount } from "@/lib/format";
 import { useBudgetSettings } from "@/hooks/use-budget-settings";
 import { BudgetMonthToolbar } from "@/components/dashboard/budget/budget-month-toolbar";
@@ -15,12 +22,29 @@ export default function BudgetSettingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <header className="flex items-center gap-3">
-          <div>
-            <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
-              {bs.t("settings.budget.description")}
-            </p>
-          </div>
+        <header className="flex flex-col gap-2">
+          <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+            {bs.t("settings.budget.description")}
+          </p>
+          <p className="flex items-start gap-1.5 text-xs text-[#A09080] dark:text-stone-500">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="mt-0.5 inline-flex shrink-0 rounded-sm text-[#A09080] outline-offset-2 hover:text-[#6B5E4E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring dark:text-stone-500 dark:hover:text-stone-300"
+                    aria-label={bs.t("settings.budget.thbApproxTooltip")}
+                  >
+                    <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {bs.t("settings.budget.thbApproxTooltip")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>{bs.t("settings.budget.thbOnlyNote")}</span>
+          </p>
         </header>
 
         <BudgetMonthToolbar

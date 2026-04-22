@@ -12,7 +12,7 @@ import {
   getTransactionsSummary,
   listTransactionsByUser,
 } from "@/lib/transactions";
-import { getTotalBalance } from "@/lib/balance";
+import { getTotalBalanceMeta } from "@/lib/balance";
 import { maskAccountNumber } from "@/lib/format";
 import { getAccountNumberForMasking } from "@/lib/account-number";
 
@@ -65,11 +65,15 @@ async function fetchDashboardInit(userId: string) {
       select: { name: true, email: true, image: true },
     }),
     (async () => {
-      const [summary, totalBalance] = await Promise.all([
+      const [summary, balanceMeta] = await Promise.all([
         getTransactionsSummary(userId, { from: monthRange.from, to: monthRange.to }),
-        getTotalBalance(userId),
+        getTotalBalanceMeta(userId),
       ]);
-      return { ...summary, totalBalance };
+      return {
+        ...summary,
+        totalBalance: balanceMeta.thb,
+        totalBalanceApproximate: balanceMeta.approximate,
+      };
     })(),
     listTransactionsByUser(userId, { limit: 8, offset: 0 }),
     prisma.financialAccount.count({ where: { userId, isActive: true } }),
@@ -86,7 +90,16 @@ async function fetchDashboardInit(userId: string) {
     fullVersion: patchVersion ? `${appVersion} (${patchVersion})` : appVersion,
   };
 
-  function mapAccount(acc: { id: string; name: string; type: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null) {
+  function mapAccount(acc: {
+    id: string;
+    name: string;
+    type: string;
+    currency?: string;
+    bankName?: string | null;
+    cardNetwork?: string | null;
+    accountNumber?: string | null;
+    accountNumberMode?: string | null;
+  } | null) {
     if (!acc) return null;
     const accountNumberMasked = maskAccountNumber(
       getAccountNumberForMasking(acc.accountNumber, acc.accountNumberMode)
@@ -95,6 +108,7 @@ async function fetchDashboardInit(userId: string) {
       id: acc.id,
       name: acc.name,
       type: acc.type,
+      currency: acc.currency ?? "THB",
       bankName: acc.bankName ?? null,
       cardNetwork: acc.cardNetwork ?? null,
       accountNumberMasked: accountNumberMasked || null,

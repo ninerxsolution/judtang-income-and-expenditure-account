@@ -19,6 +19,8 @@ export type DashboardSummary = {
   income: number;
   expense: number;
   totalBalance?: number;
+  /** True when net worth used display FX fallback for non-THB accounts. */
+  totalBalanceApproximate?: boolean;
 } | null;
 
 export type DashboardAppInfo = {
@@ -125,7 +127,12 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
       }
       const data = (await res.json()) as {
         user?: { name?: string | null; email?: string | null; image?: string | null } | null;
-        summary?: { income?: number; expense?: number; totalBalance?: number } | null;
+        summary?: {
+          income?: number;
+          expense?: number;
+          totalBalance?: number;
+          totalBalanceApproximate?: boolean;
+        } | null;
         appInfo?: DashboardAppInfo;
         recentTransactions?: DashboardTransaction[] | unknown;
         accountCount?: number;
@@ -150,6 +157,7 @@ export function DashboardDataProvider({ children }: DashboardDataProviderProps) 
               income: data.summary.income ?? 0,
               expense: data.summary.expense ?? 0,
               totalBalance: data.summary.totalBalance,
+              totalBalanceApproximate: data.summary.totalBalanceApproximate === true,
             }
           : null
       );

@@ -51,6 +51,8 @@ export async function POST(request: Request) {
     status?: string;
     postedDate?: string;
     fromAccountId?: string;
+    /** THB per 1 unit of account currency when currency is not THB (optional; server can default). */
+    exchangeRateThbPerUnit?: number;
   };
 
   try {
@@ -84,6 +86,19 @@ export async function POST(request: Request) {
   }
 
   const occurredAt = parseOccurredAt(body.occurredAt);
+
+  const exchangeRateThbPerUnitRaw =
+    body.exchangeRateThbPerUnit != null
+      ? typeof body.exchangeRateThbPerUnit === "number"
+        ? body.exchangeRateThbPerUnit
+        : Number.parseFloat(String(body.exchangeRateThbPerUnit))
+      : undefined;
+  const exchangeRateThbPerUnit =
+    exchangeRateThbPerUnitRaw != null &&
+    Number.isFinite(exchangeRateThbPerUnitRaw) &&
+    exchangeRateThbPerUnitRaw > 0
+      ? exchangeRateThbPerUnitRaw
+      : undefined;
 
   let financialAccountId = body.financialAccountId;
   if (!financialAccountId) {
@@ -219,6 +234,7 @@ export async function POST(request: Request) {
       occurredAt,
       status,
       postedDate,
+      exchangeRateThbPerUnit,
     });
 
     let transferAccount: { id: string; name: string } | null = null;
@@ -232,11 +248,36 @@ export async function POST(request: Request) {
     revalidateTag("transactions", "max");
     revalidateTag("financial-accounts", "max");
     revalidateTag("dashboard-init", "max");
+    const ex =
+      typeof transaction.exchangeRate === "object" &&
+      transaction.exchangeRate != null &&
+      "toNumber" in transaction.exchangeRate
+        ? (transaction.exchangeRate as { toNumber: () => number }).toNumber()
+        : Number(transaction.exchangeRate ?? 1);
+    const baseRaw =
+      transaction.baseAmount == null
+        ? null
+        : typeof transaction.baseAmount === "object" &&
+            transaction.baseAmount != null &&
+            "toNumber" in transaction.baseAmount
+          ? (transaction.baseAmount as { toNumber: () => number }).toNumber()
+          : Number(transaction.baseAmount);
+    const amt =
+      typeof transaction.amount === "object" &&
+      transaction.amount != null &&
+      "toNumber" in transaction.amount
+        ? (transaction.amount as { toNumber: () => number }).toNumber()
+        : Number(transaction.amount);
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
       status: transaction.status,
-      amount: transaction.amount,
+      amount: amt,
+      currency: transaction.currency ?? "THB",
+      exchangeRate: Number.isFinite(ex) ? ex : 1,
+      baseAmount: baseRaw != null && Number.isFinite(baseRaw) ? baseRaw : null,
+      transferGroupId: transaction.transferGroupId ?? null,
+      transferLeg: transaction.transferLeg ?? null,
       financialAccountId: transaction.financialAccountId,
       transferAccountId: transaction.transferAccountId ?? null,
       transferAccount,
@@ -261,10 +302,15 @@ type SerializableTransaction = {
   type: string;
   status: string;
   amount: number;
+  currency: string;
+  exchangeRate: number;
+  baseAmount: number | null;
+  transferGroupId: string | null;
+  transferLeg: string | null;
   financialAccountId: string | null;
-  financialAccount: { id: string; name: string } | null;
+  financialAccount: { id: string; name: string; currency: string; type: string; bankName: string | null; cardNetwork: string | null; accountNumberMasked: string | null } | null;
   transferAccountId: string | null;
-  transferAccount: { id: string; name: string } | null;
+  transferAccount: { id: string; name: string; currency: string; type: string; bankName: string | null; cardNetwork: string | null; accountNumberMasked: string | null } | null;
   categoryId: string | null;
   categoryRef: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
@@ -326,7 +372,16 @@ async function fetchTransactionsList(
     offset,
   });
 
-  function mapAccount(acc: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null) {
+  function mapAccount(acc: {
+    id: string;
+    name: string;
+    type?: string;
+    currency?: string;
+    bankName?: string | null;
+    cardNetwork?: string | null;
+    accountNumber?: string | null;
+    accountNumberMode?: string | null;
+  } | null) {
     if (!acc) return null;
     const accountNumberMasked = maskAccountNumber(
       getAccountNumberForMasking(acc.accountNumber, acc.accountNumberMode)
@@ -335,6 +390,7 @@ async function fetchTransactionsList(
       id: acc.id,
       name: acc.name,
       type: acc.type ?? "OTHER",
+      currency: acc.currency ?? "THB",
       bankName: acc.bankName ?? null,
       cardNetwork: acc.cardNetwork ?? null,
       accountNumberMasked: accountNumberMasked || null,
@@ -344,18 +400,43 @@ async function fetchTransactionsList(
   type TxItem = (typeof transactions)[number];
   return transactions.map((t: TxItem) => {
     const tx = t as TxItem & {
+      currency?: string;
+      exchangeRate?: unknown;
+      baseAmount?: unknown;
+      transferGroupId?: string | null;
+      transferLeg?: string | null;
       financialAccount?: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
       transferAccount?: { id: string; name: string; type?: string; bankName?: string | null; cardNetwork?: string | null; accountNumber?: string | null; accountNumberMode?: string | null } | null;
       categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
     };
+    const amountNum =
+      typeof tx.amount === "object" && tx.amount != null && "toNumber" in tx.amount
+        ? (tx.amount as { toNumber: () => number }).toNumber()
+        : Number(tx.amount);
+    const ex =
+      typeof tx.exchangeRate === "object" &&
+      tx.exchangeRate != null &&
+      "toNumber" in tx.exchangeRate
+        ? (tx.exchangeRate as { toNumber: () => number }).toNumber()
+        : Number(tx.exchangeRate ?? 1);
+    const baseRaw =
+      tx.baseAmount == null
+        ? null
+        : typeof tx.baseAmount === "object" &&
+            tx.baseAmount != null &&
+            "toNumber" in tx.baseAmount
+          ? (tx.baseAmount as { toNumber: () => number }).toNumber()
+          : Number(tx.baseAmount);
     return {
       id: tx.id,
       type: tx.type,
       status: tx.status,
-      amount:
-        typeof tx.amount === "object" && tx.amount != null && "toNumber" in tx.amount
-          ? (tx.amount as { toNumber: () => number }).toNumber()
-          : Number(tx.amount),
+      amount: amountNum,
+      currency: tx.currency ?? "THB",
+      exchangeRate: Number.isFinite(ex) ? ex : 1,
+      baseAmount: baseRaw != null && Number.isFinite(baseRaw) ? baseRaw : null,
+      transferGroupId: tx.transferGroupId ?? null,
+      transferLeg: tx.transferLeg ?? null,
       financialAccountId: tx.financialAccountId,
       financialAccount: mapAccount(tx.financialAccount ?? null),
       transferAccountId: tx.transferAccountId ?? null,

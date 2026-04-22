@@ -2,11 +2,17 @@ import type { TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAccountBalanceAsOf, getTotalBalanceAsOf } from "@/lib/balance";
 import type { StatementPdfData } from "@/lib/statement-pdf";
+import { formatAmountWithOptionalThbParenthesis } from "@/lib/fx-display";
+import { decimalLikeToNumber, isBaseCurrency, normalizeCurrencyCode } from "@/lib/currency";
 
 type TransactionWithRelations = {
   id: string;
   type: string;
   amount: unknown;
+  currency?: string;
+  exchangeRate?: unknown;
+  baseAmount?: unknown;
+  transferLeg?: string | null;
   category: string | null;
   note: string | null;
   occurredAt: Date;
@@ -21,6 +27,34 @@ function toNum(v: unknown): number {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
+}
+
+function formatPdfMoney(n: number): string {
+  return new Intl.NumberFormat("th-TH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
+/** Debit/credit cell: primary in row currency + (THB) when snapshot base exists. */
+function formatStatementCell(
+  value: number,
+  tx: Pick<
+    TransactionWithRelations,
+    "amount" | "currency" | "exchangeRate" | "baseAmount"
+  >,
+): string {
+  if (value <= 0) return "";
+  const cur = normalizeCurrencyCode(tx.currency ?? "THB");
+  const baseSnap = decimalLikeToNumber(tx.baseAmount);
+  const baseParen =
+    !isBaseCurrency(cur) && baseSnap != null ? Math.abs(baseSnap) : null;
+  return formatAmountWithOptionalThbParenthesis({
+    amount: value,
+    currency: cur,
+    baseAmount: baseParen,
+    formatMoney: formatPdfMoney,
+  });
 }
 
 /**
@@ -45,8 +79,17 @@ function getDebitCredit(
       return { debit: isSource ? amount : 0, credit: 0 };
     }
     if (type === "TRANSFER") {
-      if (isSource) return { debit: amount, credit: 0 };
-      if (isDest) return { debit: 0, credit: amount };
+      const leg = tx.transferLeg;
+      if (leg === "OUT" && tx.financialAccountId === filteredAccountId) {
+        return { debit: amount, credit: 0 };
+      }
+      if (leg === "IN" && tx.financialAccountId === filteredAccountId) {
+        return { debit: 0, credit: amount };
+      }
+      if (leg == null || leg === "") {
+        if (isSource) return { debit: amount, credit: 0 };
+        if (isDest) return { debit: 0, credit: amount };
+      }
       return { debit: 0, credit: 0 };
     }
     if (type === "PAYMENT") {
@@ -168,6 +211,8 @@ export async function buildStatementPdfData(params: {
       occurredAt: tx.occurredAt,
       debit,
       credit,
+      debitDisplay: formatStatementCell(debit, tx),
+      creditDisplay: formatStatementCell(credit, tx),
       accountName: tx.financialAccount?.name,
       transferAccountName: tx.transferAccount?.name,
     };

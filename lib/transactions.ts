@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Prisma, TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -7,6 +8,17 @@ import {
 } from "@/lib/date-range";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { recomputeOutstanding } from "@/lib/credit-card";
+import {
+  assertTransferPairBaseBalanced,
+  computeBaseAmountThb,
+  decimalLikeToNumber,
+  defaultExchangeRateThbPerUnit,
+  getEffectiveBaseAmountThb,
+  isBaseCurrency,
+  normalizeCurrencyCode,
+  resolveCrossCurrencyTransferLegs,
+} from "@/lib/currency";
+import { sumTransactionThbInRange } from "@/lib/transaction-thb-sum";
 
 export const TransactionType = {
   INCOME: "INCOME",
@@ -38,6 +50,24 @@ export type CreateTransactionParams = {
   status?: "PENDING" | "POSTED";
   postedDate?: Date;
   statementId?: string | null;
+  /** THB per 1 unit of account currency when currency is not THB (snapshot at save). */
+  exchangeRateThbPerUnit?: number | null;
+};
+
+/** Cross-currency transfer: creates two TRANSFER rows with the same transferGroupId. */
+export type CreateCrossCurrencyTransferParams = {
+  userId: string;
+  fromAccountId: string;
+  toAccountId: string;
+  fromAmount: number;
+  toAmount: number;
+  /**
+   * Optional: bank THB per 1 unit of the non-THB currency.
+   * When set, the THB leg is computed from the foreign amount × this rate (see resolveCrossCurrencyTransferLegs).
+   */
+  bankRateThbPerForeignUnit?: number | null;
+  occurredAt: Date;
+  note?: string | null;
 };
 
 export type ListTransactionsOptions = {
@@ -62,6 +92,8 @@ export type UpdateTransactionParams = {
   occurredAt?: Date;
   status?: "PENDING" | "POSTED" | "VOID";
   postedDate?: Date | null;
+  /** When account currency is not THB, optional override for THB per 1 unit (else keep existing rate or default). */
+  exchangeRateThbPerUnit?: number | null;
 };
 
 export async function createTransaction(params: CreateTransactionParams) {
@@ -102,6 +134,50 @@ export async function createTransaction(params: CreateTransactionParams) {
     }
   }
 
+  const occurredAt = params.occurredAt;
+  if (!(occurredAt instanceof Date) || Number.isNaN(occurredAt.getTime())) {
+    throw new Error("occurredAt must be a valid Date");
+  }
+
+  const fromAccount = await prisma.financialAccount.findFirst({
+    where: { id: params.financialAccountId, userId },
+    select: { currency: true, type: true, name: true },
+  });
+  if (!fromAccount) {
+    throw new Error("Account not found");
+  }
+
+  let toAccount: { currency: string; type: typeof fromAccount.type; name: string } | null = null;
+  if (type === TransactionType.TRANSFER) {
+    const toId = params.transferAccountId != null ? String(params.transferAccountId).trim() : "";
+    const toRow = await prisma.financialAccount.findFirst({
+      where: { id: toId, userId },
+      select: { currency: true, type: true, name: true },
+    });
+    if (!toRow) {
+      throw new Error("Transfer destination account not found");
+    }
+    toAccount = toRow;
+    if (
+      normalizeCurrencyCode(fromAccount.currency) !== normalizeCurrencyCode(toRow.currency)
+    ) {
+      throw new Error(
+        "Accounts use different currencies; use the cross-currency transfer flow instead",
+      );
+    }
+  }
+
+  const fromCur = normalizeCurrencyCode(fromAccount.currency);
+  let exchangeRateThb = 1;
+  if (!isBaseCurrency(fromCur)) {
+    const override = params.exchangeRateThbPerUnit;
+    exchangeRateThb =
+      override != null && Number.isFinite(override) && override > 0
+        ? override
+        : defaultExchangeRateThbPerUnit(fromCur);
+  }
+  const baseAmountVal = computeBaseAmountThb(amountNumber, fromCur, exchangeRateThb);
+
   const category =
     params.category != null && String(params.category).trim() !== ""
       ? String(params.category).trim()
@@ -115,11 +191,6 @@ export async function createTransaction(params: CreateTransactionParams) {
       ? String(params.categoryId).trim()
       : null;
 
-  const occurredAt = params.occurredAt;
-  if (!(occurredAt instanceof Date) || Number.isNaN(occurredAt.getTime())) {
-    throw new Error("occurredAt must be a valid Date");
-  }
-
   const status = params.status === "PENDING" ? PrismaTransactionStatus.PENDING : PrismaTransactionStatus.POSTED;
   const postedDate = status === PrismaTransactionStatus.POSTED
     ? (params.postedDate ?? occurredAt)
@@ -131,6 +202,9 @@ export async function createTransaction(params: CreateTransactionParams) {
       type: type as PrismaTransactionType,
       status,
       amount: amountNumber,
+      currency: fromCur,
+      exchangeRate: exchangeRateThb,
+      baseAmount: baseAmountVal,
       financialAccountId: params.financialAccountId,
       transferAccountId:
         type === TransactionType.TRANSFER && params.transferAccountId
@@ -146,20 +220,12 @@ export async function createTransaction(params: CreateTransactionParams) {
   });
 
   if (params.financialAccountId) {
-    const account = await prisma.financialAccount.findUnique({
-      where: { id: params.financialAccountId },
-      select: { type: true, name: true },
-    });
+    const account = fromAccount;
     if (account?.type === "CREDIT_CARD") {
       void recomputeOutstanding(params.financialAccountId);
     }
     const transferAccount =
-      type === TransactionType.TRANSFER && params.transferAccountId
-        ? await prisma.financialAccount.findUnique({
-            where: { id: params.transferAccountId },
-            select: { name: true },
-          })
-        : null;
+      type === TransactionType.TRANSFER && toAccount ? { name: toAccount.name } : null;
     const categoryRow = params.categoryId
       ? await prisma.category.findUnique({
           where: { id: params.categoryId },
@@ -201,6 +267,134 @@ export async function createTransaction(params: CreateTransactionParams) {
   }
 
   return transaction;
+}
+
+export async function createCrossCurrencyTransfer(
+  params: CreateCrossCurrencyTransferParams,
+): Promise<{ transferGroupId: string; legs: { id: string }[] }> {
+  const {
+    userId,
+    fromAccountId,
+    toAccountId,
+    fromAmount,
+    toAmount,
+    bankRateThbPerForeignUnit,
+    occurredAt,
+  } = params;
+  if (!userId || !fromAccountId || !toAccountId) {
+    throw new Error("Missing accounts");
+  }
+  if (fromAccountId === toAccountId) {
+    throw new Error("Accounts must be different");
+  }
+  if (!(occurredAt instanceof Date) || Number.isNaN(occurredAt.getTime())) {
+    throw new Error("occurredAt must be a valid Date");
+  }
+
+  const [fromAcc, toAcc] = await Promise.all([
+    prisma.financialAccount.findFirst({
+      where: { id: fromAccountId, userId },
+      select: { currency: true, type: true, name: true },
+    }),
+    prisma.financialAccount.findFirst({
+      where: { id: toAccountId, userId },
+      select: { currency: true, type: true, name: true },
+    }),
+  ]);
+  if (!fromAcc || !toAcc) {
+    throw new Error("Account not found");
+  }
+  if (fromAcc.type === "CREDIT_CARD" || toAcc.type === "CREDIT_CARD") {
+    throw new Error("Cannot transfer to or from a credit card account");
+  }
+
+  const cFrom = normalizeCurrencyCode(fromAcc.currency);
+  const cTo = normalizeCurrencyCode(toAcc.currency);
+  if (cFrom === cTo) {
+    throw new Error("Both accounts use the same currency; use a normal transfer instead");
+  }
+
+  const resolved = resolveCrossCurrencyTransferLegs({
+    fromCurrency: cFrom,
+    toCurrency: cTo,
+    fromAmount,
+    toAmount,
+    bankRateThbPerForeignUnit,
+  });
+  const {
+    fromAmount: legFromAmt,
+    toAmount: legToAmt,
+    thbPerUnitSource,
+    thbPerUnitDestination,
+    baseOut,
+    baseIn,
+  } = resolved;
+  assertTransferPairBaseBalanced(baseOut, baseIn);
+
+  const groupId = randomUUID();
+  const note =
+    params.note != null && String(params.note).trim() !== ""
+      ? String(params.note).trim()
+      : null;
+  const postedDate = occurredAt;
+
+  const [legOut, legIn] = await prisma.$transaction([
+    prisma.transaction.create({
+      data: {
+        userId,
+        type: PrismaTransactionType.TRANSFER,
+        status: PrismaTransactionStatus.POSTED,
+        amount: legFromAmt,
+        currency: cFrom,
+        exchangeRate: thbPerUnitSource,
+        baseAmount: baseOut,
+        transferGroupId: groupId,
+        transferLeg: "OUT",
+        financialAccountId: fromAccountId,
+        transferAccountId: toAccountId,
+        occurredAt,
+        postedDate,
+        note,
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        userId,
+        type: PrismaTransactionType.TRANSFER,
+        status: PrismaTransactionStatus.POSTED,
+        amount: legToAmt,
+        currency: cTo,
+        exchangeRate: thbPerUnitDestination,
+        baseAmount: baseIn,
+        transferGroupId: groupId,
+        transferLeg: "IN",
+        financialAccountId: toAccountId,
+        transferAccountId: fromAccountId,
+        occurredAt,
+        postedDate,
+        note,
+      },
+    }),
+  ]);
+
+  void createActivityLog({
+    userId,
+    action: ActivityLogAction.TRANSACTION_CREATED,
+    entityType: "transaction",
+    entityId: legOut.id,
+    details: {
+      type: "TRANSFER",
+      crossCurrency: true,
+      transferGroupId: groupId,
+      fromAccountName: fromAcc.name,
+      toAccountName: toAcc.name,
+      fromAmount: legFromAmt,
+      toAmount: legToAmt,
+      occurredAt,
+    },
+  });
+
+  return { transferGroupId: groupId, legs: [{ id: legOut.id }, { id: legIn.id }] };
 }
 
 export async function listTransactionsByUser(
@@ -302,6 +496,7 @@ export async function listTransactionsByUser(
           id: true,
           name: true,
           type: true,
+          currency: true,
           bankName: true,
           cardNetwork: true,
           accountNumber: true,
@@ -313,6 +508,7 @@ export async function listTransactionsByUser(
           id: true,
           name: true,
           type: true,
+          currency: true,
           bankName: true,
           cardNetwork: true,
           accountNumber: true,
@@ -329,8 +525,8 @@ export async function getTransactionById(userId: string, id: string) {
   return prisma.transaction.findFirst({
     where: { id, userId },
     include: {
-      financialAccount: { select: { id: true, name: true } },
-      transferAccount: { select: { id: true, name: true } },
+      financialAccount: { select: { id: true, name: true, currency: true } },
+      transferAccount: { select: { id: true, name: true, currency: true } },
       categoryRef: { select: { id: true, name: true, nameEn: true } },
     },
   });
@@ -344,6 +540,72 @@ export async function updateTransaction(
   const existing = await getTransactionById(userId, id);
   if (!existing) {
     throw new Error("Transaction not found");
+  }
+
+  if (existing.transferGroupId) {
+    const amountChanging =
+      params.amount != null && Number(params.amount) !== Number(existing.amount);
+    const acctChanging =
+      params.financialAccountId != null &&
+      params.financialAccountId !== existing.financialAccountId;
+    const toChanging =
+      params.transferAccountId !== undefined &&
+      (params.transferAccountId ?? null) !== (existing.transferAccountId ?? null);
+    const typeChanging = params.type != null && params.type !== existing.type;
+    const categoryChanging =
+      params.categoryId !== undefined || params.category !== undefined;
+    if (amountChanging || acctChanging || toChanging || typeChanging || categoryChanging) {
+      throw new Error(
+        "Cross-currency transfer pairs can only update date, note, status, and posted date from this endpoint",
+      );
+    }
+    const patch: Prisma.TransactionUpdateManyMutationInput = {};
+    if (params.occurredAt instanceof Date && !Number.isNaN(params.occurredAt.getTime())) {
+      patch.occurredAt = params.occurredAt;
+    }
+    if (params.note !== undefined) {
+      patch.note =
+        params.note != null && String(params.note).trim() !== ""
+          ? String(params.note).trim()
+          : null;
+    }
+    if (params.status !== undefined) {
+      patch.status = params.status as PrismaTransactionStatus;
+    }
+    if (params.postedDate !== undefined) {
+      patch.postedDate = params.postedDate;
+    }
+    if (Object.keys(patch).length > 0) {
+      await prisma.transaction.updateMany({
+        where: { userId, transferGroupId: existing.transferGroupId },
+        data: patch,
+      });
+    }
+    const transaction = await prisma.transaction.findFirst({
+      where: { id, userId },
+      include: {
+        financialAccount: { select: { id: true, name: true, currency: true } },
+        transferAccount: { select: { id: true, name: true, currency: true } },
+        categoryRef: { select: { id: true, name: true, nameEn: true } },
+      },
+    });
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.TRANSACTION_UPDATED,
+      entityType: "transaction",
+      entityId: transaction.id,
+      details: {
+        type: transaction.type,
+        crossCurrencyPair: true,
+        transferGroupId: existing.transferGroupId,
+        occurredAt: transaction.occurredAt,
+        note: transaction.note,
+      },
+    });
+    return transaction;
   }
 
   const validUpdateTypes = [
@@ -399,6 +661,27 @@ export async function updateTransaction(
     if (transferAccountId === financialAccountId) {
       throw new Error("transferAccountId must be different from financialAccountId");
     }
+    const [fromA, toA] = await Promise.all([
+      financialAccountId
+        ? prisma.financialAccount.findFirst({
+            where: { id: financialAccountId, userId },
+            select: { currency: true },
+          })
+        : null,
+      prisma.financialAccount.findFirst({
+        where: { id: transferAccountId, userId },
+        select: { currency: true },
+      }),
+    ]);
+    if (
+      fromA &&
+      toA &&
+      normalizeCurrencyCode(fromA.currency) !== normalizeCurrencyCode(toA.currency)
+    ) {
+      throw new Error(
+        "Accounts use different currencies; use the cross-currency transfer flow instead",
+      );
+    }
   }
   const occurredAt =
     params.occurredAt instanceof Date && !Number.isNaN(params.occurredAt.getTime())
@@ -428,12 +711,32 @@ export async function updateTransaction(
     updateData.postedDate = params.postedDate;
   }
 
+  const accRow = financialAccountId
+    ? await prisma.financialAccount.findFirst({
+        where: { id: financialAccountId, userId },
+        select: { currency: true },
+      })
+    : null;
+  const cur = normalizeCurrencyCode(accRow?.currency);
+  const overrideRate = params.exchangeRateThbPerUnit;
+  const rate = isBaseCurrency(cur)
+    ? 1
+    : overrideRate != null &&
+        Number.isFinite(overrideRate) &&
+        overrideRate > 0
+      ? overrideRate
+      : decimalLikeToNumber(existing.exchangeRate) ?? defaultExchangeRateThbPerUnit(cur);
+  const baseAmountVal = computeBaseAmountThb(amountNumber, cur, rate);
+  updateData.currency = cur;
+  updateData.exchangeRate = rate;
+  updateData.baseAmount = baseAmountVal;
+
   const transaction = await prisma.transaction.update({
     where: { id },
     data: updateData,
     include: {
-      financialAccount: { select: { id: true, name: true } },
-      transferAccount: { select: { id: true, name: true } },
+      financialAccount: { select: { id: true, name: true, currency: true } },
+      transferAccount: { select: { id: true, name: true, currency: true } },
       categoryRef: { select: { id: true, name: true, nameEn: true } },
     },
   });
@@ -585,6 +888,45 @@ export async function deleteTransaction(
     categoryName = existing.category;
   }
 
+  if (existing.transferGroupId) {
+    const groupId = existing.transferGroupId;
+    const related = await prisma.transaction.findMany({
+      where: { userId, transferGroupId: groupId },
+      select: { financialAccountId: true },
+    });
+    await prisma.transaction.deleteMany({
+      where: { userId, transferGroupId: groupId },
+    });
+    for (const r of related) {
+      if (r.financialAccountId) {
+        const acc = await prisma.financialAccount.findUnique({
+          where: { id: r.financialAccountId },
+          select: { type: true },
+        });
+        if (acc?.type === "CREDIT_CARD") {
+          void recomputeOutstanding(r.financialAccountId);
+        }
+      }
+    }
+    void createActivityLog({
+      userId,
+      action: ActivityLogAction.TRANSACTION_DELETED,
+      entityType: "transaction",
+      entityId: id,
+      details: {
+        type: existing.type,
+        crossCurrencyPair: true,
+        transferGroupId: groupId,
+        amount: existing.amount,
+        occurredAt: existing.occurredAt,
+        accountName,
+        categoryName,
+        note: existing.note ?? undefined,
+      },
+    });
+    return true;
+  }
+
   await prisma.transaction.delete({
     where: { id },
   });
@@ -621,36 +963,22 @@ export async function getTransactionsSummary(
     throw new Error("userId is required");
   }
   const { from, to, financialAccountId } = options;
-  const where: {
-    userId: string;
-    occurredAt?: { gte: Date; lte: Date };
-    financialAccountId?: string;
-  } = {
-    userId,
-  };
-  if (from != null && to != null) {
-    where.occurredAt = { gte: from, lte: to };
-  }
-  if (financialAccountId) {
-    where.financialAccountId = financialAccountId;
-  }
-
-  const [incomeRows, expenseRows] = await Promise.all([
-    prisma.transaction.aggregate({
-      where: { ...where, type: PrismaTransactionType.INCOME },
-      _sum: { amount: true },
+  const hasRange = from != null && to != null;
+  const [income, expense] = await Promise.all([
+    sumTransactionThbInRange({
+      userId,
+      types: [PrismaTransactionType.INCOME],
+      ...(hasRange ? { from, to } : {}),
+      ...(financialAccountId ? { financialAccountId } : {}),
     }),
-    prisma.transaction.aggregate({
-      where: {
-        ...where,
-        type: { in: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST] },
-      },
-      _sum: { amount: true },
+    sumTransactionThbInRange({
+      userId,
+      types: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST],
+      ...(hasRange ? { from, to } : {}),
+      ...(financialAccountId ? { financialAccountId } : {}),
     }),
   ]);
 
-  const income = Number(incomeRows._sum.amount ?? 0);
-  const expense = Number(expenseRows._sum.amount ?? 0);
   return { income, expense };
 }
 
@@ -715,18 +1043,27 @@ export async function getExpenseWeekOverview(
         in: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST],
       },
     },
-    select: { occurredAt: true, amount: true },
+    select: {
+      occurredAt: true,
+      amount: true,
+      currency: true,
+      exchangeRate: true,
+      baseAmount: true,
+    },
   });
 
   const byDay = new Map<string, number>();
   for (const row of rows) {
     const key = toDateStringInTimezone(row.occurredAt, timezone);
-    const amt =
-      typeof row.amount === "object" && row.amount != null && "toNumber" in row.amount
-        ? (row.amount as { toNumber: () => number }).toNumber()
-        : Number(row.amount);
-    if (!Number.isFinite(amt)) continue;
-    byDay.set(key, (byDay.get(key) ?? 0) + amt);
+    const thb =
+      getEffectiveBaseAmountThb({
+        amount: row.amount,
+        currency: row.currency,
+        exchangeRate: row.exchangeRate,
+        baseAmount: row.baseAmount,
+      }) ?? 0;
+    if (!Number.isFinite(thb)) continue;
+    byDay.set(key, (byDay.get(key) ?? 0) + thb);
   }
 
   const weekDays: DashboardExpenseWeekDay[] = weekDateStrings.map((date) => ({
@@ -778,7 +1115,14 @@ export async function getSummaryByMonth(
       },
       ...(financialAccountId ? { financialAccountId } : {}),
     },
-    select: { occurredAt: true, type: true, amount: true },
+    select: {
+      occurredAt: true,
+      type: true,
+      amount: true,
+      currency: true,
+      exchangeRate: true,
+      baseAmount: true,
+    },
   });
 
   const monthMap = new Map<
@@ -795,11 +1139,17 @@ export async function getSummaryByMonth(
     const m = monthPart ? parseInt(monthPart, 10) - 1 : 0;
     const prev = monthMap.get(m) ?? { income: 0, expense: 0 };
     const typeUpper = String(tx.type).toUpperCase();
-    const amt = Number(tx.amount) || 0;
+    const thb =
+      getEffectiveBaseAmountThb({
+        amount: tx.amount,
+        currency: tx.currency,
+        exchangeRate: tx.exchangeRate,
+        baseAmount: tx.baseAmount,
+      }) ?? 0;
     if (typeUpper === "INCOME") {
-      monthMap.set(m, { ...prev, income: prev.income + amt });
+      monthMap.set(m, { ...prev, income: prev.income + thb });
     } else if (typeUpper === "EXPENSE" || typeUpper === "INTEREST") {
-      monthMap.set(m, { ...prev, expense: prev.expense + amt });
+      monthMap.set(m, { ...prev, expense: prev.expense + thb });
     }
   }
 
@@ -843,6 +1193,9 @@ export async function getSummaryByCategory(
     },
     select: {
       amount: true,
+      currency: true,
+      exchangeRate: true,
+      baseAmount: true,
       categoryId: true,
       category: true,
       categoryRef: { select: { name: true, nameEn: true } },
@@ -861,15 +1214,21 @@ export async function getSummaryByCategory(
     const nameEn = tx.categoryRef?.nameEn ?? null;
     const key = tx.categoryId ?? `str:${name}`;
     const prev = map.get(key);
-    const amt = Number(tx.amount) || 0;
+    const thb =
+      getEffectiveBaseAmountThb({
+        amount: tx.amount,
+        currency: tx.currency,
+        exchangeRate: tx.exchangeRate,
+        baseAmount: tx.baseAmount,
+      }) ?? 0;
     if (prev) {
-      map.set(key, { ...prev, amount: prev.amount + amt });
+      map.set(key, { ...prev, amount: prev.amount + thb });
     } else {
       map.set(key, {
         categoryId: tx.categoryId,
         categoryName: name,
         categoryNameEn: nameEn,
-        amount: amt,
+        amount: thb,
       });
     }
   }

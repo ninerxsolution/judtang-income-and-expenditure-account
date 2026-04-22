@@ -3,6 +3,7 @@ const mockTransactionFindFirst = jest.fn();
 const mockTransactionUpdate = jest.fn();
 const mockTransactionDelete = jest.fn();
 const mockFinancialAccountFindUnique = jest.fn();
+const mockFinancialAccountFindFirst = jest.fn();
 const mockCategoryFindUnique = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
@@ -16,6 +17,7 @@ jest.mock("@/lib/prisma", () => ({
     },
     financialAccount: {
       findUnique: (...args: unknown[]) => mockFinancialAccountFindUnique(...args),
+      findFirst: (...args: unknown[]) => mockFinancialAccountFindFirst(...args),
     },
     category: {
       findUnique: (...args: unknown[]) => mockCategoryFindUnique(...args),
@@ -61,6 +63,11 @@ beforeEach(() => {
     updatedAt: new Date(),
   });
   mockFinancialAccountFindUnique.mockResolvedValue({ type: "CASH", name: "Main" });
+  mockFinancialAccountFindFirst.mockResolvedValue({
+    currency: "THB",
+    type: "CASH",
+    name: "Main",
+  });
   mockCategoryFindUnique.mockResolvedValue(null);
 });
 
@@ -134,6 +141,9 @@ describe("createTransaction", () => {
           type: "EXPENSE",
           amount: 100,
           financialAccountId: "acc-1",
+          currency: "THB",
+          exchangeRate: 1,
+          baseAmount: 100,
         }),
       })
     );
@@ -201,11 +211,20 @@ describe("updateTransaction", () => {
       occurredAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      currency: "THB",
+      exchangeRate: 1,
+      baseAmount: 100,
+      transferGroupId: null,
+      transferLeg: null,
     };
-    mockTransactionFindFirst
-      .mockResolvedValueOnce(existing)
-      .mockResolvedValueOnce(existing);
-    mockTransactionUpdate.mockResolvedValue({ ...existing, amount: 200 });
+    mockTransactionFindFirst.mockResolvedValueOnce(existing);
+    mockTransactionUpdate.mockResolvedValue({
+      ...existing,
+      amount: 200,
+      currency: "THB",
+      exchangeRate: 1,
+      baseAmount: 200,
+    });
 
     const result = await updateTransaction("user-1", "tx-1", { amount: 200 });
 
@@ -238,6 +257,11 @@ describe("deleteTransaction", () => {
       occurredAt: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
+      currency: "THB",
+      exchangeRate: 1,
+      baseAmount: 100,
+      transferGroupId: null,
+      transferLeg: null,
     };
     mockTransactionFindFirst.mockReset();
     mockTransactionFindFirst.mockResolvedValue(existing);

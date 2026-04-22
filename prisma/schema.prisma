@@ -227,6 +227,8 @@ model FinancialAccount {
   id             String   @id @default(cuid())
   name           String
   type           AccountType
+  /// ISO 4217 (e.g. THB, USD). Immutable after first posted transaction on this account (enforced in API).
+  currency       String   @default("THB") @db.VarChar(3)
   initialBalance Decimal   @db.Decimal(15, 2)
   isActive       Boolean   @default(true)
   isDefault      Boolean   @default(false)
@@ -292,6 +294,16 @@ model Transaction {
   type                 TransactionType
   status               TransactionStatus @default(POSTED)
   amount               Decimal           @db.Decimal(15, 2)
+  /// ISO 4217; must match financial account currency for this leg.
+  currency             String            @default("THB") @db.VarChar(3)
+  /// THB per 1 unit of `currency` at posting time (1 when currency is THB).
+  exchangeRate         Decimal           @default(1) @db.Decimal(18, 8)
+  /// Amount in THB (base) for cross-account summaries; snapshot at posting.
+  baseAmount           Decimal?          @db.Decimal(15, 2)
+  /// Pairs two rows for cross-currency TRANSFER (same group id).
+  transferGroupId      String?
+  /// For paired TRANSFER: OUT = funds leave financialAccountId; IN = funds enter financialAccountId. Null for legacy single-row TRANSFER.
+  transferLeg          String?           @db.VarChar(3)
   category             String?
   note                 String?           @db.Text
   occurredAt           DateTime
@@ -315,6 +327,7 @@ model Transaction {
   @@index([userId, occurredAt])
   @@index([financialAccountId])
   @@index([transferAccountId])
+  @@index([transferGroupId])
   @@index([statementId])
   @@index([recurringTransactionId])
 }

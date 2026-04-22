@@ -2,16 +2,18 @@
  * Budget management: aggregation, progress calculation, template-apply.
  * Uses Transaction (EXPENSE only), BudgetMonth, BudgetCategory, BudgetTemplate.
  */
-import { Prisma } from "@prisma/client";
+import { Prisma, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  sumExpenseByCategoryThbForMonth,
+  sumTransactionThbInRange,
+} from "@/lib/transaction-thb-sum";
 import {
   getBudgetIndicator,
   type BudgetProgressIndicator,
 } from "@/lib/budget-shared";
 
 export { getBudgetIndicator, type BudgetProgressIndicator } from "@/lib/budget-shared";
-
-const EXPENSE = "EXPENSE" as const;
 
 /** Calendar month bounds in server local time (month 1–12). */
 export function getMonthDateRange(year: number, month: number): { from: Date; to: Date } {
@@ -27,15 +29,12 @@ export async function getTotalExpenseForMonth(
   month: number,
 ): Promise<number> {
   const { from, to } = getMonthDateRange(year, month);
-  const result = await prisma.transaction.aggregate({
-    where: {
-      userId,
-      type: EXPENSE,
-      occurredAt: { gte: from, lte: to },
-    },
-    _sum: { amount: true },
+  return sumTransactionThbInRange({
+    userId,
+    types: [TransactionType.EXPENSE],
+    from,
+    to,
   });
-  return Number(result._sum.amount ?? 0);
 }
 
 /** Per-category expense for user in the given month. Keys: categoryId or "__uncategorized" for null. */
@@ -45,21 +44,7 @@ export async function getExpenseByCategoryForMonth(
   month: number,
 ): Promise<Map<string | null, number>> {
   const { from, to } = getMonthDateRange(year, month);
-  const rows = await prisma.transaction.groupBy({
-    by: ["categoryId"],
-    where: {
-      userId,
-      type: EXPENSE,
-      occurredAt: { gte: from, lte: to },
-    },
-    _sum: { amount: true },
-  });
-  const map = new Map<string | null, number>();
-  for (const r of rows) {
-    const key = r.categoryId ?? null;
-    map.set(key, Number(r._sum.amount ?? 0));
-  }
-  return map;
+  return sumExpenseByCategoryThbForMonth({ userId, from, to });
 }
 
 export type CategoryBudgetWithActual = {

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { TransactionType } from "@prisma/client";
+import { Prisma, TransactionType } from "@prisma/client";
 import { getOutstandingAsOf } from "@/lib/credit-card";
+import { approximateBalanceThb } from "@/lib/fx-display";
 
 /**
  * Balance = initialBalance + sum(INCOME) - sum(EXPENSE) + sum(TRANSFER in) - sum(TRANSFER out)
@@ -26,6 +27,7 @@ export async function getAccountBalanceAsOf(
       type: true,
       cardAccountType: true,
       linkedAccountId: true,
+      currency: true,
     },
   });
 
@@ -46,7 +48,31 @@ export async function getAccountBalanceAsOf(
 
   const occurredAtFilter = endDate ? { occurredAt: { lte: endDate } } : {};
   const baseWhere = { financialAccountId: accountId, ...occurredAtFilter };
-  const transferInWhere = { transferAccountId: accountId, type: TransactionType.TRANSFER, ...occurredAtFilter };
+
+  const transferOutWhere: Prisma.TransactionWhereInput = {
+    ...baseWhere,
+    type: TransactionType.TRANSFER,
+    OR: [
+      {
+        AND: [
+          { transferGroupId: null },
+          { transferAccountId: { not: null } },
+        ],
+      },
+      { transferLeg: "OUT" },
+    ],
+  };
+
+  const transferInWhere: Prisma.TransactionWhereInput = {
+    type: TransactionType.TRANSFER,
+    ...occurredAtFilter,
+    OR: [
+      { transferAccountId: accountId },
+      {
+        AND: [{ transferLeg: "IN" }, { financialAccountId: accountId }],
+      },
+    ],
+  };
 
   const [incomeSum, expenseSum, transferOutSum, transferInSum] = await Promise.all([
     prisma.transaction.aggregate({
@@ -58,7 +84,7 @@ export async function getAccountBalanceAsOf(
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
-      where: { ...baseWhere, type: TransactionType.TRANSFER },
+      where: transferOutWhere,
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
@@ -98,21 +124,21 @@ export type NetWorthTrendItem = {
 };
 
 /**
- * Total net balance as of a given date.
- * When financialAccountId is provided, returns only that account's balance.
+ * Total net worth in THB (mixed-currency accounts converted with display FX rules).
+ * `approximate` is true when any included account used a non-snapshot rate (e.g. fallback USD).
  */
-export async function getTotalBalanceAsOf(
+export async function getTotalBalanceMeta(
   userId: string,
   endDate?: Date,
   financialAccountId?: string,
-): Promise<number> {
+): Promise<{ thb: number; approximate: boolean }> {
   const accounts = await prisma.financialAccount.findMany({
     where: {
       userId,
       isActive: true,
       ...(financialAccountId ? { id: financialAccountId } : {}),
     },
-    select: { id: true, type: true, cardAccountType: true, linkedAccountId: true },
+    select: { id: true, type: true, cardAccountType: true, linkedAccountId: true, currency: true },
   });
   const toSum = accounts.filter((a) => {
     if (a.type !== "CREDIT_CARD") return true;
@@ -124,7 +150,29 @@ export async function getTotalBalanceAsOf(
   const balances = await Promise.all(
     toSum.map((a) => getAccountBalanceAsOf(a.id, endDate)),
   );
-  return balances.reduce((sum, b) => sum + b, 0);
+  let totalThb = 0;
+  let approximate = false;
+  for (let i = 0; i < toSum.length; i++) {
+    const acc = toSum[i]!;
+    const bal = balances[i]!;
+    const { thb, approximate: apx } = approximateBalanceThb(bal, acc.currency ?? "THB");
+    totalThb += thb;
+    if (apx) approximate = true;
+  }
+  return { thb: totalThb, approximate };
+}
+
+/**
+ * Total net balance as of a given date.
+ * When financialAccountId is provided, returns only that account's balance.
+ */
+export async function getTotalBalanceAsOf(
+  userId: string,
+  endDate?: Date,
+  financialAccountId?: string,
+): Promise<number> {
+  const { thb } = await getTotalBalanceMeta(userId, endDate, financialAccountId);
+  return thb;
 }
 
 /**

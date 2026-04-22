@@ -9,8 +9,52 @@ import {
 } from "@/lib/transactions";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { revalidateTag } from "@/lib/cache";
+import { parseOccurredAt } from "@/lib/date-range";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
+
+function serializeTransactionAmounts(transaction: {
+  amount: unknown;
+  currency?: string;
+  exchangeRate?: unknown;
+  baseAmount?: unknown;
+  transferGroupId?: string | null;
+  transferLeg?: string | null;
+}): {
+  amount: number;
+  currency: string;
+  exchangeRate: number;
+  baseAmount: number | null;
+  transferGroupId: string | null;
+  transferLeg: string | null;
+} {
+  const amount =
+    typeof transaction.amount === "object" && transaction.amount != null && "toNumber" in transaction.amount
+      ? (transaction.amount as { toNumber: () => number }).toNumber()
+      : Number(transaction.amount);
+  const ex =
+    typeof transaction.exchangeRate === "object" &&
+    transaction.exchangeRate != null &&
+    "toNumber" in transaction.exchangeRate
+      ? (transaction.exchangeRate as { toNumber: () => number }).toNumber()
+      : Number(transaction.exchangeRate ?? 1);
+  const baseRaw =
+    transaction.baseAmount == null
+      ? null
+      : typeof transaction.baseAmount === "object" &&
+          transaction.baseAmount != null &&
+          "toNumber" in transaction.baseAmount
+        ? (transaction.baseAmount as { toNumber: () => number }).toNumber()
+        : Number(transaction.baseAmount);
+  return {
+    amount,
+    currency: transaction.currency ?? "THB",
+    exchangeRate: Number.isFinite(ex) ? ex : 1,
+    baseAmount: baseRaw != null && Number.isFinite(baseRaw) ? baseRaw : null,
+    transferGroupId: transaction.transferGroupId ?? null,
+    transferLeg: transaction.transferLeg ?? null,
+  };
+}
 
 export async function GET(
   _request: Request,
@@ -34,20 +78,19 @@ export async function GET(
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
     }
 
-    const amount =
-      typeof transaction.amount === "object" && "toNumber" in transaction.amount
-        ? (transaction.amount as { toNumber: () => number }).toNumber()
-        : Number(transaction.amount);
+    const amounts = serializeTransactionAmounts(transaction);
 
     const txWithInclude = transaction as typeof transaction & {
-      transferAccount?: { id: string; name: string } | null;
+      financialAccount?: { id: string; name: string; currency?: string } | null;
+      transferAccount?: { id: string; name: string; currency?: string } | null;
     };
     return NextResponse.json({
       id: transaction.id,
       type: transaction.type,
       status: transaction.status,
-      amount,
+      ...amounts,
       financialAccountId: transaction.financialAccountId,
+      financialAccount: txWithInclude.financialAccount ?? null,
       transferAccountId: transaction.transferAccountId ?? null,
       transferAccount: txWithInclude.transferAccount ?? null,
       categoryId: transaction.categoryId,
@@ -93,6 +136,7 @@ export async function PATCH(
     occurredAt?: string;
     status?: string;
     postedDate?: string | null;
+    exchangeRateThbPerUnit?: number;
   };
 
   try {
@@ -129,12 +173,22 @@ export async function PATCH(
   }
 
   let occurredAt: Date | undefined;
-  if (body.occurredAt) {
-    const parsed = new Date(body.occurredAt);
-    if (!Number.isNaN(parsed.getTime())) {
-      occurredAt = parsed;
-    }
+  if (body.occurredAt !== undefined && body.occurredAt !== null) {
+    occurredAt = parseOccurredAt(body.occurredAt);
   }
+
+  const exchangeRateThbPerUnitRaw =
+    body.exchangeRateThbPerUnit != null
+      ? typeof body.exchangeRateThbPerUnit === "number"
+        ? body.exchangeRateThbPerUnit
+        : Number.parseFloat(String(body.exchangeRateThbPerUnit))
+      : undefined;
+  const exchangeRateThbPerUnit =
+    exchangeRateThbPerUnitRaw != null &&
+    Number.isFinite(exchangeRateThbPerUnitRaw) &&
+    exchangeRateThbPerUnitRaw > 0
+      ? exchangeRateThbPerUnitRaw
+      : undefined;
 
   const status =
     body.status === "PENDING"
@@ -183,15 +237,14 @@ export async function PATCH(
       occurredAt,
       status,
       postedDate,
+      exchangeRateThbPerUnit,
     });
 
-    const amount =
-      typeof transaction.amount === "object" && "toNumber" in transaction.amount
-        ? (transaction.amount as { toNumber: () => number }).toNumber()
-        : Number(transaction.amount);
+    const amounts = serializeTransactionAmounts(transaction);
 
     const txWithInclude = transaction as typeof transaction & {
-      transferAccount?: { id: string; name: string } | null;
+      financialAccount?: { id: string; name: string; currency?: string } | null;
+      transferAccount?: { id: string; name: string; currency?: string } | null;
     };
     revalidateTag("transactions", "max");
     revalidateTag("financial-accounts", "max");
@@ -200,8 +253,9 @@ export async function PATCH(
       id: transaction.id,
       type: transaction.type,
       status: transaction.status,
-      amount,
+      ...amounts,
       financialAccountId: transaction.financialAccountId,
+      financialAccount: txWithInclude.financialAccount ?? null,
       transferAccountId: transaction.transferAccountId ?? null,
       transferAccount: txWithInclude.transferAccount ?? null,
       categoryId: transaction.categoryId,

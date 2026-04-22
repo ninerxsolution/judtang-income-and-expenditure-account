@@ -121,6 +121,11 @@ export default function DashboardPage() {
                   >
                     ฿{summary ? formatAmount(balance) : "0.00"}
                   </p>
+                  {summary?.totalBalanceApproximate ? (
+                    <p className="mt-1 text-xs text-white/70">
+                      {t("dashboard.summary.balanceApproximate")}
+                    </p>
+                  ) : null}
                 </CardContent>
               </Card>
             </>

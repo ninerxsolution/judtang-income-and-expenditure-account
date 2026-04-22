@@ -13,17 +13,13 @@ jest.mock("@/auth", () => ({
 
 jest.mock("@/lib/transactions", () => ({
   getTransactionsSummary: jest.fn().mockResolvedValue({
-    totalIncome: 1000,
-    totalExpense: 500,
-    totalTransfer: 0,
-    totalPayment: 0,
-    totalInterest: 0,
-    totalAdjustment: 0,
+    income: 1000,
+    expense: 500,
   }),
 }));
 
 jest.mock("@/lib/balance", () => ({
-  getTotalBalance: jest.fn().mockResolvedValue(500),
+  getTotalBalanceMeta: jest.fn().mockResolvedValue({ thb: 500, approximate: false }),
 }));
 
 jest.mock("@/lib/cache", () => ({
@@ -59,8 +55,9 @@ describe("GET /api/transactions/summary", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveProperty("totalIncome");
-    expect(data).toHaveProperty("totalExpense");
+    expect(data).toHaveProperty("income");
+    expect(data).toHaveProperty("expense");
     expect(data).toHaveProperty("totalBalance");
+    expect(data).toHaveProperty("totalBalanceApproximate");
   });
 });

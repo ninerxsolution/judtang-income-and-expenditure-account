@@ -65,7 +65,13 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 
 ## Learned Workspace Facts
 
-- Category and Financial Account pickers use an MRU (Most Recently Used) pattern backed by `localStorage` keys like `judtang_recent_categories`. Always use shared components like `CategoryRowSelect`, `CategoryCombobox`, or `AccountCombobox` to maintain this behavior.
+- Multi-currency (product intent): **summary/base for dashboards and budgets is THB only**—no user-facing change of base currency later. **`exchangeRate` means THB per 1 unit of the transaction row’s currency** (use 1 when the leg is THB).
+- **Transfers:** **same-currency** stays a **single** `TRANSFER` row (existing model). **Cross-currency** uses **two rows** with the same **`transferGroupId`**. **Edit and delete** must apply to the **whole transfer group**, not one leg alone.
+- **Credit card `PAYMENT` (phase 1):** users **enter amounts in THB** in the app; settling FX outside the app is fine—no cross-currency payment flow required initially.
+- **Budgets** are **THB-only**; non-THB activity can be converted with **approximate THB** for budget math. FX suggestion may use an API with **fallback 32 THB per 1 USD** when a rate is unavailable.
+- **Export/PDF:** show **primary amount in the account currency** with **THB in parentheses**; use **`≈` / approximate wording** when THB comes from estimated rates, not from **`baseAmount`** stored on the transaction at posting time.
+- **Rollout on staging/prod with real data:** **additive schema** first, app **fallbacks when new columns are null**, verify, then **backfill** THB/`baseAmount`, then tighten to NOT NULL and stricter rules.
+- Category and Financial Account pickers use an MRU (Most Recently Used) pattern backed by `localStorage` keys like `judtang_recent_categories`. Always use shared components like `CategoryRowSelect`, `CategoryCombobox`, `CategoryCapsulePicker`, or `AccountCombobox` to maintain this behavior.
 - In `DashboardDataProvider`, `refresh()` updates data silently (without toggling the global loading skeleton). To show the loading overlay, use `load({ showLoadingOverlay: true })`.
 - Budget progress: `getBudgetIndicator` in `lib/budget-shared.ts` treats exactly 100% of limit as indicator `full`; `over` applies only when progress is greater than 1.
 - Modal financial-account selection should follow the drill-down slide picker pattern used in `transaction-form-dialog` (`AccountSlidePicker`); reset that picker navigation state when the dialog closes so reopening starts on the main form, not on the account list.

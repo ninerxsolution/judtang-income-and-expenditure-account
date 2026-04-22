@@ -25,12 +25,8 @@ jest.mock("@/lib/prisma", () => ({
 
 jest.mock("@/lib/transactions", () => ({
   getTransactionsSummary: jest.fn().mockResolvedValue({
-    totalIncome: 0,
-    totalExpense: 0,
-    totalTransfer: 0,
-    totalPayment: 0,
-    totalInterest: 0,
-    totalAdjustment: 0,
+    income: 0,
+    expense: 0,
   }),
   listTransactionsByUser: jest.fn().mockResolvedValue([]),
   getExpenseWeekOverview: jest.fn().mockResolvedValue({
@@ -45,7 +41,7 @@ jest.mock("@/lib/transactions", () => ({
 }));
 
 jest.mock("@/lib/balance", () => ({
-  getTotalBalance: jest.fn().mockResolvedValue(0),
+  getTotalBalanceMeta: jest.fn().mockResolvedValue({ thb: 0, approximate: false }),
 }));
 
 import { GET } from "@/app/api/dashboard/init/route";

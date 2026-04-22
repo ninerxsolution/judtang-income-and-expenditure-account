@@ -258,6 +258,8 @@ export const thDictionary = {
       transferBetweenAccounts: "โอนระหว่างบัญชี",
       manageAccounts: "จัดการบัญชี",
       fromAllAccounts: "จากทั้งหมด {count} บัญชี",
+      balanceApproximate:
+        "รวมยอดประมาณการเป็นบาทสำหรับบัญชีสกุลอื่น (อัตราแสดงผล ไม่ใช่ snapshot รายการ)",
       recentAccountActivity: "บัญชีที่มีการดำเนินการล่าสุด",
       recentAccountActivityEmpty: "ยังไม่มีธุรกรรม",
     },
@@ -376,6 +378,11 @@ export const thDictionary = {
     },
   },
   accounts: {
+    currencyLabel: "สกุลเงินของบัญชี",
+    currencyOptionTHB: "THB (บาท)",
+    currencyOptionUSD: "USD (ดอลลาร์สหรัฐ)",
+    currencyLockedHint: "ไม่สามารถเปลี่ยนสกุลเงินหลังมีธุรกรรมในบัญชีนี้แล้ว",
+    currencyCardLockedTHB: "บัญชีบัตรเครดิตใช้ยอดเป็นบาทเท่านั้น",
     subtitle: "จัดการบัญชีการเงิน ธนาคาร กระเป๋าเงิน และเงินสด",
     loadFailed: "โหลดบัญชีไม่สำเร็จ",
     empty: "ยังไม่มีบัญชี สร้างบัญชีแรกเพื่อเริ่มบันทึกรายการ",
@@ -630,6 +637,10 @@ export const thDictionary = {
     budget: {
       title: "งบประมาณ",
       description: "ตั้งงบรายเดือนและติดตามการใช้จ่ายตามหมวดหมู่",
+      thbOnlyNote:
+        "งบประมาณคำนวณเป็นเงินบาท (THB) เสมอ — รายการสกุลอื่นจะถูกประมาณตามอัตราแลกเปลี่ยนของธุรกรรม",
+      thbApproxTooltip:
+        "ยอดที่ไม่ใช่บาทจะถูกแปลงเป็นบาทจากอัตราแลกเปลี่ยนที่บันทึกในแต่ละธุรกรรม (ไม่ใช่อัตราตลาดแบบเรียลไทม์) — ใช้สำหรับสรุปงบและความคืบหน้าเท่านั้น",
       open: "จัดการงบประมาณ",
       month: "เดือน",
       year: "ปี",
@@ -953,6 +964,23 @@ export const thDictionary = {
       amountRequired: "กรุณาระบุจำนวนเงิน",
       transferToAccountRequired: "กรุณาเลือกบัญชีปลายทางสำหรับการโอน",
       transferAccountsSame: "บัญชีต้นทางและปลายทางต้องต่างกัน",
+      crossCurrencySection: "โอนคนละสกุลเงิน",
+      crossCurrencyHelpAria: "คำอธิบายโอนคนละสกุลเงินและอัตราแลกเปลี่ยน",
+      crossCurrencyAmountFrom: "จำนวนเงิน (บัญชีต้นทาง — {currency})",
+      crossCurrencyToAmount: "จำนวนที่รับ (บัญชีปลายทาง — {currency})",
+      crossCurrencyBankRateLabel: "อัตราแลกเปลี่ยนที่ธนาคาร (บาทต่อ 1 {currency}) — ไม่บังคับ",
+      crossCurrencyBankRateHint:
+        "ถ้ากรอก ระบบจะคำนวณจำนวนขาบาทจากจำนวนสกุลต่างประเทศ × อัตรานี้ หากไม่กรอก ให้ใส่ทั้งสองจำนวนตามที่แอปธนาคารแสดง ระบบจะคำนวณอัตราโดยนัยให้ยอดบาทสมดุล",
+      crossCurrencyReferenceOnly:
+        "อัตราอ้างอิงจากตลาด (ประมาณการ) — ระบบไม่ใช้คำนวณตอนบันทึก",
+      crossCurrencyPreviewDebitThb:
+        "จากอัตราที่กรอก: จะหักจากบัญชีต้นทางประมาณ {amount} บาท",
+      crossCurrencyPreviewCreditThb:
+        "จากอัตราที่กรอก: จะเข้าบัญชีปลายทางประมาณ {amount} บาท",
+      crossCurrencyRatesNote:
+        "ใส่จำนวนตามที่เห็นในแอปธนาคาร; อัตราแนะนำจากระบบใช้ดูอ้างอิงเท่านั้น",
+      crossCurrencyPairEditHint:
+        "รายการนี้เป็นคู่โอนคนละสกุล แก้ได้เฉพาะวันที่ หมายเหตุ หรือสถานะ",
       dateRequired: "กรุณาเลือกวันที่",
       saveFailed: "ไม่สามารถบันทึกรายการได้",
       saveSuccess: "บันทึกรายการเรียบร้อย",

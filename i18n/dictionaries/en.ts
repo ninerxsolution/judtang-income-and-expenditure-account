@@ -260,6 +260,8 @@ export const enDictionary = {
       transferBetweenAccounts: "Transfer between accounts",
       manageAccounts: "Manage accounts",
       fromAllAccounts: "From all {count} accounts",
+      balanceApproximate:
+        "Includes estimated THB for non-baht accounts (display rate, not per-transaction snapshot).",
       recentAccountActivity: "Recent account activity",
       recentAccountActivityEmpty: "No transactions yet",
     },
@@ -379,6 +381,11 @@ export const enDictionary = {
     },
   },
   accounts: {
+    currencyLabel: "Account currency",
+    currencyOptionTHB: "THB (Thai Baht)",
+    currencyOptionUSD: "USD (US Dollar)",
+    currencyLockedHint: "Currency cannot be changed after this account has transactions.",
+    currencyCardLockedTHB: "Credit card balances are tracked in THB.",
     subtitle: "Manage your bank accounts, wallets, and cash.",
     loadFailed: "Failed to load accounts.",
     empty:
@@ -642,6 +649,10 @@ export const enDictionary = {
       title: "Budget",
       description:
         "Set monthly spending limits and track progress by category.",
+      thbOnlyNote:
+        "Budgets are always calculated in THB — non-THB entries are approximated using each transaction's recorded exchange rate.",
+      thbApproxTooltip:
+        "Non-THB amounts are converted to THB using each transaction's stored exchange rate (not a live market feed) — used only for budget summaries and progress.",
       open: "Manage budget",
       month: "Month",
       year: "Year",
@@ -970,6 +981,23 @@ export const enDictionary = {
       transferToAccountRequired:
         "Please select destination account for transfer",
       transferAccountsSame: "From and to accounts must be different",
+      crossCurrencySection: "Cross-currency transfer",
+      crossCurrencyHelpAria: "Help: cross-currency transfer and exchange rate",
+      crossCurrencyAmountFrom: "Amount (from account — {currency})",
+      crossCurrencyToAmount: "Amount received (to account — {currency})",
+      crossCurrencyBankRateLabel: "Bank exchange rate (THB per 1 {currency}) — optional",
+      crossCurrencyBankRateHint:
+        "If set, the THB leg is calculated as foreign amount × this rate. If left empty, enter both amounts as shown in your banking app and the implied rate is stored so THB nets to zero.",
+      crossCurrencyReferenceOnly:
+        "Market reference rates (approximate) are not used when saving.",
+      crossCurrencyPreviewDebitThb:
+        "From your rate: about {amount} THB will be debited from the source account.",
+      crossCurrencyPreviewCreditThb:
+        "From your rate: about {amount} THB will be credited to the destination account.",
+      crossCurrencyRatesNote:
+        "Enter amounts as in your bank app; suggested rates are for reference only.",
+      crossCurrencyPairEditHint:
+        "This row is part of a cross-currency transfer pair. You can change the date, note, or status only.",
       dateRequired: "Please select a date",
       saveFailed: "Failed to save transaction",
       saveSuccess: "Transaction saved",

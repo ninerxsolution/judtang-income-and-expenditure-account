@@ -27,6 +27,7 @@ import {
   AccountSlidePickerPanel,
 } from "@/components/dashboard/account-slide-picker";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RowSelect } from "@/components/dashboard/row-select";
 
 const ACCOUNT_TYPES = ["BANK", "CREDIT_CARD", "WALLET", "CASH", "OTHER"] as const;
 
@@ -105,9 +106,17 @@ export function FinancialAccountFormDialog({
     editId ? "loading" : "idle"
   );
   const [linkedAccountPickerOpen, setLinkedAccountPickerOpen] = useState(false);
+  const [accountCurrency, setAccountCurrency] = useState<string>("THB");
+  const [accountTransactionCount, setAccountTransactionCount] = useState(0);
 
   const isMobile = useIsMobile();
   const viewport = useVisualViewport(open && isMobile);
+
+  useEffect(() => {
+    if (type === "CREDIT_CARD") {
+      setAccountCurrency("THB");
+    }
+  }, [type]);
 
   useEffect(() => {
     if (!open) {
@@ -134,6 +143,8 @@ export function FinancialAccountFormDialog({
       setCardNetwork("");
       setLinkedAccountId("");
       setBankAccountsForDebit([]);
+      setAccountCurrency("THB");
+      setAccountTransactionCount(0);
       setLoadState("idle");
       setError(null);
       return;
@@ -165,10 +176,17 @@ export function FinancialAccountFormDialog({
           interestRate?: number | null;
           cardAccountType?: string | null;
           cardNetwork?: string | null;
+          currency?: string;
+          transactionCount?: number;
         } | undefined) => {
           if (cancelled || !data) return;
           setName(data.name ?? "");
           setType(ACCOUNT_TYPES.includes(data.type as (typeof ACCOUNT_TYPES)[number]) ? data.type : "CASH");
+          const cur = (data.currency ?? "THB").trim().toUpperCase();
+          setAccountCurrency(cur === "USD" ? "USD" : "THB");
+          setAccountTransactionCount(
+            typeof data.transactionCount === "number" ? data.transactionCount : 0,
+          );
           setInitialBalance(sanitizeAmountInput(String(data.initialBalance ?? 0)));
           setCreditLimit(data.creditLimit != null ? String(data.creditLimit) : "");
           setStatementClosingDay(data.statementClosingDay != null ? String(data.statementClosingDay) : "");
@@ -348,6 +366,9 @@ export function FinancialAccountFormDialog({
       type,
       initialBalance: balance,
     };
+    if (type !== "CREDIT_CARD") {
+      payload.currency = accountCurrency === "USD" ? "USD" : "THB";
+    }
     if (type === "CREDIT_CARD") {
       const isDebit = cardAccountType?.toLowerCase() === "debit";
       payload.cardAccountType = cardAccountType || null;
@@ -546,6 +567,39 @@ export function FinancialAccountFormDialog({
                   })}
                 </div>
               </div>
+              {type === "CREDIT_CARD" ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("accounts.currencyCardLockedTHB")}
+                </p>
+              ) : (
+                <div>
+                  <label
+                    htmlFor="account-form-currency"
+                    className="mb-1 block text-sm font-medium"
+                  >
+                    {t("accounts.currencyLabel")}
+                  </label>
+                  {editId && accountTransactionCount > 0 ? (
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      {t("accounts.currencyLockedHint")}
+                    </p>
+                  ) : null}
+                  <RowSelect
+                    id="account-form-currency"
+                    value={accountCurrency}
+                    onChange={setAccountCurrency}
+                    options={[
+                      { value: "THB", label: t("accounts.currencyOptionTHB") },
+                      { value: "USD", label: t("accounts.currencyOptionUSD") },
+                    ]}
+                    className={
+                      editId && accountTransactionCount > 0
+                        ? "pointer-events-none opacity-60"
+                        : undefined
+                    }
+                  />
+                </div>
+              )}
               {(type === "BANK" || type === "WALLET") ||
               (type === "CREDIT_CARD" &&
                 (cardAccountType?.toLowerCase() ?? "") !== "debit") ? (

@@ -13,6 +13,7 @@ import {
 } from "@/lib/account-number";
 import { isAccountIncomplete } from "@/lib/financial-accounts";
 import type { AccountType } from "@prisma/client";
+import { normalizeCurrencyCode } from "@/lib/currency";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -74,6 +75,7 @@ export async function GET(
     id: account.id,
     name: account.name,
     type: account.type,
+    currency: account.currency ?? "THB",
     initialBalance: Number(account.initialBalance),
     isActive: account.isActive,
     isDefault: account.isDefault,
@@ -155,6 +157,7 @@ export async function PATCH(
   let body: {
     name?: string;
     type?: string;
+    currency?: string;
     initialBalance?: number;
     lastCheckedAt?: string;
     isDefault?: boolean;
@@ -180,6 +183,7 @@ export async function PATCH(
   const data: {
     name?: string;
     type?: AccountType;
+    currency?: string;
     initialBalance?: number;
     lastCheckedAt?: Date;
     isDefault?: boolean;
@@ -222,6 +226,30 @@ export async function PATCH(
   }
   if (typeof body.isHidden === "boolean") {
     data.isHidden = body.isHidden;
+  }
+  if (body.currency !== undefined) {
+    const nextCur =
+      account.type === "CREDIT_CARD"
+        ? "THB"
+        : normalizeCurrencyCode(body.currency);
+    const currentCur = account.currency ?? "THB";
+    if (nextCur !== currentCur) {
+      const txCount = await prisma.transaction.count({
+        where: {
+          OR: [{ financialAccountId: id }, { transferAccountId: id }],
+        },
+      });
+      if (txCount > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Cannot change currency after this account has linked transactions",
+          },
+          { status: 400 },
+        );
+      }
+      data.currency = nextCur;
+    }
   }
   if (account.type === "CREDIT_CARD") {
     if (typeof body.creditLimit === "number" && Number.isFinite(body.creditLimit) && body.creditLimit >= 0) {

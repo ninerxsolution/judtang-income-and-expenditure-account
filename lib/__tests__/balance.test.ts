@@ -90,7 +90,10 @@ describe("getTotalBalance", () => {
   });
 
   it("sums balances of all active accounts", async () => {
-    mockFindMany.mockResolvedValue([{ id: "a1" }, { id: "a2" }]);
+    mockFindMany.mockResolvedValue([
+      { id: "a1", type: "BANK", cardAccountType: null, linkedAccountId: null, currency: "THB" },
+      { id: "a2", type: "WALLET", cardAccountType: null, linkedAccountId: null, currency: "THB" },
+    ]);
 
     mockFindUnique
       .mockResolvedValueOnce({ initialBalance: 1000, type: "BANK" })
@@ -110,7 +113,10 @@ describe("getTotalBalance", () => {
   });
 
   it("includes negative credit card balances in total", async () => {
-    mockFindMany.mockResolvedValue([{ id: "bank-1" }, { id: "cc-1" }]);
+    mockFindMany.mockResolvedValue([
+      { id: "bank-1", type: "BANK", cardAccountType: null, linkedAccountId: null, currency: "THB" },
+      { id: "cc-1", type: "CREDIT_CARD", cardAccountType: null, linkedAccountId: null, currency: "THB" },
+    ]);
 
     mockFindUnique
       .mockResolvedValueOnce({ initialBalance: 10000, type: "BANK" })

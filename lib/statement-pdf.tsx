@@ -137,6 +137,8 @@ export type StatementPdfData = {
     occurredAt: Date;
     debit: number;
     credit: number;
+    debitDisplay?: string;
+    creditDisplay?: string;
     accountName?: string;
     transferAccountName?: string | null;
   }>;
@@ -280,10 +282,10 @@ function StatementDocument({ data }: { data: StatementPdfData }) {
                   <Text style={styles.colAccount}>{accountLabel}</Text>
                 )}
                 <Text style={styles.colDebit}>
-                  {tx.debit > 0 ? formatAmount(tx.debit) : ""}
+                  {tx.debit > 0 ? (tx.debitDisplay ?? formatAmount(tx.debit)) : ""}
                 </Text>
                 <Text style={styles.colCredit}>
-                  {tx.credit > 0 ? formatAmount(tx.credit) : ""}
+                  {tx.credit > 0 ? (tx.creditDisplay ?? formatAmount(tx.credit)) : ""}
                 </Text>
               </View>
             );

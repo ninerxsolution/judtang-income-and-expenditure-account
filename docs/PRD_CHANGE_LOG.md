@@ -5,6 +5,35 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 22/04/2026 (Multi-currency phase 2 scope doc — CC cross-currency PAYMENT)
+
+- docs/feature/multi-currency-cc-payment-phase2.md — New scope doc for Phase 2 (Credit Card Cross-Currency PAYMENT). **Not implemented.** Captures schema reuse (transferGroupId/transferLeg pair), API / UI / i18n / tests to touch, open questions, prerequisites (phase 1 backfill on staging/prod), and a suggested 5-todo plan structure to use when a separate implementation plan is created.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+### Follow-up same day (budget THB tooltip + rollout / migration ops notes)
+
+- `i18n/dictionaries/th.ts`, `i18n/dictionaries/en.ts` — `settings.budget.thbApproxTooltip` (longer explanation for non-THB → THB in budgets).
+- `app/(dashboard)/dashboard/settings/budget/page.tsx` — Info icon wrapped with `Tooltip` + local `TooltipProvider` (pattern aligned with other dashboard pages; no global provider required).
+- **Rollout checklist (staging then prod):** (1) Deploy app version that includes additive columns + app fallbacks. (2) Backup DB. (3) Run `npx tsx scripts/backfill-multi-currency.ts` with correct `DATABASE_URL`. (4) Verify `SELECT COUNT(*) FROM Transaction WHERE baseAmount IS NULL` = 0 and spot-check dashboard net worth / budgets. (5) Optional dry-run counts: `npx tsx scripts/backfill-multi-currency-dryrun.ts`.
+- **Migration `20260405151832_currency` — table name casing:** SQL uses lowercase `` `financialaccount` ``, `` `transaction` `` while older migrations use PascalCase `` `FinancialAccount` ``, `` `Transaction` ``. On MySQL with case-sensitive table names (common on Linux defaults), this can fail or create inconsistent names. Before first prod apply: run `SHOW VARIABLES LIKE 'lower_case_table_names';` on staging (same as prod) and test `npx prisma migrate deploy`. **Do not edit an already-applied migration file** without assessing Prisma migration checksum drift across environments; if the migration is not applied anywhere yet, fix casing in SQL before first deploy; if already applied broadly, document operational reliance on `lower_case_table_names` or plan a separate repair (out of band).
+- docs/PRD_CHANGE_LOG.md — This subsection.
+
+---
+
+## 05/04/2026 (Multi-currency rollout — base THB, account currency, cross-currency transfer)
+
+- prisma/schema.prisma — `FinancialAccount.currency`; `Transaction.currency`, `exchangeRate`, `baseAmount`, `transferGroupId`, `transferLeg`; indexes as designed.
+- lib/transactions.ts — Currency alignment, `baseAmount` snapshot, same-currency TRANSFER vs cross-currency pair (`createCrossCurrencyTransfer`), grouped update/delete by `transferGroupId`; summaries use THB-equivalent helpers.
+- lib/balance.ts, lib/transaction-thb-sum.ts, lib/budget.ts, lib/fx-display.ts, lib/fx-rate.ts (or equivalent) — Net worth / budget / summaries in THB; approximate display for non-THB balances when using fallback rates.
+- app/api/financial-accounts/*, app/api/transactions/*, app/api/fx/suggest, app/api/dashboard/init, calendar-summary — New fields and endpoints as implemented.
+- components/dashboard/financial-account-form-dialog.tsx, transaction-form-dialog.tsx, dashboard page/context — Currency selection, cross-currency transfer UI, approximate balance footnote.
+- lib/statement-pdf-data.ts, lib/statement-pdf.tsx — Primary amount + optional THB parenthesis / approximate marking.
+- scripts/backfill-multi-currency.ts — Manual backfill helper for legacy rows (team runs on STAGING then PROD per rollout plan).
+- Tests updated across lib and `__tests__/api/*` for new shapes and behaviour.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 29/03/2026 (Public contact form)
 
 - prisma/schema.prisma — `ContactTopic` enum, `ContactMessage` model.

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { getTransactionsSummary } from "@/lib/transactions";
-import { getTotalBalance } from "@/lib/balance";
+import { getTotalBalanceMeta } from "@/lib/balance";
 import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
@@ -46,11 +46,15 @@ async function fetchSummary(
     options.to = endOfMonth(now.getFullYear(), now.getMonth());
   }
 
-  const [summary, totalBalance] = await Promise.all([
+  const [summary, balanceMeta] = await Promise.all([
     getTransactionsSummary(userId, options),
-    getTotalBalance(userId),
+    getTotalBalanceMeta(userId),
   ]);
-  return { ...summary, totalBalance };
+  return {
+    ...summary,
+    totalBalance: balanceMeta.thb,
+    totalBalanceApproximate: balanceMeta.approximate,
+  };
 }
 
 export async function GET(request: Request) {

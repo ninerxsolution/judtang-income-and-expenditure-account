@@ -1,17 +1,19 @@
 /**
  * @jest-environment node
  */
-const mockAggregate = jest.fn();
-const mockGroupBy = jest.fn();
+const mockSumTransactionThbInRange = jest.fn();
+const mockSumExpenseByCategoryThbForMonth = jest.fn();
 const mockBudgetMonthFindUnique = jest.fn();
 const mockBudgetMonthFindMany = jest.fn();
 
+jest.mock("@/lib/transaction-thb-sum", () => ({
+  sumTransactionThbInRange: (...args: unknown[]) => mockSumTransactionThbInRange(...args),
+  sumExpenseByCategoryThbForMonth: (...args: unknown[]) =>
+    mockSumExpenseByCategoryThbForMonth(...args),
+}));
+
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    transaction: {
-      aggregate: (...args: unknown[]) => mockAggregate(...args),
-      groupBy: (...args: unknown[]) => mockGroupBy(...args),
-    },
     budgetMonth: {
       findUnique: (...args: unknown[]) => mockBudgetMonthFindUnique(...args),
       findMany: (...args: unknown[]) => mockBudgetMonthFindMany(...args),
@@ -96,13 +98,13 @@ describe("budget", () => {
 
   describe("getTotalExpenseForMonth", () => {
     it("returns 0 when no expenses", async () => {
-      mockAggregate.mockResolvedValue({ _sum: { amount: null } });
+      mockSumTransactionThbInRange.mockResolvedValue(0);
       const result = await getTotalExpenseForMonth("user-1", 2025, 6);
       expect(result).toBe(0);
     });
 
     it("returns sum of expenses", async () => {
-      mockAggregate.mockResolvedValue({ _sum: { amount: 15000 } });
+      mockSumTransactionThbInRange.mockResolvedValue(15000);
       const result = await getTotalExpenseForMonth("user-1", 2025, 6);
       expect(result).toBe(15000);
     });
@@ -110,16 +112,18 @@ describe("budget", () => {
 
   describe("getExpenseByCategoryForMonth", () => {
     it("returns empty map when no expenses", async () => {
-      mockGroupBy.mockResolvedValue([]);
+      mockSumExpenseByCategoryThbForMonth.mockResolvedValue(new Map());
       const result = await getExpenseByCategoryForMonth("user-1", 2025, 6);
       expect(result.size).toBe(0);
     });
 
     it("returns map with category totals", async () => {
-      mockGroupBy.mockResolvedValue([
-        { categoryId: "cat-1", _sum: { amount: 5000 } },
-        { categoryId: null, _sum: { amount: 2000 } },
-      ]);
+      mockSumExpenseByCategoryThbForMonth.mockResolvedValue(
+        new Map<string | null, number>([
+          ["cat-1", 5000],
+          [null, 2000],
+        ]),
+      );
       const result = await getExpenseByCategoryForMonth("user-1", 2025, 6);
       expect(result.get("cat-1")).toBe(5000);
       expect(result.get(null)).toBe(2000);
@@ -129,8 +133,8 @@ describe("budget", () => {
   describe("getBudgetForMonth", () => {
     it("returns structure with null budgetMonth when none exists", async () => {
       mockBudgetMonthFindUnique.mockResolvedValue(null);
-      mockAggregate.mockResolvedValue({ _sum: { amount: 3000 } });
-      mockGroupBy.mockResolvedValue([]);
+      mockSumTransactionThbInRange.mockResolvedValue(3000);
+      mockSumExpenseByCategoryThbForMonth.mockResolvedValue(new Map());
       const result = await getBudgetForMonth("user-1", 2025, 6);
       expect(result.budgetMonth).toBeNull();
       expect(result.totalSpent).toBe(3000);
@@ -156,10 +160,10 @@ describe("budget", () => {
           },
         ],
       });
-      mockAggregate.mockResolvedValue({ _sum: { amount: 35000 } });
-      mockGroupBy.mockResolvedValue([
-        { categoryId: "cat-1", _sum: { amount: 8000 } },
-      ]);
+      mockSumTransactionThbInRange.mockResolvedValue(35000);
+      mockSumExpenseByCategoryThbForMonth.mockResolvedValue(
+        new Map<string | null, number>([["cat-1", 8000]]),
+      );
 
       const result = await getBudgetForMonth("user-1", 2025, 6);
       expect(result.totalBudget).toBe(50000);

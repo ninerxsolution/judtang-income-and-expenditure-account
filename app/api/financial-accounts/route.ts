@@ -14,6 +14,7 @@ import { isAccountIncomplete } from "@/lib/financial-accounts";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
 import type { AccountType } from "@prisma/client";
+import { normalizeCurrencyCode } from "@/lib/currency";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -73,6 +74,7 @@ async function fetchFinancialAccountsList(
         id: acc.id,
         name: acc.name,
         type: acc.type,
+        currency: acc.currency ?? "THB",
         initialBalance: Number(acc.initialBalance),
         isActive: acc.isActive,
         isDefault: acc.isDefault,
@@ -172,6 +174,8 @@ export async function POST(request: Request) {
   let body: {
     name?: string;
     type?: string;
+    /** ISO 4217; ignored for CREDIT_CARD (always THB in phase 1). */
+    currency?: string;
     initialBalance?: number;
     creditLimit?: number;
     statementClosingDay?: number;
@@ -206,10 +210,18 @@ export async function POST(request: Request) {
   const initialBalance = Number(body.initialBalance);
   const initialBalanceNum = Number.isFinite(initialBalance) ? initialBalance : 0;
 
+  const currencyResolved =
+    type === "CREDIT_CARD"
+      ? "THB"
+      : normalizeCurrencyCode(
+          typeof body.currency === "string" ? body.currency : "THB",
+        );
+
   const createData: Parameters<typeof prisma.financialAccount.create>[0]["data"] = {
     userId,
     name,
     type,
+    currency: currencyResolved,
     initialBalance: initialBalanceNum,
     isActive: true,
     isDefault: false,
@@ -319,6 +331,7 @@ export async function POST(request: Request) {
       id: account.id,
       name: account.name,
       type: account.type,
+      currency: account.currency ?? "THB",
       initialBalance: Number(account.initialBalance),
       isActive: account.isActive,
       isDefault: account.isDefault,
