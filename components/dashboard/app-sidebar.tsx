@@ -21,6 +21,8 @@ import {
   Home,
   RepeatIcon,
   ClipboardList,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -60,6 +62,7 @@ import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
 import { NotificationsPopover } from "@/components/dashboard/notifications-popover";
 import { useFullscreen } from "@/components/dashboard/fullscreen-context";
+import { useBalanceVisibility } from "@/components/dashboard/balance-visibility-context";
 import { useAdminMode } from "@/components/dashboard/admin-mode-context";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useI18n } from "@/hooks/use-i18n";
@@ -112,6 +115,7 @@ export function AppSidebarLayout({
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : null);
   const { t } = useI18n();
   const { fullscreen, toggleFullscreen } = useFullscreen();
+  const { balanceVisible, toggleBalanceVisibility } = useBalanceVisibility();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const isDark = (resolvedTheme ?? theme) === "dark";
   const isSmallScreen = useIsSmallScreen();
@@ -250,13 +254,49 @@ export function AppSidebarLayout({
             <span
               className={cn(
                 "text-sm font-semibold tabular-nums bg-white/50 dark:bg-stone-800 rounded-full px-3 py-1",
-                balance !== null && balance < 0
-                  ? "text-red-600 dark:text-red-300"
-                  : "text-foreground"
+                !balanceVisible
+                  ? "text-foreground"
+                  : balance !== null && balance < 0
+                    ? "text-red-600 dark:text-red-300"
+                    : "text-foreground"
               )}
             >
-              ฿ {balance !== null ? formatAmount(balance) : "—"}
+              {balanceVisible ? (
+                <>฿ {balance !== null ? formatAmount(balance) : "—"}</>
+              ) : (
+                <>
+                  <span aria-hidden="true">฿ ••••</span>
+                  <span className="sr-only">{t("dashboard.balance.hidden")}</span>
+                </>
+              )}
             </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full shrink-0"
+              aria-label={balanceVisible ? t("dashboard.balance.hide") : t("dashboard.balance.show")}
+              aria-pressed={!balanceVisible}
+              onClick={toggleBalanceVisibility}
+            >
+              <span className="relative inline-flex h-4 w-4" aria-hidden>
+                <Eye
+                  className={cn(
+                    "absolute inset-0 h-4 w-4 transition-all duration-200",
+                    balanceVisible
+                      ? "scale-100 opacity-100"
+                      : "scale-0 opacity-0 pointer-events-none"
+                  )}
+                />
+                <EyeOff
+                  className={cn(
+                    "absolute inset-0 h-4 w-4 transition-all duration-200",
+                    balanceVisible
+                      ? "scale-0 opacity-0 pointer-events-none"
+                      : "scale-100 opacity-100"
+                  )}
+                />
+              </span>
+            </Button>
           </div>
           <div className="ml-auto flex items-center gap-1 sm:gap-4">
             <ThemeToggle className="hidden sm:flex"/>

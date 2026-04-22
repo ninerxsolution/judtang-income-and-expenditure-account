@@ -288,6 +288,11 @@ export const thDictionary = {
       enter: "เปิดโหมดเต็มจอ",
       exit: "ปิดโหมดเต็มจอ",
     },
+    balance: {
+      hide: "ซ่อนยอดเงิน",
+      show: "แสดงยอดเงิน",
+      hidden: "ยอดเงินถูกซ่อน",
+    },
     header: {
       netBalance: "ยอดสุทธิ",
     },

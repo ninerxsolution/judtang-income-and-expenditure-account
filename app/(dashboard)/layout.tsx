@@ -14,6 +14,7 @@ import { TransactionFormProvider } from "@/components/dashboard/transaction-form
 import { FullscreenProvider } from "@/components/dashboard/fullscreen-context";
 import { AdminModeProvider } from "@/components/dashboard/admin-mode-context";
 import { AccountDetailBreadcrumbProvider } from "@/components/dashboard/account-detail-breadcrumb-context";
+import { BalanceVisibilityProvider } from "@/components/dashboard/balance-visibility-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function DashboardLayout({
   return (
     <div className="dashboard-page h-dvh min-h-dvh overflow-hidden">
       <SessionTouch />
+      <BalanceVisibilityProvider>
       <DashboardDataProvider>
         <SlipUploadProvider>
           <TransactionFormProvider>
@@ -49,6 +51,7 @@ export default function DashboardLayout({
           </TransactionFormProvider>
         </SlipUploadProvider>
       </DashboardDataProvider>
+      </BalanceVisibilityProvider>
     </div>
   );
 }

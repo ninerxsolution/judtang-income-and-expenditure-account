@@ -14,6 +14,7 @@ import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { RecurringDueWidget } from "@/components/dashboard/recurring-due-widget";
 import { DashboardSpendingOverview } from "@/components/dashboard/dashboard-spending-overview";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
+import { useBalanceVisibility } from "@/components/dashboard/balance-visibility-context";
 import {
   Card,
   CardContent,
@@ -43,6 +44,7 @@ export default function DashboardPage() {
   } = useDashboardData();
   const balance =
     summary?.totalBalance ?? (summary ? summary.income - summary.expense : 0);
+  const { balanceVisible } = useBalanceVisibility();
 
   const [formOpen, setFormOpen] = useState(false);
   const [formInitialType, setFormInitialType] = useState<"INCOME" | "EXPENSE" | "TRANSFER">("EXPENSE");
@@ -119,7 +121,14 @@ export default function DashboardPage() {
                     className={`text-3xl sm:text-4xl font-bold tabular-nums ${balance >= 0 ? "text-white" : "text-red-300"
                       }`}
                   >
-                    ฿{summary ? formatAmount(balance) : "0.00"}
+                    {balanceVisible ? (
+                      <>฿{summary ? formatAmount(balance) : "0.00"}</>
+                    ) : (
+                      <>
+                        <span aria-hidden="true">฿ ••••</span>
+                        <span className="sr-only">{t("dashboard.balance.hidden")}</span>
+                      </>
+                    )}
                   </p>
                   {summary?.totalBalanceApproximate ? (
                     <p className="mt-1 text-xs text-white/70">
@@ -227,7 +236,14 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
-                      ฿{summary ? formatAmount(summary.income) : "0.00"}
+                      {balanceVisible ? (
+                        <>฿{summary ? formatAmount(summary.income) : "0.00"}</>
+                      ) : (
+                        <>
+                          <span aria-hidden="true">฿ ••••</span>
+                          <span className="sr-only">{t("dashboard.balance.hidden")}</span>
+                        </>
+                      )}
                     </p>
                   </CardContent>
                 </Card>
@@ -245,7 +261,14 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-xl font-semibold tabular-nums text-red-800 dark:text-red-200">
-                      ฿{summary ? formatAmount(summary.expense) : "0.00"}
+                      {balanceVisible ? (
+                        <>฿{summary ? formatAmount(summary.expense) : "0.00"}</>
+                      ) : (
+                        <>
+                          <span aria-hidden="true">฿ ••••</span>
+                          <span className="sr-only">{t("dashboard.balance.hidden")}</span>
+                        </>
+                      )}
                     </p>
                   </CardContent>
                 </Card>
@@ -292,12 +315,21 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <p className="text-lg font-semibold tabular-nums">
-                    ฿ {formatAmount(budgetOverview.totalSpent)} / ฿ {formatAmount(budgetOverview.totalBudget)}
-                    <span
-                      className={`ml-2 text-sm font-normal ${budgetIndicatorMetaTextClass(budgetOverview.totalIndicator)}`}
-                    >
-                      ({Math.round(budgetOverview.totalProgress * 100)}%)
-                    </span>
+                    {balanceVisible ? (
+                      <>
+                        ฿ {formatAmount(budgetOverview.totalSpent)} / ฿ {formatAmount(budgetOverview.totalBudget)}
+                        <span
+                          className={`ml-2 text-sm font-normal ${budgetIndicatorMetaTextClass(budgetOverview.totalIndicator)}`}
+                        >
+                          ({Math.round(budgetOverview.totalProgress * 100)}%)
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span aria-hidden="true">฿ •••• / ฿ ••••</span>
+                        <span className="sr-only">{t("dashboard.balance.hidden")}</span>
+                      </>
+                    )}
                   </p>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E8E0D0] dark:bg-stone-700">
                     <div

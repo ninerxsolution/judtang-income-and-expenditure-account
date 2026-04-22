@@ -290,6 +290,11 @@ export const enDictionary = {
       enter: "Enter fullscreen",
       exit: "Exit fullscreen",
     },
+    balance: {
+      hide: "Hide balance",
+      show: "Show balance",
+      hidden: "Balance is hidden",
+    },
     header: {
       netBalance: "Net balance",
     },
