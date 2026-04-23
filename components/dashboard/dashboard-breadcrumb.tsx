@@ -26,6 +26,7 @@ export function getSegmentLabel(segment: string, _allSegments?: string[]): strin
     "transaction-usage": "Transaction usage",
     accounts: "Accounts",
     "monthly-entry": "Monthly Entry",
+    "spending-efficiency": "Spending efficiency",
   };
 
   if (map[segment]) return map[segment];

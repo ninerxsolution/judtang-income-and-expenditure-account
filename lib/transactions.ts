@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Prisma, TransactionType as PrismaTransactionType, TransactionStatus as PrismaTransactionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
+  enumerateDateStringsInRange,
   getDateRangeInTimezone,
   getWeekDateStringsMondayToSunday,
   toDateStringInTimezone,
@@ -1076,6 +1077,80 @@ export async function getExpenseWeekOverview(
   const todayExpense = byDay.get(todayStr) ?? 0;
 
   return { todayExpense, weekTotalExpense, weekDays };
+}
+
+export type DailyExpenseInRangeDay = {
+  date: string;
+  spent: number;
+};
+
+/**
+ * EXPENSE + INTEREST by local day (same types as getTransactionsSummary expense side),
+ * THB via getEffectiveBaseAmountThb, one row per calendar day in [from, to] inclusive.
+ */
+export async function getDailyExpenseByDateInRange(
+  userId: string,
+  fromParam: string,
+  toParam: string,
+  timezone: string = "Asia/Bangkok",
+  excludedCategoryIds: string[] = [],
+): Promise<DailyExpenseInRangeDay[]> {
+  if (!userId) {
+    throw new Error("userId is required");
+  }
+  const dateList = enumerateDateStringsInRange(fromParam, toParam, timezone);
+  if (dateList.length === 0) {
+    return [];
+  }
+  const fromRange = getDateRangeInTimezone(fromParam, timezone);
+  const toRange = getDateRangeInTimezone(toParam, timezone);
+  if (!fromRange || !toRange) {
+    return [];
+  }
+
+  const rows = await prisma.transaction.findMany({
+    where: {
+      userId,
+      occurredAt: { gte: fromRange.from, lte: toRange.to },
+      type: {
+        in: [PrismaTransactionType.EXPENSE, PrismaTransactionType.INTEREST],
+      },
+      ...(excludedCategoryIds.length > 0
+        ? {
+            OR: [
+              { categoryId: null },
+              { categoryId: { notIn: excludedCategoryIds } },
+            ],
+          }
+        : {}),
+    },
+    select: {
+      occurredAt: true,
+      amount: true,
+      currency: true,
+      exchangeRate: true,
+      baseAmount: true,
+    },
+  });
+
+  const byDay = new Map<string, number>();
+  for (const row of rows) {
+    const key = toDateStringInTimezone(row.occurredAt, timezone);
+    const thb =
+      getEffectiveBaseAmountThb({
+        amount: row.amount,
+        currency: row.currency,
+        exchangeRate: row.exchangeRate,
+        baseAmount: row.baseAmount,
+      }) ?? 0;
+    if (!Number.isFinite(thb)) continue;
+    byDay.set(key, (byDay.get(key) ?? 0) + thb);
+  }
+
+  return dateList.map((date) => ({
+    date,
+    spent: byDay.get(date) ?? 0,
+  }));
 }
 
 export type SummaryByMonthOptions = {

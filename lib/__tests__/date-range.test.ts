@@ -1,5 +1,6 @@
 import {
   addCalendarDaysInTimezone,
+  enumerateDateStringsInRange,
   getDateRangeInTimezone,
   getMondayDateStringInSameWeek,
   getWeekDateStringsMondayToSunday,
@@ -76,6 +77,25 @@ describe("date-range", () => {
       const sun = new Date("2026-04-05T12:00:00+07:00");
       const ymd = toDateStringInTimezone(sun, "Asia/Bangkok");
       expect(getMondayDateStringInSameWeek(ymd, "Asia/Bangkok")).toBe("2026-03-30");
+    });
+  });
+
+  describe("enumerateDateStringsInRange", () => {
+    it("returns empty for invalid or reversed bounds", () => {
+      expect(enumerateDateStringsInRange("not-a-date", "2026-01-10", "Asia/Bangkok")).toEqual([]);
+      expect(enumerateDateStringsInRange("2026-01-10", "2026-01-05", "Asia/Bangkok")).toEqual([]);
+    });
+    it("returns a single day when from equals to", () => {
+      expect(enumerateDateStringsInRange("2026-01-10", "2026-01-10", "Asia/Bangkok")).toEqual([
+        "2026-01-10",
+      ]);
+    });
+    it("lists consecutive dates inclusive", () => {
+      expect(enumerateDateStringsInRange("2026-01-10", "2026-01-12", "Asia/Bangkok")).toEqual([
+        "2026-01-10",
+        "2026-01-11",
+        "2026-01-12",
+      ]);
     });
   });
 

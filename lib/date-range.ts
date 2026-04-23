@@ -117,6 +117,31 @@ export function addCalendarDaysInTimezone(
 }
 
 /**
+ * List every calendar date from `from` through `to` (inclusive) in `timezone` as YYYY-MM-DD.
+ * Returns empty if either bound is invalid or if `from` is after `to` (string compare is valid for YYYY-MM-DD).
+ */
+export function enumerateDateStringsInRange(
+  from: string,
+  to: string,
+  timezone: string = "Asia/Bangkok",
+): string[] {
+  if (!getDateRangeInTimezone(from, timezone) || !getDateRangeInTimezone(to, timezone)) {
+    return [];
+  }
+  if (from > to) return [];
+  const out: string[] = [];
+  let cur: string | null = from;
+  // Guard against runaway in case of add bug
+  for (let n = 0; n < 2000 && cur != null; n++) {
+    out.push(cur);
+    if (cur === to) break;
+    cur = addCalendarDaysInTimezone(cur, 1, timezone);
+    if (cur == null) break;
+  }
+  return out;
+}
+
+/**
  * Monday-start week: return the YYYY-MM-DD (in `timezone`) for the Monday of the week that contains `dateStr`.
  */
 export function getMondayDateStringInSameWeek(

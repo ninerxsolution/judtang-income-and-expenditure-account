@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Eye,
   EyeOff,
+  Target,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -98,6 +99,7 @@ const navItems = [
   { key: "recurring", href: "/dashboard/recurring", icon: RepeatIcon },
   { key: "budget", href: "/dashboard/settings/budget", icon: Wallet },
   { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
+  { key: "spendingEfficiency", href: "/dashboard/spending-efficiency", icon: Target },
 ] as const;
 
 export function AppSidebarLayout({
