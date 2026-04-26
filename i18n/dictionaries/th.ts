@@ -400,6 +400,10 @@ export const thDictionary = {
     },
     allAccounts: "ทุกบัญชี",
     expenseRatio: "อัตรารายจ่าย/รายรับ",
+    avgMonthlyIncome: "รายรับเฉลี่ยต่อเดือน",
+    avgMonthlyExpense: "รายจ่ายเฉลี่ยต่อเดือน",
+    avgWeeklyExpense: "รายจ่ายเฉลี่ยต่อสัปดาห์",
+    avgDailyExpense: "รายจ่ายเฉลี่ยต่อวัน",
     chart: {
       incomeVsExpense: "รายรับ vs รายจ่าย (รายเดือน)",
       expenseByCategory: "รายจ่ายตามหมวดหมู่",

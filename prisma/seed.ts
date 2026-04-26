@@ -44,7 +44,7 @@ const CATEGORY_NAME_EN: Record<string, string> = {
   "ปรับยอด": "Adjustment",
 };
 
-const DAYS_BACK = 270;
+const DAYS_BACK = 1000;
 const MIN_TX_PER_DAY = 4;
 const MAX_TX_PER_DAY = 8;
 

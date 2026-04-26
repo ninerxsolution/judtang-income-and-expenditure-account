@@ -190,6 +190,23 @@ export default function SpendingEfficiencyPage() {
     };
   }, [days, dailyTarget]);
 
+  /**
+   * Averages for the **selected month** (n = calendar days in that month) with the same
+   * excluded categories as the total. Not comparable to "รายจ่ายเฉลี่ย/เดือน" on Summary
+   * (which is year total ÷ 12). We do not show a third "per month" line: the main figure is
+   * already that month’s total.
+   */
+  const avgRunRates = useMemo(() => {
+    const { total, n } = stats;
+    if (n <= 0) {
+      return { daily: 0, weekly: 0 };
+    }
+    return {
+      daily: total / n,
+      weekly: (total * 7) / n,
+    };
+  }, [stats]);
+
   const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => i), []);
   const yearOptions = useMemo(() => {
     const y = new Date().getFullYear();
@@ -403,7 +420,32 @@ export default function SpendingEfficiencyPage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {loading && !days ? (
           <>
-            {["a", "b", "c", "d"].map((k) => (
+            <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">
+              <CardHeader className="flex flex-row items-center gap-2 pb-2">
+                <Wallet className="h-4 w-4 min-h-4 min-w-4 text-zinc-600 dark:text-zinc-400" />
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t("dashboard.spendingEfficiency.totalSpent")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-0">
+                <Skeleton className="h-8 w-24" />
+                <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
+                  {(["d", "w"] as const).map((row) => (
+                    <div
+                      key={row}
+                      className="flex items-baseline justify-between gap-2"
+                    >
+                      <span className="text-xs text-muted-foreground">
+                        {row === "d" && t("summary.avgDailyExpense")}
+                        {row === "w" && t("summary.avgWeeklyExpense")}
+                      </span>
+                      <Skeleton className="h-3.5 w-20" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            {["b", "c", "d"].map((k) => (
               <Card key={k}>
                 <CardHeader>
                   <Skeleton className="h-4 w-32" />
@@ -423,8 +465,26 @@ export default function SpendingEfficiencyPage() {
                   {t("dashboard.spendingEfficiency.totalSpent")}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold tabular-nums">{formatAmount(stats.total)}</p>
+              <CardContent className="space-y-0">
+                <p className="text-xl font-semibold tabular-nums">
+                  {formatAmount(stats.total)}
+                </p>
+                {stats.n > 0 ? (
+                  <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
+                    <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+                      <span className="min-w-0 shrink">{t("summary.avgDailyExpense")}</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatAmount(avgRunRates.daily)}
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+                      <span className="min-w-0 shrink">{t("summary.avgWeeklyExpense")}</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatAmount(avgRunRates.weekly)}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
             <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">

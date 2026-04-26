@@ -8,6 +8,9 @@ import { useEffect, useState, useMemo } from "react";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
+  BarChart2,
+  Calendar,
+  CalendarRange,
   Wallet,
   Percent,
 } from "lucide-react";
@@ -67,6 +70,10 @@ function getMonthRange(year: number, month: number): { from: string; to: string 
 
 function getYearRange(year: number): { from: string; to: string } {
   return { from: `${year}-01-01`, to: `${year}-12-31` };
+}
+
+function getDaysInGregorianYear(y: number): number {
+  return new Date(y, 1, 29).getDate() === 29 ? 366 : 365;
 }
 
 export default function SummaryPage() {
@@ -200,6 +207,28 @@ export default function SummaryPage() {
       })),
     [monthData],
   );
+
+  const { avgMonthlyIncome, avgMonthlyExpense, avgWeeklyExpense, avgDailyExpense } =
+    useMemo(() => {
+      if (monthData.length === 0) {
+        return {
+          avgMonthlyIncome: 0,
+          avgMonthlyExpense: 0,
+          avgWeeklyExpense: 0,
+          avgDailyExpense: 0,
+        };
+      }
+      const totalIncome = monthData.reduce((s, m) => s + m.income, 0);
+      const totalExpense = monthData.reduce((s, m) => s + m.expense, 0);
+      const daysInYear = getDaysInGregorianYear(year);
+      const avgDaily = totalExpense / daysInYear;
+      return {
+        avgMonthlyIncome: totalIncome / 12,
+        avgMonthlyExpense: totalExpense / 12,
+        avgWeeklyExpense: (totalExpense * 7) / daysInYear,
+        avgDailyExpense: avgDaily,
+      };
+    }, [monthData, year]);
 
   const pieData = useMemo(
     () =>
@@ -364,6 +393,77 @@ export default function SummaryPage() {
             ) : (
               <p className="text-xl font-semibold text-muted-foreground">
                 N/A
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <BarChart2 className="min-w-4 min-h-4 w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <CardTitle className="text-sm font-medium text-nowrap">
+              {t("summary.avgMonthlyIncome")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monthLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                {formatAmount(avgMonthlyIncome)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <BarChart2 className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
+            <CardTitle className="text-sm font-medium text-nowrap">
+              {t("summary.avgMonthlyExpense")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monthLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
+                {formatAmount(avgMonthlyExpense)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <CalendarRange className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
+            <CardTitle className="text-sm font-medium text-nowrap">
+              {t("summary.avgWeeklyExpense")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monthLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
+                {formatAmount(avgWeeklyExpense)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+            <Calendar className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
+            <CardTitle className="text-sm font-medium text-nowrap">
+              {t("summary.avgDailyExpense")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monthLoading ? (
+              <Skeleton className="h-7 w-24" />
+            ) : (
+              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
+                {formatAmount(avgDailyExpense)}
               </p>
             )}
           </CardContent>

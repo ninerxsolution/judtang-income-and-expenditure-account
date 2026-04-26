@@ -402,6 +402,10 @@ export const enDictionary = {
     },
     allAccounts: "All accounts",
     expenseRatio: "Expense / Income",
+    avgMonthlyIncome: "Average monthly income",
+    avgMonthlyExpense: "Average monthly expense",
+    avgWeeklyExpense: "Average weekly expense",
+    avgDailyExpense: "Average daily expense",
     chart: {
       incomeVsExpense: "Income vs Expense (monthly)",
       expenseByCategory: "Expense by category",
