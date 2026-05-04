@@ -40,3 +40,6 @@ next-env.d.ts
 
 # Cursor IDE — hook runtime state (local; changes every session)
 .cursor/hooks/state/
+
+# Graphify (https://github.com/safishamsi/graphify) — generated knowledge graph
+/graphify-out/

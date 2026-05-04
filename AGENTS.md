@@ -43,6 +43,12 @@ Judtang is a Next.js 16 personal finance web app (Thai/English) for tracking inc
 | Push schema | `npm run db:push` |
 | Seed data | `npm run db:seed` |
 
+### Graphify (optional)
+
+- Installed: Python 3.12 (winget `Python.Python.3.12`), PyPI package **`graphifyy`** (CLI is still `graphify`). `graphify install` registers the **Claude Code** skill under `~/.claude/skills/graphify/`; `graphify cursor install` adds `.cursor/rules/graphify.mdc` (alwaysApply) for this repo.
+- If `graphify` is not on PATH in a new terminal, use: `& "$env:LOCALAPPDATA\Programs\Python\Python312\Scripts\graphify.exe" --help`
+- Outputs live under `graphify-out/` (gitignored). Refresh code structure without an LLM: `graphify update .` from the repo root (same path style as above if PATH is missing).
+
 ### Gotchas
 
 - `npm install` (postinstall) requires `DATABASE_URL` in `.env` because `prisma generate` reads `prisma.config.ts` which resolves this env var. Create `.env` from `.env.example` before installing.
