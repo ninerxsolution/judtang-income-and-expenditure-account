@@ -1,6 +1,6 @@
 # Caching Strategy (Level 1 – Application-Level Cache)
 
-**Updated:** 02/03/2026 (dashboard init — removed unstable_cache; no-store on client fetch)
+**Updated:** 04/05/2026 (transaction list cache key version; project status doc)
 
 **Source:** PRD §14
 
@@ -28,6 +28,7 @@ Application-level cache is implemented using Next.js `unstable_cache` in API rou
 
 - **Revalidate:** 45 seconds (`CACHE_REVALIDATE_SECONDS`)
 - **Cache keys:** Include `userId` and relevant query parameters so data is isolated per user and per request shape
+- **`GET /api/transactions`:** Uses a **module-level** `unstable_cache` callback plus a **payload version** string in the cache key parts (`TRANSACTIONS_LIST_CACHE_VERSION` in `app/api/transactions/route.ts`). Bump that constant when the serialized list JSON shape changes so old Data Cache entries are not reused across incompatible deployments.
 
 **Cached GET routes:**
 

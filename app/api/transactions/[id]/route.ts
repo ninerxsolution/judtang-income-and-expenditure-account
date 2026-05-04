@@ -13,6 +13,16 @@ import { parseOccurredAt } from "@/lib/date-range";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
+function serializeOptionalDecimal(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === "object" && v != null && "toNumber" in v) {
+    const n = (v as { toNumber: () => number }).toNumber();
+    return Number.isFinite(n) ? n : null;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 function serializeTransactionAmounts(transaction: {
   amount: unknown;
   currency?: string;
@@ -100,6 +110,12 @@ export async function GET(
       postedDate: transaction.postedDate?.toISOString() ?? null,
       createdAt: transaction.createdAt.toISOString(),
       updatedAt: transaction.updatedAt.toISOString(),
+      accountBalanceAfter: serializeOptionalDecimal(
+        (transaction as { accountBalanceAfter?: unknown }).accountBalanceAfter,
+      ),
+      transferAccountBalanceAfter: serializeOptionalDecimal(
+        (transaction as { transferAccountBalanceAfter?: unknown }).transferAccountBalanceAfter,
+      ),
     });
   } catch {
     return NextResponse.json(
@@ -265,6 +281,12 @@ export async function PATCH(
       postedDate: transaction.postedDate?.toISOString() ?? null,
       createdAt: transaction.createdAt.toISOString(),
       updatedAt: transaction.updatedAt.toISOString(),
+      accountBalanceAfter: serializeOptionalDecimal(
+        (transaction as { accountBalanceAfter?: unknown }).accountBalanceAfter,
+      ),
+      transferAccountBalanceAfter: serializeOptionalDecimal(
+        (transaction as { transferAccountBalanceAfter?: unknown }).transferAccountBalanceAfter,
+      ),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";

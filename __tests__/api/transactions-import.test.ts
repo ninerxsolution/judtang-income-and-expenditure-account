@@ -56,6 +56,10 @@ jest.mock("@/lib/cache", () => ({
   revalidateTag: jest.fn(),
 }));
 
+jest.mock("@/lib/transaction-balance-snapshot", () => ({
+  rebuildBalanceSnapshotsForFinancialAccountIds: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { POST } from "@/app/api/transactions/import/route";
 import { createMockSession } from "../helpers/api-helper";
 

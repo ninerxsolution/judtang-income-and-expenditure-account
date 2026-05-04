@@ -33,6 +33,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { formatAmount } from "@/lib/format";
+import { resolvedBalanceAfterSnapshot } from "@/lib/transaction-balance-display";
 import { toDateStringInTimezone } from "@/lib/date-range";
 import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
 import { getCardNetworkDisplayName } from "@/lib/card-types";
@@ -91,8 +92,12 @@ type Transaction = {
   id: string;
   type: string;
   amount: number;
-  financialAccount?: { id: string; name: string } | null;
-  transferAccount?: { id: string; name: string } | null;
+  financialAccountId: string | null;
+  transferAccountId: string | null;
+  accountBalanceAfter: number | null;
+  transferAccountBalanceAfter: number | null;
+  financialAccount?: { id: string; name: string; currency?: string } | null;
+  transferAccount?: { id: string; name: string; currency?: string } | null;
   categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
@@ -138,6 +143,15 @@ function formatDateTime(iso: string, locale: string): string {
   return `${dateStr} ${timeStr}`;
 }
 
+function currencyForBalance(tx: Transaction, filterAccountId: string): string {
+  const f = filterAccountId.trim();
+  if (!f) return tx.financialAccount?.currency ?? "THB";
+  if (tx.financialAccountId === f) return tx.financialAccount?.currency ?? "THB";
+  if (tx.transferAccountId === f) {
+    return tx.transferAccount?.currency ?? tx.financialAccount?.currency ?? "THB";
+  }
+  return tx.financialAccount?.currency ?? "THB";
+}
 
 export default function AccountDetailPage() {
   const params = useParams();
@@ -239,8 +253,27 @@ export default function AccountDetailPage() {
       if (txFilterType !== "all") params.set("type", txFilterType);
       const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
       if (res.ok) {
-        const data = (await res.json()) as Transaction[];
-        setTransactions(Array.isArray(data) ? data : []);
+        const raw = (await res.json()) as unknown;
+        const data = Array.isArray(raw) ? raw : [];
+        setTransactions(
+          data.map((row) => {
+            const r = row as Transaction;
+            return {
+              ...r,
+              financialAccountId: r.financialAccountId ?? r.financialAccount?.id ?? null,
+              transferAccountId: r.transferAccountId ?? null,
+              accountBalanceAfter:
+                r.accountBalanceAfter != null && Number.isFinite(Number(r.accountBalanceAfter))
+                  ? Number(r.accountBalanceAfter)
+                  : null,
+              transferAccountBalanceAfter:
+                r.transferAccountBalanceAfter != null &&
+                Number.isFinite(Number(r.transferAccountBalanceAfter))
+                  ? Number(r.transferAccountBalanceAfter)
+                  : null,
+            };
+          }),
+        );
       } else {
         setTransactions([]);
       }
@@ -517,6 +550,7 @@ export default function AccountDetailPage() {
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.account")}</th>
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
                 <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.balanceAfter")}</th>
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.note")}</th>
                 <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("common.actions.edit")} / {t("common.actions.delete")}</th>
@@ -529,6 +563,7 @@ export default function AccountDetailPage() {
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
                   <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                  <td className="hidden lg:table-cell px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-20" /></td>
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                   <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
@@ -891,6 +926,7 @@ export default function AccountDetailPage() {
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.account")}</th>
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
                     <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                    <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.balanceAfter")}</th>
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.note")}</th>
                     <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("common.actions.edit")} / {t("common.actions.delete")}</th>
@@ -903,6 +939,9 @@ export default function AccountDetailPage() {
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
                       <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                      <td className="hidden lg:table-cell px-2 py-2 lg:px-4 text-right">
+                        <Skeleton className="ml-auto h-4 w-20" />
+                      </td>
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                       <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
@@ -934,6 +973,9 @@ export default function AccountDetailPage() {
                       <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
                         {t("transactions.list.columns.amount")}
                       </th>
+                      <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
+                        {t("transactions.list.columns.balanceAfter")}
+                      </th>
                       <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                         {t("transactions.list.columns.category")}
                       </th>
@@ -949,6 +991,18 @@ export default function AccountDetailPage() {
                     {transactions.map((tx) => {
                       const isIncome = tx.type === "INCOME";
                       const isTransfer = tx.type === "TRANSFER";
+                      const balanceAfter =
+                        accountId != null
+                          ? resolvedBalanceAfterSnapshot({
+                              financialAccountId: tx.financialAccountId,
+                              transferAccountId: tx.transferAccountId,
+                              accountBalanceAfter: tx.accountBalanceAfter,
+                              transferAccountBalanceAfter: tx.transferAccountBalanceAfter,
+                              filterFinancialAccountId: accountId,
+                            })
+                          : null;
+                      const balanceCurrency =
+                        accountId != null ? currencyForBalance(tx, accountId) : "THB";
                       const accountDisplay =
                         isTransfer && tx.transferAccount
                           ? t("transactions.list.transferTo", {
@@ -998,6 +1052,14 @@ export default function AccountDetailPage() {
                                   accountDisplay
                                 )}
                                 {categoryDisplay ? ` · ${categoryDisplay}` : ""}
+                                {balanceAfter != null && (
+                                  <span className="block mt-0.5 text-[11px] tabular-nums text-[#6B5E4E] dark:text-stone-500">
+                                    {t("transactions.list.columns.balanceAfter")}:{" "}
+                                    {balanceCurrency !== "THB"
+                                      ? `${formatAmount(balanceAfter)} ${balanceCurrency}`
+                                      : `฿${formatAmount(balanceAfter)}`}
+                                  </span>
+                                )}
                               </span>
                             </div>
                           </td>
@@ -1054,6 +1116,19 @@ export default function AccountDetailPage() {
                           >
                             <span className="lg:hidden">{isIncome ? "+" : isTransfer ? "" : "-"}</span>
                             {formatAmount(tx.amount)}
+                          </td>
+                          <td className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-right tabular-nums text-[#3D3020] dark:text-stone-200 whitespace-nowrap">
+                            {balanceAfter != null ? (
+                              balanceCurrency !== "THB" ? (
+                                <span>
+                                  {formatAmount(balanceAfter)} {balanceCurrency}
+                                </span>
+                              ) : (
+                                <span>฿{formatAmount(balanceAfter)}</span>
+                              )
+                            ) : (
+                              "—"
+                            )}
                           </td>
                           <td className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-200 max-w-[80px] truncate">
                             {categoryDisplay || "—"}

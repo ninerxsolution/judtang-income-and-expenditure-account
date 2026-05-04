@@ -1,9 +1,14 @@
+jest.mock("@/lib/transaction-balance-snapshot", () => ({
+  rebuildBalanceSnapshotsForFinancialAccountIds: jest.fn().mockResolvedValue(undefined),
+}));
+
 const mockRecurringCreate = jest.fn();
 const mockRecurringFindMany = jest.fn();
 const mockRecurringFindFirst = jest.fn();
 const mockRecurringUpdate = jest.fn();
 const mockRecurringDelete = jest.fn();
 const mockTransactionCreate = jest.fn();
+const mockTransactionFindFirst = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -16,6 +21,7 @@ jest.mock("@/lib/prisma", () => ({
     },
     transaction: {
       create: (...args: unknown[]) => mockTransactionCreate(...args),
+      findFirst: (...args: unknown[]) => mockTransactionFindFirst(...args),
     },
   },
 }));
@@ -32,6 +38,14 @@ jest.mock("@/lib/activity-log", () => ({
 
 jest.mock("@/lib/cache", () => ({
   revalidateTag: jest.fn(),
+}));
+
+const mockUpdateTransaction = jest.fn();
+const mockGetTransactionById = jest.fn();
+
+jest.mock("@/lib/transactions", () => ({
+  getTransactionById: (...args: unknown[]) => mockGetTransactionById(...args),
+  updateTransaction: (...args: unknown[]) => mockUpdateTransaction(...args),
 }));
 
 import {
@@ -78,7 +92,7 @@ beforeEach(() => {
   mockRecurringFindFirst.mockResolvedValue(mockTemplate);
   mockRecurringUpdate.mockResolvedValue(mockTemplate);
   mockRecurringDelete.mockResolvedValue(mockTemplate);
-  mockTransactionCreate.mockResolvedValue({
+  const createdTx = {
     id: "tx-1",
     type: "EXPENSE",
     status: "POSTED",
@@ -87,7 +101,12 @@ beforeEach(() => {
     financialAccount: null,
     categoryRef: null,
     recurringTransaction: mockTemplate,
-  });
+  };
+  mockTransactionCreate.mockResolvedValue(createdTx);
+  mockTransactionFindFirst.mockReset();
+  mockTransactionFindFirst.mockResolvedValue(null);
+  mockGetTransactionById.mockResolvedValue(createdTx);
+  mockUpdateTransaction.mockResolvedValue(createdTx);
 });
 
 describe("createRecurringTransaction", () => {
@@ -171,12 +190,15 @@ describe("deleteRecurringTransaction", () => {
 
 describe("confirmRecurringTransaction", () => {
   const confirmParams = {
+    dueYear: 2025,
+    dueMonth: 3,
     amount: 5000,
-    occurredAt: new Date("2025-03-01"),
+    occurredAt: new Date("2025-03-15T12:00:00"),
     financialAccountId: "acc-1",
   };
 
   it("creates a transaction linked to recurring template", async () => {
+    mockTransactionFindFirst.mockResolvedValueOnce(null);
     const result = await confirmRecurringTransaction("user-1", "rec-1", confirmParams);
     expect(mockTransactionCreate).toHaveBeenCalledTimes(1);
     const call = mockTransactionCreate.mock.calls[0][0];
@@ -195,5 +217,55 @@ describe("confirmRecurringTransaction", () => {
     await expect(
       confirmRecurringTransaction("user-1", "rec-1", { ...confirmParams, amount: 0 }),
     ).rejects.toThrow("Amount must be a positive number");
+  });
+
+  it("throws when already recorded in the due month", async () => {
+    mockTransactionFindFirst.mockResolvedValueOnce({ id: "existing" });
+    await expect(
+      confirmRecurringTransaction("user-1", "rec-1", confirmParams),
+    ).rejects.toThrow("Already recorded for this recurring item in the selected month");
+  });
+
+  it("links an existing transaction via updateTransaction", async () => {
+    mockTransactionFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "manual-1",
+        userId: "user-1",
+        type: "EXPENSE",
+        status: "POSTED",
+        recurringTransactionId: null,
+        transferGroupId: null,
+        occurredAt: new Date("2025-03-10"),
+      });
+    const refreshed = { id: "manual-1", type: "EXPENSE" };
+    mockGetTransactionById.mockResolvedValueOnce(refreshed);
+
+    const result = await confirmRecurringTransaction("user-1", "rec-1", {
+      ...confirmParams,
+      linkTransactionId: "manual-1",
+    });
+
+    expect(mockTransactionCreate).not.toHaveBeenCalled();
+    expect(mockUpdateTransaction).toHaveBeenCalledWith(
+      "user-1",
+      "manual-1",
+      expect.objectContaining({
+        recurringTransactionId: "rec-1",
+        amount: 5000,
+        financialAccountId: "acc-1",
+        activityLogExtras: expect.objectContaining({ source: "recurring-link" }),
+      }),
+    );
+    expect(result).toBe(refreshed);
+  });
+
+  it("throws when payment date is outside due month", async () => {
+    await expect(
+      confirmRecurringTransaction("user-1", "rec-1", {
+        ...confirmParams,
+        occurredAt: new Date("2025-04-01"),
+      }),
+    ).rejects.toThrow("Payment date must fall within the selected due month");
   });
 });

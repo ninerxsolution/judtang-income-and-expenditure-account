@@ -315,6 +315,10 @@ model Transaction {
   categoryId             String?
   statementId            String?
   recurringTransactionId String?
+  /// Balance of `financialAccountId` after this row (that account's currency). Matches app running balance; null for legacy rows.
+  accountBalanceAfter          Decimal? @db.Decimal(15, 2)
+  /// For single-row same-currency TRANSFER: balance of `transferAccountId` after this row. Null otherwise.
+  transferAccountBalanceAfter  Decimal? @db.Decimal(15, 2)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

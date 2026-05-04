@@ -15,6 +15,7 @@ import { ensureUserHasDefaultFinancialAccount } from "../lib/financial-accounts"
 import { DEFAULT_CATEGORY_NAMES } from "../lib/categories";
 import { createActivityLog } from "../lib/activity-log";
 import { getAccountBalance } from "../lib/balance";
+import { rebuildBalanceSnapshotsForFinancialAccountIds } from "../lib/transaction-balance-snapshot";
 
 const RESET_FLAG = process.argv.includes("--reset");
 
@@ -487,6 +488,20 @@ async function ensureNonNegativeAssetBalances(ctx: Pick<SeedContext, "userId" | 
     console.log(`Topped up ${adjustments} asset account(s) so balances are not negative.`);
   }
   return adjustments;
+}
+
+/** Fills `accountBalanceAfter` / `transferAccountBalanceAfter` after bulk `prisma.transaction.create` in seed. */
+async function rebuildTransactionBalanceSnapshotsForUser(userId: string): Promise<void> {
+  const accounts = await prisma.financialAccount.findMany({
+    where: { userId },
+    select: { id: true },
+  });
+  if (accounts.length === 0) return;
+  await rebuildBalanceSnapshotsForFinancialAccountIds(
+    userId,
+    accounts.map((a) => a.id),
+  );
+  console.log(`Rebuilt balance-after snapshots for ${accounts.length} financial account(s).`);
 }
 
 async function seedTransactions(ctx: SeedContext): Promise<number> {
@@ -1149,6 +1164,7 @@ async function main() {
 
   const totalTx = await seedTransactions(ctx);
   const balanceTopUps = await ensureNonNegativeAssetBalances(ctx);
+  await rebuildTransactionBalanceSnapshotsForUser(userId);
   await seedDisabledAccounts(ctx);
   await seedTermsAcceptance(userId);
   await seedRecurringTransactions(ctx);

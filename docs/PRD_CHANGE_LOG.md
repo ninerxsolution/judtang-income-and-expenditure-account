@@ -5,7 +5,30 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
-## 22/04/2026 (Multi-currency phase 2 scope doc — CC cross-currency PAYMENT)
+## 04/05/2026 (Recurring confirm — link existing transaction)
+
+- docs/feature/recurring-transactions.md — Document `getCalendarMonthBounds`, `listRecurringLinkCandidates`, `GET .../link-candidates`, confirm body (`dueYear`/`dueMonth`, optional `linkTransactionId`), UI dual mode, activity log for link vs create.
+- lib/recurring-transactions.ts — Shared month bounds; link candidates query; `confirmRecurringTransaction` create vs link + duplicate guard; `updateTransaction` integration for link.
+- lib/transactions.ts — `UpdateTransactionParams.recurringTransactionId`, `activityLogExtras`; guards for transfer rows and non INCOME/EXPENSE when linking.
+- app/api/recurring-transactions/[id]/link-candidates/route.ts — New GET endpoint.
+- app/api/recurring-transactions/[id]/confirm/route.ts — Require `dueYear`/`dueMonth`; pass `linkTransactionId`.
+- components/dashboard/recurring-confirm-dialog.tsx, recurring page, due widget — Due month props; create vs link UI; fetch candidates.
+- i18n/dictionaries/en.ts, th.ts — New `confirmDialog` strings for link mode.
+- lib/__tests__/recurring-transactions.test.ts, __tests__/api/recurring-transactions.test.ts — Coverage for link path, duplicate guard, API.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
+## 04/05/2026 (Project status doc + testing/caching notes)
+
+- docs/structure/project-status.md — New: implementation snapshot (balances on transactions/account UI, monthly-entry PATCH/bulk behavior, list-cache versioning, Prisma generate/restart after schema changes, Jest vs UI verification, suggested smoke checklist).
+- docs/INDEX.md — Linked `project-status.md` under structure/.
+- docs/structure/product-overview.md — Pointer to project-status; updated “Updated” date.
+- docs/structure/testing-strategy.md — PATCH/bulk mock caveat; new `transfer-group-patch-utils` test bullet; “Verification caveats (Jest vs browser)” section with workspace rule reference.
+- docs/core/caching-strategy.md — Documented `GET /api/transactions` module cache + `TRANSACTIONS_LIST_CACHE_VERSION` bump policy; updated “Updated” date.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
 
 - docs/feature/multi-currency-cc-payment-phase2.md — New scope doc for Phase 2 (Credit Card Cross-Currency PAYMENT). **Not implemented.** Captures schema reuse (transferGroupId/transferLeg pair), API / UI / i18n / tests to touch, open questions, prerequisites (phase 1 backfill on staging/prod), and a suggested 5-todo plan structure to use when a separate implementation plan is created.
 - docs/PRD_CHANGE_LOG.md — This entry.

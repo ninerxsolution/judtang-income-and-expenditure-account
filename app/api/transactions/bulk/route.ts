@@ -3,11 +3,21 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { TransactionType } from "@/lib/transactions";
-import type { TransactionType as PrismaTransactionType } from "@prisma/client";
+import {
+  TransactionStatus,
+  TransactionType as PrismaTransactionType,
+} from "@prisma/client";
+import {
+  computeBaseAmountThb,
+  defaultExchangeRateThbPerUnit,
+  isBaseCurrency,
+  normalizeCurrencyCode,
+} from "@/lib/currency";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { parseOccurredAt } from "@/lib/date-range";
 import { revalidateTag } from "@/lib/cache";
+import { rebuildBalanceSnapshotsForFinancialAccountIds } from "@/lib/transaction-balance-snapshot";
 
 const MAX_BULK_ROWS = 500;
 
@@ -69,6 +79,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
+
   const errors: ValidationError[] = [];
 
   for (let i = 0; i < items.length; i++) {
@@ -108,15 +120,56 @@ export async function POST(request: Request) {
         });
         continue;
       }
-      if (
-        item.financialAccountId &&
-        item.transferAccountId === item.financialAccountId
-      ) {
+      const finId = item.financialAccountId?.trim() || defaultAccount.id;
+      const toId = String(item.transferAccountId).trim();
+      if (finId === toId) {
         errors.push({
           index: i,
           message:
             "transferAccountId must be different from financialAccountId",
         });
+        continue;
+      }
+      const [fromA, toA] = await Promise.all([
+        prisma.financialAccount.findFirst({
+          where: { id: finId, userId },
+          select: { currency: true },
+        }),
+        prisma.financialAccount.findFirst({
+          where: { id: toId, userId },
+          select: { currency: true },
+        }),
+      ]);
+      if (!fromA || !toA) {
+        errors.push({
+          index: i,
+          message: "Source or destination account not found",
+        });
+        continue;
+      }
+      if (
+        normalizeCurrencyCode(fromA.currency) !==
+        normalizeCurrencyCode(toA.currency)
+      ) {
+        errors.push({
+          index: i,
+          message:
+            "Cross-currency transfers are not supported in bulk monthly entry",
+        });
+        continue;
+      }
+    } else {
+      const finId = item.financialAccountId?.trim() || defaultAccount.id;
+      const acc = await prisma.financialAccount.findFirst({
+        where: { id: finId, userId },
+        select: { id: true },
+      });
+      if (!acc) {
+        errors.push({
+          index: i,
+          message: "Financial account not found",
+        });
+        continue;
       }
     }
   }
@@ -128,9 +181,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
-
   try {
+    const accountIdsForSnapshots = new Set<string>();
     const result = await prisma.$transaction(async (tx) => {
       let createdCount = 0;
 
@@ -147,23 +199,61 @@ export async function POST(request: Request) {
             ? item.transferAccountId?.trim() || null
             : null;
 
+        const fromAccount = await tx.financialAccount.findFirst({
+          where: { id: financialAccountId, userId },
+          select: { currency: true },
+        });
+        if (!fromAccount) {
+          throw new Error(`Financial account not found: ${financialAccountId}`);
+        }
+        const fromCur = normalizeCurrencyCode(fromAccount.currency);
+        let exchangeRateThb = 1;
+        if (!isBaseCurrency(fromCur)) {
+          exchangeRateThb = defaultExchangeRateThbPerUnit(fromCur);
+        }
+        const baseAmountVal = computeBaseAmountThb(amount, fromCur, exchangeRateThb);
+
+        let category: string | null = null;
+        if (categoryId) {
+          const cat = await tx.category.findFirst({
+            where: { id: categoryId, userId },
+            select: { name: true },
+          });
+          category = cat?.name ?? null;
+        }
+
         await tx.transaction.create({
           data: {
             userId,
             type: typeUpper as PrismaTransactionType,
+            status: TransactionStatus.POSTED,
             amount,
+            currency: fromCur,
+            exchangeRate: exchangeRateThb,
+            baseAmount: baseAmountVal,
             financialAccountId,
-            transferAccountId: transferAccountId ?? undefined,
+            transferAccountId:
+              typeUpper === TransactionType.TRANSFER && transferAccountId
+                ? transferAccountId
+                : undefined,
             categoryId,
+            category,
             note,
             occurredAt,
+            postedDate: occurredAt,
           },
         });
+        accountIdsForSnapshots.add(financialAccountId);
+        if (transferAccountId) {
+          accountIdsForSnapshots.add(transferAccountId);
+        }
         createdCount += 1;
       }
 
       return { createdCount };
     });
+
+    await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [...accountIdsForSnapshots]);
 
     void createActivityLog({
       userId,

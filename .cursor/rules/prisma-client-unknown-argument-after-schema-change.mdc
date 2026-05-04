@@ -1,0 +1,30 @@
+---
+description: Prisma Unknown argument after schema field changes — regenerate client and restart dev server
+alwaysApply: true
+---
+
+# Prisma: `Unknown argument ...` หลังเพิ่ม field ใน schema
+
+## ปัญหาที่เจอ
+
+- หลังเพิ่ม field ใหม่ใน `schema.prisma` (เช่น `accountBalanceAfter`) API บันทึกข้อมูลหลักสำเร็จแล้ว แต่ตอนอัปเดต snapshot ล้มด้วย error:
+  - `Unknown argument 'accountBalanceAfter'` ใน `prisma.transaction.update()`
+- ผู้ใช้เห็น 500 (`Failed to update transaction`) แต่รายการถูกบันทึกแล้วบางส่วน
+
+## สาเหตุ
+
+- Prisma Client runtime ไม่ตรงกับ schema ล่าสุด (client เก่าที่ยังไม่ regenerate หรือ dev server ยังใช้ instance เก่า)
+- โค้ดที่รันภายหลังขั้นตอนบันทึกหลัก ไปแตะ field ใหม่ แล้วชน Unknown argument
+
+## วิธีแก้
+
+1. รัน `npx prisma generate` เพื่อ sync Prisma Client กับ `schema.prisma`
+2. รีสตาร์ท dev server (`next dev`) เพื่อโหลด Prisma client ใหม่
+3. สำหรับ path ที่ critical ให้ระวังไม่ให้ขั้นตอน snapshot/follow-up ทำให้ API ตอบ 500 ทั้งที่ธุรกรรมหลักสำเร็จแล้ว
+
+## กันซ้ำ
+
+- **Do:** หลังเปลี่ยน Prisma schema fields ให้ regenerate client ทันทีและรีสตาร์ท server
+- **Do:** ถ้าเจอ `Unknown argument` ให้ตรวจ client/schema drift ก่อนสงสัย business logic
+- **Don't:** อย่าตีความว่า DB/schema ผิดเสมอไปทันทีเมื่อเห็น Unknown argument; มักเป็น client ที่ยังเก่า
+

@@ -15,11 +15,14 @@ export async function POST(request: Request, { params }: RouteContext) {
   const { id } = await params;
 
   let body: {
+    dueYear?: number;
+    dueMonth?: number;
     amount?: number;
     occurredAt?: string;
     financialAccountId?: string;
     categoryId?: string | null;
     note?: string | null;
+    linkTransactionId?: string | null;
   };
 
   try {
@@ -41,13 +44,26 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "occurredAt is required" }, { status: 400 });
   }
 
+  const dueYear = typeof body.dueYear === "number" ? body.dueYear : parseInt(String(body.dueYear ?? ""), 10);
+  const dueMonth = typeof body.dueMonth === "number" ? body.dueMonth : parseInt(String(body.dueMonth ?? ""), 10);
+  if (!Number.isInteger(dueYear) || !Number.isInteger(dueMonth) || dueMonth < 1 || dueMonth > 12) {
+    return NextResponse.json({ error: "dueYear and dueMonth are required (dueMonth 1–12)" }, { status: 400 });
+  }
+
+  const linkRaw = body.linkTransactionId;
+  const linkTransactionId =
+    linkRaw != null && String(linkRaw).trim() !== "" ? String(linkRaw).trim() : null;
+
   try {
     const transaction = await confirmRecurringTransaction(userId, id, {
+      dueYear,
+      dueMonth,
       amount,
       occurredAt: parseOccurredAt(body.occurredAt),
       financialAccountId: body.financialAccountId,
       categoryId: body.categoryId ?? null,
       note: body.note ?? null,
+      linkTransactionId,
     });
     return NextResponse.json(transaction, { status: 201 });
   } catch (err) {

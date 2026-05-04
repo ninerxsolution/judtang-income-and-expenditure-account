@@ -4,6 +4,7 @@ const mockTransactionUpdate = jest.fn();
 const mockTransactionDelete = jest.fn();
 const mockFinancialAccountFindUnique = jest.fn();
 const mockFinancialAccountFindFirst = jest.fn();
+const mockFinancialAccountFindMany = jest.fn();
 const mockCategoryFindUnique = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
@@ -18,6 +19,7 @@ jest.mock("@/lib/prisma", () => ({
     financialAccount: {
       findUnique: (...args: unknown[]) => mockFinancialAccountFindUnique(...args),
       findFirst: (...args: unknown[]) => mockFinancialAccountFindFirst(...args),
+      findMany: (...args: unknown[]) => mockFinancialAccountFindMany(...args),
     },
     category: {
       findUnique: (...args: unknown[]) => mockCategoryFindUnique(...args),
@@ -52,6 +54,7 @@ const baseParams = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockFinancialAccountFindMany.mockResolvedValue([]);
   mockTransactionCreate.mockResolvedValue({
     id: "tx-1",
     type: "EXPENSE",
