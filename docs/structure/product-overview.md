@@ -1,6 +1,6 @@
 # Product Overview
 
-**Updated:** product-overview (02/03/2026)
+**Updated:** product-overview (04/05/2026)
 
 **Source:** PRD §1–6
 
@@ -15,6 +15,7 @@ The product includes:
 - **Public Landing Page** (`/`) — Product overview, core value, feature grid, entry points (Login, Get Started). Theme and language switchers. User-friendly content in Thai and English.
 - **Public Releases Page** (`/releases`) — Changelog for unauthenticated users.
 - **Income & Expense tracking** — Multi-account support, credit card management, calendar view, import/export. See [PRD.md](../PRD.md) §18 and [feature/](../feature/).
+- **Implementation snapshot (maintainers):** [project-status.md](./project-status.md) — balances on list/account pages, monthly-entry save paths, list-cache versioning, Prisma client drift notes, and how Jest relates to UI verification.
 
 ---
 

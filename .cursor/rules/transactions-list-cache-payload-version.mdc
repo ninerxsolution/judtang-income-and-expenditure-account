@@ -1,0 +1,29 @@
+---
+description: GET /api/transactions list cache must match JSON payload shape
+alwaysApply: false
+---
+
+# Transactions list: `unstable_cache` and balance columns
+
+## Problem
+
+- UI column "ยอดคงเหลือหลังรายการ" / balance after showed "—" while DB had `accountBalanceAfter` / `transferAccountBalanceAfter` populated.
+
+## Causes
+
+1. **Stale Data Cache:** `unstable_cache` entries created before the list response included balance fields kept being served (same logical filters, old payload shape).
+2. **Per-request `unstable_cache`:** Wrapping the list in `unstable_cache` inside the handler each time is discouraged; prefer one module-level cached function with stable `keyParts` plus all query dimensions passed as callback arguments.
+
+## Fix
+
+- Define `getCachedTransactionsList` at **module** scope with `keyParts` including a **payload version** string (e.g. `snap-v1`). **Bump that version** whenever the serialized list shape changes so old cache entries are never reused.
+- Optionally harden `serializeOptionalDecimal` for `string` / `number` Prisma edge types.
+
+## Do / Don’t
+
+- **Do:** keep `revalidateTag("transactions")` on mutations; bump `TRANSACTIONS_LIST_CACHE_VERSION` when adding/removing/rename fields on the list API.
+- **Don’t:** rely only on time-based `revalidate` for new fields—deploy + old cache can still omit keys until tag/time clears.
+
+## Reference
+
+- `app/api/transactions/route.ts` — `TRANSACTIONS_LIST_CACHE_VERSION`, `getCachedTransactionsList`

@@ -12,6 +12,7 @@ import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { revalidateTag } from "@/lib/cache";
 import { createNotification } from "@/lib/notifications";
+import { rebuildBalanceSnapshotsForFinancialAccountIds } from "@/lib/transaction-balance-snapshot";
 
 async function findOrCreateCategoryByName(
   tx: Pick<typeof prisma, "category">,
@@ -316,6 +317,7 @@ export async function POST(request: Request) {
   const defaultAccount = await ensureUserHasDefaultFinancialAccount(userId);
 
   try {
+    const accountIdsForSnapshots = new Set<string>();
     const result = await prisma.$transaction(async (tx) => {
       let createdCount = 0;
       let updatedCount = 0;
@@ -347,6 +349,10 @@ export async function POST(request: Request) {
             occurredAt: row.occurredAt,
           },
         });
+        accountIdsForSnapshots.add(financialAccountId);
+        if (row.type === TransactionType.TRANSFER && row.transferAccountId) {
+          accountIdsForSnapshots.add(row.transferAccountId);
+        }
         createdCount += 1;
       }
 
@@ -391,11 +397,17 @@ export async function POST(request: Request) {
           },
           data: updateData,
         });
+        accountIdsForSnapshots.add(updateData.financialAccountId);
+        if (row.type === TransactionType.TRANSFER && row.transferAccountId) {
+          accountIdsForSnapshots.add(row.transferAccountId);
+        }
         updatedCount += 1;
       }
 
       return { createdCount, updatedCount };
     });
+
+    await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [...accountIdsForSnapshots]);
 
     void createActivityLog({
       userId,

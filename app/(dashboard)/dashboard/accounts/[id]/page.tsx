@@ -15,6 +15,7 @@ import {
   BanknoteIcon,
   FileText,
   CheckCircle,
+  ClipboardList,
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
@@ -33,6 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { formatAmount } from "@/lib/format";
+import { resolvedBalanceAfterSnapshot } from "@/lib/transaction-balance-display";
 import { toDateStringInTimezone } from "@/lib/date-range";
 import { getBankDisplayName, getBankLogoUrl } from "@/lib/thai-banks";
 import { getCardNetworkDisplayName } from "@/lib/card-types";
@@ -43,6 +45,8 @@ import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
+import { BalanceReconciliationDialog } from "@/components/dashboard/balance-reconciliation-dialog";
+import { isFinancialAccountBalanceReconciliationEligible } from "@/lib/financial-accounts-shared";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -54,10 +58,21 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+type BalanceReconciliationRow = {
+  id: string;
+  checkedAt: string;
+  appBalance: number;
+  statedBalance: number;
+  difference: number;
+  currency: string;
+  note: string | null;
+};
+
 type FinancialAccount = {
   id: string;
   name: string;
   type: string;
+  currency?: string;
   initialBalance: number;
   isActive: boolean;
   isDefault: boolean;
@@ -91,8 +106,12 @@ type Transaction = {
   id: string;
   type: string;
   amount: number;
-  financialAccount?: { id: string; name: string } | null;
-  transferAccount?: { id: string; name: string } | null;
+  financialAccountId: string | null;
+  transferAccountId: string | null;
+  accountBalanceAfter: number | null;
+  transferAccountBalanceAfter: number | null;
+  financialAccount?: { id: string; name: string; currency?: string } | null;
+  transferAccount?: { id: string; name: string; currency?: string } | null;
   categoryRef?: { id: string; name: string; nameEn?: string | null } | null;
   category: string | null;
   note: string | null;
@@ -123,6 +142,11 @@ function formatDate(iso: string | null, locale: string): string {
   });
 }
 
+function formatLedgerMoney(amount: number, currency: string): string {
+  const f = formatAmount(amount);
+  return currency === "THB" ? `฿${f}` : `${currency} ${f}`;
+}
+
 function formatDateTime(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -138,6 +162,15 @@ function formatDateTime(iso: string, locale: string): string {
   return `${dateStr} ${timeStr}`;
 }
 
+function currencyForBalance(tx: Transaction, filterAccountId: string): string {
+  const f = filterAccountId.trim();
+  if (!f) return tx.financialAccount?.currency ?? "THB";
+  if (tx.financialAccountId === f) return tx.financialAccount?.currency ?? "THB";
+  if (tx.transferAccountId === f) {
+    return tx.transferAccount?.currency ?? tx.financialAccount?.currency ?? "THB";
+  }
+  return tx.financialAccount?.currency ?? "THB";
+}
 
 export default function AccountDetailPage() {
   const params = useParams();
@@ -171,7 +204,9 @@ export default function AccountDetailPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
-
+  const [reconHistory, setReconHistory] = useState<BalanceReconciliationRow[]>([]);
+  const [reconHistoryLoading, setReconHistoryLoading] = useState(false);
+  const [reconDialogOpen, setReconDialogOpen] = useState(false);
 
   const fetchAccount = useCallback(async () => {
     if (!accountId) return;
@@ -239,8 +274,27 @@ export default function AccountDetailPage() {
       if (txFilterType !== "all") params.set("type", txFilterType);
       const res = await fetch(`/api/transactions?${params.toString()}`, { cache: "no-store" });
       if (res.ok) {
-        const data = (await res.json()) as Transaction[];
-        setTransactions(Array.isArray(data) ? data : []);
+        const raw = (await res.json()) as unknown;
+        const data = Array.isArray(raw) ? raw : [];
+        setTransactions(
+          data.map((row) => {
+            const r = row as Transaction;
+            return {
+              ...r,
+              financialAccountId: r.financialAccountId ?? r.financialAccount?.id ?? null,
+              transferAccountId: r.transferAccountId ?? null,
+              accountBalanceAfter:
+                r.accountBalanceAfter != null && Number.isFinite(Number(r.accountBalanceAfter))
+                  ? Number(r.accountBalanceAfter)
+                  : null,
+              transferAccountBalanceAfter:
+                r.transferAccountBalanceAfter != null &&
+                Number.isFinite(Number(r.transferAccountBalanceAfter))
+                  ? Number(r.transferAccountBalanceAfter)
+                  : null,
+            };
+          }),
+        );
       } else {
         setTransactions([]);
       }
@@ -254,6 +308,36 @@ export default function AccountDetailPage() {
   useEffect(() => {
     void fetchAccount();
   }, [fetchAccount]);
+
+  useEffect(() => {
+    if (!accountId || !account || !isFinancialAccountBalanceReconciliationEligible(account)) {
+      setReconHistory([]);
+      setReconHistoryLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setReconHistoryLoading(true);
+    void fetch(`/api/financial-accounts/${accountId}/reconciliation?limit=20`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        if (!res.ok) return { items: [] as BalanceReconciliationRow[] };
+        return (await res.json()) as { items: BalanceReconciliationRow[] };
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setReconHistory(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (!cancelled) setReconHistory([]);
+      })
+      .finally(() => {
+        if (!cancelled) setReconHistoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId, account]);
 
   useEffect(() => {
     if (account?.name && typeof document !== "undefined") {
@@ -408,6 +492,9 @@ export default function AccountDetailPage() {
     refresh();
   }
 
+  const reconEligible =
+    account != null && isFinancialAccountBalanceReconciliationEligible(account);
+
   function applyTxFilters() {
     setTxOffset(0);
     void fetchTransactions({ offset: 0 });
@@ -517,6 +604,7 @@ export default function AccountDetailPage() {
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.account")}</th>
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
                 <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.balanceAfter")}</th>
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
                 <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.note")}</th>
                 <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("common.actions.edit")} / {t("common.actions.delete")}</th>
@@ -529,6 +617,7 @@ export default function AccountDetailPage() {
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
                   <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                  <td className="hidden lg:table-cell px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-20" /></td>
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
                   <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                   <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
@@ -666,6 +755,18 @@ export default function AccountDetailPage() {
                 </Button>
               </>
             )}
+          {reconEligible && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReconDialogOpen(true)}
+              disabled={account.isIncomplete}
+              className="gap-2"
+            >
+              <ClipboardList className="h-4 w-4" />
+              {t("accounts.reconciliation.menuRecord")}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleMarkChecked} className="gap-2">
             <CheckCircle className="h-4 w-4" />
             {t("accounts.markChecked")}
@@ -824,6 +925,114 @@ export default function AccountDetailPage() {
         </div>
       </div>
 
+      {reconEligible && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="mb-3 text-base font-semibold">
+              {t("accounts.reconciliation.historyTitle")}
+            </h2>
+            {reconHistoryLoading ? (
+              <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700">
+                <table className="min-w-full text-xs lg:text-sm">
+                  <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.date")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.appBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.statedBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.difference")}
+                      </th>
+                      <th className="hidden lg:table-cell px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.note")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[1, 2, 3].map((i) => (
+                      <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
+                        <td className="px-3 py-2">
+                          <Skeleton className="h-4 w-28" />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Skeleton className="ml-auto h-4 w-20" />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Skeleton className="ml-auto h-4 w-20" />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Skeleton className="ml-auto h-4 w-16" />
+                        </td>
+                        <td className="hidden lg:table-cell px-3 py-2">
+                          <Skeleton className="h-4 w-32" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : reconHistory.length === 0 ? (
+              <p className="text-sm text-[#A09080] dark:text-stone-400">
+                {t("accounts.reconciliation.historyEmpty")}
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700">
+                <table className="min-w-full text-xs lg:text-sm">
+                  <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.date")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.appBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.statedBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.difference")}
+                      </th>
+                      <th className="hidden lg:table-cell px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.note")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reconHistory.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-t border-[#D4C9B0] dark:border-stone-800"
+                      >
+                        <td className="px-3 py-2 whitespace-nowrap tabular-nums">
+                          {formatDateTime(row.checkedAt, locale)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {formatLedgerMoney(row.appBalance, row.currency)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {formatLedgerMoney(row.statedBalance, row.currency)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {formatLedgerMoney(row.difference, row.currency)}
+                        </td>
+                        <td className="hidden lg:table-cell max-w-[200px] truncate px-3 py-2 text-left text-muted-foreground">
+                          {row.note ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* TransactionList */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base">{t("accounts.detail.transactions")}</CardTitle>
@@ -891,6 +1100,7 @@ export default function AccountDetailPage() {
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.account")}</th>
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.type")}</th>
                     <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.amount")}</th>
+                    <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.balanceAfter")}</th>
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.category")}</th>
                     <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">{t("transactions.list.columns.note")}</th>
                     <th className="hidden lg:table-cell w-0 px-2 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">{t("common.actions.edit")} / {t("common.actions.delete")}</th>
@@ -903,6 +1113,9 @@ export default function AccountDetailPage() {
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-5 w-16 rounded-full" /></td>
                       <td className="px-2 py-2 lg:px-4 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
+                      <td className="hidden lg:table-cell px-2 py-2 lg:px-4 text-right">
+                        <Skeleton className="ml-auto h-4 w-20" />
+                      </td>
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-16" /></td>
                       <td className="hidden lg:table-cell px-4 py-2"><Skeleton className="h-4 w-24" /></td>
                       <td className="hidden lg:table-cell px-2 py-2 text-right"><Skeleton className="ml-auto h-4 w-16" /></td>
@@ -934,6 +1147,9 @@ export default function AccountDetailPage() {
                       <th className="px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
                         {t("transactions.list.columns.amount")}
                       </th>
+                      <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-right font-medium text-[#A09080] dark:text-stone-400 whitespace-nowrap">
+                        {t("transactions.list.columns.balanceAfter")}
+                      </th>
                       <th className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
                         {t("transactions.list.columns.category")}
                       </th>
@@ -949,6 +1165,18 @@ export default function AccountDetailPage() {
                     {transactions.map((tx) => {
                       const isIncome = tx.type === "INCOME";
                       const isTransfer = tx.type === "TRANSFER";
+                      const balanceAfter =
+                        accountId != null
+                          ? resolvedBalanceAfterSnapshot({
+                              financialAccountId: tx.financialAccountId,
+                              transferAccountId: tx.transferAccountId,
+                              accountBalanceAfter: tx.accountBalanceAfter,
+                              transferAccountBalanceAfter: tx.transferAccountBalanceAfter,
+                              filterFinancialAccountId: accountId,
+                            })
+                          : null;
+                      const balanceCurrency =
+                        accountId != null ? currencyForBalance(tx, accountId) : "THB";
                       const accountDisplay =
                         isTransfer && tx.transferAccount
                           ? t("transactions.list.transferTo", {
@@ -998,6 +1226,14 @@ export default function AccountDetailPage() {
                                   accountDisplay
                                 )}
                                 {categoryDisplay ? ` · ${categoryDisplay}` : ""}
+                                {balanceAfter != null && (
+                                  <span className="block mt-0.5 text-[11px] tabular-nums text-[#6B5E4E] dark:text-stone-500">
+                                    {t("transactions.list.columns.balanceAfter")}:{" "}
+                                    {balanceCurrency !== "THB"
+                                      ? `${formatAmount(balanceAfter)} ${balanceCurrency}`
+                                      : `฿${formatAmount(balanceAfter)}`}
+                                  </span>
+                                )}
                               </span>
                             </div>
                           </td>
@@ -1054,6 +1290,19 @@ export default function AccountDetailPage() {
                           >
                             <span className="lg:hidden">{isIncome ? "+" : isTransfer ? "" : "-"}</span>
                             {formatAmount(tx.amount)}
+                          </td>
+                          <td className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-right tabular-nums text-[#3D3020] dark:text-stone-200 whitespace-nowrap">
+                            {balanceAfter != null ? (
+                              balanceCurrency !== "THB" ? (
+                                <span>
+                                  {formatAmount(balanceAfter)} {balanceCurrency}
+                                </span>
+                              ) : (
+                                <span>{formatAmount(balanceAfter)}</span>
+                              )
+                            ) : (
+                              "—"
+                            )}
                           </td>
                           <td className="hidden lg:table-cell px-2 py-1.5 lg:px-4 lg:py-2 text-[#3D3020] dark:text-stone-200 max-w-[80px] truncate">
                             {categoryDisplay || "—"}
@@ -1187,6 +1436,23 @@ export default function AccountDetailPage() {
           void fetchSummary();
         }}
       />
+
+      {reconEligible && (
+        <BalanceReconciliationDialog
+          open={reconDialogOpen}
+          onOpenChange={setReconDialogOpen}
+          account={{
+            id: account.id,
+            name: account.name,
+            balance: account.balance,
+            currency: account.currency ?? "THB",
+          }}
+          onSuccess={() => {
+            void fetchAccount();
+            void fetchSummary();
+          }}
+        />
+      )}
 
       {account.type === "CREDIT_CARD" &&
         account.cardAccountType?.toLowerCase() !== "debit" && (

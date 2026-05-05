@@ -1,0 +1,25 @@
+---
+description: Jest route tests that mock lib/Prisma are not proof the UI or real DB path works
+alwaysApply: false
+---
+
+# Verification: Jest vs UI / real API paths
+
+## Problem
+
+- `__tests__/api/*.test.ts` often mocks `updateTransaction`, `createTransaction`, or `prisma`. **All tests can pass while PATCH/POST from the browser still returns 500**, because the failing code never ran.
+- Example: `updateTransaction` restricted edits for rows with `transferGroupId`; the guard treated JSON `categoryId: null` as “always changed” vs `undefined`, so monthly-entry PATCH always threw for those legs.
+
+## Do
+
+- After changing **transaction create / update / bulk / snapshot** code paths, add tests that execute **real logic** (pure helpers in `lib/`, or integration with DB when explicitly requested), or assert the **same JSON body shape** the UI sends (explicit `null` fields, ISO datetimes, etc.).
+- Before telling the user a fix is verified, use **more than mocked route tests**: new unit tests for extracted guards plus a **manual** check (DevTools Network replay, or hitting the route with the same payload).
+
+## Don't
+
+- Do not cite “`npm test` passed” as the only evidence that a user-visible save/update flow works when tests mock the layer that broke.
+
+## Reference
+
+- `lib/transfer-group-patch-utils.ts` — regression helpers for `transferGroupId` PATCH guards
+- `__tests__/api/transactions.test.ts` — mocks `@/lib/transactions`; complements, does not replace, real-path checks

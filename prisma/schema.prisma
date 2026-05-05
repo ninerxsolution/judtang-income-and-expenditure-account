@@ -131,6 +131,7 @@ model User {
   recurringTransactions  RecurringTransaction[]
   notifications          Notification[]
   deletionRequests       UserDeletionRequest[]
+  balanceReconciliations BalanceReconciliation[]
 }
 
 model UserDeletionRequest {
@@ -263,7 +264,29 @@ model FinancialAccount {
   linkedAccountId    String?
   linkedAccount      FinancialAccount?  @relation("DebitCardLinkedAccount", fields: [linkedAccountId], references: [id], onDelete: SetNull)
   linkedDebitCards   FinancialAccount[] @relation("DebitCardLinkedAccount")
+  balanceReconciliations BalanceReconciliation[]
 
+  @@index([userId])
+}
+
+/// Periodic balance check: app ledger vs user-entered bank balance (asset accounts only in UI).
+model BalanceReconciliation {
+  id                 String   @id @default(cuid())
+  userId             String
+  financialAccountId String
+  checkedAt          DateTime @default(now())
+  appBalance         Decimal  @db.Decimal(15, 2)
+  statedBalance      Decimal  @db.Decimal(15, 2)
+  /// statedBalance - appBalance at time of check.
+  difference         Decimal  @db.Decimal(15, 2)
+  currency           String   @db.VarChar(3)
+  note               String?  @db.Text
+  createdAt          DateTime @default(now())
+
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  financialAccount   FinancialAccount @relation(fields: [financialAccountId], references: [id], onDelete: Cascade)
+
+  @@index([financialAccountId, checkedAt])
   @@index([userId])
 }
 
@@ -315,6 +338,10 @@ model Transaction {
   categoryId             String?
   statementId            String?
   recurringTransactionId String?
+  /// Balance of `financialAccountId` after this row (that account's currency). Matches app running balance; null for legacy rows.
+  accountBalanceAfter          Decimal? @db.Decimal(15, 2)
+  /// For single-row same-currency TRANSFER: balance of `transferAccountId` after this row. Null otherwise.
+  transferAccountBalanceAfter  Decimal? @db.Decimal(15, 2)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

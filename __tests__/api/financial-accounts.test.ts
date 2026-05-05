@@ -9,6 +9,7 @@ const mockUpdate = jest.fn();
 const mockDelete = jest.fn();
 const mockCount = jest.fn();
 const mockTransactionFindFirst = jest.fn();
+const mockBalanceReconciliationGroupBy = jest.fn();
 
 jest.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
@@ -31,12 +32,21 @@ jest.mock("@/lib/prisma", () => ({
       count: (...args: unknown[]) => mockCount(...args),
       findFirst: (...args: unknown[]) => mockTransactionFindFirst(...args),
     },
+    balanceReconciliation: {
+      groupBy: (...args: unknown[]) => mockBalanceReconciliationGroupBy(...args),
+    },
   },
 }));
 
 jest.mock("@/lib/financial-accounts", () => ({
   ensureUserHasDefaultFinancialAccount: jest.fn().mockResolvedValue({ id: "acc-1" }),
   isAccountIncomplete: jest.fn().mockReturnValue(false),
+  isFinancialAccountBalanceReconciliationEligible: jest.fn(
+    (acc: { type: string; cardAccountType?: string | null }) => {
+      if (acc.type === "CREDIT_CARD") return acc.cardAccountType?.toLowerCase() === "debit";
+      return ["BANK", "WALLET", "CASH", "OTHER"].includes(acc.type);
+    },
+  ),
 }));
 
 jest.mock("@/lib/balance", () => ({
@@ -73,6 +83,7 @@ beforeEach(() => {
   mockFindFirst.mockResolvedValue(null);
   mockCount.mockResolvedValue(0);
   mockTransactionFindFirst.mockResolvedValue(null);
+  mockBalanceReconciliationGroupBy.mockResolvedValue([]);
 });
 
 describe("GET /api/financial-accounts", () => {
@@ -113,6 +124,35 @@ describe("GET /api/financial-accounts", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(data)).toBe(true);
     expect(data[0].name).toBe("Main");
+  });
+
+  it("returns 200 when balanceReconciliation.groupBy fails (e.g. table not migrated)", async () => {
+    mockGetServerSession.mockResolvedValue(createMockSession());
+    mockFindMany.mockResolvedValue([
+      {
+        id: "acc-1",
+        name: "Main",
+        type: "CASH",
+        initialBalance: 0,
+        isActive: true,
+        isDefault: true,
+        isHidden: false,
+        lastCheckedAt: null,
+        createdAt: new Date(),
+        accountNumber: null,
+        accountNumberMode: null,
+        bankName: null,
+      },
+    ]);
+    mockBalanceReconciliationGroupBy.mockRejectedValue(new Error("Table does not exist"));
+
+    const req = new Request("http://localhost/api/financial-accounts");
+    const res = await GET(req);
+    const data = (await res.json()) as { reconciliationEligible?: boolean }[];
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(data)).toBe(true);
+    expect(data[0]?.reconciliationEligible).toBe(true);
   });
 });
 

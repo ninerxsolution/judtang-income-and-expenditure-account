@@ -1,6 +1,20 @@
 const mockTxFindUnique = jest.fn();
 const mockTxUpdate = jest.fn();
 const mockRecomputeOutstanding = jest.fn();
+const mockRebuildSnapshots = jest.fn();
+
+jest.mock("@/lib/transaction-balance-snapshot", () => ({
+  collectFinancialAccountIdsForSnapshotRefresh: (p: {
+    financialAccountId: string | null;
+    transferAccountId: string | null;
+  }) => {
+    const out: string[] = [];
+    if (p.financialAccountId) out.push(p.financialAccountId);
+    if (p.transferAccountId) out.push(p.transferAccountId);
+    return out;
+  },
+  rebuildBalanceSnapshotsForFinancialAccountIds: (...args: unknown[]) => mockRebuildSnapshots(...args),
+}));
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -37,14 +51,17 @@ describe("postTransaction", () => {
   it("posts a pending transaction", async () => {
     mockTxFindUnique.mockResolvedValue({
       id: "tx-1",
+      userId: "user-1",
       status: "PENDING",
       postedDate: null,
       financialAccountId: "acc-1",
+      transferAccountId: null,
       financialAccount: { type: "BANK" },
     });
     mockTxUpdate.mockResolvedValue({});
 
     await postTransaction("tx-1");
+    expect(mockRebuildSnapshots).toHaveBeenCalledWith("user-1", ["acc-1"]);
     expect(mockTxUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "tx-1" },
@@ -57,9 +74,11 @@ describe("postTransaction", () => {
     const postedDate = new Date("2025-06-01");
     mockTxFindUnique.mockResolvedValue({
       id: "tx-1",
+      userId: "user-1",
       status: "PENDING",
       postedDate,
       financialAccountId: "acc-1",
+      transferAccountId: null,
       financialAccount: { type: "BANK" },
     });
     mockTxUpdate.mockResolvedValue({});
@@ -75,9 +94,11 @@ describe("postTransaction", () => {
   it("recomputes outstanding for credit card accounts", async () => {
     mockTxFindUnique.mockResolvedValue({
       id: "tx-1",
+      userId: "user-1",
       status: "PENDING",
       postedDate: null,
       financialAccountId: "cc-1",
+      transferAccountId: null,
       financialAccount: { type: "CREDIT_CARD" },
     });
     mockTxUpdate.mockResolvedValue({});
@@ -90,9 +111,11 @@ describe("postTransaction", () => {
   it("does not recompute outstanding for non-credit-card accounts", async () => {
     mockTxFindUnique.mockResolvedValue({
       id: "tx-1",
+      userId: "user-1",
       status: "PENDING",
       postedDate: null,
       financialAccountId: "bank-1",
+      transferAccountId: null,
       financialAccount: { type: "BANK" },
     });
     mockTxUpdate.mockResolvedValue({});

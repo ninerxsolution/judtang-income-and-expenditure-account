@@ -48,6 +48,7 @@ const ACTION_OPTIONS = [
   { value: "FINANCIAL_ACCOUNT_DISABLED", labelKey: "FINANCIAL_ACCOUNT_DISABLED" },
   { value: "FINANCIAL_ACCOUNT_DELETED", labelKey: "FINANCIAL_ACCOUNT_DELETED" },
   { value: "FINANCIAL_ACCOUNT_RESTORED", labelKey: "FINANCIAL_ACCOUNT_RESTORED" },
+  { value: "BALANCE_RECONCILIATION_RECORDED", labelKey: "BALANCE_RECONCILIATION_RECORDED" },
   { value: "ACCOUNT_DEACTIVATE", labelKey: "ACCOUNT_DEACTIVATE" },
   { value: "ACCOUNT_RESTORE", labelKey: "ACCOUNT_RESTORE" },
   { value: "ACCOUNT_DELETED", labelKey: "ACCOUNT_DELETED" },
@@ -223,6 +224,22 @@ function formatDetails(
         createdCount: createdCount ?? 0,
         updatedCount: updatedCount ?? 0,
         totalRows: totalRows ?? 0,
+      }),
+    );
+    return detailLines;
+  }
+
+  if (action === "BALANCE_RECONCILIATION_RECORDED") {
+    const appBalance = formatAmount(details.appBalance);
+    const statedBalance = formatAmount(details.statedBalance);
+    const difference = formatAmount(details.difference);
+    const currency = typeof details.currency === "string" ? details.currency : "THB";
+    detailLines.push(
+      t("activityLog.details.balanceReconciliationRecorded", {
+        appBalance: currency === "THB" ? `฿${appBalance}` : `${currency} ${appBalance}`,
+        statedBalance: currency === "THB" ? `฿${statedBalance}` : `${currency} ${statedBalance}`,
+        difference: currency === "THB" ? `฿${difference}` : `${currency} ${difference}`,
+        currency,
       }),
     );
     return detailLines;

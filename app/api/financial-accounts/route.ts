@@ -10,7 +10,10 @@ import {
   getAccountNumberForMasking,
   processAccountNumberForStorage,
 } from "@/lib/account-number";
-import { isAccountIncomplete } from "@/lib/financial-accounts";
+import {
+  isAccountIncomplete,
+  isFinancialAccountBalanceReconciliationEligible,
+} from "@/lib/financial-accounts";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
 import type { AccountType } from "@prisma/client";
@@ -20,6 +23,8 @@ type SessionWithId = { user: { id?: string }; sessionId?: string };
 
 const DAYS_INACTIVE_WARNING = 7;
 const DAYS_LAST_CHECKED_WARNING = 30;
+const DAYS_RECONCILE_WARNING = 30;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 async function fetchFinancialAccountsList(
   userId: string,
@@ -30,6 +35,30 @@ async function fetchFinancialAccountsList(
     where: { userId, isActive: isActiveFilter },
     orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
   });
+
+  const lastRecoByAccount = new Map<string, Date>();
+  if (accounts.length > 0) {
+    try {
+      const recoGroup = await prisma.balanceReconciliation.groupBy({
+        by: ["financialAccountId"],
+        where: {
+          userId,
+          financialAccountId: { in: accounts.map((a) => a.id) },
+        },
+        _max: { checkedAt: true },
+      });
+      for (const g of recoGroup) {
+        const checkedAt = g._max.checkedAt;
+        if (checkedAt != null) {
+          lastRecoByAccount.set(g.financialAccountId, checkedAt);
+        }
+      }
+    } catch {
+      // e.g. BalanceReconciliation table not created yet (run db:push / migrate) — still return accounts.
+    }
+  }
+
+  const now = new Date();
 
   const result = await Promise.all(
     accounts.map(async (acc) => {
@@ -44,7 +73,6 @@ async function fetchFinancialAccountsList(
       ]);
       const lastTransactionDate = lastTx?.occurredAt ?? null;
 
-      const now = new Date();
       const daysSinceLastTransaction = lastTransactionDate
         ? Math.floor(
             (now.getTime() - lastTransactionDate.getTime()) / (24 * 60 * 60 * 1000)
@@ -70,6 +98,20 @@ async function fetchFinancialAccountsList(
 
       const isIncomplete = isAccountIncomplete(acc);
 
+      const reconciliationEligible =
+        isFinancialAccountBalanceReconciliationEligible(acc);
+      const lastRecoAt = lastRecoByAccount.get(acc.id) ?? null;
+      const referenceAt = lastRecoAt ?? acc.lastCheckedAt;
+      const daysSinceLastReconciliation =
+        referenceAt != null
+          ? Math.floor((now.getTime() - referenceAt.getTime()) / MS_PER_DAY)
+          : null;
+      const reconcileDue =
+        reconciliationEligible &&
+        (referenceAt == null ||
+          (daysSinceLastReconciliation != null &&
+            daysSinceLastReconciliation >= DAYS_RECONCILE_WARNING));
+
       const base = {
         id: acc.id,
         name: acc.name,
@@ -86,6 +128,9 @@ async function fetchFinancialAccountsList(
         daysSinceLastTransaction,
         daysSinceLastChecked,
         needsAttention,
+        reconciliationEligible,
+        daysSinceLastReconciliation,
+        reconcileDue,
         isIncomplete,
         transactionCount: txCount,
         bankName: acc.bankName ?? null,

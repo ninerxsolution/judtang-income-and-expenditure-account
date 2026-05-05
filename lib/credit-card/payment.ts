@@ -3,6 +3,7 @@ import { TransactionType, TransactionStatus } from "@prisma/client";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { isAccountIncomplete } from "@/lib/financial-accounts";
 import { getCurrentOutstanding, recomputeOutstanding } from "./outstanding";
+import { rebuildBalanceSnapshotsForFinancialAccountIds } from "@/lib/transaction-balance-snapshot";
 
 export type RecordPaymentParams = {
   userId: string;
@@ -149,7 +150,17 @@ export async function recordPayment(params: RecordPaymentParams) {
     return paymentTx;
   });
 
+  const snapshotAccounts = [accountId];
+  if (fromAccountIdTrimmed) {
+    snapshotAccounts.push(fromAccountIdTrimmed);
+  }
+  await rebuildBalanceSnapshotsForFinancialAccountIds(userId, snapshotAccounts);
+
   await recomputeOutstanding(accountId);
+
+  const paymentRefreshed = await prisma.transaction.findUnique({
+    where: { id: transaction.id },
+  });
 
   void createActivityLog({
     userId,
@@ -166,5 +177,5 @@ export async function recordPayment(params: RecordPaymentParams) {
     },
   });
 
-  return transaction;
+  return paymentRefreshed ?? transaction;
 }

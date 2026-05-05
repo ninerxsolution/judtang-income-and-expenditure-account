@@ -1,7 +1,14 @@
-import { RecurringFrequency, TransactionType as PrismaTransactionType } from "@prisma/client";
+import {
+  Prisma,
+  RecurringFrequency,
+  TransactionStatus,
+  TransactionType as PrismaTransactionType,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { revalidateTag } from "@/lib/cache";
+import { rebuildBalanceSnapshotsForFinancialAccountIds } from "@/lib/transaction-balance-snapshot";
+import { getTransactionById, updateTransaction } from "@/lib/transactions";
 
 export { RecurringFrequency };
 
@@ -175,12 +182,119 @@ export async function deleteRecurringTransaction(userId: string, id: string) {
 export type RecurringDueItem = Awaited<ReturnType<typeof getDueRecurringTransactions>>[number];
 
 /**
+ * Calendar month bounds in the environment local timezone (matches legacy due-month logic).
+ */
+export function getCalendarMonthBounds(year: number, month: number): {
+  periodStart: Date;
+  periodEnd: Date;
+} {
+  const periodStart = new Date(year, month - 1, 1);
+  const periodEnd = new Date(year, month, 0, 23, 59, 59, 999);
+  return { periodStart, periodEnd };
+}
+
+export type RecurringLinkCandidate = Awaited<ReturnType<typeof listRecurringLinkCandidates>>[number];
+
+export type ListRecurringLinkCandidatesOptions = {
+  /** Trimmed substring search (note, account name, legacy category label, category name/nameEn, exact amount). */
+  search?: string;
+  /** Gregorian YYYY-MM-DD; narrows occurredAt to that local calendar day within the due month. */
+  onDate?: string;
+  /** Max rows returned (default 10, capped at 50). */
+  limit?: number;
+};
+
+/**
+ * Posted INCOME/EXPENSE rows in the due month with no recurring link and not part of a transfer group.
+ */
+export async function listRecurringLinkCandidates(
+  userId: string,
+  recurringId: string,
+  year: number,
+  month: number,
+  options: ListRecurringLinkCandidatesOptions = {},
+) {
+  const template = await prisma.recurringTransaction.findFirst({
+    where: { id: recurringId, userId },
+  });
+  if (!template) {
+    throw new Error("Recurring transaction not found");
+  }
+  if (template.type !== PrismaTransactionType.INCOME && template.type !== PrismaTransactionType.EXPENSE) {
+    throw new Error("Recurring transactions only support INCOME or EXPENSE type");
+  }
+
+  const { periodStart, periodEnd } = getCalendarMonthBounds(year, month);
+
+  let occurredAt: { gte: Date; lte: Date } = { gte: periodStart, lte: periodEnd };
+  const onDateRaw = typeof options.onDate === "string" ? options.onDate.trim() : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(onDateRaw)) {
+    const [dy, dm, dd] = onDateRaw.split("-").map(Number);
+    const dayStart = new Date(dy, dm - 1, dd, 0, 0, 0, 0);
+    const dayEnd = new Date(dy, dm - 1, dd, 23, 59, 59, 999);
+    if (dayStart >= periodStart && dayEnd <= periodEnd) {
+      occurredAt = { gte: dayStart, lte: dayEnd };
+    }
+  }
+
+  const baseWhere: Prisma.TransactionWhereInput = {
+    userId,
+    type: template.type,
+    status: TransactionStatus.POSTED,
+    recurringTransactionId: null,
+    transferGroupId: null,
+    occurredAt,
+  };
+
+  const q = typeof options.search === "string" ? options.search.trim() : "";
+  const andExtras: Prisma.TransactionWhereInput[] = [];
+  if (q.length > 0) {
+    const searchOr: Prisma.TransactionWhereInput[] = [];
+    searchOr.push({ note: { contains: q } });
+    searchOr.push({ category: { contains: q } });
+    searchOr.push({ financialAccount: { name: { contains: q } } });
+    searchOr.push({ categoryRef: { name: { contains: q } } });
+    searchOr.push({ categoryRef: { nameEn: { contains: q } } });
+    const amountStr = q.replace(/,/g, "");
+    const num = Number.parseFloat(amountStr);
+    if (Number.isFinite(num) && num > 0) {
+      searchOr.push({ amount: { equals: new Prisma.Decimal(num) } });
+    }
+    if (/^[c][a-z0-9]{24}$/i.test(q)) {
+      searchOr.push({ id: q });
+    }
+    andExtras.push({ OR: searchOr });
+  }
+
+  const safeLimit = Math.min(Math.max(options.limit ?? 10, 1), 50);
+
+  const where: Prisma.TransactionWhereInput =
+    andExtras.length > 0 ? { AND: [baseWhere, ...andExtras] } : baseWhere;
+
+  return prisma.transaction.findMany({
+    where,
+    orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+    take: safeLimit,
+    select: {
+      id: true,
+      occurredAt: true,
+      amount: true,
+      currency: true,
+      note: true,
+      financialAccountId: true,
+      categoryId: true,
+      financialAccount: { select: { id: true, name: true } },
+      categoryRef: { select: { id: true, name: true, nameEn: true } },
+    },
+  });
+}
+
+/**
  * Returns all active recurring transactions that are due in the given year/month,
  * each annotated with whether a transaction was already recorded for that period.
  */
 export async function getDueRecurringTransactions(userId: string, year: number, month: number) {
-  const periodStart = new Date(year, month - 1, 1);
-  const periodEnd = new Date(year, month, 0, 23, 59, 59, 999);
+  const { periodStart, periodEnd } = getCalendarMonthBounds(year, month);
 
   const templates = await prisma.recurringTransaction.findMany({
     where: {
@@ -214,21 +328,37 @@ export async function getDueRecurringTransactions(userId: string, year: number, 
   }));
 }
 
+function assertOccurredAtInDueMonth(occurredAt: Date, year: number, month: number): void {
+  const { periodStart, periodEnd } = getCalendarMonthBounds(year, month);
+  if (occurredAt < periodStart || occurredAt > periodEnd) {
+    throw new Error("Payment date must fall within the selected due month");
+  }
+}
+
 /**
- * Creates an actual Transaction from a recurring template (i.e., "confirm payment").
- * Links the created transaction back to the template via recurringTransactionId.
+ * Creates an actual Transaction from a recurring template (i.e., "confirm payment"),
+ * or links an existing manual row when `linkTransactionId` is set.
  */
 export async function confirmRecurringTransaction(
   userId: string,
   recurringId: string,
   params: {
+    dueYear: number;
+    dueMonth: number;
     amount: number;
     occurredAt: Date;
     financialAccountId: string;
     categoryId?: string | null;
     note?: string | null;
+    linkTransactionId?: string | null;
   },
 ) {
+  const year = Number(params.dueYear);
+  const month = Number(params.dueMonth);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error("dueYear and dueMonth must be a valid calendar month");
+  }
+
   const template = await prisma.recurringTransaction.findFirst({
     where: { id: recurringId, userId },
   });
@@ -239,6 +369,66 @@ export async function confirmRecurringTransaction(
     throw new Error("Amount must be a positive number");
   }
 
+  const { periodStart, periodEnd } = getCalendarMonthBounds(year, month);
+  assertOccurredAtInDueMonth(params.occurredAt, year, month);
+
+  const existingForMonth = await prisma.transaction.findFirst({
+    where: {
+      userId,
+      recurringTransactionId: recurringId,
+      occurredAt: { gte: periodStart, lte: periodEnd },
+    },
+    select: { id: true },
+  });
+  if (existingForMonth) {
+    throw new Error("Already recorded for this recurring item in the selected month");
+  }
+
+  const categoryIdResolved = params.categoryId ?? template.categoryId;
+  const noteResolved = params.note?.trim() ?? template.note ?? null;
+
+  const linkId =
+    params.linkTransactionId != null && String(params.linkTransactionId).trim() !== ""
+      ? String(params.linkTransactionId).trim()
+      : null;
+
+  if (linkId) {
+    const candidate = await prisma.transaction.findFirst({
+      where: {
+        id: linkId,
+        userId,
+        type: template.type,
+        status: TransactionStatus.POSTED,
+        recurringTransactionId: null,
+        transferGroupId: null,
+        occurredAt: { gte: periodStart, lte: periodEnd },
+      },
+    });
+    if (!candidate) {
+      throw new Error("Selected transaction cannot be linked for this recurring item and month");
+    }
+
+    await updateTransaction(userId, linkId, {
+      amount,
+      financialAccountId: params.financialAccountId,
+      categoryId: categoryIdResolved,
+      note: noteResolved,
+      occurredAt: params.occurredAt,
+      recurringTransactionId: recurringId,
+      activityLogExtras: {
+        source: "recurring-link",
+        recurringId,
+        recurringName: template.name,
+      },
+    });
+
+    revalidateTag("transactions", "max");
+    revalidateTag("recurring-transactions", "max");
+
+    const refreshed = await getTransactionById(userId, linkId);
+    return refreshed ?? candidate;
+  }
+
   const transaction = await prisma.transaction.create({
     data: {
       userId,
@@ -246,8 +436,8 @@ export async function confirmRecurringTransaction(
       status: "POSTED",
       amount,
       financialAccountId: params.financialAccountId,
-      categoryId: params.categoryId ?? template.categoryId,
-      note: params.note?.trim() ?? template.note ?? null,
+      categoryId: categoryIdResolved,
+      note: noteResolved,
       occurredAt: params.occurredAt,
       recurringTransactionId: recurringId,
     },
@@ -266,8 +456,11 @@ export async function confirmRecurringTransaction(
     details: { source: "recurring", recurringId, name: template.name },
   });
 
+  await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [params.financialAccountId]);
+
   revalidateTag("transactions", "max");
   revalidateTag("recurring-transactions", "max");
 
-  return transaction;
+  const refreshed = await getTransactionById(userId, transaction.id);
+  return refreshed ?? transaction;
 }

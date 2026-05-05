@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { TransactionStatus } from "@prisma/client";
 import { recomputeOutstanding } from "./outstanding";
+import {
+  collectFinancialAccountIdsForSnapshotRefresh,
+  rebuildBalanceSnapshotsForFinancialAccountIds,
+} from "@/lib/transaction-balance-snapshot";
 
 /**
  * Post a PENDING transaction: set status to POSTED.
@@ -25,6 +29,14 @@ export async function postTransaction(transactionId: string): Promise<void> {
       postedDate,
     },
   });
+
+  await rebuildBalanceSnapshotsForFinancialAccountIds(
+    tx.userId,
+    collectFinancialAccountIdsForSnapshotRefresh({
+      financialAccountId: tx.financialAccountId,
+      transferAccountId: tx.transferAccountId,
+    }),
+  );
 
   if (tx.financialAccountId && tx.financialAccount?.type === "CREDIT_CARD") {
     await recomputeOutstanding(tx.financialAccountId);

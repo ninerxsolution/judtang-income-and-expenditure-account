@@ -13,6 +13,7 @@ Architectural and technical conventions.
 | Document | Responsibility |
 |----------|----------------|
 | [product-overview.md](./structure/product-overview.md) | What the product is, purpose, problems, non-goals, success criteria, target users |
+| [project-status.md](./structure/project-status.md) | Implementation snapshot: current transaction/balance behavior, caching, verification caveats, ops notes (see PRD for intent) |
 | [technical-stack.md](./structure/technical-stack.md) | Initial technology choices |
 | [testing-strategy.md](./structure/testing-strategy.md) | Initial testing scope, tools, focus areas |
 | [mvp-boundary.md](./structure/mvp-boundary.md) | MVP in-scope and out-of-scope |

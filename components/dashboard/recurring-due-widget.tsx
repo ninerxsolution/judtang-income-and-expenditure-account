@@ -134,6 +134,8 @@ export function RecurringDueWidget() {
         onOpenChange={setConfirmOpen}
         item={confirmItem}
         defaultDate={todayString}
+        dueYear={now.getFullYear()}
+        dueMonth={now.getMonth() + 1}
         onSuccess={loadItems}
       />
     </div>

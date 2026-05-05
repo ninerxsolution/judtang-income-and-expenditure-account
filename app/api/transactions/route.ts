@@ -7,7 +7,7 @@ import {
   TransactionType,
   listTransactionsByUser,
 } from "@/lib/transactions";
-import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey, revalidateTag } from "@/lib/cache";
+import { unstable_cache, CACHE_REVALIDATE_SECONDS, revalidateTag } from "@/lib/cache";
 import {
   ensureUserHasDefaultFinancialAccount,
   isAccountIncomplete,
@@ -18,6 +18,23 @@ import { maskAccountNumber } from "@/lib/format";
 import { getAccountNumberForMasking } from "@/lib/account-number";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
+
+function serializeOptionalDecimal(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === "string") {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (typeof v === "number") {
+    return Number.isFinite(v) ? v : null;
+  }
+  if (typeof v === "object" && "toNumber" in v && typeof (v as { toNumber: unknown }).toNumber === "function") {
+    const n = (v as { toNumber: () => number }).toNumber();
+    return Number.isFinite(n) ? n : null;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -200,6 +217,12 @@ export async function POST(request: Request) {
           note: transaction.note,
           occurredAt: transaction.occurredAt.toISOString(),
           createdAt: transaction.createdAt.toISOString(),
+          accountBalanceAfter: serializeOptionalDecimal(
+            (transaction as { accountBalanceAfter?: unknown }).accountBalanceAfter,
+          ),
+          transferAccountBalanceAfter: serializeOptionalDecimal(
+            (transaction as { transferAccountBalanceAfter?: unknown }).transferAccountBalanceAfter,
+          ),
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to record payment";
@@ -287,6 +310,12 @@ export async function POST(request: Request) {
       occurredAt: transaction.occurredAt.toISOString(),
       postedDate: transaction.postedDate?.toISOString() ?? null,
       createdAt: transaction.createdAt.toISOString(),
+      accountBalanceAfter: serializeOptionalDecimal(
+        (transaction as { accountBalanceAfter?: unknown }).accountBalanceAfter,
+      ),
+      transferAccountBalanceAfter: serializeOptionalDecimal(
+        (transaction as { transferAccountBalanceAfter?: unknown }).transferAccountBalanceAfter,
+      ),
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Failed to create transaction";
@@ -318,6 +347,8 @@ type SerializableTransaction = {
   occurredAt: string;
   postedDate: string | null;
   createdAt: string;
+  accountBalanceAfter: number | null;
+  transferAccountBalanceAfter: number | null;
 };
 
 async function fetchTransactionsList(
@@ -448,9 +479,49 @@ async function fetchTransactionsList(
       occurredAt: tx.occurredAt.toISOString(),
       postedDate: tx.postedDate?.toISOString() ?? null,
       createdAt: tx.createdAt.toISOString(),
+      accountBalanceAfter: serializeOptionalDecimal(
+        (tx as { accountBalanceAfter?: unknown }).accountBalanceAfter,
+      ),
+      transferAccountBalanceAfter: serializeOptionalDecimal(
+        (tx as { transferAccountBalanceAfter?: unknown }).transferAccountBalanceAfter,
+      ),
     };
   });
 }
+
+/** Bumps with API payload shape so `unstable_cache` does not serve entries missing new fields. */
+const TRANSACTIONS_LIST_CACHE_VERSION = "snap-v1";
+
+const getCachedTransactionsList = unstable_cache(
+  (
+    uid: string,
+    fromParam: string | undefined,
+    toParam: string | undefined,
+    dateParam: string | undefined,
+    timezoneParam: string,
+    typeParam: string | undefined,
+    financialAccountIdParam: string | undefined,
+    categoryIdParam: string | undefined,
+    searchParam: string | undefined,
+    limit: number,
+    offset: number,
+  ) =>
+    fetchTransactionsList(
+      uid,
+      fromParam,
+      toParam,
+      dateParam,
+      timezoneParam,
+      typeParam,
+      financialAccountIdParam,
+      categoryIdParam,
+      searchParam,
+      limit,
+      offset,
+    ),
+  ["transactions-list", TRANSACTIONS_LIST_CACHE_VERSION],
+  { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
+);
 
 export async function GET(request: Request) {
   const session = (await getServerSession(authOptions)) as SessionWithId | null;
@@ -479,37 +550,7 @@ export async function GET(request: Request) {
   const offset = offsetParam ? Number.parseInt(offsetParam, 10) || 0 : 0;
 
   try {
-    const getCached = unstable_cache(
-      (
-        uid: string,
-        from: string | undefined,
-        to: string | undefined,
-        date: string | undefined,
-        tz: string,
-        type: string | undefined,
-        accId: string | undefined,
-        catId: string | undefined,
-        search: string | undefined,
-        lim: number,
-        off: number,
-      ) => fetchTransactionsList(uid, from, to, date, tz, type, accId, catId, search, lim, off),
-      cacheKey(
-        "transactions-list",
-        userId,
-        fromParam ?? "",
-        toParam ?? "",
-        dateParam ?? "",
-        timezoneParam,
-        typeParam ?? "",
-        financialAccountIdParam ?? "",
-        categoryIdParam ?? "",
-        searchParam ?? "",
-        String(limit),
-        String(offset),
-      ),
-      { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
-    );
-    const data = await getCached(
+    const data = await getCachedTransactionsList(
       userId,
       fromParam,
       toParam,

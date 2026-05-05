@@ -9,6 +9,7 @@ const mockGetRecurringTransactionById = jest.fn();
 const mockUpdateRecurringTransaction = jest.fn();
 const mockDeleteRecurringTransaction = jest.fn();
 const mockConfirmRecurringTransaction = jest.fn();
+const mockListRecurringLinkCandidates = jest.fn();
 
 jest.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
@@ -24,6 +25,7 @@ jest.mock("@/lib/recurring-transactions", () => ({
   updateRecurringTransaction: (...args: unknown[]) => mockUpdateRecurringTransaction(...args),
   deleteRecurringTransaction: (...args: unknown[]) => mockDeleteRecurringTransaction(...args),
   confirmRecurringTransaction: (...args: unknown[]) => mockConfirmRecurringTransaction(...args),
+  listRecurringLinkCandidates: (...args: unknown[]) => mockListRecurringLinkCandidates(...args),
 }));
 
 jest.mock("@/lib/date-range", () => ({
@@ -41,6 +43,7 @@ import {
   DELETE,
 } from "@/app/api/recurring-transactions/[id]/route";
 import { POST as CONFIRM } from "@/app/api/recurring-transactions/[id]/confirm/route";
+import { GET as GET_LINK_CANDIDATES } from "@/app/api/recurring-transactions/[id]/link-candidates/route";
 import { createRequest, createMockSession, createParams, TEST_USER_ID } from "../helpers/api-helper";
 
 const mockRecurring = {
@@ -313,6 +316,8 @@ describe("DELETE /api/recurring-transactions/[id]", () => {
 
 describe("POST /api/recurring-transactions/[id]/confirm", () => {
   const validConfirmBody = {
+    dueYear: 2025,
+    dueMonth: 6,
     amount: 15000,
     occurredAt: "2025-06-15T10:00:00Z",
     financialAccountId: "acc-1",
@@ -340,7 +345,12 @@ describe("POST /api/recurring-transactions/[id]/confirm", () => {
     expect(mockConfirmRecurringTransaction).toHaveBeenCalledWith(
       TEST_USER_ID,
       "rec-1",
-      expect.objectContaining({ amount: 15000, financialAccountId: "acc-1" }),
+      expect.objectContaining({
+        dueYear: 2025,
+        dueMonth: 6,
+        amount: 15000,
+        financialAccountId: "acc-1",
+      }),
     );
   });
 
@@ -362,10 +372,19 @@ describe("POST /api/recurring-transactions/[id]/confirm", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 when dueYear or dueMonth is missing", async () => {
+    const req = createRequest("http://localhost/api/recurring-transactions/rec-1/confirm", {
+      method: "POST",
+      body: { amount: 15000, occurredAt: "2025-06-15T10:00:00Z", financialAccountId: "acc-1" },
+    });
+    const res = await CONFIRM(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(400);
+  });
+
   it("returns 400 when occurredAt is missing", async () => {
     const req = createRequest("http://localhost/api/recurring-transactions/rec-1/confirm", {
       method: "POST",
-      body: { amount: 15000, financialAccountId: "acc-1" },
+      body: { dueYear: 2025, dueMonth: 6, amount: 15000, financialAccountId: "acc-1" },
     });
     const res = await CONFIRM(req, { params: createParams({ id: "rec-1" }) });
     expect(res.status).toBe(400);
@@ -391,5 +410,82 @@ describe("POST /api/recurring-transactions/[id]/confirm", () => {
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toBe("Already confirmed");
+  });
+});
+
+describe("GET /api/recurring-transactions/[id]/link-candidates", () => {
+  it("returns 401 when not authenticated", async () => {
+    mockGetServerSession.mockResolvedValue(null);
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=6",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns candidates", async () => {
+    mockListRecurringLinkCandidates.mockResolvedValue([{ id: "tx-1", amount: 100 }]);
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=6",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(200);
+    expect(mockListRecurringLinkCandidates).toHaveBeenCalledWith(TEST_USER_ID, "rec-1", 2025, 6, {});
+    const data = await res.json();
+    expect(data).toHaveLength(1);
+  });
+
+  it("passes query options to listRecurringLinkCandidates", async () => {
+    mockListRecurringLinkCandidates.mockResolvedValue([]);
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=6&q=coffee&onDate=2025-06-10&limit=25",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(200);
+    expect(mockListRecurringLinkCandidates).toHaveBeenCalledWith(TEST_USER_ID, "rec-1", 2025, 6, {
+      search: "coffee",
+      onDate: "2025-06-10",
+      limit: 25,
+    });
+  });
+
+  it("returns 400 for invalid onDate", async () => {
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=6&onDate=not-a-date",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toContain("onDate");
+  });
+
+  it("returns 400 for invalid limit", async () => {
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=6&limit=99",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toContain("limit");
+  });
+
+  it("accepts search alias parameter", async () => {
+    mockListRecurringLinkCandidates.mockResolvedValue([]);
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=6&search=test",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(200);
+    expect(mockListRecurringLinkCandidates).toHaveBeenCalledWith(TEST_USER_ID, "rec-1", 2025, 6, {
+      search: "test",
+    });
+  });
+
+  it("returns 400 for invalid dueMonth", async () => {
+    const req = createRequest(
+      "http://localhost/api/recurring-transactions/rec-1/link-candidates?dueYear=2025&dueMonth=13",
+    );
+    const res = await GET_LINK_CANDIDATES(req, { params: createParams({ id: "rec-1" }) });
+    expect(res.status).toBe(400);
   });
 });

@@ -14,12 +14,18 @@ const NO_STORE_HEADERS = {
 } as const;
 
 export async function GET() {
-  const row = await prisma.siteAnnouncement.findUnique({
-    where: { id: "default" },
-  });
-  if (!row) {
+  try {
+    const row = await prisma.siteAnnouncement.findUnique({
+      where: { id: "default" },
+    });
+    if (!row) {
+      return NextResponse.json(null, { headers: NO_STORE_HEADERS });
+    }
+    const payload = rowToPublicAnnouncement(row);
+    return NextResponse.json(payload, { headers: NO_STORE_HEADERS });
+  } catch (e: unknown) {
+    // DB unreachable, pool timeout, etc.: home page still loads; no announcement.
+    console.warn("[GET /api/announcement] skipped (database unavailable):", e);
     return NextResponse.json(null, { headers: NO_STORE_HEADERS });
   }
-  const payload = rowToPublicAnnouncement(row);
-  return NextResponse.json(payload, { headers: NO_STORE_HEADERS });
 }

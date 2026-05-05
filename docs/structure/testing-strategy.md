@@ -1,6 +1,6 @@
 # Testing Strategy
 
-**Updated:** 06/03/2026
+**Updated:** 04/05/2026
 
 **Source:** PRD §10
 
@@ -38,7 +38,18 @@
 - **lib/__tests__/financial-accounts.test.ts** — `isAccountIncomplete` for CASH/OTHER, BANK/WALLET, CREDIT_CARD; Prisma Decimal handling
 - **lib/credit-card/__tests__/payment.test.ts** — `recordPayment` validation and success paths
 - **lib/credit-card/__tests__/statement.test.ts** — `getPeriodForClosingDate`
- - **lib/__tests__/slip-parser.test.ts** — `parseSlipText` (EN/TH amount, date, note for Kasikorn-style slips)
+- **lib/__tests__/slip-parser.test.ts** — `parseSlipText` (EN/TH amount, date, note for Kasikorn-style slips)
+- **__tests__/lib/transfer-group-patch-utils.test.ts** — guards for `transferGroupId` PATCH: explicit `categoryId: null` must not count as a category change when unchanged
+
+## Verification caveats (Jest vs browser)
+
+Many API tests mock Prisma or `lib/transactions`. **Passing Jest alone does not prove** monthly-entry `PATCH`/`bulk` or snapshot rebuild paths work end-to-end. After changes in those areas:
+
+- Prefer **unit tests on pure helpers** that the real code imports, and/or
+- Reproduce with the **same JSON body** the UI sends (Network tab), and/or
+- Run a short **manual smoke** on `/dashboard/monthly-entry` and `/dashboard/transactions`.
+
+Workspace rule: `.cursor/rules/verification-jest-vs-ui-api-paths.mdc`. Maintainer summary: [project-status.md](./project-status.md) §3.
 
 ## API integration tests
 
@@ -51,7 +62,7 @@
 - **__tests__/api/users/me-password.test.ts** — PATCH (401, 400, 401 wrong password, 200)
 - **__tests__/api/sessions.test.ts** — GET, POST, DELETE (401, 400, 200)
 - **__tests__/api/financial-accounts.test.ts** — GET, POST, GET/PATCH/DELETE [id]
-- **__tests__/api/transactions.test.ts** — GET, POST (validation, success)
+- **__tests__/api/transactions.test.ts** — GET, POST (validation, success); PATCH/DELETE paths mock `@/lib/transactions` — they validate the route shell, not full `updateTransaction` + balance snapshot behavior
 - **__tests__/api/transactions-export.test.ts** — GET (401, 200 CSV)
 - **__tests__/api/transactions-import.test.ts** — POST (401, 400 no content, 200 with CSV)
 - **__tests__/api/categories.test.ts** — GET, POST, PATCH, DELETE [id]

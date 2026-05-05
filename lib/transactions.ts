@@ -19,7 +19,15 @@ import {
   normalizeCurrencyCode,
   resolveCrossCurrencyTransferLegs,
 } from "@/lib/currency";
+import {
+  isExplicitCategoryIdChange,
+  isExplicitCategoryLabelChange,
+} from "@/lib/transfer-group-patch-utils";
 import { sumTransactionThbInRange } from "@/lib/transaction-thb-sum";
+import {
+  collectFinancialAccountIdsForSnapshotRefresh,
+  rebuildBalanceSnapshotsForFinancialAccountIds,
+} from "@/lib/transaction-balance-snapshot";
 
 export const TransactionType = {
   INCOME: "INCOME",
@@ -95,6 +103,10 @@ export type UpdateTransactionParams = {
   postedDate?: Date | null;
   /** When account currency is not THB, optional override for THB per 1 unit (else keep existing rate or default). */
   exchangeRateThbPerUnit?: number | null;
+  /** Link or unlink a row to a recurring template (INCOME/EXPENSE only). */
+  recurringTransactionId?: string | null;
+  /** Merged into activity log details when present (e.g. recurring link source). */
+  activityLogExtras?: Record<string, unknown>;
 };
 
 export async function createTransaction(params: CreateTransactionParams) {
@@ -267,7 +279,16 @@ export async function createTransaction(params: CreateTransactionParams) {
     });
   }
 
-  return transaction;
+  await rebuildBalanceSnapshotsForFinancialAccountIds(
+    userId,
+    collectFinancialAccountIdsForSnapshotRefresh({
+      financialAccountId: transaction.financialAccountId,
+      transferAccountId: transaction.transferAccountId,
+    }),
+  );
+
+  const refreshed = await getTransactionById(userId, transaction.id);
+  return refreshed ?? transaction;
 }
 
 export async function createCrossCurrencyTransfer(
@@ -394,6 +415,8 @@ export async function createCrossCurrencyTransfer(
       occurredAt,
     },
   });
+
+  await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [fromAccountId, toAccountId]);
 
   return { transferGroupId: groupId, legs: [{ id: legOut.id }, { id: legIn.id }] };
 }
@@ -544,6 +567,9 @@ export async function updateTransaction(
   }
 
   if (existing.transferGroupId) {
+    if (params.recurringTransactionId !== undefined) {
+      throw new Error("Cannot link recurring to transfer or paired transfer rows");
+    }
     const amountChanging =
       params.amount != null && Number(params.amount) !== Number(existing.amount);
     const acctChanging =
@@ -554,7 +580,8 @@ export async function updateTransaction(
       (params.transferAccountId ?? null) !== (existing.transferAccountId ?? null);
     const typeChanging = params.type != null && params.type !== existing.type;
     const categoryChanging =
-      params.categoryId !== undefined || params.category !== undefined;
+      isExplicitCategoryIdChange(params.categoryId, existing.categoryId) ||
+      isExplicitCategoryLabelChange(params.category, existing.category);
     if (amountChanging || acctChanging || toChanging || typeChanging || categoryChanging) {
       throw new Error(
         "Cross-currency transfer pairs can only update date, note, status, and posted date from this endpoint",
@@ -606,7 +633,20 @@ export async function updateTransaction(
         note: transaction.note,
       },
     });
-    return transaction;
+    const pairLegs = await prisma.transaction.findMany({
+      where: { userId, transferGroupId: existing.transferGroupId },
+      select: { financialAccountId: true, transferAccountId: true },
+    });
+    const pairAccountIds = new Set<string>();
+    for (const leg of pairLegs) {
+      collectFinancialAccountIdsForSnapshotRefresh({
+        financialAccountId: leg.financialAccountId,
+        transferAccountId: leg.transferAccountId,
+      }).forEach((id) => pairAccountIds.add(id));
+    }
+    await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [...pairAccountIds]);
+    const refreshedPair = await getTransactionById(userId, id);
+    return refreshedPair ?? transaction;
   }
 
   const validUpdateTypes = [
@@ -710,6 +750,18 @@ export async function updateTransaction(
   }
   if (params.postedDate !== undefined) {
     updateData.postedDate = params.postedDate;
+  }
+
+  if (params.recurringTransactionId !== undefined) {
+    const raw = params.recurringTransactionId;
+    const nextRecurringId =
+      raw != null && String(raw).trim() !== "" ? String(raw).trim() : null;
+    if (nextRecurringId != null) {
+      if (type !== TransactionType.INCOME && type !== TransactionType.EXPENSE) {
+        throw new Error("Only income or expense rows can be linked to a recurring template");
+      }
+    }
+    updateData.recurringTransactionId = nextRecurringId;
   }
 
   const accRow = financialAccountId
@@ -842,6 +894,7 @@ export async function updateTransaction(
     accountName: newAccountName,
     financialAccountId: transaction.financialAccountId,
     changes: changes.length > 0 ? changes : undefined,
+    ...(params.activityLogExtras ?? {}),
   };
   if (transaction.type === "TRANSFER" && newTransferAccountName) {
     activityDetails.toAccountName = newTransferAccountName;
@@ -855,7 +908,23 @@ export async function updateTransaction(
     details: activityDetails,
   });
 
-  return transaction;
+  const snapshotAccountIds = new Set<string>();
+  for (const id of collectFinancialAccountIdsForSnapshotRefresh({
+    financialAccountId: existing.financialAccountId,
+    transferAccountId: existing.transferAccountId,
+  })) {
+    snapshotAccountIds.add(id);
+  }
+  for (const id of collectFinancialAccountIdsForSnapshotRefresh({
+    financialAccountId: transaction.financialAccountId,
+    transferAccountId: transaction.transferAccountId,
+  })) {
+    snapshotAccountIds.add(id);
+  }
+  await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [...snapshotAccountIds]);
+
+  const refreshed = await getTransactionById(userId, id);
+  return refreshed ?? transaction;
 }
 
 export async function deleteTransaction(
@@ -889,12 +958,28 @@ export async function deleteTransaction(
     categoryName = existing.category;
   }
 
+  const snapshotAccountIds = new Set<string>();
+  for (const id of collectFinancialAccountIdsForSnapshotRefresh({
+    financialAccountId: existing.financialAccountId,
+    transferAccountId: existing.transferAccountId,
+  })) {
+    snapshotAccountIds.add(id);
+  }
+
   if (existing.transferGroupId) {
     const groupId = existing.transferGroupId;
     const related = await prisma.transaction.findMany({
       where: { userId, transferGroupId: groupId },
-      select: { financialAccountId: true },
+      select: { financialAccountId: true, transferAccountId: true },
     });
+    for (const r of related) {
+      for (const id of collectFinancialAccountIdsForSnapshotRefresh({
+        financialAccountId: r.financialAccountId,
+        transferAccountId: r.transferAccountId,
+      })) {
+        snapshotAccountIds.add(id);
+      }
+    }
     await prisma.transaction.deleteMany({
       where: { userId, transferGroupId: groupId },
     });
@@ -909,6 +994,7 @@ export async function deleteTransaction(
         }
       }
     }
+    await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [...snapshotAccountIds]);
     void createActivityLog({
       userId,
       action: ActivityLogAction.TRANSACTION_DELETED,
@@ -931,6 +1017,8 @@ export async function deleteTransaction(
   await prisma.transaction.delete({
     where: { id },
   });
+
+  await rebuildBalanceSnapshotsForFinancialAccountIds(userId, [...snapshotAccountIds]);
 
   void createActivityLog({
     userId,

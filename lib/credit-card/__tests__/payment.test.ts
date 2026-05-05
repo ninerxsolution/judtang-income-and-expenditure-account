@@ -1,8 +1,13 @@
+jest.mock("@/lib/transaction-balance-snapshot", () => ({
+  rebuildBalanceSnapshotsForFinancialAccountIds: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { recordPayment } from "../payment";
 
 const mockFindUnique = jest.fn();
 const mockFindMany = jest.fn();
 const mockTransactionCreate = jest.fn();
+const mockTransactionFindUnique = jest.fn();
 const mockStatementUpdate = jest.fn();
 const mockTransaction = jest.fn();
 
@@ -10,6 +15,9 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     financialAccount: {
       findUnique: (...args: unknown[]) => mockFindUnique(...args),
+    },
+    transaction: {
+      findUnique: (...args: unknown[]) => mockTransactionFindUnique(...args),
     },
     creditCardStatement: {
       findMany: (...args: unknown[]) => mockFindMany(...args),
@@ -81,13 +89,15 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockGetCurrentOutstanding.mockResolvedValue(5000);
   mockRecomputeOutstanding.mockResolvedValue(undefined);
-  mockTransactionCreate.mockResolvedValue({
+  const paymentTx = {
     id: "tx-1",
     type: "PAYMENT",
     amount: 1000,
     financialAccountId: "cc-1",
     occurredAt: baseParams.occurredAt,
-  });
+  };
+  mockTransactionCreate.mockResolvedValue(paymentTx);
+  mockTransactionFindUnique.mockResolvedValue(paymentTx);
   mockTransaction.mockImplementation(async (fn) => {
     const tx = createTxClient();
     return fn(tx);
