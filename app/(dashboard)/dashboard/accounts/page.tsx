@@ -18,6 +18,7 @@ import {
   EyeOff,
   Trash2,
   CheckCircle,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +70,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
+import { BalanceReconciliationDialog } from "@/components/dashboard/balance-reconciliation-dialog";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { toast } from "sonner";
 
@@ -76,6 +78,7 @@ type FinancialAccount = {
   id: string;
   name: string;
   type: string;
+  currency: string;
   initialBalance: number;
   isActive: boolean;
   isDefault: boolean;
@@ -87,6 +90,9 @@ type FinancialAccount = {
   daysSinceLastTransaction: number | null;
   daysSinceLastChecked: number | null;
   needsAttention: boolean;
+  reconciliationEligible: boolean;
+  daysSinceLastReconciliation: number | null;
+  reconcileDue: boolean;
   creditLimit?: number | null;
   statementClosingDay?: number | null;
   dueDay?: number | null;
@@ -148,6 +154,8 @@ export default function AccountsPage() {
   const [hoveredAccountId, setHoveredAccountId] = useState<string | null>(null);
   const [openMenuAccountId, setOpenMenuAccountId] = useState<string | null>(null);
   const [openSectionMenu, setOpenSectionMenu] = useState(false);
+  const [reconDialogOpen, setReconDialogOpen] = useState(false);
+  const [reconAccount, setReconAccount] = useState<FinancialAccount | null>(null);
   const touchPreventedRef = useRef(false);
 
   const fetchAccounts = useCallback(async () => {
@@ -517,23 +525,34 @@ export default function AccountsPage() {
                 key={acc.id}
                 className={cn(
                   "relative overflow-hidden py-4 gap-3 md:py-6 md:gap-6",
-                  acc.needsAttention && "ring-2 ring-amber-400/50 dark:ring-amber-500/50",
-                  acc.isIncomplete && "ring-2 ring-red-400/50 dark:ring-red-500/50"
+                  acc.isIncomplete && "ring-2 ring-red-400/50 dark:ring-red-500/50",
+                  !acc.isIncomplete &&
+                    !(acc.reconcileDue && acc.reconciliationEligible) &&
+                    acc.needsAttention &&
+                    "ring-2 ring-amber-400/50 dark:ring-amber-500/50",
                 )}
               >
-                {acc.isIncomplete && (
-                  <div
-                    className="absolute right-2 top-2"
-                    title={t("accounts.incompleteAccount")}
-                  >
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                  </div>
-                )}
-                {acc.needsAttention && !acc.isIncomplete && (
-                  <div className="absolute right-2 top-2" title={t("accounts.needsAttention")}>
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  </div>
-                )}
+                <div className="absolute right-2 top-2 flex items-center gap-1">
+                  {acc.isIncomplete && (
+                    <span title={t("accounts.incompleteAccount")}>
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                    </span>
+                  )}
+                  {!acc.isIncomplete &&
+                    acc.reconcileDue &&
+                    acc.reconciliationEligible && (
+                      <span title={t("accounts.reconcileDueHint")}>
+                        <ClipboardList className="h-4 w-4" />
+                      </span>
+                    )}
+                  {!acc.isIncomplete &&
+                    acc.needsAttention &&
+                    !(acc.reconcileDue && acc.reconciliationEligible) && (
+                      <span title={t("accounts.needsAttention")}>
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      </span>
+                    )}
+                </div>
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 px-4 pb-1 md:px-6 md:pb-2">
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex items-center gap-2">
@@ -762,6 +781,19 @@ export default function AccountsPage() {
                             </DropdownMenuItem>
                           </>
                         )}
+                      {acc.reconciliationEligible && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setOpenMenuAccountId(null);
+                            setReconAccount(acc);
+                            setReconDialogOpen(true);
+                          }}
+                          disabled={acc.isIncomplete}
+                        >
+                          <ClipboardList className="mr-2 h-4 w-4" />
+                          {t("accounts.reconciliation.menuRecord")}
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => handleCheck(acc)}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         {t("accounts.markChecked")}
@@ -1044,6 +1076,24 @@ export default function AccountsPage() {
         onOpenChange={setFormOpen}
         editId={formEditId}
         defaultType={formDefaultType}
+        onSuccess={fetchAccounts}
+      />
+      <BalanceReconciliationDialog
+        open={reconDialogOpen}
+        onOpenChange={(open) => {
+          setReconDialogOpen(open);
+          if (!open) setReconAccount(null);
+        }}
+        account={
+          reconAccount
+            ? {
+                id: reconAccount.id,
+                name: reconAccount.name,
+                balance: reconAccount.balance,
+                currency: reconAccount.currency ?? "THB",
+              }
+            : null
+        }
         onSuccess={fetchAccounts}
       />
       {paymentAccount && (

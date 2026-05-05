@@ -1,6 +1,9 @@
 jest.mock("@/lib/prisma", () => ({ prisma: {} }));
 
-import { isAccountIncomplete } from "../financial-accounts";
+import {
+  isAccountIncomplete,
+  isFinancialAccountBalanceReconciliationEligible,
+} from "../financial-accounts";
 
 describe("isAccountIncomplete", () => {
   describe("CASH and OTHER", () => {
@@ -240,5 +243,35 @@ describe("isAccountIncomplete", () => {
         })
       ).toBe(false);
     });
+  });
+});
+
+describe("isFinancialAccountBalanceReconciliationEligible", () => {
+  it("returns true for BANK, WALLET, CASH, OTHER", () => {
+    expect(isFinancialAccountBalanceReconciliationEligible({ type: "BANK" })).toBe(true);
+    expect(isFinancialAccountBalanceReconciliationEligible({ type: "WALLET" })).toBe(true);
+    expect(isFinancialAccountBalanceReconciliationEligible({ type: "CASH" })).toBe(true);
+    expect(isFinancialAccountBalanceReconciliationEligible({ type: "OTHER" })).toBe(true);
+  });
+
+  it("returns false for credit card unless debit", () => {
+    expect(
+      isFinancialAccountBalanceReconciliationEligible({
+        type: "CREDIT_CARD",
+        cardAccountType: "credit",
+      }),
+    ).toBe(false);
+    expect(
+      isFinancialAccountBalanceReconciliationEligible({
+        type: "CREDIT_CARD",
+        cardAccountType: null,
+      }),
+    ).toBe(false);
+    expect(
+      isFinancialAccountBalanceReconciliationEligible({
+        type: "CREDIT_CARD",
+        cardAccountType: "debit",
+      }),
+    ).toBe(true);
   });
 });

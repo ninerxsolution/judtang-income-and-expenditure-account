@@ -15,6 +15,7 @@ import {
   BanknoteIcon,
   FileText,
   CheckCircle,
+  ClipboardList,
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
@@ -44,6 +45,8 @@ import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { useAccountDetailBreadcrumb } from "@/components/dashboard/account-detail-breadcrumb-context";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { FinancialAccountFormDialog } from "@/components/dashboard/financial-account-form-dialog";
+import { BalanceReconciliationDialog } from "@/components/dashboard/balance-reconciliation-dialog";
+import { isFinancialAccountBalanceReconciliationEligible } from "@/lib/financial-accounts-shared";
 import { CreditCardPaymentDialog } from "@/components/dashboard/credit-card-payment-dialog";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
@@ -55,10 +58,21 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+type BalanceReconciliationRow = {
+  id: string;
+  checkedAt: string;
+  appBalance: number;
+  statedBalance: number;
+  difference: number;
+  currency: string;
+  note: string | null;
+};
+
 type FinancialAccount = {
   id: string;
   name: string;
   type: string;
+  currency?: string;
   initialBalance: number;
   isActive: boolean;
   isDefault: boolean;
@@ -128,6 +142,11 @@ function formatDate(iso: string | null, locale: string): string {
   });
 }
 
+function formatLedgerMoney(amount: number, currency: string): string {
+  const f = formatAmount(amount);
+  return currency === "THB" ? `฿${f}` : `${currency} ${f}`;
+}
+
 function formatDateTime(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -185,7 +204,9 @@ export default function AccountDetailPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
-
+  const [reconHistory, setReconHistory] = useState<BalanceReconciliationRow[]>([]);
+  const [reconHistoryLoading, setReconHistoryLoading] = useState(false);
+  const [reconDialogOpen, setReconDialogOpen] = useState(false);
 
   const fetchAccount = useCallback(async () => {
     if (!accountId) return;
@@ -287,6 +308,36 @@ export default function AccountDetailPage() {
   useEffect(() => {
     void fetchAccount();
   }, [fetchAccount]);
+
+  useEffect(() => {
+    if (!accountId || !account || !isFinancialAccountBalanceReconciliationEligible(account)) {
+      setReconHistory([]);
+      setReconHistoryLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setReconHistoryLoading(true);
+    void fetch(`/api/financial-accounts/${accountId}/reconciliation?limit=20`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        if (!res.ok) return { items: [] as BalanceReconciliationRow[] };
+        return (await res.json()) as { items: BalanceReconciliationRow[] };
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setReconHistory(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (!cancelled) setReconHistory([]);
+      })
+      .finally(() => {
+        if (!cancelled) setReconHistoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId, account]);
 
   useEffect(() => {
     if (account?.name && typeof document !== "undefined") {
@@ -440,6 +491,9 @@ export default function AccountDetailPage() {
     void fetchTransactions({ offset: txOffset });
     refresh();
   }
+
+  const reconEligible =
+    account != null && isFinancialAccountBalanceReconciliationEligible(account);
 
   function applyTxFilters() {
     setTxOffset(0);
@@ -701,6 +755,18 @@ export default function AccountDetailPage() {
                 </Button>
               </>
             )}
+          {reconEligible && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReconDialogOpen(true)}
+              disabled={account.isIncomplete}
+              className="gap-2"
+            >
+              <ClipboardList className="h-4 w-4" />
+              {t("accounts.reconciliation.menuRecord")}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleMarkChecked} className="gap-2">
             <CheckCircle className="h-4 w-4" />
             {t("accounts.markChecked")}
@@ -858,6 +924,114 @@ export default function AccountDetailPage() {
           </div>
         </div>
       </div>
+
+      {reconEligible && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="mb-3 text-base font-semibold">
+              {t("accounts.reconciliation.historyTitle")}
+            </h2>
+            {reconHistoryLoading ? (
+              <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700">
+                <table className="min-w-full text-xs lg:text-sm">
+                  <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.date")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.appBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.statedBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.difference")}
+                      </th>
+                      <th className="hidden lg:table-cell px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.note")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[1, 2, 3].map((i) => (
+                      <tr key={i} className="border-t border-[#D4C9B0] dark:border-stone-800">
+                        <td className="px-3 py-2">
+                          <Skeleton className="h-4 w-28" />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Skeleton className="ml-auto h-4 w-20" />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Skeleton className="ml-auto h-4 w-20" />
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <Skeleton className="ml-auto h-4 w-16" />
+                        </td>
+                        <td className="hidden lg:table-cell px-3 py-2">
+                          <Skeleton className="h-4 w-32" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : reconHistory.length === 0 ? (
+              <p className="text-sm text-[#A09080] dark:text-stone-400">
+                {t("accounts.reconciliation.historyEmpty")}
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-[#D4C9B0] dark:border-stone-700">
+                <table className="min-w-full text-xs lg:text-sm">
+                  <thead className="bg-[#F5F0E8] dark:bg-stone-800/80">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.date")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.appBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.statedBalance")}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.difference")}
+                      </th>
+                      <th className="hidden lg:table-cell px-3 py-2 text-left font-medium text-[#A09080] dark:text-stone-400">
+                        {t("accounts.reconciliation.columns.note")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reconHistory.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-t border-[#D4C9B0] dark:border-stone-800"
+                      >
+                        <td className="px-3 py-2 whitespace-nowrap tabular-nums">
+                          {formatDateTime(row.checkedAt, locale)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {formatLedgerMoney(row.appBalance, row.currency)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {formatLedgerMoney(row.statedBalance, row.currency)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {formatLedgerMoney(row.difference, row.currency)}
+                        </td>
+                        <td className="hidden lg:table-cell max-w-[200px] truncate px-3 py-2 text-left text-muted-foreground">
+                          {row.note ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* TransactionList */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1124,7 +1298,7 @@ export default function AccountDetailPage() {
                                   {formatAmount(balanceAfter)} {balanceCurrency}
                                 </span>
                               ) : (
-                                <span>฿{formatAmount(balanceAfter)}</span>
+                                <span>{formatAmount(balanceAfter)}</span>
                               )
                             ) : (
                               "—"
@@ -1262,6 +1436,23 @@ export default function AccountDetailPage() {
           void fetchSummary();
         }}
       />
+
+      {reconEligible && (
+        <BalanceReconciliationDialog
+          open={reconDialogOpen}
+          onOpenChange={setReconDialogOpen}
+          account={{
+            id: account.id,
+            name: account.name,
+            balance: account.balance,
+            currency: account.currency ?? "THB",
+          }}
+          onSuccess={() => {
+            void fetchAccount();
+            void fetchSummary();
+          }}
+        />
+      )}
 
       {account.type === "CREDIT_CARD" &&
         account.cardAccountType?.toLowerCase() !== "debit" && (
