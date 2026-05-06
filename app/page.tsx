@@ -12,8 +12,6 @@ import {
 import { getChangelogVersions } from "@/lib/changelog";
 import { LandingNavbar } from "@/components/landing/landing-navbar";
 import { LandingHero } from "@/components/landing/landing-hero";
-import { LandingCoreValue } from "@/components/landing/landing-core-value";
-import { LandingFeatureGrid } from "@/components/landing/landing-feature-grid";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LandingGoToTop } from "@/components/landing/landing-go-to-top";
 
@@ -37,13 +35,10 @@ export default async function Home() {
   const latestVersion = versions[0]?.version ?? "0.0.0";
 
   return (
-    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
+    <div className="landing-page flex min-h-screen flex-col bg-[#F5F0E8] dark:bg-stone-950">
       <LandingNavbar language={language} />
-      <main>
+      <main className="flex flex-1 flex-col">
         <LandingHero language={language} />
-        <LandingCoreValue language={language} />
-        <LandingFeatureGrid language={language} />
-        
         <LandingFooter language={language} version={latestVersion} />
       </main>
       <LandingGoToTop />
