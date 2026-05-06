@@ -16,8 +16,8 @@ export function LandingHero({ language }: LandingHeroProps) {
         className="pointer-events-none absolute inset-0"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.45),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%)]" />
-        <div className="absolute -bottom-[30rem] left-1/2 h-[54rem] w-[130%] -translate-x-1/2 rounded-[50%] border border-[#7E6D58]/45 bg-[#D8C9BA]/75 dark:border-stone-700 dark:bg-stone-900/70" />
-        <div className="absolute -bottom-[29.25rem] left-1/2 h-[53rem] w-[128%] -translate-x-1/2 rounded-[50%] border border-[#F8F2EA]/70" />
+        <div className="absolute -bottom-[106rem] left-1/2 h-[120rem] w-[120rem] -translate-x-1/2 rounded-full border border-[#7E6D58]/45 bg-[#D8C9BA]/75 dark:border-stone-700 dark:bg-stone-900/70" />
+        <div className="absolute -bottom-[105rem] left-1/2 h-[118rem] w-[118rem] -translate-x-1/2 rounded-full border border-[#F8F2EA]/70" />
         <div className="absolute -left-20 top-12 h-64 w-64 rounded-full bg-[#E6D8CA]/35 dark:bg-stone-800/30" />
         <div className="absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-[#D6C3B1]/35 dark:bg-stone-800/30" />
         <div className="absolute left-[12%] top-[20%] h-6 w-6 rounded-full border border-[#F0A43B]/40 bg-[#F6C36A]/35" />
