@@ -9,7 +9,6 @@ import {
   User,
   Wallet,
   Landmark,
-  CalendarRange,
   Settings,
   LogOut,
   Maximize2,
@@ -19,11 +18,9 @@ import {
   BarChart3,
   PanelLeftIcon,
   Home,
-  RepeatIcon,
   ClipboardList,
   Eye,
   EyeOff,
-  Target,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -93,13 +90,9 @@ function getInitials(name: string | null | undefined, email: string | null | und
 const navItems = [
   { key: "home", href: "/dashboard", icon: Home },
   { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
-  { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
   { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
-  { key: "monthlyEntry", href: "/dashboard/monthly-entry", icon: ClipboardList },
-  { key: "recurring", href: "/dashboard/recurring", icon: RepeatIcon },
-  { key: "budget", href: "/dashboard/settings/budget", icon: Wallet },
-  { key: "summary", href: "/dashboard/summary", icon: BarChart3 },
-  { key: "spendingEfficiency", href: "/dashboard/spending-efficiency", icon: Target },
+  { key: "entry", href: "/dashboard/entry", icon: ClipboardList },
+  { key: "reports", href: "/dashboard/reports", icon: BarChart3 },
 ] as const;
 
 export function AppSidebarLayout({

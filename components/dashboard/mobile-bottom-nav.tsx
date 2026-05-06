@@ -8,7 +8,7 @@ import {
   LayoutDashboard,
   Wallet,
   List,
-  CalendarRange,
+  BarChart3,
   Plus,
   ArrowDownCircle,
   ArrowUpCircle,
@@ -24,8 +24,8 @@ import { useTransactionForm } from "@/components/dashboard/transaction-form-cont
 const navItems = [
   { key: "dashboard", href: "/dashboard", icon: LayoutDashboard },
   { key: "accounts", href: "/dashboard/accounts", icon: Wallet },
-  { key: "calendar", href: "/dashboard/calendar", icon: CalendarRange },
   { key: "transactions", href: "/dashboard/transactions", icon: List },
+  { key: "reports", href: "/dashboard/reports", icon: BarChart3 },
 ] as const;
 
 export function MobileBottomNav() {

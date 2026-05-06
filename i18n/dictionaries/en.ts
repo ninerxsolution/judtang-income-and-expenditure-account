@@ -229,6 +229,7 @@ export const enDictionary = {
       account: "Account",
       theme: "Theme",
       reports: "Reports",
+      entry: "Entry",
       monthlyEntry: "Monthly Entry",
       spendingEfficiency: "Spending efficiency",
     },
@@ -1117,6 +1118,10 @@ export const enDictionary = {
       tapToEditOrDelete: "Tap to edit or delete",
       selectAction: "Select action",
     },
+    view: {
+      list: "List view",
+      calendar: "Calendar view",
+    },
   },
   activityLog: {
     subtitle: "Audit trail of your actions (read-only).",
@@ -1877,6 +1882,18 @@ export const enDictionary = {
         "Help us understand how the site is used via Vercel Analytics to improve your experience.",
       save: "Save Preferences",
       cancel: "Cancel",
+    },
+  },
+  reports: {
+    tabs: {
+      summary: "Overview",
+      efficiency: "Daily Efficiency",
+    },
+  },
+  entry: {
+    tabs: {
+      monthly: "Monthly Entry",
+      recurring: "Recurring",
     },
   },
 };

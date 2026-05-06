@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -14,6 +14,8 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
+  List,
+  CalendarRange,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,7 @@ import {
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
+import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 
 type Transaction = {
   id: string;
@@ -80,7 +83,7 @@ function currencyForBalance(tx: Transaction, filterAccountId: string): string {
 
 const PAGE_SIZE = 20;
 
-export default function TransactionsPage() {
+function TransactionsListView() {
   const searchParams = useSearchParams();
   const { t, locale, language } = useI18n();
   const { refresh } = useDashboardData();
@@ -277,28 +280,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          {/* <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <List className="h-5 w-5" />
-            {t("dashboard.pageTitle.transactionsList")}
-          </h1> */}
-          <p className="mt-1 text-sm text-[#6B5E4E] dark:text-stone-400">
-            {t("transactions.list.subtitle")}
-          </p>
-        </div>
-        {/* <div className="flex flex-wrap items-center gap-2">
-          <Button
-            onClick={() => openCreateModal()}
-            className="inline-flex gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
-          >
-            <Plus className="h-4 w-4" />
-            {t("transactions.list.newTransaction")}
-          </Button>
-        </div> */}
-      </div>
-
+    <div className="space-y-4">
       <div className="rounded-lg border space-y-3 border-[#D4C9B0] bg-[#F5F0E8]/50 p-3 md:p-4 dark:border-stone-700 dark:bg-stone-900/40">
         <h2 className="text-sm font-medium text-[#3D3020] dark:text-stone-200">
           {t("transactions.list.filters")}
@@ -849,6 +831,59 @@ export default function TransactionsPage() {
         transaction={deleteTransaction}
         onConfirm={refreshList}
       />
+    </div>
+  );
+}
+
+export default function TransactionsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { t } = useI18n();
+
+  const view = searchParams.get("view") ?? "list";
+
+  function switchView(nextView: "list" | "calendar") {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", nextView);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-[#6B5E4E] dark:text-stone-400">
+          {t("transactions.list.subtitle")}
+        </p>
+        <div className="flex items-center gap-1 rounded-md border border-[#D4C9B0] p-0.5 dark:border-stone-700">
+          <Button
+            variant={view === "list" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={() => switchView("list")}
+            aria-label={t("transactions.view.list")}
+            aria-pressed={view === "list"}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={view === "calendar" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={() => switchView("calendar")}
+            aria-label={t("transactions.view.calendar")}
+            aria-pressed={view === "calendar"}
+          >
+            <CalendarRange className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {view === "calendar" ? (
+        <TransactionsCalendar variant="full" showQuickActions={true} />
+      ) : (
+        <TransactionsListView />
+      )}
     </div>
   );
 }

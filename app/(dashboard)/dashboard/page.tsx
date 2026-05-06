@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, MoreHorizontal, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, MoreHorizontal, Settings, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
@@ -308,9 +308,11 @@ export default function DashboardPage() {
                   </CardTitle>
                   <Link
                     href={`/dashboard/settings/budget?year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`}
-                    className="text-xs font-medium text-[#5C6B52] hover:underline dark:text-stone-400 dark:hover:text-stone-300"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-[#5C6B52] hover:underline dark:text-stone-400 dark:hover:text-stone-300"
                   >
+                    <Settings className="h-3 w-3" />
                     {t("settings.budget.open")}
+                    <ChevronRight className="h-3 w-3" />
                   </Link>
                 </CardHeader>
                 <CardContent className="space-y-1">

@@ -226,6 +226,7 @@ export const thDictionary = {
       account: "บัญชีผู้ใช้",
       theme: "ธีม",
       reports: "รายงาน",
+      entry: "บันทึก",
       monthlyEntry: "บันทึกรายเดือน",
       spendingEfficiency: "ประสิทธิภาพการใช้เงิน",
     },
@@ -1099,6 +1100,10 @@ export const thDictionary = {
       tapToEditOrDelete: "แตะเพื่อแก้ไขหรือลบ",
       selectAction: "เลือกการดำเนินการ",
     },
+    view: {
+      list: "มุมมองรายการ",
+      calendar: "มุมมองปฏิทิน",
+    },
   },
   activityLog: {
     subtitle: "บันทึกประวัติกิจกรรมการใช้งานของคุณ (อ่านอย่างเดียว)",
@@ -1855,6 +1860,18 @@ export const thDictionary = {
         "ช่วยให้เราเข้าใจการใช้งานเว็บไซต์ผ่าน Vercel Analytics เพื่อปรับปรุงประสบการณ์ผู้ใช้",
       save: "บันทึกการตั้งค่า",
       cancel: "ยกเลิก",
+    },
+  },
+  reports: {
+    tabs: {
+      summary: "สรุปภาพรวม",
+      efficiency: "ประสิทธิภาพรายวัน",
+    },
+  },
+  entry: {
+    tabs: {
+      monthly: "บันทึกรายเดือน",
+      recurring: "รายการประจำ",
     },
   },
 };
