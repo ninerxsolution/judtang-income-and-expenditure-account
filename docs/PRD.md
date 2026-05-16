@@ -766,7 +766,7 @@ Behaviour:
 - If `from` and `to` are omitted or invalid, uses the **current month** (start and end of month in server timezone)
 - Aggregates transactions in the range by type and returns `{ income: number, expense: number }` (balance can be computed client-side as income − expense)
 
-Used by the **Dashboard** home page to show summary cards (income, expense, balance) for the current month.
+Used by the **Dashboard** home page (`DashboardSummaryCard`) to show income, expense, and total balance for the current month.
 
 ---
 
@@ -882,7 +882,12 @@ Core concepts:
 
 ##### Dashboard summary (home)
 
-- The dashboard home page (`/dashboard`) displays **summary cards** for the current month: total **Income**, total **Expense**, and **Balance** (income − expense). Data is loaded from `GET /api/transactions/summary` (defaults to current month when `from`/`to` are omitted).
+- The dashboard home page (`/dashboard`) shows a **single combined summary card** (`components/dashboard/dashboard-summary-card.tsx`) for the current month:
+  - **Balance** — total balance across accounts (`totalBalance` from dashboard init when present; otherwise income − expense for the month). Link to `/dashboard/accounts` shows account count. Optional note when balance is approximate (multi-currency).
+  - **Income** and **Expense** — month totals from dashboard summary data (same source as former separate cards).
+- **Layout:** One olive-green surface (`#4A5E40` / dark `#3D4F33`); no internal divider borders; income/expense amounts use semantic text colors (green/red) only. On viewports **&lt; sm**, income and expense stack one per row; from **sm** upward they sit side by side.
+- **Balance visibility:** When the user hides balances (header toggle), all three amounts on this card are masked (same scope as budget card on home).
+- Data is loaded via `DashboardDataProvider` (`GET /api/dashboard/init`), which includes summary fields for the current month.
 
 ##### Data Tools — `/dashboard/tools`
 

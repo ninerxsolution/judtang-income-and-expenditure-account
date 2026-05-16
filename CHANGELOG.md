@@ -2,6 +2,14 @@
 
 ---
 
+# v0.9.41 - 2026-05-16
+
+## Changed
+
+- **Dashboard summary card** — The home page now shows balance, monthly income, and monthly expense in a single combined card (`DashboardSummaryCard`) with one olive-green background instead of three separate cards. Income and expense use text color only (no icons or internal borders). On mobile, income and expense stack one per row; from `sm` breakpoint up they appear side by side. Balance visibility toggle still masks all three amounts on this card.
+
+---
+
 # v0.9.40 - 2026-05-16
 
 ## Added

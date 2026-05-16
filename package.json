@@ -1,6 +1,6 @@
 {
   "name": "judtang-income-and-expenditure-account",
-  "version": "0.9.40",
+  "version": "0.9.41",
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",

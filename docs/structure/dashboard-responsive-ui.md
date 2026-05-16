@@ -1,6 +1,6 @@
 # Dashboard Responsive UI
 
-**Updated:** 16/05/2026
+**Updated:** 16/05/2026 (summary card)
 
 **Source:** PRD §18 (Income & Expense), Dashboard layout
 
@@ -77,9 +77,20 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 ## 6. Dashboard Page Layout
 
 - **File:** `app/(dashboard)/dashboard/page.tsx`
-- **Responsive grid:** Single column on small screens; two columns on larger
-- **Quick Add buttons:** Use `useIsSmallScreen` for layout adjustments
+- **Responsive grid:** Single column on small screens; two columns (`xl:grid-cols-2`) on larger viewports (summary column + calendar column)
+- **Quick Add buttons:** Shown between summary and calendar on mid breakpoints (`md:flex xl:hidden` in left column; `xl:flex` in right column)
 - **Text wrapping:** Button labels wrap to prevent overflow on narrow screens
+
+### 6.1 Combined summary card
+
+- **Component:** `components/dashboard/dashboard-summary-card.tsx` (`DashboardSummaryCard`)
+- **Content:** Balance (all accounts), current-month income, current-month expense in one card
+- **Visual:** Single olive-green background; no internal borders; no icons on income/expense rows
+- **Responsive metrics row:**
+  - **&lt; sm (default):** `grid-cols-1` — income and expense each on their own row
+  - **≥ sm:** `grid-cols-2` — income and expense side by side
+- **Loading:** Static labels and structure unchanged; skeleton placeholders only for numeric values (see skeleton-static-structure rule)
+- **Props:** `loading`, `balanceVisible`, `data` (`balance`, `income`, `expense`, `accountCount`, optional `totalBalanceApproximate`)
 
 ---
 
@@ -87,6 +98,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 | Component | Role |
 |-----------|------|
+| `DashboardSummaryCard` | Home summary: balance + month income/expense in one card |
 | `AppSidebarLayout` | Wraps dashboard; renders Sidebar + header; switches to Dialog on small screen |
 | `MobileBottomNav` | Fixed bottom nav on mobile |
 | `Dialog` (ui/dialog) | Sidebar nav overlay on small screens |
