@@ -28,7 +28,7 @@ export default async function RestoreAccountPage({ searchParams }: PageProps) {
   return (
     <div className="auth-page flex min-h-screen flex-col bg-[#F5F0E8] dark:bg-stone-950">
       <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
-        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-2 sm:px-6 py-2 sm:py-4">
           <Link
             href="/"
             className="flex items-center gap-2 text-lg font-semibold text-[#3D3020] dark:text-stone-100"

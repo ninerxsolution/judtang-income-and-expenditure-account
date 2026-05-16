@@ -13,6 +13,7 @@ import {
   type Language,
 } from "@/i18n";
 import { Button } from "@/components/ui/button";
+import { LandingGoToTop } from "@/components/landing/landing-go-to-top";
 
 async function getLanguage(): Promise<Language> {
   const cookieStore = await cookies();
@@ -48,7 +49,7 @@ export default async function PrivacyPage() {
     <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
       {/* Sticky header */}
       <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
-        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-2 sm:px-6 py-2 sm:py-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/" className="gap-2 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100">
               <ArrowLeft className="h-4 w-4" />
@@ -348,6 +349,7 @@ export default async function PrivacyPage() {
           </p>
         </div>
       </main>
+      <LandingGoToTop />
     </div>
   );
 }

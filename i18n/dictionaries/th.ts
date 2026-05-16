@@ -862,7 +862,7 @@ export const thDictionary = {
     },
     hero: {
       headline: "มาจัดตังค์กันเถอะ",
-      subheadline: "บันทึกรายรับรายจ่าย ให้เห็นภาพอย่างง่ายดาย",
+      subheadline: "จดง่าย เห็นภาพรวม จัดการเงินได้อยู่หมัด",
       primaryCta: "เริ่มใช้งาน",
       secondaryCta: "ดูฟีเจอร์ทั้งหมด",
       previewLabel: "ตัวอย่างหน้าแดชบอร์ด",
