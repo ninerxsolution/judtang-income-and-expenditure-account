@@ -2,6 +2,18 @@
 
 ---
 
+# v0.9.42 - 2026-05-16
+
+## Added
+
+- **Tooltip มุมมองเดือน/ปีในปฏิทิน** — `GET /api/transactions/month-summary` และ `year-summary` คืนยอดรวมโดยประมาณเป็น THB ต่อเดือน/ปี (`incomeSumThb`, `expenseSumThb`, `transferSumThb`) ใช้ logic เดียวกับ `calendar-summary` เมื่อ hover ช่องเดือนหรือปีจะแสดงรายละเอียดรายรับ/รายจ่าย/โอน (หรือข้อความไม่มีรายการ)
+
+## Changed
+
+- **ตำแหน่งปุ่มมุมมองปฏิทิน (วัน/สัปดาห์/เดือน/ปี/วันนี้)** — บน **หน้าแรก Dashboard** ปุ่มอยู่ในแถบหัว**ภายในการ์ด** เดียวกับ prev/next และชื่อช่วงเวลา บน **มุมมองปฏิทินในหน้ารายการ** (`/dashboard/transactions?view=calendar`) และหน้า `/dashboard/calendar` (`variant="full"`) ปุ่มอยู่**เหนือการ์ด**แบบเดิม ปรับได้ด้วย prop `viewModeToolbarPlacement` บน `TransactionsCalendar`
+
+---
+
 # v0.9.41 - 2026-05-16
 
 ## Changed

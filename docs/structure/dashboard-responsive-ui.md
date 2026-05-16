@@ -92,6 +92,12 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 - **Loading:** Static labels and structure unchanged; skeleton placeholders only for numeric values (see skeleton-static-structure rule)
 - **Props:** `loading`, `balanceVisible`, `data` (`balance`, `income`, `expense`, `accountCount`, optional `totalBalanceApproximate`)
 
+### 6.2 Embedded calendar (home)
+
+- **Component:** `TransactionsCalendar` with default `variant="embedded"` (no `showQuickActions` on home)
+- **View toolbar:** Day / Week / Month / Year / Today in the **calendar card header**, same row as prev/next and period label (`viewModeToolbarPlacement` default `inside-card`)
+- **Tooltips:** Day, week row, month tile, and year tile show approximate THB breakdown on hover (`showDayHoverTooltip`, default true)
+
 ---
 
 ## 7. Components
@@ -99,6 +105,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 | Component | Role |
 |-----------|------|
 | `DashboardSummaryCard` | Home summary: balance + month income/expense in one card |
+| `TransactionsCalendar` | Calendar grid; `variant` and `viewModeToolbarPlacement` control layout and toolbar position |
 | `AppSidebarLayout` | Wraps dashboard; renders Sidebar + header; switches to Dialog on small screen |
 | `MobileBottomNav` | Fixed bottom nav on mobile |
 | `Dialog` (ui/dialog) | Sidebar nav overlay on small screens |
@@ -109,7 +116,9 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 - **File:** `app/(dashboard)/dashboard/transactions/page.tsx`
 - **View switcher:** Same route toggles between **list** (table) and **calendar** (`TransactionsCalendar`); preference can be reflected in URL/search params
-- **Calendar day tooltips:** Calendar uses `GET /api/transactions/calendar-summary` for per-day indicators and approximate THB income/expense/transfer totals in tooltips
+- **Calendar variant:** `variant="full"` with `showQuickActions={true}`; view-mode toolbar **above** the calendar card (`viewModeToolbarPlacement` default `outside-card` for full)
+- **Calendar tooltips:** `calendar-summary`, `month-summary`, and `year-summary` supply approximate THB totals for day, month, and year hover tooltips
+- **Card header (full calendar):** Prev/next + period label on the left; quick actions (income / expense / slip) on the right — view-mode controls are not duplicated inside the card when toolbar is outside
 
 ### List view — table responsive
 

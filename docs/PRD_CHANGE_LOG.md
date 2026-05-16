@@ -5,6 +5,18 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 16/05/2026 (v0.9.42 — calendar month/year tooltips, view toolbar placement)
+
+- CHANGELOG.md, CHANGELOG.th.md — v0.9.42: month/year summary THB fields + hover tooltips; `viewModeToolbarPlacement` (inside card on home, outside on full calendar).
+- package.json — version `0.9.42`.
+- app/api/transactions/month-summary/route.ts, year-summary/route.ts — THB totals via `accumulateCalendarDaySummary`; cache key `thb-v1`.
+- components/dashboard/transactions-calendar.tsx — `CalendarViewModeControls`, `CalendarPeriodTooltipContent`, `viewModeToolbarPlacement` prop; default `embedded` → inside-card, `full` → outside-card.
+- docs/PRD.md — §18.3.4–18.3.5 month/year API response fields; §18.4.3 toolbar placement and month/year tooltips.
+- docs/structure/dashboard-responsive-ui.md — §6.2 home calendar toolbar; §8 calendar tooltips and toolbar placement.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
 ## 16/05/2026 (v0.9.41 — dashboard combined summary card)
 
 - CHANGELOG.md, CHANGELOG.th.md — v0.9.41: single `DashboardSummaryCard` on home (balance + month income/expense); responsive stacked metrics on mobile.

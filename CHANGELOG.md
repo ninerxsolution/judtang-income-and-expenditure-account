@@ -2,6 +2,18 @@
 
 ---
 
+# v0.9.42 - 2026-05-16
+
+## Added
+
+- **Calendar month/year tooltips** — `GET /api/transactions/month-summary` and `year-summary` now return approximate THB totals per month/year (`incomeSumThb`, `expenseSumThb`, `transferSumThb`) using the same logic as `calendar-summary`. Hovering a month or year tile shows income, expense, and transfer breakdown in THB (or “no records”).
+
+## Changed
+
+- **Calendar view-mode toolbar placement** — Day / Week / Month / Year / Today controls on the **dashboard home** calendar sit in the card header on the same row as prev/next and the period label. On **transactions calendar view** (`/dashboard/transactions?view=calendar`) and the full **calendar page** (`variant="full"`), those controls render **above** the calendar card (previous layout). Override with `viewModeToolbarPlacement` on `TransactionsCalendar` (`inside-card` | `outside-card`).
+
+---
+
 # v0.9.41 - 2026-05-16
 
 ## Changed

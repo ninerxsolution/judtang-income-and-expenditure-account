@@ -666,24 +666,34 @@ Used by the transactions **calendar** grid (indicators per day) and **day toolti
 Query params:
 
 - `year=YYYY`
+- `timezone` (optional, default `Asia/Bangkok`) — day bounds for grouping
 
 Behaviour:
 
 - Requires authenticated user; returns `401` otherwise
-- Builds range `from = 1 Jan YYYY 00:00:00.000`, `to = 31 Dec YYYY 23:59:59.999`
-- Fetches all transactions in that year (selecting only `occurredAt`)
-- Groups by `occurredAt.getMonth()` (0–11)
+- Builds the calendar year range in the given timezone (`getDateRangeInTimezone`)
+- Fetches transactions in that year (fields needed for THB aggregation: `occurredAt`, `type`, `transferLeg`, `amount`, `currency`, `exchangeRate`, `baseAmount`)
+- Groups by calendar month via `toDateStringInTimezone` and `accumulateCalendarDaySummary` from `lib/calendar-summary-thb.ts`
 
-Response:
+Response (per month with activity):
 
 ```json
 [
-  { "monthIndex": 0, "hasTransactions": true, "count": 10 },
-  { "monthIndex": 5, "hasTransactions": true, "count": 2 }
+  {
+    "monthIndex": 0,
+    "hasTransactions": true,
+    "count": 10,
+    "incomeCount": 2,
+    "expenseCount": 7,
+    "transferCount": 1,
+    "incomeSumThb": 50000,
+    "expenseSumThb": 12000,
+    "transferSumThb": 3000
+  }
 ]
 ```
 
-Used by the **Month view** to show which months have any transactions (and rough volume) in the selected year.
+Used by the **Month view** for activity indicators and **hover tooltips** (approximate THB income/expense/transfer, same pattern as day tooltips).
 
 #### 18.3.5 Year Summary — `GET /api/transactions/year-summary`
 
@@ -691,23 +701,34 @@ Query params:
 
 - `fromYear=YYYY`
 - `toYear=YYYY`
+- `timezone` (optional, default `Asia/Bangkok`)
 
 Behaviour:
 
 - Requires authenticated user; returns `401` otherwise
 - Normalises the range: `startYear = min(fromYear, toYear)`, `endYear = max(fromYear, toYear)`
-- Builds `from = 1 Jan startYear`, `to = 31 Dec endYear`
-- Fetches all transactions in that inclusive year range (only `occurredAt`)
-- Groups by `occurredAt.getFullYear()`
+- Builds inclusive year bounds in timezone; fetches transactions with the same select fields as month-summary
+- Groups by calendar year via `toDateStringInTimezone` and `accumulateCalendarDaySummary`
 
-Response:
+Response (per year with activity):
 
 ```json
 [
-  { "year": 2024, "hasTransactions": true, "count": 50 },
-  { "year": 2025, "hasTransactions": false, "count": 0 }
+  {
+    "year": 2024,
+    "hasTransactions": true,
+    "count": 50,
+    "incomeCount": 10,
+    "expenseCount": 35,
+    "transferCount": 5,
+    "incomeSumThb": 600000,
+    "expenseSumThb": 450000,
+    "transferSumThb": 80000
+  }
 ]
 ```
+
+Used by the **Year view** for indicators and **hover tooltips** (approximate THB breakdown).
 
 Used by the **Year view** to highlight years that contain any transactions and give a coarse sense of volume.
 
@@ -827,14 +848,15 @@ Core concepts:
 - `year` and `monthIndex` track the current focus month/year
 - Navigation uses `<`, `>` buttons to move across months/years/ranges
 
-**Global controls**
+**Global controls** (`TransactionsCalendar`, `components/dashboard/transactions-calendar.tsx`)
 
-- **View mode switcher**: segmented control with `Day`, `Month`, `Year`
-- **Today** button:
-  - Resets `year` and `monthIndex` to the current date
-  - Switches back to **Day** view
-- **New transaction** button:
-  - Opens the create-transaction modal in-page
+- **View mode switcher**: segmented control with `Day`, `Week`, `Month`, `Year`, plus **Today** (resets focus date and returns to Day view).
+- **Toolbar placement** (`viewModeToolbarPlacement`, default by `variant`):
+  - **`embedded`** (dashboard home): controls in the **card header** on the same row as `<` / `>` and the period label (month name, week range, year, or year range).
+  - **`full`** (`/dashboard/transactions?view=calendar`, `/dashboard/calendar`): controls **above** the calendar card (list/calendar page header stays separate).
+  - Explicit override: `inside-card` | `outside-card`.
+- **Quick actions** (optional `showQuickActions`): income / expense / slip upload in the card header when enabled (transactions calendar view).
+- **New transaction** (when enabled): opens create-transaction modal in-page.
 
 ##### Day view
 
@@ -857,9 +879,8 @@ Core concepts:
 - Shows a **3×4 grid of months** for the currently selected `year`
 - Each tile:
   - Displays the month name (short format, locale-dependent)
-  - Uses `month-summary` data to show whether there are any transactions in that month, and how many:
-    - If there are no transactions, shows a muted “ไม่มีบันทึก” / “no records” label
-    - If there are transactions, shows a green dot and optional count
+  - Uses `month-summary` data for type dots (income/expense/transfer) and optional transaction count
+  - **Hover tooltip:** month label plus approximate THB income, expense, and transfer (or “no records”), same style as day view
 - Navigation:
   - `<`/`>` buttons move `year - 1` / `year + 1`
 - Interaction:
@@ -870,8 +891,9 @@ Core concepts:
 - Shows a **grid of years** (e.g. 12 years at a time, arranged 3×4)
 - Internally tracks a `yearRangeStart`; `yearRangeEnd` is derived (e.g. `yearRangeStart + 11`)
 - Each tile:
-  - Displays the year number
-  - Uses `year-summary` data to show whether there are any transactions that year, plus an optional count
+  - Displays the year number (Buddhist era when UI language is Thai)
+  - Uses `year-summary` data for type dots and optional count
+  - **Hover tooltip:** year label plus approximate THB income, expense, and transfer (or “no records”)
 - Navigation:
   - `<`/`>` buttons slide the year window backward or forward by 12 years
 - Interaction:
