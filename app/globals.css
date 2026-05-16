@@ -176,6 +176,34 @@
   --landing-expense: oklch(0.627 0.265 303.9);
 }
 
+/* Floating doodles on public / information pages */
+@keyframes landing-doodle-float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+.landing-doodle-float {
+  animation: landing-doodle-float 6s ease-in-out infinite;
+}
+
+.landing-doodle-float-delayed {
+  animation: landing-doodle-float 7s ease-in-out infinite 2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-doodle-float,
+  .landing-doodle-float-delayed {
+    animation: none;
+  }
+}
+
 /* Earth Tone - สำหรับ auth pages (sign-in, register, forgot-password) */
 .auth-page {
   --background: #F5F0E8;
