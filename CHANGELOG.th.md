@@ -2,6 +2,19 @@
 
 ---
 
+# v0.9.40 - 2026-05-16
+
+## Added
+
+- **สรุปรายวันปฏิทิน (THB)** — `GET /api/transactions/calendar-summary` คืนจำนวนรายรับ/รายจ่าย/โอน และยอดรวมโดยประมาณเป็น THB ต่อวัน (`incomeSumThb`, `expenseSumThb`, `transferSumThb`) logic ร่วมอยู่ที่ `lib/calendar-summary-thb.ts` ปฏิทินรายการธุรกรรมแสดง tooltip รายละเอียดต่อวัน
+- **เลย์เอาต์หน้าสาธารณะ** — `LandingPublicShell` ห่อหน้าแรกและหน้าข้อมูลสาธารณะ (ติดต่อ, นโยบายความเป็นส่วนตัว, ข้อกำหนด, บันทึกเวอร์ชัน) ให้ layout เหมือนกัน `LandingDoodleBackground` เพิ่ม doodle ลอยเบา ๆ และเคารพ `prefers-reduced-motion`
+
+## Changed
+
+- **Timezone ตัวเลือก recurring** — `GET .../link-candidates` รับพารามิเตอร์ `timezone` (ใช้กรอง `onDate` และแสดงวันที่ใน slide picker) ค่าเริ่มต้น `Asia/Bangkok` ถ้าไม่ส่ง
+
+---
+
 # v0.9.39 - 2026-05-07
 
 ## Added

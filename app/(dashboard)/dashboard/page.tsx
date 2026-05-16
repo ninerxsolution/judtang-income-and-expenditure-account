@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, MoreHorizontal, Settings, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, Settings, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
@@ -30,8 +30,6 @@ import {
   budgetIndicatorProgressBarClass,
 } from "@/lib/budget-indicator-ui";
 import { useI18n } from "@/hooks/use-i18n";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
 export default function DashboardPage() {
   const { t } = useI18n();
   const {
@@ -164,23 +162,14 @@ export default function DashboardPage() {
               <ArrowUpCircle className="h-4 w-4 shrink-0" />
               <span>{t("transactions.common.expense")}</span>
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
-                  aria-label={t("notifications.moreOptions")}
-                >
-                  <MoreHorizontal className="h-4.5 w-4.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
-                  <ImagePlus className="h-4 w-4" />
-                  {t("dashboard.slipUpload.title")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+              aria-label={t("dashboard.slipUpload.title")}
+            >
+              <ImagePlus className="h-4.5 w-4.5 shrink-0" aria-hidden />
+            </button>
           </div>
 
           <div className="gap-3">
@@ -388,23 +377,14 @@ export default function DashboardPage() {
               <ArrowUpCircle className="h-4 w-4 shrink-0" />
               <span>{t("transactions.common.expense")}</span>
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
-                  aria-label={t("notifications.moreOptions")}
-                >
-                  <MoreHorizontal className="h-4.5 w-4.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
-                  <ImagePlus className="h-4 w-4" />
-                  {t("dashboard.slipUpload.title")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+              aria-label={t("dashboard.slipUpload.title")}
+            >
+              <ImagePlus className="h-4.5 w-4.5 shrink-0" aria-hidden />
+            </button>
           </div>
 
           <TransactionsCalendar showNewTransactionButton={false} showQuickActions={false} />

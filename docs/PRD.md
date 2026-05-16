@@ -630,24 +630,36 @@ Query params:
 
 - `from=YYYY-MM-DD` — start of displayed calendar grid (including leading days from previous month)
 - `to=YYYY-MM-DD` — end of displayed calendar grid
+- `timezone` — IANA timezone for grouping days and range bounds (default `Asia/Bangkok`)
+- `financialAccountId` — optional; limit summary to one account
 
 Behaviour:
 
 - Requires authenticated user; returns `401` otherwise
-- Converts `from` to **startOfDay** and `to` to **endOfDay**
-- Fetches all `Transaction` rows for the user in that range (only `occurredAt` is selected)
-- Groups by calendar date (derived from `occurredAt.toISOString().slice(0, 10)`)
+- Uses `getDateRangeInTimezone` for `from`/`to` bounds in the given timezone
+- Fetches `Transaction` rows in range (selects `occurredAt`, `type`, `transferLeg`, `amount`, `currency`, `exchangeRate`, `baseAmount`)
+- Groups by calendar date via `toDateStringInTimezone(occurredAt, timezone)`
+- Per day, accumulates counts by type and **approximate THB totals** via `lib/calendar-summary-thb.ts` (`baseAmount` when stored, otherwise `amount` × `exchangeRate` with currency fallback)
 
-Response:
+Response (array of days that have at least one transaction):
 
 ```json
 [
-  { "date": "2026-02-01", "hasTransactions": true, "count": 3 },
-  { "date": "2026-02-05", "hasTransactions": true, "count": 1 }
+  {
+    "date": "2026-02-01",
+    "hasTransactions": true,
+    "count": 3,
+    "incomeCount": 1,
+    "expenseCount": 2,
+    "transferCount": 0,
+    "incomeSumThb": 5000,
+    "expenseSumThb": 1200.5,
+    "transferSumThb": 0
+  }
 ]
 ```
 
-Used by the **Day view** version of the calendar grid to determine whether to show an indicator per day and (optionally) transaction counts.
+Used by the transactions **calendar** grid (indicators per day) and **day tooltips** showing income/expense/transfer breakdown in approximate THB.
 
 #### 18.3.4 Month Summary — `GET /api/transactions/month-summary`
 

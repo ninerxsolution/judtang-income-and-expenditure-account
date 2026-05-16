@@ -13,7 +13,15 @@ The home page (`/`) serves as the public entry point for Judtang Financial Engin
 
 ---
 
-## 2. Page Structure
+## 2. Public shell (shared layout)
+
+Public and information pages use **`LandingPublicShell`** (`components/landing/landing-public-shell.tsx`): navbar, scrollable main content, footer, and optional **Go to Top**. **`LandingDoodleBackground`** (`components/landing/landing-doodle-background.tsx`) renders light floating finance-themed doodles behind content; animations are disabled when `prefers-reduced-motion: reduce`.
+
+**Routes using the shell:** `/` (home), `/contact`, `/privacy`, `/terms`, `/releases`.
+
+---
+
+## 3. Page Structure (home `/`)
 
 Sections in order:
 
@@ -28,7 +36,7 @@ Sections in order:
 
 ---
 
-## 3. Navbar
+## 4. Navbar
 
 ### Items
 
@@ -48,7 +56,7 @@ Sections in order:
 
 ---
 
-## 4. Hero Section
+## 5. Hero Section
 
 ### Content (i18n)
 
@@ -64,7 +72,7 @@ Sections in order:
 
 ---
 
-## 5. Core Value Section
+## 6. Core Value Section
 
 Three-column layout. Content uses user-friendly language (no technical jargon).
 
@@ -76,7 +84,7 @@ Three-column layout. Content uses user-friendly language (no technical jargon).
 
 ---
 
-## 6. Feature Grid
+## 7. Feature Grid
 
 2×2 grid. All content translated for general users.
 
@@ -89,14 +97,14 @@ Three-column layout. Content uses user-friendly language (no technical jargon).
 
 ---
 
-## 7. Engine Section
+## 8. Engine Section
 
 - **Title:** ออกแบบมาเพื่อจัดการเงินจริง ไม่ใช่แค่จดบันทึก
 - **Bullets:** บันทึกรายการอย่างเป็นระบบ, แยกบัญชีบัตรเครดิตชัดเจน, ติดตามรอบบิลตามจริง, จัดการวงจรชีวิตรายการได้, โครงสร้างข้อมูลชัดเจน ดูแลง่าย
 
 ---
 
-## 8. Public Releases Page
+## 9. Public Releases Page
 
 - **Route:** `/releases`
 - **Access:** Public (no login required)
@@ -105,7 +113,7 @@ Three-column layout. Content uses user-friendly language (no technical jargon).
 
 ---
 
-## 9. i18n Keys
+## 10. i18n Keys
 
 All landing content under `home.*`:
 
@@ -119,10 +127,12 @@ All landing content under `home.*`:
 
 ---
 
-## 10. Components
+## 11. Components
 
 | Component | Path |
 |-----------|------|
+| LandingPublicShell | `components/landing/landing-public-shell.tsx` |
+| LandingDoodleBackground | `components/landing/landing-doodle-background.tsx` |
 | LandingNavbar | `components/landing/landing-navbar.tsx` |
 | LandingHero | `components/landing/landing-hero.tsx` |
 | LandingCoreValue | `components/landing/landing-core-value.tsx` |
@@ -134,7 +144,7 @@ All landing content under `home.*`:
 
 ---
 
-## 11. Go to Top Button
+## 12. Go to Top Button
 
 - **Placement:** Fixed bottom-right (`bottom-6 right-6`).
 - **Appearance:** Round button, ArrowUp icon (Lucide), matches landing palette (light/dark).
@@ -142,7 +152,7 @@ All landing content under `home.*`:
 
 ---
 
-## 12. Visual Guidelines
+## 13. Visual Guidelines
 
 - **Background:** `bg-stone-50` / `dark:bg-stone-950` (Earth tone)
 - **Accent:** `amber-600` for primary CTAs; `emerald-500` for bullets/dots
@@ -153,7 +163,7 @@ All landing content under `home.*`:
 
 ---
 
-## 13. Non-Goals
+## 14. Non-Goals
 
 - No internal schema deep dive
 - No full feature documentation

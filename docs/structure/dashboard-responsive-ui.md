@@ -1,6 +1,6 @@
 # Dashboard Responsive UI
 
-**Updated:** 05/03/2026
+**Updated:** 16/05/2026
 
 **Source:** PRD §18 (Income & Expense), Dashboard layout
 
@@ -50,7 +50,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 - Collapsible sidebar (shadcn/ui `Sidebar`) with icon rail
 - Header: logo, app name
-- Nav items: Accounts, Calendar, Transactions, Summary; Admin Reports (if admin)
+- Nav items: Home, Accounts, Transactions, Entry (`/dashboard/entry` — Monthly + Recurring tabs), Reports (`/dashboard/reports` — Summary + Spending Efficiency tabs); Admin Reports (if admin)
 - Footer: app version
 
 ### Small screen (< 640px)
@@ -67,7 +67,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 - **Component:** `components/dashboard/mobile-bottom-nav.tsx`
 - **Shown when:** `useIsMobile()` is true (< 768px)
 - **Position:** Fixed bottom, full width
-- **Items:** Dashboard, Accounts, Transactions, Summary, Settings (5 items)
+- **Items:** Dashboard, Accounts, Transactions, Reports, Settings (5 items; Entry is in sidebar only)
 - **Styling:** Cream background (light) / stone-900 (dark); icon + text label per item; `md:hidden`; safe-area-inset-bottom for notched devices
 - **Active state:** Indicator bar at top of active item; colors adapt to theme via `useTheme()`
 - **Dark theme:** Background, border, active/inactive colors are theme-aware (light: cream/olive; dark: stone-900/stone-400)
@@ -93,9 +93,14 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 ---
 
-## 8. Transactions Table Responsive
+## 8. Transactions Page (list / calendar)
 
 - **File:** `app/(dashboard)/dashboard/transactions/page.tsx`
+- **View switcher:** Same route toggles between **list** (table) and **calendar** (`TransactionsCalendar`); preference can be reflected in URL/search params
+- **Calendar day tooltips:** Calendar uses `GET /api/transactions/calendar-summary` for per-day indicators and approximate THB income/expense/transfer totals in tooltips
+
+### List view — table responsive
+
 - **Desktop (≥ 1024px):** Full table with Date, Account, Category, Type, Amount, Note; Edit/Delete buttons per row
 - **Tablet/Mobile (< 1024px):** Compact layout:
   - **First column:** Date + account + category combined (single cell)

@@ -1,13 +1,7 @@
 "use client";
 
-import { ArrowDownCircle, ArrowUpCircle, ImagePlus, MoreHorizontal } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ImagePlus } from "lucide-react";
 import { useI18n } from "@/hooks/use-i18n";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -44,23 +38,14 @@ export function CalendarQuickActions({
           {t("transactions.common.expense")}
         </span>
       </button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
-            aria-label={t("notifications.moreOptions")}
-          >
-            <MoreHorizontal className="h-4.5 w-4.5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onSlipUpload}>
-            <ImagePlus className="h-4 w-4" />
-            {t("dashboard.slipUpload.title")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button
+        type="button"
+        onClick={onSlipUpload}
+        className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+        aria-label={t("dashboard.slipUpload.title")}
+      >
+        <ImagePlus className="h-4.5 w-4.5 shrink-0" aria-hidden />
+      </button>
     </div>
   );
 }

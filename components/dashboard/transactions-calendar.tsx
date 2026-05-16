@@ -333,7 +333,7 @@ function CalendarDayTooltipContent({
 }) {
   return (
     <div className="space-y-1.5 text-xs">
-      <p className="font-semibold leading-snug text-[#3D3020] font-bold">{formatCalendarTooltipDate(day.iso, locale)}</p>
+      <p className="leading-snug text-[#3D3020] font-bold">{formatCalendarTooltipDate(day.iso, locale)}</p>
       {!day.hasTransactions ? (
         <p className="text-[#6B5E4E]">{labels.noRecords}</p>
       ) : (

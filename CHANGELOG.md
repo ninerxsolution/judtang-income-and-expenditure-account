@@ -2,6 +2,19 @@
 
 ---
 
+# v0.9.40 - 2026-05-16
+
+## Added
+
+- **Calendar day THB summaries** — `GET /api/transactions/calendar-summary` now returns per-day income, expense, and transfer counts plus approximate THB totals (`incomeSumThb`, `expenseSumThb`, `transferSumThb`). Shared logic lives in `lib/calendar-summary-thb.ts`. The transactions calendar shows a tooltip on each day with the breakdown.
+- **Landing public shell** — New `LandingPublicShell` wraps the home page and public information pages (Contact, Privacy, Terms, Releases) for a consistent layout. `LandingDoodleBackground` adds light floating doodle animations with `prefers-reduced-motion` support.
+
+## Changed
+
+- **Recurring link picker timezone** — `GET /api/recurring-transactions/[id]/link-candidates` accepts an optional `timezone` query param (used for `onDate` day bounds and date display in the link slide picker). Defaults to `Asia/Bangkok` when omitted.
+
+---
+
 # v0.9.39 - 2026-05-07
 
 ## Added
