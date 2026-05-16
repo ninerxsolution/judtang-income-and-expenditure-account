@@ -7,6 +7,10 @@ import {
   toDateStringInTimezone,
 } from "@/lib/date-range";
 import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
+import {
+  accumulateCalendarDaySummary,
+  emptyDaySummaryAccumulator,
+} from "@/lib/calendar-summary-thb";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -17,6 +21,9 @@ type CalendarSummaryItem = {
   incomeCount: number;
   expenseCount: number;
   transferCount: number;
+  incomeSumThb: number;
+  expenseSumThb: number;
+  transferSumThb: number;
 };
 
 async function fetchCalendarSummary(
@@ -36,46 +43,51 @@ async function fetchCalendarSummary(
       occurredAt: { gte: fromRange.from, lte: toRange.to },
       ...(financialAccountId ? { financialAccountId } : {}),
     },
-    select: { occurredAt: true, type: true, transferLeg: true },
+    select: {
+      occurredAt: true,
+      type: true,
+      transferLeg: true,
+      amount: true,
+      currency: true,
+      exchangeRate: true,
+      baseAmount: true,
+    },
   });
 
-  const summaryMap = new Map<
-    string,
-    { count: number; incomeCount: number; expenseCount: number; transferCount: number }
-  >();
+  const summaryMap = new Map<string, ReturnType<typeof emptyDaySummaryAccumulator>>();
 
   for (const tx of transactions) {
     const dateIso = toDateStringInTimezone(tx.occurredAt, timezone);
-    const prev = summaryMap.get(dateIso) ?? {
-      count: 0,
-      incomeCount: 0,
-      expenseCount: 0,
-      transferCount: 0,
-    };
-    const typeUpper = String(tx.type).toUpperCase();
-    const isIncome = typeUpper === "INCOME";
-    const isExpense = typeUpper === "EXPENSE";
-    const isTransfer =
-      typeUpper === "TRANSFER" &&
-      (tx.transferLeg == null || tx.transferLeg === "OUT");
-    summaryMap.set(dateIso, {
-      count: prev.count + 1,
-      incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
-      expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
-      transferCount: prev.transferCount + (isTransfer ? 1 : 0),
-    });
+    const prev = summaryMap.get(dateIso) ?? emptyDaySummaryAccumulator();
+    summaryMap.set(dateIso, accumulateCalendarDaySummary(prev, tx));
   }
 
   return Array.from(summaryMap.entries())
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([date, { count, incomeCount, expenseCount, transferCount }]) => ({
-      date,
-      hasTransactions: count > 0,
-      count,
-      incomeCount,
-      expenseCount,
-      transferCount,
-    }));
+    .map(
+      ([
+        date,
+        {
+          count,
+          incomeCount,
+          expenseCount,
+          transferCount,
+          incomeSumThb,
+          expenseSumThb,
+          transferSumThb,
+        },
+      ]) => ({
+        date,
+        hasTransactions: count > 0,
+        count,
+        incomeCount,
+        expenseCount,
+        transferCount,
+        incomeSumThb,
+        expenseSumThb,
+        transferSumThb,
+      }),
+    );
 }
 
 export async function GET(request: Request) {
@@ -103,7 +115,15 @@ export async function GET(request: Request) {
     const getCached = unstable_cache(
       (uid: string, from: string, to: string, tz: string, accId: string | undefined) =>
         fetchCalendarSummary(uid, from, to, tz, accId),
-      cacheKey("transactions-calendar-summary", userId, fromParam, toParam, timezoneParam, financialAccountIdParam ?? ""),
+      cacheKey(
+        "transactions-calendar-summary",
+        userId,
+        fromParam,
+        toParam,
+        timezoneParam,
+        financialAccountIdParam ?? "",
+        "sum-v1",
+      ),
       { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
     );
     const result = await getCached(userId, fromParam, toParam, timezoneParam, financialAccountIdParam);

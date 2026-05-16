@@ -2,6 +2,7 @@
 
 import {
   type KeyboardEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { formatAmount } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
@@ -37,6 +39,12 @@ import { TransactionFormDialog } from "@/components/dashboard/transaction-form-d
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 import { CalendarQuickActions } from "@/components/dashboard/calendar-quick-actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type CalendarSummaryItem = {
   date: string; // YYYY-MM-DD
@@ -45,6 +53,9 @@ type CalendarSummaryItem = {
   incomeCount?: number;
   expenseCount?: number;
   transferCount?: number;
+  incomeSumThb?: number;
+  expenseSumThb?: number;
+  transferSumThb?: number;
 };
 
 type DailyTransaction = {
@@ -67,6 +78,9 @@ type CalendarDay = {
   incomeCount: number;
   expenseCount: number;
   transferCount: number;
+  incomeSumThb: number;
+  expenseSumThb: number;
+  transferSumThb: number;
 };
 
 type ViewMode = "day" | "week" | "month" | "year";
@@ -126,6 +140,24 @@ function getMonthLabel(year: number, monthIndex: number, locale: string): string
     year: "numeric",
     month: "long",
   });
+}
+
+function finiteSummaryNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeCalendarSummaryItem(item: CalendarSummaryItem): CalendarSummaryItem {
+  return {
+    date: item.date,
+    hasTransactions: !!item.hasTransactions,
+    count: finiteSummaryNumber(item.count),
+    incomeCount: finiteSummaryNumber(item.incomeCount),
+    expenseCount: finiteSummaryNumber(item.expenseCount),
+    transferCount: finiteSummaryNumber(item.transferCount),
+    incomeSumThb: finiteSummaryNumber(item.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item.transferSumThb),
+  };
 }
 
 function getWeekRangeLabel(
@@ -197,6 +229,9 @@ function buildCalendarDays(
       incomeCount: s?.incomeCount ?? 0,
       expenseCount: s?.expenseCount ?? 0,
       transferCount: s?.transferCount ?? 0,
+      incomeSumThb: s?.incomeSumThb ?? 0,
+      expenseSumThb: s?.expenseSumThb ?? 0,
+      transferSumThb: s?.transferSumThb ?? 0,
     });
 
     cursor.setDate(cursor.getDate() + 1);
@@ -255,6 +290,9 @@ function buildWeekDays(
       incomeCount: s?.incomeCount ?? 0,
       expenseCount: s?.expenseCount ?? 0,
       transferCount: s?.transferCount ?? 0,
+      incomeSumThb: s?.incomeSumThb ?? 0,
+      expenseSumThb: s?.expenseSumThb ?? 0,
+      transferSumThb: s?.transferSumThb ?? 0,
     });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -266,6 +304,90 @@ function buildWeekDays(
   };
 }
 
+type CalendarDayTooltipLabels = {
+  income: string;
+  expense: string;
+  transfer: string;
+  noRecords: string;
+};
+
+function formatCalendarTooltipDate(iso: string, locale: string): string {
+  const d = parseISODateOnly(iso);
+  if (!d) return iso;
+  return d.toLocaleDateString(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function CalendarDayTooltipContent({
+  day,
+  locale,
+  labels,
+}: {
+  day: CalendarDay;
+  locale: string;
+  labels: CalendarDayTooltipLabels;
+}) {
+  return (
+    <div className="space-y-1.5 text-xs">
+      <p className="font-semibold leading-snug text-[#3D3020] font-bold">{formatCalendarTooltipDate(day.iso, locale)}</p>
+      {!day.hasTransactions ? (
+        <p className="text-[#6B5E4E]">{labels.noRecords}</p>
+      ) : (
+        <ul className="space-y-1">
+          <li className="flex items-center justify-between gap-4">
+            <span className="text-emerald-700 font-bold">{labels.income}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">฿{formatAmount(day.incomeSumThb)}</span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="text-red-700 font-bold">{labels.expense}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">฿{formatAmount(day.expenseSumThb)}</span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="text-blue-700 font-bold">{labels.transfer}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">฿{formatAmount(day.transferSumThb)}</span>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function CalendarDayHoverTooltip({
+  day,
+  locale,
+  enabled,
+  labels,
+  children,
+}: {
+  day: CalendarDay;
+  locale: string;
+  enabled: boolean;
+  labels: CalendarDayTooltipLabels;
+  children: ReactNode;
+}) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        sideOffset={6}
+        className={cn(
+          "max-w-[260px] border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2.5 text-[#3D3020] shadow-md",
+          "!text-[#3D3020]",
+          "[&_.bg-foreground]:!bg-[#FDFAF4] [&_.fill-foreground]:!fill-[#FDFAF4]",
+        )}
+      >
+        <CalendarDayTooltipContent day={day} locale={locale} labels={labels} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 type TransactionsCalendarProps = {
@@ -274,12 +396,15 @@ type TransactionsCalendarProps = {
   showQuickActions?: boolean;
   /** full = 2-col layout + inline day panel, embedded = modal (default) */
   variant?: "full" | "embedded";
+  /** Hover tooltip with daily income/expense/transfer sums (default: true) */
+  showDayHoverTooltip?: boolean;
 };
 
 export function TransactionsCalendar({
   showNewTransactionButton: _ = true,
   showQuickActions = false,
   variant = "embedded",
+  showDayHoverTooltip = true,
 }: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
   const { openSlipUpload } = useSlipUpload();
@@ -289,6 +414,17 @@ export function TransactionsCalendar({
     transactionViewsEpoch,
   } = useDashboardData();
   const localeKey = language === "th" ? "th" : "en";
+  const displayLocale = language === "th" ? "th-TH" : "en-US";
+
+  const dayTooltipLabels = useMemo(
+    (): CalendarDayTooltipLabels => ({
+      income: t("calendar.legend.income"),
+      expense: t("calendar.legend.expense"),
+      transfer: t("calendar.legend.transfer"),
+      noRecords: t("calendar.noRecords"),
+    }),
+    [t],
+  );
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -415,29 +551,9 @@ export function TransactionsCalendar({
         const data = (await res.json()) as CalendarSummaryItem[] | unknown;
         if (Array.isArray(data)) {
           setSummary(
-            data.map((item) => ({
-              date: item.date,
-              hasTransactions: !!item.hasTransactions,
-              count:
-                typeof item.count === "number" && Number.isFinite(item.count)
-                  ? item.count
-                  : 0,
-              incomeCount:
-                typeof item.incomeCount === "number" &&
-                  Number.isFinite(item.incomeCount)
-                  ? item.incomeCount
-                  : 0,
-              expenseCount:
-                typeof item.expenseCount === "number" &&
-                  Number.isFinite(item.expenseCount)
-                  ? item.expenseCount
-                  : 0,
-              transferCount:
-                typeof item.transferCount === "number" &&
-                  Number.isFinite(item.transferCount)
-                  ? item.transferCount
-                  : 0,
-            })),
+            data.map((item) =>
+              normalizeCalendarSummaryItem(item as CalendarSummaryItem),
+            ),
           );
         } else {
           setSummary([]);
@@ -1027,6 +1143,7 @@ export function TransactionsCalendar({
   );
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1180,12 +1297,18 @@ export function TransactionsCalendar({
                   const isSelected = isFullVariant && selectedDate === day.iso;
 
                   return (
-                    <button
+                    <CalendarDayHoverTooltip
                       key={day.iso}
+                      day={day}
+                      locale={displayLocale}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                    >
+                    <button
                       type="button"
                       onClick={() => openDay(day.iso)}
                       className={[
-                        "flex h-16 flex-col rounded-md border p-1 text-left transition-colors duration-150 ease-out",
+                        "flex h-16 w-full flex-col rounded-md border p-1 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         isMuted
                           ? "text-[#A09080] dark:text-stone-500"
@@ -1229,6 +1352,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarDayHoverTooltip>
                   );
                 })}
               </div>
@@ -1302,8 +1426,14 @@ export function TransactionsCalendar({
                   const hasData = day.hasTransactions;
                   const weekdayKey = WEEKDAY_LABEL_KEYS[idx];
                   return (
-                    <button
+                    <CalendarDayHoverTooltip
                       key={day.iso}
+                      day={day}
+                      locale={displayLocale}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                    >
+                    <button
                       type="button"
                       onClick={() => openDay(day.iso)}
                       className={[
@@ -1352,6 +1482,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarDayHoverTooltip>
                   );
                 })}
               </div>
@@ -1820,5 +1951,6 @@ export function TransactionsCalendar({
         onConfirm={refreshCalendar}
       />
     </div>
+    </TooltipProvider>
   );
 }
