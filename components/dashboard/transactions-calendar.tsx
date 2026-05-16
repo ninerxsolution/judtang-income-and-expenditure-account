@@ -507,7 +507,68 @@ function CalendarDayHoverTooltip({
   );
 }
 
+const calendarViewActiveClass =
+  "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100";
+const calendarViewInactiveClass =
+  "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200";
+
+function CalendarViewModeControls({
+  viewMode,
+  onViewModeChange,
+  onToday,
+  t,
+}: {
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  onToday: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-transparent dark:bg-stone-800/40">
+        <button
+          type="button"
+          onClick={() => onViewModeChange("day")}
+          className={`rounded-l-md px-3 py-2 font-medium transition-colors duration-150 ease-out ${viewMode === "day" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.day")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("week")}
+          className={`border-l border-[#D4C9B0] px-3 py-2 font-medium transition-colors duration-150 ease-out dark:border-stone-800/50 ${viewMode === "week" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.week")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("month")}
+          className={`border-l border-[#D4C9B0] px-3 py-2 font-medium transition-colors duration-150 ease-out dark:border-stone-800/50 ${viewMode === "month" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.month")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("year")}
+          className={`rounded-r-md border-l border-[#D4C9B0] px-3 py-2 font-medium transition-colors duration-150 ease-out dark:border-stone-800/50 ${viewMode === "year" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.year")}
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onToday}
+        className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
+      >
+        {t("calendar.today")}
+      </button>
+    </div>
+  );
+}
+
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
+type ViewModeToolbarPlacement = "inside-card" | "outside-card";
 
 type TransactionsCalendarProps = {
   showNewTransactionButton?: boolean;
@@ -517,6 +578,11 @@ type TransactionsCalendarProps = {
   variant?: "full" | "embedded";
   /** Hover tooltip with daily income/expense/transfer sums (default: true) */
   showDayHoverTooltip?: boolean;
+  /**
+   * วัน/สัปดาห์/เดือน/ปี/วันนี้ — inside-card = ในแถบหัวการ์ด (dashboard home),
+   * outside-card = เหนือการ์ด (transactions calendar view). Default: embedded → inside, full → outside.
+   */
+  viewModeToolbarPlacement?: ViewModeToolbarPlacement;
 };
 
 export function TransactionsCalendar({
@@ -524,6 +590,7 @@ export function TransactionsCalendar({
   showQuickActions = false,
   variant = "embedded",
   showDayHoverTooltip = true,
+  viewModeToolbarPlacement,
 }: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
   const { openSlipUpload } = useSlipUpload();
@@ -560,6 +627,11 @@ export function TransactionsCalendar({
     useState<DailyTransaction | null>(null);
 
   const isDesktop = useIsDesktopOrLarger();
+  const isFullVariant = variant === "full";
+  const resolvedViewModeToolbarPlacement: ViewModeToolbarPlacement =
+    viewModeToolbarPlacement ??
+    (isFullVariant ? "outside-card" : "inside-card");
+  const viewModeToolbarInside = resolvedViewModeToolbarPlacement === "inside-card";
   const today = useMemo(() => new Date(), []);
   const initialYear = today.getFullYear();
 
@@ -1082,8 +1154,6 @@ export function TransactionsCalendar({
     });
   }, [selectedDate, locale]);
 
-  const isFullVariant = variant === "full";
-
   const dayDetailContent = (
     <>
       {dailyLoading && dailyItems.length === 0 && (
@@ -1217,82 +1287,35 @@ export function TransactionsCalendar({
     </>
   );
 
+  const viewModeControls = (
+    <CalendarViewModeControls
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      onToday={goToToday}
+      t={t}
+    />
+  );
+
+  const headerToolbarRight = (includeViewModeControls: boolean) => (
+    <div className="flex flex-wrap items-center gap-2">
+      {includeViewModeControls && viewModeControls}
+      {showQuickActions && (
+        <CalendarQuickActions
+          onQuickAdd={openQuickAdd}
+          onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+        />
+      )}
+    </div>
+  );
+
   return (
     <TooltipProvider delayDuration={200}>
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-transparent dark:bg-stone-800/40">
-              <button
-                type="button"
-                onClick={() => setViewMode("day")}
-                className={`px-3 py-2 transition-colors duration-150 ease-out ${viewMode === "day"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  } rounded-l-md font-medium`}
-              >
-                {t("calendar.view.day")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("week")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 font-medium transition-colors duration-150 ease-out ${viewMode === "week"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  }`}
-              >
-                {t("calendar.view.week")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("month")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 font-medium transition-colors duration-150 ease-out ${viewMode === "month"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  }`}
-              >
-                {t("calendar.view.month")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("year")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 rounded-r-md font-medium transition-colors duration-150 ease-out ${viewMode === "year"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  }`}
-              >
-                {t("calendar.view.year")}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={goToToday}
-              className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
-            >
-              {t("calendar.today")}
-            </button>
-          </div>
-        </div>
-        {/* {showNewTransactionButton && (
-          <button
-            type="button"
-            onClick={() => {
-              setFormEditId(null);
-              setFormInitialDate(null);
-              setFormInitialType(undefined);
-              setFormOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
-          >
-            <Plus className="h-4 w-4" />
-            {t("calendar.newTransaction")}
-          </button>
-        )} */}
-      </div>
-
+      <div className={viewModeToolbarInside ? undefined : "space-y-4"}>
+        {!viewModeToolbarInside && (
+          <div className="flex flex-wrap items-center gap-2">{viewModeControls}</div>
+        )}
       <div
-        className={`mt-6 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] shadow-sm dark:border-stone-700 dark:bg-stone-900/80 ${isFullVariant ? "overflow-hidden" : "p-2 sm:p-4"}`}
+        className={`rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] shadow-sm dark:border-stone-700 dark:bg-stone-900/80 ${isFullVariant ? "overflow-hidden" : "p-2 sm:p-4"}`}
       >
         <div
           className={
@@ -1311,8 +1334,8 @@ export function TransactionsCalendar({
             {/* Header & content depend on view mode */}
         {viewMode === "day" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   {isFullVariant && (
                     <Calendar className="h-4 w-4 text-[#5C6B52] dark:text-stone-300" />
@@ -1342,12 +1365,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-stone-500">
@@ -1453,8 +1471,8 @@ export function TransactionsCalendar({
 
         {viewMode === "week" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1481,12 +1499,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             {summaryLoading ? (
@@ -1579,8 +1592,8 @@ export function TransactionsCalendar({
 
         {viewMode === "month" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1622,12 +1635,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             {monthSummaryLoading ? (
@@ -1719,8 +1727,8 @@ export function TransactionsCalendar({
 
         {viewMode === "year" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1747,12 +1755,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             {yearSummaryLoading ? (
@@ -2041,7 +2044,7 @@ export function TransactionsCalendar({
         transaction={deleteTransaction}
         onConfirm={refreshCalendar}
       />
-    </div>
+      </div>
     </TooltipProvider>
   );
 }

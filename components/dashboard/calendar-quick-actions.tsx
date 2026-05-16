@@ -41,7 +41,7 @@ export function CalendarQuickActions({
       <button
         type="button"
         onClick={onSlipUpload}
-        className="inline-flex shrink-0 items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+        className="inline-flex shrink-0 items-center justify-center rounded-xl border bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
         aria-label={t("dashboard.slipUpload.title")}
       >
         <ImagePlus className="h-4.5 w-4.5 shrink-0" aria-hidden />
