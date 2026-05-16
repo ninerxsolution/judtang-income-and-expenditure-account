@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { revalidateTag } from "@/lib/cache";
 import { rebuildBalanceSnapshotsForFinancialAccountIds } from "@/lib/transaction-balance-snapshot";
+import { getDateRangeInTimezone } from "@/lib/date-range";
 import { getTransactionById, updateTransaction } from "@/lib/transactions";
 
 export { RecurringFrequency };
@@ -198,8 +199,10 @@ export type RecurringLinkCandidate = Awaited<ReturnType<typeof listRecurringLink
 export type ListRecurringLinkCandidatesOptions = {
   /** Trimmed substring search (note, account name, legacy category label, category name/nameEn, exact amount). */
   search?: string;
-  /** Gregorian YYYY-MM-DD; narrows occurredAt to that local calendar day within the due month. */
+  /** Gregorian YYYY-MM-DD; narrows occurredAt to that calendar day in `timezone`. */
   onDate?: string;
+  /** IANA timezone for `onDate` day bounds (default Asia/Bangkok). */
+  timezone?: string;
   /** Max rows returned (default 10, capped at 50). */
   limit?: number;
 };
@@ -225,15 +228,17 @@ export async function listRecurringLinkCandidates(
   }
 
   const { periodStart, periodEnd } = getCalendarMonthBounds(year, month);
+  const timezone =
+    typeof options.timezone === "string" && options.timezone.trim().length > 0
+      ? options.timezone.trim()
+      : "Asia/Bangkok";
 
   let occurredAt: { gte: Date; lte: Date } = { gte: periodStart, lte: periodEnd };
   const onDateRaw = typeof options.onDate === "string" ? options.onDate.trim() : "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(onDateRaw)) {
-    const [dy, dm, dd] = onDateRaw.split("-").map(Number);
-    const dayStart = new Date(dy, dm - 1, dd, 0, 0, 0, 0);
-    const dayEnd = new Date(dy, dm - 1, dd, 23, 59, 59, 999);
-    if (dayStart >= periodStart && dayEnd <= periodEnd) {
-      occurredAt = { gte: dayStart, lte: dayEnd };
+    const dayRange = getDateRangeInTimezone(onDateRaw, timezone);
+    if (dayRange) {
+      occurredAt = { gte: dayRange.from, lte: dayRange.to };
     }
   }
 

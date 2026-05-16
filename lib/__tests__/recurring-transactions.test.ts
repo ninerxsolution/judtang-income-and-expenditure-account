@@ -9,6 +9,7 @@ const mockRecurringUpdate = jest.fn();
 const mockRecurringDelete = jest.fn();
 const mockTransactionCreate = jest.fn();
 const mockTransactionFindFirst = jest.fn();
+const mockTransactionFindMany = jest.fn();
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
@@ -22,6 +23,7 @@ jest.mock("@/lib/prisma", () => ({
     transaction: {
       create: (...args: unknown[]) => mockTransactionCreate(...args),
       findFirst: (...args: unknown[]) => mockTransactionFindFirst(...args),
+      findMany: (...args: unknown[]) => mockTransactionFindMany(...args),
     },
   },
 }));
@@ -53,6 +55,7 @@ import {
   updateRecurringTransaction,
   deleteRecurringTransaction,
   confirmRecurringTransaction,
+  listRecurringLinkCandidates,
   RecurringFrequency,
 } from "../recurring-transactions";
 
@@ -107,6 +110,7 @@ beforeEach(() => {
   mockTransactionFindFirst.mockResolvedValue(null);
   mockGetTransactionById.mockResolvedValue(createdTx);
   mockUpdateTransaction.mockResolvedValue(createdTx);
+  mockTransactionFindMany.mockResolvedValue([]);
 });
 
 describe("createRecurringTransaction", () => {
@@ -185,6 +189,38 @@ describe("deleteRecurringTransaction", () => {
     await expect(deleteRecurringTransaction("user-1", "rec-999")).rejects.toThrow(
       "Recurring transaction not found",
     );
+  });
+});
+
+describe("listRecurringLinkCandidates", () => {
+  it("filters onDate using Asia/Bangkok calendar day bounds", async () => {
+    await listRecurringLinkCandidates("user-1", "rec-1", 2025, 5, {
+      onDate: "2025-05-05",
+      timezone: "Asia/Bangkok",
+    });
+
+    expect(mockTransactionFindMany).toHaveBeenCalledTimes(1);
+    const call = mockTransactionFindMany.mock.calls[0][0] as {
+      where: { occurredAt: { gte: Date; lte: Date } };
+    };
+    const { gte, lte } = call.where.occurredAt;
+    expect(gte.toISOString()).toBe("2025-05-04T17:00:00.000Z");
+    expect(lte.toISOString()).toBe("2025-05-05T16:59:59.999Z");
+  });
+
+  it("uses due month bounds when onDate is omitted", async () => {
+    await listRecurringLinkCandidates("user-1", "rec-1", 2025, 5, {});
+
+    const call = mockTransactionFindMany.mock.calls[0][0] as {
+      where: { occurredAt: { gte: Date; lte: Date } };
+    };
+    const { gte, lte } = call.where.occurredAt;
+    expect(gte.getFullYear()).toBe(2025);
+    expect(gte.getMonth()).toBe(4);
+    expect(gte.getDate()).toBe(1);
+    expect(lte.getFullYear()).toBe(2025);
+    expect(lte.getMonth()).toBe(4);
+    expect(lte.getDate()).toBe(31);
   });
 });
 
