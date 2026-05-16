@@ -92,6 +92,9 @@ type MonthSummaryItem = {
   incomeCount?: number;
   expenseCount?: number;
   transferCount?: number;
+  incomeSumThb?: number;
+  expenseSumThb?: number;
+  transferSumThb?: number;
 };
 
 type YearSummaryItem = {
@@ -101,7 +104,61 @@ type YearSummaryItem = {
   incomeCount?: number;
   expenseCount?: number;
   transferCount?: number;
+  incomeSumThb?: number;
+  expenseSumThb?: number;
+  transferSumThb?: number;
 };
+
+type CalendarSummaryTotals = {
+  hasTransactions: boolean;
+  incomeSumThb: number;
+  expenseSumThb: number;
+  transferSumThb: number;
+};
+
+function calendarSummaryTotals(
+  item:
+    | Pick<
+        MonthSummaryItem | YearSummaryItem,
+        "hasTransactions" | "incomeSumThb" | "expenseSumThb" | "transferSumThb"
+      >
+    | undefined,
+): CalendarSummaryTotals {
+  return {
+    hasTransactions: !!item?.hasTransactions,
+    incomeSumThb: finiteSummaryNumber(item?.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item?.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item?.transferSumThb),
+  };
+}
+
+function normalizeMonthSummaryItem(item: MonthSummaryItem): MonthSummaryItem {
+  return {
+    monthIndex: item.monthIndex,
+    hasTransactions: !!item.hasTransactions,
+    count: finiteSummaryNumber(item.count),
+    incomeCount: finiteSummaryNumber(item.incomeCount),
+    expenseCount: finiteSummaryNumber(item.expenseCount),
+    transferCount: finiteSummaryNumber(item.transferCount),
+    incomeSumThb: finiteSummaryNumber(item.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item.transferSumThb),
+  };
+}
+
+function normalizeYearSummaryItem(item: YearSummaryItem): YearSummaryItem {
+  return {
+    year: item.year,
+    hasTransactions: !!item.hasTransactions,
+    count: finiteSummaryNumber(item.count),
+    incomeCount: finiteSummaryNumber(item.incomeCount),
+    expenseCount: finiteSummaryNumber(item.expenseCount),
+    transferCount: finiteSummaryNumber(item.transferCount),
+    incomeSumThb: finiteSummaryNumber(item.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item.transferSumThb),
+  };
+}
 
 function formatDateInput(d: Date): string {
   const year = d.getFullYear();
@@ -356,6 +413,76 @@ function CalendarDayTooltipContent({
   );
 }
 
+function CalendarPeriodTooltipContent({
+  title,
+  totals,
+  labels,
+}: {
+  title: string;
+  totals: CalendarSummaryTotals;
+  labels: CalendarDayTooltipLabels;
+}) {
+  return (
+    <div className="space-y-1.5 text-xs">
+      <p className="font-bold leading-snug text-[#3D3020]">{title}</p>
+      {!totals.hasTransactions ? (
+        <p className="text-[#6B5E4E]">{labels.noRecords}</p>
+      ) : (
+        <ul className="space-y-1">
+          <li className="flex items-center justify-between gap-4">
+            <span className="font-bold text-emerald-700">{labels.income}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">
+              ฿{formatAmount(totals.incomeSumThb)}
+            </span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="font-bold text-red-700">{labels.expense}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">
+              ฿{formatAmount(totals.expenseSumThb)}
+            </span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="font-bold text-blue-700">{labels.transfer}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">
+              ฿{formatAmount(totals.transferSumThb)}
+            </span>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const calendarTooltipContentClass = cn(
+  "max-w-[260px] border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2.5 text-[#3D3020] shadow-md",
+  "!text-[#3D3020]",
+  "[&_.bg-foreground]:!bg-[#FDFAF4] [&_.fill-foreground]:!fill-[#FDFAF4]",
+);
+
+function CalendarHoverTooltip({
+  enabled,
+  labels,
+  title,
+  totals,
+  children,
+}: {
+  enabled: boolean;
+  labels: CalendarDayTooltipLabels;
+  title: string;
+  totals: CalendarSummaryTotals;
+  children: ReactNode;
+}) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className={calendarTooltipContentClass}>
+        <CalendarPeriodTooltipContent title={title} totals={totals} labels={labels} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function CalendarDayHoverTooltip({
   day,
   locale,
@@ -373,15 +500,7 @@ function CalendarDayHoverTooltip({
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent
-        side="top"
-        sideOffset={6}
-        className={cn(
-          "max-w-[260px] border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2.5 text-[#3D3020] shadow-md",
-          "!text-[#3D3020]",
-          "[&_.bg-foreground]:!bg-[#FDFAF4] [&_.fill-foreground]:!fill-[#FDFAF4]",
-        )}
-      >
+      <TooltipContent side="top" sideOffset={6} className={calendarTooltipContentClass}>
         <CalendarDayTooltipContent day={day} locale={locale} labels={labels} />
       </TooltipContent>
     </Tooltip>
@@ -620,29 +739,7 @@ export function TransactionsCalendar({
         const data = (await res.json()) as MonthSummaryItem[] | unknown;
         if (Array.isArray(data)) {
           setMonthSummary(
-            data.map((item) => ({
-              monthIndex: item.monthIndex,
-              hasTransactions: !!item.hasTransactions,
-              count:
-                typeof item.count === "number" && Number.isFinite(item.count)
-                  ? item.count
-                  : 0,
-              incomeCount:
-                typeof item.incomeCount === "number" &&
-                  Number.isFinite(item.incomeCount)
-                  ? item.incomeCount
-                  : 0,
-              expenseCount:
-                typeof item.expenseCount === "number" &&
-                  Number.isFinite(item.expenseCount)
-                  ? item.expenseCount
-                  : 0,
-              transferCount:
-                typeof item.transferCount === "number" &&
-                  Number.isFinite(item.transferCount)
-                  ? item.transferCount
-                  : 0,
-            })),
+            data.map((item) => normalizeMonthSummaryItem(item)),
           );
         } else {
           setMonthSummary([]);
@@ -706,29 +803,7 @@ export function TransactionsCalendar({
         const data = (await res.json()) as YearSummaryItem[] | unknown;
         if (Array.isArray(data)) {
           setYearSummary(
-            data.map((item) => ({
-              year: item.year,
-              hasTransactions: !!item.hasTransactions,
-              count:
-                typeof item.count === "number" && Number.isFinite(item.count)
-                  ? item.count
-                  : 0,
-              incomeCount:
-                typeof item.incomeCount === "number" &&
-                  Number.isFinite(item.incomeCount)
-                  ? item.incomeCount
-                  : 0,
-              expenseCount:
-                typeof item.expenseCount === "number" &&
-                  Number.isFinite(item.expenseCount)
-                  ? item.expenseCount
-                  : 0,
-              transferCount:
-                typeof item.transferCount === "number" &&
-                  Number.isFinite(item.transferCount)
-                  ? item.transferCount
-                  : 0,
-            })),
+            data.map((item) => normalizeYearSummaryItem(item)),
           );
         } else {
           setYearSummary([]);
@@ -1572,16 +1647,23 @@ export function TransactionsCalendar({
                   const transferCount = info?.transferCount ?? 0;
                   const isCurrentMonth =
                     idx === today.getMonth() && year === today.getFullYear();
+                  const monthTotals = calendarSummaryTotals(info);
                   return (
-                    <button
+                    <CalendarHoverTooltip
                       key={idx}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                      title={getMonthLabel(year, idx, displayLocale)}
+                      totals={monthTotals}
+                    >
+                      <button
                       type="button"
                       onClick={() => {
                         setMonthYear({ year, monthIndex: idx });
                         setViewMode("day");
                       }}
                       className={[
-                        "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
+                        "flex h-20 w-full flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         hasData
                           ? "text-[#3D3020] dark:text-stone-100"
@@ -1615,6 +1697,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarHoverTooltip>
                   );
                 })}
               </div>
@@ -1691,9 +1774,16 @@ export function TransactionsCalendar({
                   const expenseCount = info?.expenseCount ?? 0;
                   const transferCount = info?.transferCount ?? 0;
                   const isCurrentYear = y === today.getFullYear();
+                  const yearTotals = calendarSummaryTotals(info);
                   return (
-                    <button
+                    <CalendarHoverTooltip
                       key={y}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                      title={String(formatYearForDisplay(y, language))}
+                      totals={yearTotals}
+                    >
+                      <button
                       type="button"
                       onClick={() => {
                         setMonthYear(({ monthIndex }) => ({
@@ -1703,7 +1793,7 @@ export function TransactionsCalendar({
                         setViewMode("month");
                       }}
                       className={[
-                        "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
+                        "flex h-20 w-full flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         hasData
                           ? "text-[#3D3020] dark:text-stone-100"
@@ -1735,6 +1825,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarHoverTooltip>
                   );
                 })}
               </div>
