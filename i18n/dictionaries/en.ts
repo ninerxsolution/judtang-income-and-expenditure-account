@@ -878,9 +878,9 @@ export const enDictionary = {
       themeSystem: "System",
     },
     hero: {
-      headline: "Know where your money goes — every account, every card",
+      headline: "Let's Judtang.",
       subheadline:
-        "Track income & expenses, transfer between accounts, and manage credit cards with billing cycles — all in one place.",
+        "Easy to write down, see the big picture, manage your money well",
       primaryCta: "Get Started",
       secondaryCta: "See all features",
       previewLabel: "Dashboard preview",
