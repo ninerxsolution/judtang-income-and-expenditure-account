@@ -46,6 +46,10 @@ export const enDictionary = {
       pending: "Signing in…",
       invalidCredentials: "Invalid email or password",
       genericError: "Something went wrong. Please try again.",
+      serverError:
+        "We're having trouble signing you in right now. Please try again in a moment.",
+      oauthNotLinked:
+        "This email is already registered with a different sign-in method. Please sign in the way you used before.",
       or: "or",
       google: "Sign in with Google",
       noAccount: "Don't have an account?",
@@ -1708,6 +1712,26 @@ export const enDictionary = {
     validationAmountRequired: "Amount is required",
     validationAmountPositive: "Amount must be positive",
     day: "Day {day}",
+    selectRow: "Select row",
+    selectedCount: "{count} selected",
+    selectAll: "Select all ({count})",
+    deselectAll: "Deselect all",
+    setType: "Type:",
+    setCategory: "Set category",
+    setAccount: "Set account",
+    deleteSelected: "Delete",
+    clearSelection: "Clear selection",
+    invalidRowsHint: "{count} row(s) need attention before saving.",
+    validationTransferDestination:
+      "Transfer rows need a destination account different from the source.",
+    nothingToSave: "Enter an amount before saving.",
+    saveValidationFailed:
+      "{count} row(s) were rejected. Check the highlighted rows.",
+    saveServerError:
+      "Server error while saving. Your entries are kept — please try again.",
+    saveNetworkError:
+      "Network error. Your entries are kept — check your connection and try again.",
+    draftRestored: "Restored your unsaved entries.",
   },
   notifications: {
     title: "Notifications",

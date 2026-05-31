@@ -30,6 +30,10 @@ export const authOptions: AuthOptions = {
   useSecureCookies: isSecure,
   pages: {
     signIn: "/sign-in",
+    // Route NextAuth's own error redirects to our sign-in page (which shows a
+    // friendly, localized message) instead of the built-in page that echoes the
+    // raw error string. A database "pool timeout" must never reach the user.
+    error: "/sign-in",
   },
   providers: [
     CredentialsProvider({
@@ -45,25 +49,42 @@ export const authOptions: AuthOptions = {
 
         if (!shouldSkipTurnstileVerification()) {
           if (!credentials.turnstileToken) return null;
-          const result = await verifyTurnstileToken(
-            String(credentials.turnstileToken)
-          );
-          if (!result.success) return null;
+          let verified = false;
+          try {
+            const result = await verifyTurnstileToken(
+              String(credentials.turnstileToken)
+            );
+            verified = result.success;
+          } catch (e) {
+            // Turnstile/network failure is infrastructure, not a bad credential.
+            console.error("[auth] authorize: turnstile verification error:", e);
+            throw new Error("ServerError");
+          }
+          if (!verified) return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: String(credentials.email) },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            image: true,
-            role: true,
-            password: true,
-            status: true,
-            deleteAfter: true,
-          },
-        });
+        let user;
+        try {
+          user = await prisma.user.findUnique({
+            where: { email: String(credentials.email) },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              image: true,
+              role: true,
+              password: true,
+              status: true,
+              deleteAfter: true,
+            },
+          });
+        } catch (e) {
+          // Database unavailable (e.g. connection-pool timeout). Throw a clean,
+          // generic code — never let the raw driver error reach the client/URL.
+          console.error("[auth] authorize: database error during sign-in:", e);
+          throw new Error("ServerError");
+        }
+
         if (!user?.password) return null;
         const ok = await bcrypt.compare(
           String(credentials.password),
@@ -72,7 +93,11 @@ export const authOptions: AuthOptions = {
         if (!ok) return null;
         const status = resolveUserStatus(user);
         if (status === "DELETED") {
-          await finalizeDeletion(user.id);
+          try {
+            await finalizeDeletion(user.id);
+          } catch (e) {
+            console.error("[auth] authorize: finalizeDeletion failed:", e);
+          }
           return null;
         }
         if (status === "SUSPENDED") return null;
@@ -95,28 +120,35 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && user?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: { id: true, status: true, deleteAfter: true },
-        });
-        if (dbUser) {
-          const status = resolveUserStatus(dbUser);
-          if (status === "DELETED") {
-            await finalizeDeletion(dbUser.id);
-            return false;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true, status: true, deleteAfter: true },
+          });
+          if (dbUser) {
+            const status = resolveUserStatus(dbUser);
+            if (status === "DELETED") {
+              await finalizeDeletion(dbUser.id);
+              return false;
+            }
+            if (status === "SUSPENDED") return false;
           }
-          if (status === "SUSPENDED") return false;
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { emailVerified: new Date() },
+          });
+        } catch (e) {
+          // Database unavailable — surface a clean code, not the raw driver error.
+          console.error("[auth] signIn(google): database error:", e);
+          throw new Error("ServerError");
         }
-        await prisma.user.update({
-          where: { email: user.email },
-          data: { emailVerified: new Date() },
-        });
       }
       return true;
     },
     async jwt({ token, user, account }) {
       const t = token as JWTWithId;
       if (user?.id) {
+        try {
           t.id = user.id;
           t.role = (user as { role?: string }).role;
           if (!t.role) {
@@ -150,38 +182,28 @@ export const authOptions: AuthOptions = {
             action: ActivityLogAction.USER_LOGGED_IN,
             entityType: "user",
             entityId: user.id,
-          });
+          }).catch(() => {});
           return t as typeof token;
+        } catch (e) {
+          // Could not record the session at sign-in time — fail cleanly with a
+          // generic code rather than leaking the raw database error.
+          console.error("[auth] jwt: failed to initialize session:", e);
+          throw new Error("ServerError");
+        }
       }
       if (t.sessionId) {
-        const row = await prisma.userSession.findFirst({
-          where: { sessionId: t.sessionId, revokedAt: null },
-        });
-        if (!row) {
-          delete t.sub;
-          delete t.id;
-          delete t.sessionId;
-          delete t.role;
-          return t as typeof token;
-        }
-        if (row.expiresAt < new Date()) {
-          await prisma.userSession.update({
-            where: { sessionId: t.sessionId },
-            data: { revokedAt: new Date() },
+        try {
+          const row = await prisma.userSession.findFirst({
+            where: { sessionId: t.sessionId, revokedAt: null },
           });
-          delete t.sub;
-          delete t.id;
-          delete t.sessionId;
-          delete t.role;
-          return t as typeof token;
-        }
-        const dbUser = await prisma.user.findUnique({
-          where: { id: row.userId },
-          select: { role: true, status: true, deleteAfter: true },
-        });
-        if (dbUser) {
-          const status = resolveUserStatus(dbUser);
-          if (status === "SUSPENDED" || status === "DELETED") {
+          if (!row) {
+            delete t.sub;
+            delete t.id;
+            delete t.sessionId;
+            delete t.role;
+            return t as typeof token;
+          }
+          if (row.expiresAt < new Date()) {
             await prisma.userSession.update({
               where: { sessionId: t.sessionId },
               data: { revokedAt: new Date() },
@@ -192,8 +214,35 @@ export const authOptions: AuthOptions = {
             delete t.role;
             return t as typeof token;
           }
+          const dbUser = await prisma.user.findUnique({
+            where: { id: row.userId },
+            select: { role: true, status: true, deleteAfter: true },
+          });
+          if (dbUser) {
+            const status = resolveUserStatus(dbUser);
+            if (status === "SUSPENDED" || status === "DELETED") {
+              await prisma.userSession.update({
+                where: { sessionId: t.sessionId },
+                data: { revokedAt: new Date() },
+              });
+              delete t.sub;
+              delete t.id;
+              delete t.sessionId;
+              delete t.role;
+              return t as typeof token;
+            }
+          }
+          t.role = dbUser?.role ?? "USER";
+        } catch (e) {
+          // Transient DB outage during per-request validation: keep the existing
+          // token (skip validation this round) instead of erroring the user out or
+          // forcing a logout. Validation resumes automatically once the DB is back.
+          console.error(
+            "[auth] jwt: session validation skipped (database error):",
+            e,
+          );
+          return token as typeof token;
         }
-        t.role = dbUser?.role ?? "USER";
       }
       return token as typeof token;
     },

@@ -46,6 +46,10 @@ export const thDictionary = {
       pending: "กำลังเข้าสู่ระบบ…",
       invalidCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
       genericError: "เกิดข้อผิดพลาด โปรดลองใหม่อีกครั้ง",
+      serverError:
+        "ขณะนี้ระบบมีปัญหาในการเข้าสู่ระบบ กรุณาลองใหม่อีกสักครู่",
+      oauthNotLinked:
+        "อีเมลนี้ลงทะเบียนด้วยวิธีเข้าสู่ระบบอื่นไว้แล้ว กรุณาเข้าสู่ระบบด้วยวิธีที่เคยใช้",
       or: "หรือ",
       google: "เข้าสู่ระบบด้วย Google",
       noAccount: "ยังไม่มีบัญชีใช่ไหม?",
@@ -1698,6 +1702,25 @@ export const thDictionary = {
     validationAmountRequired: "กรุณาระบุจำนวนเงิน",
     validationAmountPositive: "จำนวนเงินต้องเป็นตัวเลขบวก",
     day: "วันที่ {day}",
+    selectRow: "เลือกรายการ",
+    selectedCount: "เลือก {count} รายการ",
+    selectAll: "เลือกทั้งหมด ({count})",
+    deselectAll: "ยกเลิกการเลือก",
+    setType: "ประเภท:",
+    setCategory: "ตั้งหมวดหมู่",
+    setAccount: "ตั้งบัญชี",
+    deleteSelected: "ลบ",
+    clearSelection: "ล้างการเลือก",
+    invalidRowsHint: "มี {count} รายการที่ต้องแก้ก่อนบันทึก",
+    validationTransferDestination:
+      "รายการโอนต้องเลือกบัญชีปลายทางที่ไม่ซ้ำกับบัญชีต้นทาง",
+    nothingToSave: "กรอกจำนวนเงินก่อนบันทึก",
+    saveValidationFailed: "มี {count} รายการถูกปฏิเสธ ตรวจรายการที่ไฮไลต์ไว้",
+    saveServerError:
+      "เซิร์ฟเวอร์มีปัญหาระหว่างบันทึก ข้อมูลของคุณยังอยู่ — ลองใหม่อีกครั้ง",
+    saveNetworkError:
+      "เครือข่ายมีปัญหา ข้อมูลของคุณยังอยู่ — ตรวจการเชื่อมต่อแล้วลองใหม่",
+    draftRestored: "กู้คืนรายการที่ยังไม่บันทึกแล้ว",
   },
   notifications: {
     title: "การแจ้งเตือน",

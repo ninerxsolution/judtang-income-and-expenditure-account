@@ -2,6 +2,36 @@
 
 ---
 
+# v0.9.44 - 2026-05-31
+
+## Fixed
+
+- **Sign-in no longer exposes raw server errors** — When the database was unreachable, signing in redirected to a page showing the raw driver error (e.g. `pool timeout: failed to retrieve a connection from pool ...`) in both the URL and the page body. NextAuth callbacks now catch infrastructure failures and surface a clean, localized "we're having trouble signing you in right now" message instead; the raw error is logged server-side only. Unknown error codes always fall back to a generic message, so internal details can never reach the user.
+
+## Changed
+
+- **Auth resilience during a database blip** — An already-signed-in user is no longer forced out or shown an error if the database is briefly unavailable; per-request session validation degrades gracefully and resumes automatically once the database recovers.
+- **Error pages hide internals in production** — The global and dashboard error screens now show a generic message in production (the underlying message is shown only in development).
+
+---
+
+# v0.9.43 - 2026-05-31
+
+## Fixed
+
+- **Monthly entry no longer fails when saving large batches** — Saving many rows at once (e.g. 70–100+ at month-end) could return a 500 error. The bulk endpoint resolved every row's account and category with separate queries *inside* a single database transaction, which exceeded the database's 5-second interactive-transaction limit once the batch grew large. It now pre-resolves all accounts and categories up front and inserts with a single chunked batch write (with an explicit timeout), so hundreds of rows save reliably. The server also logs the real error instead of swallowing it into an opaque 500.
+
+## Added
+
+- **Multi-select bulk editing on the monthly entry page** — Select several unsaved rows (a per-day checkbox selects a whole day; "Select all" selects every entered row) and set their type, category, or account in one action — or delete them together — instead of editing one row at a time.
+- **Draft auto-save for monthly entry** — Unsaved rows are now kept in your browser per month, so a refresh or navigating away no longer loses what you typed. Drafts are restored automatically (with a confirmation) and cleared once you save.
+
+## Changed
+
+- **Clearer monthly entry validation** — Transfer rows missing a destination account are caught before saving and highlighted; rows the server rejects are highlighted and scrolled into view; and save errors now distinguish validation, server, and network problems.
+
+---
+
 # v0.9.42 - 2026-05-16
 
 ## Added

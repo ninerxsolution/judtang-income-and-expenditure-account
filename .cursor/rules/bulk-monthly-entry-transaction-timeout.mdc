@@ -1,0 +1,44 @@
+---
+description: Bulk monthly entry 500 — do per-row DB work BEFORE the transaction, never inside it
+globs: app/api/transactions/bulk/**,lib/bulk-transactions.ts
+alwaysApply: false
+---
+
+# Bulk Monthly Entry: transaction timeout 500
+
+## ปัญหาที่เจอ / Problem
+
+- บันทึกรายเดือน (`/dashboard/entry?tab=monthly`) ที่มีรายการเยอะ (~70+) กด Save แล้วได้ **HTTP 500** กลับมา
+- หาตัวการไม่เจอเพราะ **ไม่มีแถวไหนผิดจริง** — ลบทีละวันก็ยังพัง เพราะมันพังที่ "จำนวนรวม" ไม่ใช่แถวใดแถวหนึ่ง
+- `POST /api/transactions/bulk` ใช้ `catch {}` เปล่า ๆ → กลืน error จริงทิ้ง เหลือแค่ 500 generic วินิจฉัยต่อไม่ได้
+
+## สาเหตุ / Root cause
+
+- เวอร์ชันเดิมรัน query แบบ **per-row อยู่ข้างใน `prisma.$transaction` เดียว**: ต่อ 1 แถวมี `findFirst` (บัญชี) + `findFirst` (หมวดหมู่) + `create` = ~3 round-trips
+- ~71 แถว = 150–210 sequential queries ในทรานแซกชัน interactive เดียว
+- Prisma interactive transaction มี **default `timeout` = 5000ms** (และ `maxWait` = 2000ms) → เกิน → throw **P2028** ("Transaction already closed") → ถูก `catch {}` กลืน → 500
+- ยิ่งรายการเยอะ (เป้าหมายผู้ใช้คือ ~100/เดือน) ยิ่งชน timeout แน่นอน
+
+## วิธีแก้ / Solution
+
+1. **ดึงข้อมูลทั้งหมดครั้งเดียวก่อนเข้า transaction** — รวม account ids + category ids แล้ว `findMany({ id: { in: [...] } })` ทีเดียว สร้าง lookup map
+2. แยก validation/transform เป็น **pure function** `prepareBulkTransactionRows()` ใน `lib/bulk-transactions.ts` (ไม่มี DB) → unit test ได้จริง (ดู `lib/__tests__/bulk-transactions.test.ts`)
+3. ข้างใน `prisma.$transaction` เหลือแค่ **`createMany` (chunk ละ 100)** = O(chunks) round-trips ไม่ใช่ O(rows) และใส่ `{ timeout: 30_000 }` กันเหนียว
+4. rebuild snapshot ทำ **นอก** transaction (เหมือนเดิม)
+5. เปลี่ยน `catch {}` → `catch (err) { console.error(...); }` เพื่อให้ debug ได้
+
+## กันซ้ำ / Prevention
+
+- **Do:** งานที่เป็น per-row (lookup/validate/compute) ให้ทำ **ก่อน** เปิด transaction เสมอ; ในทรานแซกชันให้เหลือเฉพาะ write แบบ batch
+- **Do:** ใช้ `createMany` สำหรับ insert จำนวนมาก แทนการ loop `create`
+- **Do:** ใส่ `{ timeout }` ชัดเจนเมื่อทรานแซกชันอาจทำงานนาน และ log error จริงเสมอ — อย่าใช้ `catch {}` เปล่า
+- **Don't:** อย่ายิง `findFirst`/`findMany`/`create` ทีละแถวข้างใน `prisma.$transaction` — ชน default 5s timeout (P2028)
+- **Verify:** unit test pure helper + (ถ้า DB พร้อม) รัน `npx tsx scripts/verify-bulk.ts` ซึ่งสร้าง user ชั่วคราว ยิง ~140 แถวผ่าน path จริง แล้วลบทิ้งให้เอง
+
+## อ้างอิง / Reference
+
+- `app/api/transactions/bulk/route.ts` — batch fetch + `createMany` + `{ timeout: 30_000 }` + error log
+- `lib/bulk-transactions.ts` — `prepareBulkTransactionRows` (pure), `collectReferencedAccountIds/CategoryIds`
+- `lib/__tests__/bulk-transactions.test.ts` — 15 tests สำหรับ validation/transform/transfer/currency
+- `scripts/verify-bulk.ts` — real-path smoke test (self-cleaning; ลบได้ถ้าไม่ต้องการ)
+- Prisma docs: interactive transaction default `timeout` 5s / `maxWait` 2s

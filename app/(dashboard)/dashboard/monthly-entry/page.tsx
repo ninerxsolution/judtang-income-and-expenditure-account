@@ -11,15 +11,18 @@ import {
   Plus,
   Trash2,
   Check,
+  CheckCheck,
   X,
   ArrowDownCircle,
   ArrowUpCircle,
   ArrowLeftRight,
   CalendarRange,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/lib/format";
@@ -44,6 +47,13 @@ import {
 } from "@/components/ui/select";
 import { MonthlyEntryEditDialog } from "@/components/dashboard/monthly-entry-edit-dialog";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
+import {
+  clearMonthlyEntryDraft,
+  isMonthlyEntryDraftEmpty,
+  loadMonthlyEntryDraft,
+  saveMonthlyEntryDraft,
+  type MonthlyEntryDraft,
+} from "@/lib/monthly-entry-draft";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -56,6 +66,9 @@ type RowEntry = {
   transferAccountId: string;
   note: string;
 };
+
+/** Machine codes returned per-row by POST /api/transactions/bulk. */
+type BulkApiError = { index: number; code: string; message: string };
 
 type Category = { id: string; name: string; nameEn?: string | null };
 
@@ -175,6 +188,16 @@ export default function MonthlyEntryPage() {
     useState<ExistingTransaction | null>(null);
   const [editDialogDay, setEditDialogDay] = useState<number | null>(null);
 
+  // Multi-select for bulk editing new (unsaved) rows across all days.
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  // Rows flagged invalid by client validation or rejected by the API (red ring).
+  const [invalidRowIds, setInvalidRowIds] = useState<Set<string>>(new Set());
+  // Guards the draft-save effect from firing before the draft for the current
+  // month has been hydrated (otherwise the initial empty state would wipe it).
+  const draftHydratedKeyRef = useRef<string | null>(null);
+  // Ensures the "draft restored" toast fires at most once per page mount.
+  const didDraftToastRef = useRef(false);
+
   const isMobile = useIsMobile();
   const defaultAccountId = accounts.length > 0 ? accounts[0].id : "";
   const daysInMonth = getDaysInMonth(year, month);
@@ -284,11 +307,33 @@ export default function MonthlyEntryPage() {
 
   useEffect(() => {
     void fetchExisting();
-    setDayRows({});
+    // Restore any unsaved draft for this month so a refresh / navigation does not lose work.
+    setDayRows(loadMonthlyEntryDraft(year, month));
+    draftHydratedKeyRef.current = `${year}-${month}`;
     setEditingTransaction(null);
     setEditingRow(null);
     setRecentlySavedIds(new Set());
-  }, [fetchExisting]);
+    setSelectedRowIds(new Set());
+    setInvalidRowIds(new Set());
+  }, [fetchExisting, year, month]);
+
+  // Persist unsaved rows to localStorage (per month) on every change, but only
+  // after the current month's draft has been hydrated (see draftHydratedKeyRef).
+  useEffect(() => {
+    if (draftHydratedKeyRef.current !== `${year}-${month}`) return;
+    saveMonthlyEntryDraft(year, month, dayRows as MonthlyEntryDraft);
+  }, [dayRows, year, month]);
+
+  // One-time, on mount: if the current month had an unsaved draft, reassure the user it was restored.
+  useEffect(() => {
+    if (didDraftToastRef.current) return;
+    didDraftToastRef.current = true;
+    if (!isMonthlyEntryDraftEmpty(loadMonthlyEntryDraft(year, month))) {
+      toast.info(t("monthlyEntry.draftRestored"));
+    }
+    // Mount-only: intentionally not reacting to year/month/t changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync year/month from ?date=YYYY-MM-DD when navigating from transactions list
   const dateParam = searchParams.get("date");
@@ -472,12 +517,29 @@ export default function MonthlyEntryPage() {
     }));
   }
 
-  function removeRow(day: number, rowId: string) {
+  function forgetRowId(rowId: string) {
     setExpandedRowIds((prev) => {
+      if (!prev.has(rowId)) return prev;
       const next = new Set(prev);
       next.delete(rowId);
       return next;
     });
+    setSelectedRowIds((prev) => {
+      if (!prev.has(rowId)) return prev;
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
+    setInvalidRowIds((prev) => {
+      if (!prev.has(rowId)) return prev;
+      const next = new Set(prev);
+      next.delete(rowId);
+      return next;
+    });
+  }
+
+  function removeRow(day: number, rowId: string) {
+    forgetRowId(rowId);
     setDayRows((prev) => {
       const rows = (prev[day] ?? []).filter((r) => r.id !== rowId);
       const next = { ...prev };
@@ -488,6 +550,98 @@ export default function MonthlyEntryPage() {
       }
       return next;
     });
+  }
+
+  // ---- Multi-select + bulk edit of new rows ----
+
+  const allNewRowIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const rows of Object.values(dayRows)) {
+      for (const r of rows) ids.push(r.id);
+    }
+    return ids;
+  }, [dayRows]);
+
+  const allSelected =
+    allNewRowIds.length > 0 && selectedRowIds.size === allNewRowIds.length;
+
+  function toggleRowSelected(rowId: string) {
+    setSelectedRowIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowId)) next.delete(rowId);
+      else next.add(rowId);
+      return next;
+    });
+  }
+
+  function setDaySelected(day: number, selected: boolean) {
+    const ids = (dayRows[day] ?? []).map((r) => r.id);
+    setSelectedRowIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (selected) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelectedRowIds((prev) =>
+      prev.size === allNewRowIds.length ? new Set() : new Set(allNewRowIds),
+    );
+  }
+
+  function clearSelection() {
+    setSelectedRowIds(new Set());
+  }
+
+  /** Apply one field (type / categoryId / financialAccountId) to every selected row. */
+  function applyToSelected(field: keyof RowEntry, value: string) {
+    if (selectedRowIds.size === 0) return;
+    setDayRows((prev) => {
+      const next: Record<number, RowEntry[]> = {};
+      for (const [dayStr, rows] of Object.entries(prev)) {
+        next[Number(dayStr)] = rows.map((r) => {
+          if (!selectedRowIds.has(r.id)) return r;
+          if (field === "type") {
+            const nextType = value as TransactionType;
+            return {
+              ...r,
+              type: nextType,
+              ...(nextType !== "TRANSFER" && { transferAccountId: "" }),
+            };
+          }
+          return { ...r, [field]: value };
+        });
+      }
+      return next;
+    });
+    // Clearing a field via bulk edit may fix invalid rows; recompute lazily on next save.
+    setInvalidRowIds(new Set());
+  }
+
+  function deleteSelected() {
+    if (selectedRowIds.size === 0) return;
+    setDayRows((prev) => {
+      const next: Record<number, RowEntry[]> = {};
+      for (const [dayStr, rows] of Object.entries(prev)) {
+        const kept = rows.filter((r) => !selectedRowIds.has(r.id));
+        if (kept.length > 0) next[Number(dayStr)] = kept;
+      }
+      return next;
+    });
+    setExpandedRowIds((prev) => {
+      const next = new Set(prev);
+      for (const id of selectedRowIds) next.delete(id);
+      return next;
+    });
+    setInvalidRowIds((prev) => {
+      const next = new Set(prev);
+      for (const id of selectedRowIds) next.delete(id);
+      return next;
+    });
+    setSelectedRowIds(new Set());
   }
 
   function toggleRowExpanded(rowId: string) {
@@ -668,8 +822,14 @@ export default function MonthlyEntryPage() {
     return { income, expense };
   }, [existingTransactions, dayRows]);
 
+  function scrollToRow(rowId: string) {
+    const el = document.getElementById(`newrow-${rowId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   async function handleSave() {
-    const transactions: {
+    type Payload = {
       type: string;
       amount: number;
       financialAccountId: string;
@@ -677,7 +837,11 @@ export default function MonthlyEntryPage() {
       categoryId?: string;
       note?: string;
       occurredAt: string;
-    }[] = [];
+    };
+    // Keep rowId alongside each payload so structured API errors (by index) map back to a row.
+    const entries: { payload: Payload; rowId: string }[] = [];
+    // Client-side pre-checks for the most common mistake: a transfer with no/own destination.
+    const clientInvalid = new Set<string>();
 
     for (const [dayStr, rows] of Object.entries(dayRows)) {
       const day = parseInt(dayStr, 10);
@@ -685,58 +849,96 @@ export default function MonthlyEntryPage() {
         const amt = parseFloat(row.amount);
         if (!Number.isFinite(amt) || amt <= 0) continue;
 
+        const fromId = row.financialAccountId || defaultAccountId;
+
+        if (row.type === "TRANSFER") {
+          const toId = row.transferAccountId.trim();
+          if (!toId || toId === fromId) {
+            clientInvalid.add(row.id);
+            continue;
+          }
+        }
+
         const dateObj = new Date(year, month, day);
         const nowTime = new Date();
         dateObj.setHours(nowTime.getHours(), nowTime.getMinutes(), nowTime.getSeconds());
 
-        const entry: (typeof transactions)[number] = {
+        const payload: Payload = {
           type: row.type,
           amount: amt,
-          financialAccountId: row.financialAccountId || defaultAccountId,
+          financialAccountId: fromId,
           occurredAt: dateObj.toISOString(),
         };
-        if (row.categoryId) entry.categoryId = row.categoryId;
-        if (row.note.trim()) entry.note = row.note.trim();
+        if (row.categoryId) payload.categoryId = row.categoryId;
+        if (row.note.trim()) payload.note = row.note.trim();
         if (row.type === "TRANSFER" && row.transferAccountId) {
-          entry.transferAccountId = row.transferAccountId;
+          payload.transferAccountId = row.transferAccountId;
         }
-        transactions.push(entry);
+        entries.push({ payload, rowId: row.id });
       }
     }
 
-    if (transactions.length === 0) return;
+    if (clientInvalid.size > 0) {
+      setInvalidRowIds(clientInvalid);
+      toast.error(t("monthlyEntry.validationTransferDestination"));
+      scrollToRow([...clientInvalid][0]);
+      return;
+    }
 
+    if (entries.length === 0) {
+      toast.error(t("monthlyEntry.nothingToSave"));
+      return;
+    }
+
+    setInvalidRowIds(new Set());
     setSaving(true);
     try {
       const res = await fetch("/api/transactions/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transactions }),
+        body: JSON.stringify({ transactions: entries.map((e) => e.payload) }),
       });
 
       if (res.ok) {
         const data = (await res.json()) as { createdCount: number };
-        for (const tx of transactions) {
-          if (tx.financialAccountId) {
-            saveRecentFinancialAccountId(tx.financialAccountId);
-          }
-          if (tx.transferAccountId) {
-            saveRecentFinancialAccountId(tx.transferAccountId);
-          }
+        for (const { payload } of entries) {
+          if (payload.financialAccountId) saveRecentFinancialAccountId(payload.financialAccountId);
+          if (payload.transferAccountId) saveRecentFinancialAccountId(payload.transferAccountId);
         }
         toast.success(t("monthlyEntry.saveSuccess", { count: data.createdCount }));
+        clearMonthlyEntryDraft(year, month);
         setDayRows({});
+        setSelectedRowIds(new Set());
+        setInvalidRowIds(new Set());
         const prevIds = new Set(existingTransactions.map((t) => t.id));
         const newData = await fetchExisting();
         const newIds = new Set(newData.map((t) => t.id));
         const addedIds = [...newIds].filter((id) => !prevIds.has(id));
         setRecentlySavedIds((prev) => new Set([...prev, ...addedIds]));
         refresh();
+      } else if (res.status === 400) {
+        // Structured validation failure: highlight the offending rows.
+        const data = (await res.json().catch(() => null)) as
+          | { error?: string; errors?: BulkApiError[] }
+          | null;
+        const apiErrors = Array.isArray(data?.errors) ? data!.errors : [];
+        const badRowIds = new Set<string>();
+        for (const e of apiErrors) {
+          const entry = entries[e.index];
+          if (entry) badRowIds.add(entry.rowId);
+        }
+        if (badRowIds.size > 0) {
+          setInvalidRowIds(badRowIds);
+          scrollToRow([...badRowIds][0]);
+          toast.error(t("monthlyEntry.saveValidationFailed", { count: badRowIds.size }));
+        } else {
+          toast.error(t("monthlyEntry.saveFailed"));
+        }
       } else {
-        toast.error(t("monthlyEntry.saveFailed"));
+        toast.error(t("monthlyEntry.saveServerError"));
       }
     } catch {
-      toast.error(t("monthlyEntry.saveFailed"));
+      toast.error(t("monthlyEntry.saveNetworkError"));
     } finally {
       setSaving(false);
     }
@@ -964,6 +1166,14 @@ export default function MonthlyEntryPage() {
               {/* Day header */}
               <div className="flex items-center justify-between gap-2 py-1">
                 <div className="flex items-center gap-2">
+                  {newRows.length > 0 && (
+                    <Checkbox
+                      checked={newRows.every((r) => selectedRowIds.has(r.id))}
+                      onCheckedChange={(c) => setDaySelected(day, c === true)}
+                      aria-label={t("monthlyEntry.selectRow")}
+                      className="ml-0.5"
+                    />
+                  )}
                   <span
                     className={cn(
                       "inline-flex items-center justify-center h-7 w-7 rounded-full text-sm font-medium",
@@ -1201,11 +1411,27 @@ export default function MonthlyEntryPage() {
                     return (
                       <div
                         key={row.id}
+                        id={`newrow-${row.id}`}
                         className={cn(
-                          "flex gap-2",
-                          isMobile ? "flex-col" : "flex-wrap items-center"
+                          "flex gap-2 -mx-1 rounded-md px-1 py-0.5 transition-colors",
+                          selectedRowIds.has(row.id) && "bg-primary/5",
+                          invalidRowIds.has(row.id) &&
+                            "bg-destructive/5 ring-1 ring-destructive/50",
                         )}
                       >
+                        <div className="flex shrink-0 items-center pt-2.5">
+                          <Checkbox
+                            checked={selectedRowIds.has(row.id)}
+                            onCheckedChange={() => toggleRowSelected(row.id)}
+                            aria-label={t("monthlyEntry.selectRow")}
+                          />
+                        </div>
+                        <div
+                          className={cn(
+                            "flex min-w-0 flex-1 gap-2",
+                            isMobile ? "flex-col" : "flex-wrap items-center",
+                          )}
+                        >
                         {/* Row 1: Type + Amount + (Account + Expand for INCOME/EXPENSE only) */}
                         <div
                           className={cn(
@@ -1507,6 +1733,7 @@ export default function MonthlyEntryPage() {
                             </Button>
                           </div>
                         )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1538,6 +1765,90 @@ export default function MonthlyEntryPage() {
         ref={stickySummaryRef}
         className="sticky bottom-0 -mx-8 -mb-5 space-y-3 bg-background px-4 pt-3 pb-8"
       >
+        {/* Bulk-edit bar (visible when ≥1 new row is selected) */}
+        {selectedRowIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+            <span className="text-sm font-medium">
+              {t("monthlyEntry.selectedCount", { count: selectedRowIds.size })}
+            </span>
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-xs text-primary hover:underline"
+            >
+              {allSelected
+                ? t("monthlyEntry.deselectAll")
+                : t("monthlyEntry.selectAll", { count: allNewRowIds.length })}
+            </button>
+
+            <div className="hidden h-5 w-px bg-border sm:block" />
+
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">
+                {t("monthlyEntry.setType")}
+              </span>
+              {TYPE_OPTIONS.map((ty) => (
+                <Button
+                  key={ty}
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => applyToSelected("type", ty)}
+                  aria-label={ty}
+                >
+                  <TypeIcon type={ty} className="h-4 w-4" />
+                </Button>
+              ))}
+            </div>
+
+            <div className="w-36">
+              <CategoryRowSelect
+                value=""
+                onChange={(v) => applyToSelected("categoryId", v)}
+                categories={categories}
+                language={localeKey}
+                allowEmpty
+                emptyLabel={t("monthlyEntry.setCategory")}
+                className="h-8 py-1 text-xs"
+              />
+            </div>
+
+            <div className="w-48">
+              <AccountCombobox
+                value=""
+                onChange={(id) => applyToSelected("financialAccountId", id)}
+                accounts={accounts}
+                emptyLabel={t("monthlyEntry.setAccount")}
+                className="!h-8 !py-1 !text-xs"
+              />
+            </div>
+
+            <div className="ml-auto flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-destructive hover:text-destructive"
+                onClick={deleteSelected}
+              >
+                <Trash2 className="mr-1 h-4 w-4" />
+                {t("monthlyEntry.deleteSelected")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={clearSelection}
+                aria-label={t("monthlyEntry.clearSelection")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Totals */}
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5">
@@ -1554,7 +1865,25 @@ export default function MonthlyEntryPage() {
               ฿{formatAmount(totals.expense)}
             </span>
           </div>
+          {allNewRowIds.length > 0 && selectedRowIds.size === 0 && (
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <CheckCheck className="h-3.5 w-3.5" />
+              {t("monthlyEntry.selectAll", { count: allNewRowIds.length })}
+            </button>
+          )}
         </div>
+
+        {/* Invalid rows hint */}
+        {invalidRowIds.size > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-destructive">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>{t("monthlyEntry.invalidRowsHint", { count: invalidRowIds.size })}</span>
+          </div>
+        )}
 
         {/* Save button */}
         {newEntryCount > 0 && (

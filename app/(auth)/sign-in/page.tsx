@@ -12,20 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DEFAULT_LANGUAGE, translate, type Language } from "@/i18n";
+import { authErrorMessageKey } from "@/lib/auth-error-message";
 
 type PageProps = {
   searchParams: Promise<{ callbackUrl?: string; error?: string; lang?: Language; deactivated?: string }>;
 };
-
-const ERROR_MESSAGES: Record<string, keyof typeof errorKeys> = {
-  CredentialsSignin: "credentials",
-  Default: "default",
-};
-
-const errorKeys = {
-  credentials: "auth.signIn.invalidCredentials",
-  default: "auth.signIn.genericError",
-} as const;
 
 export const metadata: Metadata = {
   title: "Sign in | Judtang",
@@ -38,8 +29,10 @@ export default async function SignInPage({ searchParams }: PageProps) {
   const deactivatedDate = params.deactivated ?? null;
   const lang = (params.lang as Language | undefined) ?? DEFAULT_LANGUAGE;
 
-  const errorKey = rawError ? ERROR_MESSAGES[rawError] ?? ERROR_MESSAGES.Default : null;
-  const error = errorKey ? translate(lang, errorKeys[errorKey]) : null;
+  // Unknown/raw error codes map to a generic message — internal details never leak.
+  const error = rawError
+    ? translate(lang, authErrorMessageKey(rawError))
+    : null;
 
   return (
     <div className="auth-page flex min-h-screen flex-col bg-[#F5F0E8] dark:bg-stone-950">
