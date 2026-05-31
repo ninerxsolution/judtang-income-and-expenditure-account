@@ -7,6 +7,10 @@ import {
   toDateStringInTimezone,
 } from "@/lib/date-range";
 import { unstable_cache, CACHE_REVALIDATE_SECONDS, cacheKey } from "@/lib/cache";
+import {
+  accumulateCalendarDaySummary,
+  emptyDaySummaryAccumulator,
+} from "@/lib/calendar-summary-thb";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -17,6 +21,9 @@ type MonthSummaryItem = {
   incomeCount: number;
   expenseCount: number;
   transferCount: number;
+  incomeSumThb: number;
+  expenseSumThb: number;
+  transferSumThb: number;
 };
 
 async function fetchMonthSummary(
@@ -33,46 +40,53 @@ async function fetchMonthSummary(
       userId,
       occurredAt: { gte: fromRange.from, lte: toRange.to },
     },
-    select: { occurredAt: true, type: true },
+    select: {
+      occurredAt: true,
+      type: true,
+      transferLeg: true,
+      amount: true,
+      currency: true,
+      exchangeRate: true,
+      baseAmount: true,
+    },
   });
 
-  const monthMap = new Map<
-    number,
-    { count: number; incomeCount: number; expenseCount: number; transferCount: number }
-  >();
+  const monthMap = new Map<number, ReturnType<typeof emptyDaySummaryAccumulator>>();
 
   for (const tx of items) {
     const dateStr = toDateStringInTimezone(tx.occurredAt, timezone);
     const monthPart = dateStr.split("-")[1];
     const m = monthPart ? parseInt(monthPart, 10) - 1 : 0;
-    const prev = monthMap.get(m) ?? {
-      count: 0,
-      incomeCount: 0,
-      expenseCount: 0,
-      transferCount: 0,
-    };
-    const typeUpper = String(tx.type).toUpperCase();
-    const isIncome = typeUpper === "INCOME";
-    const isExpense = typeUpper === "EXPENSE";
-    const isTransfer = typeUpper === "TRANSFER";
-    monthMap.set(m, {
-      count: prev.count + 1,
-      incomeCount: prev.incomeCount + (isIncome ? 1 : 0),
-      expenseCount: prev.expenseCount + (isExpense ? 1 : 0),
-      transferCount: prev.transferCount + (isTransfer ? 1 : 0),
-    });
+    const prev = monthMap.get(m) ?? emptyDaySummaryAccumulator();
+    monthMap.set(m, accumulateCalendarDaySummary(prev, tx));
   }
 
   return Array.from(monthMap.entries())
     .sort(([a], [b]) => a - b)
-    .map(([monthIndex, { count, incomeCount, expenseCount, transferCount }]) => ({
-      monthIndex,
-      hasTransactions: count > 0,
-      count,
-      incomeCount,
-      expenseCount,
-      transferCount,
-    }));
+    .map(
+      ([
+        monthIndex,
+        {
+          count,
+          incomeCount,
+          expenseCount,
+          transferCount,
+          incomeSumThb,
+          expenseSumThb,
+          transferSumThb,
+        },
+      ]) => ({
+        monthIndex,
+        hasTransactions: count > 0,
+        count,
+        incomeCount,
+        expenseCount,
+        transferCount,
+        incomeSumThb,
+        expenseSumThb,
+        transferSumThb,
+      }),
+    );
 }
 
 export async function GET(request: Request) {
@@ -97,8 +111,8 @@ export async function GET(request: Request) {
 
   try {
     const getCached = unstable_cache(
-      (uid: string, year: number, tz: string) => fetchMonthSummary(uid, year, tz),
-      cacheKey("transactions-month-summary", userId, String(yearNumber), timezoneParam),
+      (uid: string, y: number, tz: string) => fetchMonthSummary(uid, y, tz),
+      cacheKey("transactions-month-summary", "thb-v1", userId, String(yearNumber), timezoneParam),
       { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["transactions"] },
     );
     const result = await getCached(userId, yearNumber, timezoneParam);
@@ -110,4 +124,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

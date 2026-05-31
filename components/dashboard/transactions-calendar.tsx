@@ -2,6 +2,7 @@
 
 import {
   type KeyboardEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useIsDesktopOrLarger } from "@/hooks/use-mobile";
 import { formatAmount } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { formatYearForDisplay } from "@/lib/format-year";
 import { getCategoryDisplayName } from "@/lib/categories-display";
 import { useI18n } from "@/hooks/use-i18n";
@@ -37,6 +39,12 @@ import { TransactionFormDialog } from "@/components/dashboard/transaction-form-d
 import { TransactionDeleteDialog } from "@/components/dashboard/transaction-delete-dialog";
 import { CalendarQuickActions } from "@/components/dashboard/calendar-quick-actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type CalendarSummaryItem = {
   date: string; // YYYY-MM-DD
@@ -45,6 +53,9 @@ type CalendarSummaryItem = {
   incomeCount?: number;
   expenseCount?: number;
   transferCount?: number;
+  incomeSumThb?: number;
+  expenseSumThb?: number;
+  transferSumThb?: number;
 };
 
 type DailyTransaction = {
@@ -67,6 +78,9 @@ type CalendarDay = {
   incomeCount: number;
   expenseCount: number;
   transferCount: number;
+  incomeSumThb: number;
+  expenseSumThb: number;
+  transferSumThb: number;
 };
 
 type ViewMode = "day" | "week" | "month" | "year";
@@ -78,6 +92,9 @@ type MonthSummaryItem = {
   incomeCount?: number;
   expenseCount?: number;
   transferCount?: number;
+  incomeSumThb?: number;
+  expenseSumThb?: number;
+  transferSumThb?: number;
 };
 
 type YearSummaryItem = {
@@ -87,7 +104,61 @@ type YearSummaryItem = {
   incomeCount?: number;
   expenseCount?: number;
   transferCount?: number;
+  incomeSumThb?: number;
+  expenseSumThb?: number;
+  transferSumThb?: number;
 };
+
+type CalendarSummaryTotals = {
+  hasTransactions: boolean;
+  incomeSumThb: number;
+  expenseSumThb: number;
+  transferSumThb: number;
+};
+
+function calendarSummaryTotals(
+  item:
+    | Pick<
+        MonthSummaryItem | YearSummaryItem,
+        "hasTransactions" | "incomeSumThb" | "expenseSumThb" | "transferSumThb"
+      >
+    | undefined,
+): CalendarSummaryTotals {
+  return {
+    hasTransactions: !!item?.hasTransactions,
+    incomeSumThb: finiteSummaryNumber(item?.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item?.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item?.transferSumThb),
+  };
+}
+
+function normalizeMonthSummaryItem(item: MonthSummaryItem): MonthSummaryItem {
+  return {
+    monthIndex: item.monthIndex,
+    hasTransactions: !!item.hasTransactions,
+    count: finiteSummaryNumber(item.count),
+    incomeCount: finiteSummaryNumber(item.incomeCount),
+    expenseCount: finiteSummaryNumber(item.expenseCount),
+    transferCount: finiteSummaryNumber(item.transferCount),
+    incomeSumThb: finiteSummaryNumber(item.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item.transferSumThb),
+  };
+}
+
+function normalizeYearSummaryItem(item: YearSummaryItem): YearSummaryItem {
+  return {
+    year: item.year,
+    hasTransactions: !!item.hasTransactions,
+    count: finiteSummaryNumber(item.count),
+    incomeCount: finiteSummaryNumber(item.incomeCount),
+    expenseCount: finiteSummaryNumber(item.expenseCount),
+    transferCount: finiteSummaryNumber(item.transferCount),
+    incomeSumThb: finiteSummaryNumber(item.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item.transferSumThb),
+  };
+}
 
 function formatDateInput(d: Date): string {
   const year = d.getFullYear();
@@ -126,6 +197,24 @@ function getMonthLabel(year: number, monthIndex: number, locale: string): string
     year: "numeric",
     month: "long",
   });
+}
+
+function finiteSummaryNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeCalendarSummaryItem(item: CalendarSummaryItem): CalendarSummaryItem {
+  return {
+    date: item.date,
+    hasTransactions: !!item.hasTransactions,
+    count: finiteSummaryNumber(item.count),
+    incomeCount: finiteSummaryNumber(item.incomeCount),
+    expenseCount: finiteSummaryNumber(item.expenseCount),
+    transferCount: finiteSummaryNumber(item.transferCount),
+    incomeSumThb: finiteSummaryNumber(item.incomeSumThb),
+    expenseSumThb: finiteSummaryNumber(item.expenseSumThb),
+    transferSumThb: finiteSummaryNumber(item.transferSumThb),
+  };
 }
 
 function getWeekRangeLabel(
@@ -197,6 +286,9 @@ function buildCalendarDays(
       incomeCount: s?.incomeCount ?? 0,
       expenseCount: s?.expenseCount ?? 0,
       transferCount: s?.transferCount ?? 0,
+      incomeSumThb: s?.incomeSumThb ?? 0,
+      expenseSumThb: s?.expenseSumThb ?? 0,
+      transferSumThb: s?.transferSumThb ?? 0,
     });
 
     cursor.setDate(cursor.getDate() + 1);
@@ -255,6 +347,9 @@ function buildWeekDays(
       incomeCount: s?.incomeCount ?? 0,
       expenseCount: s?.expenseCount ?? 0,
       transferCount: s?.transferCount ?? 0,
+      incomeSumThb: s?.incomeSumThb ?? 0,
+      expenseSumThb: s?.expenseSumThb ?? 0,
+      transferSumThb: s?.transferSumThb ?? 0,
     });
     cursor.setDate(cursor.getDate() + 1);
   }
@@ -266,7 +361,214 @@ function buildWeekDays(
   };
 }
 
+type CalendarDayTooltipLabels = {
+  income: string;
+  expense: string;
+  transfer: string;
+  noRecords: string;
+};
+
+function formatCalendarTooltipDate(iso: string, locale: string): string {
+  const d = parseISODateOnly(iso);
+  if (!d) return iso;
+  return d.toLocaleDateString(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function CalendarDayTooltipContent({
+  day,
+  locale,
+  labels,
+}: {
+  day: CalendarDay;
+  locale: string;
+  labels: CalendarDayTooltipLabels;
+}) {
+  return (
+    <div className="space-y-1.5 text-xs">
+      <p className="leading-snug text-[#3D3020] font-bold">{formatCalendarTooltipDate(day.iso, locale)}</p>
+      {!day.hasTransactions ? (
+        <p className="text-[#6B5E4E]">{labels.noRecords}</p>
+      ) : (
+        <ul className="space-y-1">
+          <li className="flex items-center justify-between gap-4">
+            <span className="text-emerald-700 font-bold">{labels.income}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">฿{formatAmount(day.incomeSumThb)}</span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="text-red-700 font-bold">{labels.expense}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">฿{formatAmount(day.expenseSumThb)}</span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="text-blue-700 font-bold">{labels.transfer}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">฿{formatAmount(day.transferSumThb)}</span>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function CalendarPeriodTooltipContent({
+  title,
+  totals,
+  labels,
+}: {
+  title: string;
+  totals: CalendarSummaryTotals;
+  labels: CalendarDayTooltipLabels;
+}) {
+  return (
+    <div className="space-y-1.5 text-xs">
+      <p className="font-bold leading-snug text-[#3D3020]">{title}</p>
+      {!totals.hasTransactions ? (
+        <p className="text-[#6B5E4E]">{labels.noRecords}</p>
+      ) : (
+        <ul className="space-y-1">
+          <li className="flex items-center justify-between gap-4">
+            <span className="font-bold text-emerald-700">{labels.income}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">
+              ฿{formatAmount(totals.incomeSumThb)}
+            </span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="font-bold text-red-700">{labels.expense}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">
+              ฿{formatAmount(totals.expenseSumThb)}
+            </span>
+          </li>
+          <li className="flex items-center justify-between gap-4">
+            <span className="font-bold text-blue-700">{labels.transfer}</span>
+            <span className="tabular-nums font-medium text-[#3D3020]">
+              ฿{formatAmount(totals.transferSumThb)}
+            </span>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const calendarTooltipContentClass = cn(
+  "max-w-[260px] border border-[#D4C9B0] bg-[#FDFAF4] px-3 py-2.5 text-[#3D3020] shadow-md",
+  "!text-[#3D3020]",
+  "[&_.bg-foreground]:!bg-[#FDFAF4] [&_.fill-foreground]:!fill-[#FDFAF4]",
+);
+
+function CalendarHoverTooltip({
+  enabled,
+  labels,
+  title,
+  totals,
+  children,
+}: {
+  enabled: boolean;
+  labels: CalendarDayTooltipLabels;
+  title: string;
+  totals: CalendarSummaryTotals;
+  children: ReactNode;
+}) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className={calendarTooltipContentClass}>
+        <CalendarPeriodTooltipContent title={title} totals={totals} labels={labels} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function CalendarDayHoverTooltip({
+  day,
+  locale,
+  enabled,
+  labels,
+  children,
+}: {
+  day: CalendarDay;
+  locale: string;
+  enabled: boolean;
+  labels: CalendarDayTooltipLabels;
+  children: ReactNode;
+}) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className={calendarTooltipContentClass}>
+        <CalendarDayTooltipContent day={day} locale={locale} labels={labels} />
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+const calendarViewActiveClass =
+  "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100";
+const calendarViewInactiveClass =
+  "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200";
+
+function CalendarViewModeControls({
+  viewMode,
+  onViewModeChange,
+  onToday,
+  t,
+}: {
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  onToday: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-transparent dark:bg-stone-800/40">
+        <button
+          type="button"
+          onClick={() => onViewModeChange("day")}
+          className={`rounded-l-md px-3 py-2 font-medium transition-colors duration-150 ease-out ${viewMode === "day" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.day")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("week")}
+          className={`border-l border-[#D4C9B0] px-3 py-2 font-medium transition-colors duration-150 ease-out dark:border-stone-800/50 ${viewMode === "week" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.week")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("month")}
+          className={`border-l border-[#D4C9B0] px-3 py-2 font-medium transition-colors duration-150 ease-out dark:border-stone-800/50 ${viewMode === "month" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.month")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("year")}
+          className={`rounded-r-md border-l border-[#D4C9B0] px-3 py-2 font-medium transition-colors duration-150 ease-out dark:border-stone-800/50 ${viewMode === "year" ? calendarViewActiveClass : calendarViewInactiveClass}`}
+        >
+          {t("calendar.view.year")}
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onToday}
+        className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
+      >
+        {t("calendar.today")}
+      </button>
+    </div>
+  );
+}
+
 const WEEKDAY_LABEL_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
+type ViewModeToolbarPlacement = "inside-card" | "outside-card";
 
 type TransactionsCalendarProps = {
   showNewTransactionButton?: boolean;
@@ -274,12 +576,21 @@ type TransactionsCalendarProps = {
   showQuickActions?: boolean;
   /** full = 2-col layout + inline day panel, embedded = modal (default) */
   variant?: "full" | "embedded";
+  /** Hover tooltip with daily income/expense/transfer sums (default: true) */
+  showDayHoverTooltip?: boolean;
+  /**
+   * วัน/สัปดาห์/เดือน/ปี/วันนี้ — inside-card = ในแถบหัวการ์ด (dashboard home),
+   * outside-card = เหนือการ์ด (transactions calendar view). Default: embedded → inside, full → outside.
+   */
+  viewModeToolbarPlacement?: ViewModeToolbarPlacement;
 };
 
 export function TransactionsCalendar({
   showNewTransactionButton: _ = true,
   showQuickActions = false,
   variant = "embedded",
+  showDayHoverTooltip = true,
+  viewModeToolbarPlacement,
 }: TransactionsCalendarProps) {
   const { t, locale, language } = useI18n();
   const { openSlipUpload } = useSlipUpload();
@@ -289,6 +600,17 @@ export function TransactionsCalendar({
     transactionViewsEpoch,
   } = useDashboardData();
   const localeKey = language === "th" ? "th" : "en";
+  const displayLocale = language === "th" ? "th-TH" : "en-US";
+
+  const dayTooltipLabels = useMemo(
+    (): CalendarDayTooltipLabels => ({
+      income: t("calendar.legend.income"),
+      expense: t("calendar.legend.expense"),
+      transfer: t("calendar.legend.transfer"),
+      noRecords: t("calendar.noRecords"),
+    }),
+    [t],
+  );
 
   const [formOpen, setFormOpen] = useState(false);
   const [formEditId, setFormEditId] = useState<string | null>(null);
@@ -305,6 +627,11 @@ export function TransactionsCalendar({
     useState<DailyTransaction | null>(null);
 
   const isDesktop = useIsDesktopOrLarger();
+  const isFullVariant = variant === "full";
+  const resolvedViewModeToolbarPlacement: ViewModeToolbarPlacement =
+    viewModeToolbarPlacement ??
+    (isFullVariant ? "outside-card" : "inside-card");
+  const viewModeToolbarInside = resolvedViewModeToolbarPlacement === "inside-card";
   const today = useMemo(() => new Date(), []);
   const initialYear = today.getFullYear();
 
@@ -415,29 +742,9 @@ export function TransactionsCalendar({
         const data = (await res.json()) as CalendarSummaryItem[] | unknown;
         if (Array.isArray(data)) {
           setSummary(
-            data.map((item) => ({
-              date: item.date,
-              hasTransactions: !!item.hasTransactions,
-              count:
-                typeof item.count === "number" && Number.isFinite(item.count)
-                  ? item.count
-                  : 0,
-              incomeCount:
-                typeof item.incomeCount === "number" &&
-                  Number.isFinite(item.incomeCount)
-                  ? item.incomeCount
-                  : 0,
-              expenseCount:
-                typeof item.expenseCount === "number" &&
-                  Number.isFinite(item.expenseCount)
-                  ? item.expenseCount
-                  : 0,
-              transferCount:
-                typeof item.transferCount === "number" &&
-                  Number.isFinite(item.transferCount)
-                  ? item.transferCount
-                  : 0,
-            })),
+            data.map((item) =>
+              normalizeCalendarSummaryItem(item as CalendarSummaryItem),
+            ),
           );
         } else {
           setSummary([]);
@@ -504,29 +811,7 @@ export function TransactionsCalendar({
         const data = (await res.json()) as MonthSummaryItem[] | unknown;
         if (Array.isArray(data)) {
           setMonthSummary(
-            data.map((item) => ({
-              monthIndex: item.monthIndex,
-              hasTransactions: !!item.hasTransactions,
-              count:
-                typeof item.count === "number" && Number.isFinite(item.count)
-                  ? item.count
-                  : 0,
-              incomeCount:
-                typeof item.incomeCount === "number" &&
-                  Number.isFinite(item.incomeCount)
-                  ? item.incomeCount
-                  : 0,
-              expenseCount:
-                typeof item.expenseCount === "number" &&
-                  Number.isFinite(item.expenseCount)
-                  ? item.expenseCount
-                  : 0,
-              transferCount:
-                typeof item.transferCount === "number" &&
-                  Number.isFinite(item.transferCount)
-                  ? item.transferCount
-                  : 0,
-            })),
+            data.map((item) => normalizeMonthSummaryItem(item)),
           );
         } else {
           setMonthSummary([]);
@@ -590,29 +875,7 @@ export function TransactionsCalendar({
         const data = (await res.json()) as YearSummaryItem[] | unknown;
         if (Array.isArray(data)) {
           setYearSummary(
-            data.map((item) => ({
-              year: item.year,
-              hasTransactions: !!item.hasTransactions,
-              count:
-                typeof item.count === "number" && Number.isFinite(item.count)
-                  ? item.count
-                  : 0,
-              incomeCount:
-                typeof item.incomeCount === "number" &&
-                  Number.isFinite(item.incomeCount)
-                  ? item.incomeCount
-                  : 0,
-              expenseCount:
-                typeof item.expenseCount === "number" &&
-                  Number.isFinite(item.expenseCount)
-                  ? item.expenseCount
-                  : 0,
-              transferCount:
-                typeof item.transferCount === "number" &&
-                  Number.isFinite(item.transferCount)
-                  ? item.transferCount
-                  : 0,
-            })),
+            data.map((item) => normalizeYearSummaryItem(item)),
           );
         } else {
           setYearSummary([]);
@@ -891,8 +1154,6 @@ export function TransactionsCalendar({
     });
   }, [selectedDate, locale]);
 
-  const isFullVariant = variant === "full";
-
   const dayDetailContent = (
     <>
       {dailyLoading && dailyItems.length === 0 && (
@@ -1026,81 +1287,35 @@ export function TransactionsCalendar({
     </>
   );
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-md border border-[#D4C9B0] bg-[#FDFAF4] text-sm dark:border-transparent dark:bg-stone-800/40">
-              <button
-                type="button"
-                onClick={() => setViewMode("day")}
-                className={`px-3 py-2 transition-colors duration-150 ease-out ${viewMode === "day"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  } rounded-l-md font-medium`}
-              >
-                {t("calendar.view.day")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("week")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 font-medium transition-colors duration-150 ease-out ${viewMode === "week"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  }`}
-              >
-                {t("calendar.view.week")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("month")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 font-medium transition-colors duration-150 ease-out ${viewMode === "month"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  }`}
-              >
-                {t("calendar.view.month")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("year")}
-                className={`border-l border-[#D4C9B0] px-3 py-2 dark:border-stone-800/50 rounded-r-md font-medium transition-colors duration-150 ease-out ${viewMode === "year"
-                  ? "bg-[#5C6B52] text-white dark:bg-stone-700 dark:text-stone-100"
-                  : "text-[#3D3020] hover:bg-[#F5F0E8] dark:text-stone-400 dark:hover:bg-stone-800/60 dark:hover:text-stone-200"
-                  }`}
-              >
-                {t("calendar.view.year")}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={goToToday}
-              className="rounded-md border border-[#D4C9B0] px-3 py-2 text-sm font-medium text-[#3D3020] transition-colors duration-150 ease-out hover:bg-[#F5F0E8] dark:border-transparent dark:bg-stone-800/40 dark:text-stone-300 dark:hover:bg-stone-700/60 dark:hover:text-stone-100"
-            >
-              {t("calendar.today")}
-            </button>
-          </div>
-        </div>
-        {/* {showNewTransactionButton && (
-          <button
-            type="button"
-            onClick={() => {
-              setFormEditId(null);
-              setFormInitialDate(null);
-              setFormInitialType(undefined);
-              setFormOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-md bg-[#5C6B52] px-3 py-2 text-sm font-medium text-white transition-colors duration-150 ease-out hover:bg-[#4A5E40] dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
-          >
-            <Plus className="h-4 w-4" />
-            {t("calendar.newTransaction")}
-          </button>
-        )} */}
-      </div>
+  const viewModeControls = (
+    <CalendarViewModeControls
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+      onToday={goToToday}
+      t={t}
+    />
+  );
 
+  const headerToolbarRight = (includeViewModeControls: boolean) => (
+    <div className="flex flex-wrap items-center gap-2">
+      {includeViewModeControls && viewModeControls}
+      {showQuickActions && (
+        <CalendarQuickActions
+          onQuickAdd={openQuickAdd}
+          onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <div className={viewModeToolbarInside ? undefined : "space-y-4"}>
+        {!viewModeToolbarInside && (
+          <div className="flex flex-wrap items-center gap-2">{viewModeControls}</div>
+        )}
       <div
-        className={`mt-6 rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] shadow-sm dark:border-stone-700 dark:bg-stone-900/80 ${isFullVariant ? "overflow-hidden" : "p-2 sm:p-4"}`}
+        className={`rounded-xl border border-[#D4C9B0] bg-[#FDFAF4] shadow-sm dark:border-stone-700 dark:bg-stone-900/80 ${isFullVariant ? "overflow-hidden" : "p-2 sm:p-4"}`}
       >
         <div
           className={
@@ -1119,8 +1334,8 @@ export function TransactionsCalendar({
             {/* Header & content depend on view mode */}
         {viewMode === "day" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   {isFullVariant && (
                     <Calendar className="h-4 w-4 text-[#5C6B52] dark:text-stone-300" />
@@ -1150,12 +1365,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-[#A09080] dark:text-stone-500">
@@ -1180,12 +1390,18 @@ export function TransactionsCalendar({
                   const isSelected = isFullVariant && selectedDate === day.iso;
 
                   return (
-                    <button
+                    <CalendarDayHoverTooltip
                       key={day.iso}
+                      day={day}
+                      locale={displayLocale}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                    >
+                    <button
                       type="button"
                       onClick={() => openDay(day.iso)}
                       className={[
-                        "flex h-16 flex-col rounded-md border p-1 text-left transition-colors duration-150 ease-out",
+                        "flex h-16 w-full flex-col rounded-md border p-1 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         isMuted
                           ? "text-[#A09080] dark:text-stone-500"
@@ -1229,6 +1445,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarDayHoverTooltip>
                   );
                 })}
               </div>
@@ -1254,8 +1471,8 @@ export function TransactionsCalendar({
 
         {viewMode === "week" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1282,12 +1499,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             {summaryLoading ? (
@@ -1302,8 +1514,14 @@ export function TransactionsCalendar({
                   const hasData = day.hasTransactions;
                   const weekdayKey = WEEKDAY_LABEL_KEYS[idx];
                   return (
-                    <button
+                    <CalendarDayHoverTooltip
                       key={day.iso}
+                      day={day}
+                      locale={displayLocale}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                    >
+                    <button
                       type="button"
                       onClick={() => openDay(day.iso)}
                       className={[
@@ -1352,6 +1570,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarDayHoverTooltip>
                   );
                 })}
               </div>
@@ -1373,8 +1592,8 @@ export function TransactionsCalendar({
 
         {viewMode === "month" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1416,12 +1635,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             {monthSummaryLoading ? (
@@ -1441,16 +1655,23 @@ export function TransactionsCalendar({
                   const transferCount = info?.transferCount ?? 0;
                   const isCurrentMonth =
                     idx === today.getMonth() && year === today.getFullYear();
+                  const monthTotals = calendarSummaryTotals(info);
                   return (
-                    <button
+                    <CalendarHoverTooltip
                       key={idx}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                      title={getMonthLabel(year, idx, displayLocale)}
+                      totals={monthTotals}
+                    >
+                      <button
                       type="button"
                       onClick={() => {
                         setMonthYear({ year, monthIndex: idx });
                         setViewMode("day");
                       }}
                       className={[
-                        "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
+                        "flex h-20 w-full flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         hasData
                           ? "text-[#3D3020] dark:text-stone-100"
@@ -1484,6 +1705,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarHoverTooltip>
                   );
                 })}
               </div>
@@ -1505,8 +1727,8 @@ export function TransactionsCalendar({
 
         {viewMode === "year" && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -1533,12 +1755,7 @@ export function TransactionsCalendar({
                 )}
               </div>
 
-              {showQuickActions && (
-                <CalendarQuickActions
-                  onQuickAdd={openQuickAdd}
-                  onSlipUpload={() => openSlipUpload({ onSuccess: refreshCalendar })}
-                />
-              )}
+              {headerToolbarRight(viewModeToolbarInside)}
             </div>
 
             {yearSummaryLoading ? (
@@ -1560,9 +1777,16 @@ export function TransactionsCalendar({
                   const expenseCount = info?.expenseCount ?? 0;
                   const transferCount = info?.transferCount ?? 0;
                   const isCurrentYear = y === today.getFullYear();
+                  const yearTotals = calendarSummaryTotals(info);
                   return (
-                    <button
+                    <CalendarHoverTooltip
                       key={y}
+                      enabled={showDayHoverTooltip}
+                      labels={dayTooltipLabels}
+                      title={String(formatYearForDisplay(y, language))}
+                      totals={yearTotals}
+                    >
+                      <button
                       type="button"
                       onClick={() => {
                         setMonthYear(({ monthIndex }) => ({
@@ -1572,7 +1796,7 @@ export function TransactionsCalendar({
                         setViewMode("month");
                       }}
                       className={[
-                        "flex h-20 flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
+                        "flex h-20 w-full flex-col justify-between rounded-md border px-2 py-2 text-left transition-colors duration-150 ease-out",
                         "border-[#D4C9B0] bg-[#FDFAF4] hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800",
                         hasData
                           ? "text-[#3D3020] dark:text-stone-100"
@@ -1604,6 +1828,7 @@ export function TransactionsCalendar({
                         )}
                       </div>
                     </button>
+                    </CalendarHoverTooltip>
                   );
                 })}
               </div>
@@ -1819,6 +2044,7 @@ export function TransactionsCalendar({
         transaction={deleteTransaction}
         onConfirm={refreshCalendar}
       />
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

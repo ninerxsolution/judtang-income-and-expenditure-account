@@ -13,6 +13,9 @@ import {
   type Language,
 } from "@/i18n";
 import { Button } from "@/components/ui/button";
+import { LandingGoToTop } from "@/components/landing/landing-go-to-top";
+import { LandingPublicShell } from "@/components/landing/landing-public-shell";
+import { PRIVACY_VERSION } from "@/lib/terms";
 
 async function getLanguage(): Promise<Language> {
   const cookieStore = await cookies();
@@ -45,10 +48,10 @@ export default async function PrivacyPage() {
     ));
 
   return (
-    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
+    <LandingPublicShell>
       {/* Sticky header */}
       <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
-        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-2 sm:px-6 py-2 sm:py-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/" className="gap-2 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100">
               <ArrowLeft className="h-4 w-4" />
@@ -69,7 +72,7 @@ export default async function PrivacyPage() {
           </h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-[#A09080] dark:text-stone-400">
             <span className="inline-flex items-center rounded-md bg-[#5C6B52] px-2.5 py-0.5 text-xs font-medium text-white dark:bg-stone-100 dark:text-stone-900">
-              {p.version}
+              {translate(language, "privacy.version", { version: PRIVACY_VERSION })}
             </span>
             <span>{p.effectiveDate}</span>
           </div>
@@ -173,7 +176,32 @@ export default async function PrivacyPage() {
             </ul>
           </section>
 
-          {/* 4. Data Storage & Security */}
+          {/* 4. Legal Basis for Processing */}
+          <section aria-labelledby="s-legal-basis">
+            <SectionAnchor id="legal-basis" />
+            <h2
+              id="s-legal-basis"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {p.sections.legalBasis.title}
+            </h2>
+            <p className="mb-3 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
+              {p.sections.legalBasis.intro}
+            </p>
+            <ul className="space-y-1.5 pl-4">
+              {p.sections.legalBasis.items.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
+                >
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* 5. Data Storage & Security */}
           <section aria-labelledby="s-security">
             <SectionAnchor id="security" />
             <h2
@@ -201,7 +229,48 @@ export default async function PrivacyPage() {
             </p>
           </section>
 
-          {/* 5. Third-Party Services */}
+          {/* 6. Cookies & Local Storage */}
+          <section aria-labelledby="s-cookies">
+            <SectionAnchor id="cookies" />
+            <h2
+              id="s-cookies"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {p.sections.cookies.title}
+            </h2>
+            <p className="mb-4 text-sm leading-relaxed text-[#6B5E4E] dark:text-stone-400">
+              {p.sections.cookies.intro}
+            </p>
+            <div className="space-y-4">
+              {[
+                p.sections.cookies.necessary,
+                p.sections.cookies.functional,
+                p.sections.cookies.optional,
+              ].map((group) => (
+                <div key={group.title}>
+                  <h3 className="mb-2 text-sm font-medium text-[#3D3020] dark:text-stone-200">
+                    {group.title}
+                  </h3>
+                  <ul className="space-y-1 pl-4">
+                    {group.items.map((item) => (
+                      <li
+                        key={item}
+                        className="flex items-start gap-2 text-sm text-[#6B5E4E] dark:text-stone-400"
+                      >
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm italic leading-relaxed text-[#A09080] dark:text-stone-500">
+              {p.sections.cookies.note}
+            </p>
+          </section>
+
+          {/* 7. Third-Party Services */}
           <section aria-labelledby="s-third-party">
             <SectionAnchor id="third-party" />
             <h2
@@ -241,7 +310,35 @@ export default async function PrivacyPage() {
             </p>
           </section>
 
-          {/* 6. Data Retention */}
+          {/* 8. International Data Transfers */}
+          <section aria-labelledby="s-international-transfer">
+            <SectionAnchor id="international-transfer" />
+            <h2
+              id="s-international-transfer"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {p.sections.internationalTransfer.title}
+            </h2>
+            <div className="space-y-3">
+              {bodyLines(p.sections.internationalTransfer.body)}
+            </div>
+          </section>
+
+          {/* 9. Children's Data */}
+          <section aria-labelledby="s-children">
+            <SectionAnchor id="children" />
+            <h2
+              id="s-children"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {p.sections.children.title}
+            </h2>
+            <div className="space-y-3">
+              {bodyLines(p.sections.children.body)}
+            </div>
+          </section>
+
+          {/* 10. Data Retention */}
           <section aria-labelledby="s-retention">
             <SectionAnchor id="retention" />
             <h2
@@ -255,7 +352,7 @@ export default async function PrivacyPage() {
             </div>
           </section>
 
-          {/* 7. Your Rights */}
+          {/* 11. Your Rights */}
           <section aria-labelledby="s-rights">
             <SectionAnchor id="rights" />
             <h2
@@ -283,7 +380,7 @@ export default async function PrivacyPage() {
             </p>
           </section>
 
-          {/* 8. Account Deletion */}
+          {/* 12. Account Deletion */}
           <section aria-labelledby="s-deletion">
             <SectionAnchor id="deletion" />
             <h2
@@ -314,7 +411,7 @@ export default async function PrivacyPage() {
             </p>
           </section>
 
-          {/* 9. Changes to This Policy */}
+          {/* 13. Changes to This Policy */}
           <section aria-labelledby="s-changes">
             <SectionAnchor id="changes" />
             <h2
@@ -326,7 +423,7 @@ export default async function PrivacyPage() {
             <div className="space-y-3">{bodyLines(p.sections.changes.body)}</div>
           </section>
 
-          {/* 10. Contact Information */}
+          {/* 14. Contact Information */}
           <section aria-labelledby="s-contact">
             <SectionAnchor id="contact" />
             <h2
@@ -348,6 +445,7 @@ export default async function PrivacyPage() {
           </p>
         </div>
       </main>
-    </div>
+      <LandingGoToTop />
+    </LandingPublicShell>
   );
 }

@@ -1,6 +1,6 @@
 # Dashboard Responsive UI
 
-**Updated:** 05/03/2026
+**Updated:** 16/05/2026 (summary card)
 
 **Source:** PRD §18 (Income & Expense), Dashboard layout
 
@@ -50,7 +50,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 - Collapsible sidebar (shadcn/ui `Sidebar`) with icon rail
 - Header: logo, app name
-- Nav items: Accounts, Calendar, Transactions, Summary; Admin Reports (if admin)
+- Nav items: Home, Accounts, Transactions, Entry (`/dashboard/entry` — Monthly + Recurring tabs), Reports (`/dashboard/reports` — Summary + Spending Efficiency tabs); Admin Reports (if admin)
 - Footer: app version
 
 ### Small screen (< 640px)
@@ -67,7 +67,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 - **Component:** `components/dashboard/mobile-bottom-nav.tsx`
 - **Shown when:** `useIsMobile()` is true (< 768px)
 - **Position:** Fixed bottom, full width
-- **Items:** Dashboard, Accounts, Transactions, Summary, Settings (5 items)
+- **Items:** Dashboard, Accounts, Transactions, Reports, Settings (5 items; Entry is in sidebar only)
 - **Styling:** Cream background (light) / stone-900 (dark); icon + text label per item; `md:hidden`; safe-area-inset-bottom for notched devices
 - **Active state:** Indicator bar at top of active item; colors adapt to theme via `useTheme()`
 - **Dark theme:** Background, border, active/inactive colors are theme-aware (light: cream/olive; dark: stone-900/stone-400)
@@ -77,9 +77,26 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 ## 6. Dashboard Page Layout
 
 - **File:** `app/(dashboard)/dashboard/page.tsx`
-- **Responsive grid:** Single column on small screens; two columns on larger
-- **Quick Add buttons:** Use `useIsSmallScreen` for layout adjustments
+- **Responsive grid:** Single column on small screens; two columns (`xl:grid-cols-2`) on larger viewports (summary column + calendar column)
+- **Quick Add buttons:** Shown between summary and calendar on mid breakpoints (`md:flex xl:hidden` in left column; `xl:flex` in right column)
 - **Text wrapping:** Button labels wrap to prevent overflow on narrow screens
+
+### 6.1 Combined summary card
+
+- **Component:** `components/dashboard/dashboard-summary-card.tsx` (`DashboardSummaryCard`)
+- **Content:** Balance (all accounts), current-month income, current-month expense in one card
+- **Visual:** Single olive-green background; no internal borders; no icons on income/expense rows
+- **Responsive metrics row:**
+  - **&lt; sm (default):** `grid-cols-1` — income and expense each on their own row
+  - **≥ sm:** `grid-cols-2` — income and expense side by side
+- **Loading:** Static labels and structure unchanged; skeleton placeholders only for numeric values (see skeleton-static-structure rule)
+- **Props:** `loading`, `balanceVisible`, `data` (`balance`, `income`, `expense`, `accountCount`, optional `totalBalanceApproximate`)
+
+### 6.2 Embedded calendar (home)
+
+- **Component:** `TransactionsCalendar` with default `variant="embedded"` (no `showQuickActions` on home)
+- **View toolbar:** Day / Week / Month / Year / Today in the **calendar card header**, same row as prev/next and period label (`viewModeToolbarPlacement` default `inside-card`)
+- **Tooltips:** Day, week row, month tile, and year tile show approximate THB breakdown on hover (`showDayHoverTooltip`, default true)
 
 ---
 
@@ -87,15 +104,24 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
 
 | Component | Role |
 |-----------|------|
+| `DashboardSummaryCard` | Home summary: balance + month income/expense in one card |
+| `TransactionsCalendar` | Calendar grid; `variant` and `viewModeToolbarPlacement` control layout and toolbar position |
 | `AppSidebarLayout` | Wraps dashboard; renders Sidebar + header; switches to Dialog on small screen |
 | `MobileBottomNav` | Fixed bottom nav on mobile |
 | `Dialog` (ui/dialog) | Sidebar nav overlay on small screens |
 
 ---
 
-## 8. Transactions Table Responsive
+## 8. Transactions Page (list / calendar)
 
 - **File:** `app/(dashboard)/dashboard/transactions/page.tsx`
+- **View switcher:** Same route toggles between **list** (table) and **calendar** (`TransactionsCalendar`); preference can be reflected in URL/search params
+- **Calendar variant:** `variant="full"` with `showQuickActions={true}`; view-mode toolbar **above** the calendar card (`viewModeToolbarPlacement` default `outside-card` for full)
+- **Calendar tooltips:** `calendar-summary`, `month-summary`, and `year-summary` supply approximate THB totals for day, month, and year hover tooltips
+- **Card header (full calendar):** Prev/next + period label on the left; quick actions (income / expense / slip) on the right — view-mode controls are not duplicated inside the card when toolbar is outside
+
+### List view — table responsive
+
 - **Desktop (≥ 1024px):** Full table with Date, Account, Category, Type, Amount, Note; Edit/Delete buttons per row
 - **Tablet/Mobile (< 1024px):** Compact layout:
   - **First column:** Date + account + category combined (single cell)

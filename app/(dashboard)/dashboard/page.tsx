@@ -6,12 +6,13 @@
  */
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, MoreHorizontal, Settings, Wallet } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, ChevronRight, ImagePlus, List, Settings, Wallet } from "lucide-react";
 import { TransactionsCalendar } from "@/components/dashboard/transactions-calendar";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionFormDialog } from "@/components/dashboard/transaction-form-dialog";
 import { useSlipUpload } from "@/components/dashboard/slip-upload-context";
 import { RecurringDueWidget } from "@/components/dashboard/recurring-due-widget";
+import { DashboardSummaryCard } from "@/components/dashboard/dashboard-summary-card";
 import { DashboardSpendingOverview } from "@/components/dashboard/dashboard-spending-overview";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-context";
 import { useBalanceVisibility } from "@/components/dashboard/balance-visibility-context";
@@ -30,8 +31,6 @@ import {
   budgetIndicatorProgressBarClass,
 } from "@/lib/budget-indicator-ui";
 import { useI18n } from "@/hooks/use-i18n";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
 export default function DashboardPage() {
   const { t } = useI18n();
   const {
@@ -85,60 +84,21 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Left column: Balance + Quick Actions + Calendar */}
         <div className="space-y-6">
-          {summaryLoading ? (
-            <>
-              {/* Balance card skeleton */}
-              <Card className="relative overflow-hidden space-y-0 gap-1 bg-[#4A5E40] dark:bg-[#3D4F33] border-0 text-white">
-                <div className="absolute right-0 top-0 h-24 w-24 -translate-y-1/2 translate-x-1/2 rounded-full bg-white/10" />
-                <div className="absolute right-8 top-4 h-16 w-16 rounded-full bg-white/5" />
-                <CardHeader className="relative pb-1">
-                  <CardTitle className="text-sm font-medium justify-between flex items-center text-white/90">
-                    {t("dashboard.summary.balance")}
-                    <Skeleton className="h-3 w-24 bg-white/10" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative">
-                  <Skeleton className="h-10 w-40 bg-white/20 rounded-md" />
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              {/* Balance card - dark olive green, prominent */}
-              <Card className="relative overflow-hidden space-y-0 gap-1 bg-[#4A5E40] dark:bg-[#3D4F33] border-0 text-white">
-                <div className="absolute right-0 top-0 h-24 w-24 -translate-y-1/2 translate-x-1/2 rounded-full bg-white/10" />
-                <div className="absolute right-8 top-4 h-16 w-16 rounded-full bg-white/5" />
-                <CardHeader className="relative pb-1">
-                  <CardTitle className="text-sm font-medium justify-between flex items-center text-white/90">
-                    {t("dashboard.summary.balance")}
-                    <Link href="/dashboard/accounts" className="text-xs text-white/50 hover:text-white transition-all hover:underline">
-                      {t("dashboard.summary.fromAllAccounts", { count: accountCount })}
-                    </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative">
-                  <p
-                    className={`text-3xl sm:text-4xl font-bold tabular-nums ${balance >= 0 ? "text-white" : "text-red-300"
-                      }`}
-                  >
-                    {balanceVisible ? (
-                      <>฿{summary ? formatAmount(balance) : "0.00"}</>
-                    ) : (
-                      <>
-                        <span aria-hidden="true">฿ ••••</span>
-                        <span className="sr-only">{t("dashboard.balance.hidden")}</span>
-                      </>
-                    )}
-                  </p>
-                  {summary?.totalBalanceApproximate ? (
-                    <p className="mt-1 text-xs text-white/70">
-                      {t("dashboard.summary.balanceApproximate")}
-                    </p>
-                  ) : null}
-                </CardContent>
-              </Card>
-            </>
-          )}
+          <DashboardSummaryCard
+            loading={summaryLoading}
+            balanceVisible={balanceVisible}
+            data={
+              summary
+                ? {
+                    balance,
+                    income: summary.income,
+                    expense: summary.expense,
+                    accountCount,
+                    totalBalanceApproximate: summary.totalBalanceApproximate,
+                  }
+                : undefined
+            }
+          />
 
           {/* quick actions INCOME & EXPENSE & SLIP UPLOAD */}
           <div className="hidden md:flex xl:hidden gap-2 h-12">
@@ -164,117 +124,14 @@ export default function DashboardPage() {
               <ArrowUpCircle className="h-4 w-4 shrink-0" />
               <span>{t("transactions.common.expense")}</span>
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
-                  aria-label={t("notifications.moreOptions")}
-                >
-                  <MoreHorizontal className="h-4.5 w-4.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
-                  <ImagePlus className="h-4 w-4" />
-                  {t("dashboard.slipUpload.title")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="gap-3">
-            {/* <h2 className="mb-3 text-sm font-medium text-[#3D3020] dark:text-stone-300">
-              {t("dashboard.summary.title")}
-            </h2> */}
-            {summaryLoading ? (
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Income card skeleton */}
-                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
-                      <ArrowDownCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                      {t("dashboard.summary.income")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-7 w-24" />
-                  </CardContent>
-                </Card>
-
-                {/* Expense card skeleton */}
-                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
-                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
-                      {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-7 w-24" />
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Income card - light green */}
-                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-200/30 dark:bg-emerald-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-200/60 dark:bg-emerald-800/40">
-                      <ArrowDownCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                      {t("dashboard.summary.income")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xl font-semibold tabular-nums text-emerald-800 dark:text-emerald-200">
-                      {balanceVisible ? (
-                        <>฿{summary ? formatAmount(summary.income) : "0.00"}</>
-                      ) : (
-                        <>
-                          <span aria-hidden="true">฿ ••••</span>
-                          <span className="sr-only">{t("dashboard.balance.hidden")}</span>
-                        </>
-                      )}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Expense card - light brown/pink */}
-                <Card className="w-full relative overflow-hidden space-y-0 gap-1 border-[#D4C9B0] bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30">
-                  <div className="absolute right-0 top-0 h-20 w-20 -translate-y-1/2 translate-x-1/2 rounded-full bg-red-200/30 dark:bg-red-800/20" />
-                  <CardHeader className="flex flex-row items-center gap-2 pb-1">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-200/60 dark:bg-red-800/40">
-                      <ArrowUpCircle className="h-4 w-4 text-red-700 dark:text-red-300" />
-                    </div>
-                    <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
-                      {t("dashboard.summary.expense")} {t("dashboard.summary.title")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xl font-semibold tabular-nums text-red-800 dark:text-red-200">
-                      {balanceVisible ? (
-                        <>฿{summary ? formatAmount(summary.expense) : "0.00"}</>
-                      ) : (
-                        <>
-                          <span aria-hidden="true">฿ ••••</span>
-                          <span className="sr-only">{t("dashboard.balance.hidden")}</span>
-                        </>
-                      )}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
+            <button
+              type="button"
+              onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+              aria-label={t("dashboard.slipUpload.title")}
+            >
+              <ImagePlus className="h-4.5 w-4.5 shrink-0" aria-hidden />
+            </button>
           </div>
 
           <DashboardSpendingOverview />
@@ -388,23 +245,14 @@ export default function DashboardPage() {
               <ArrowUpCircle className="h-4 w-4 shrink-0" />
               <span>{t("transactions.common.expense")}</span>
             </button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
-                  aria-label={t("notifications.moreOptions")}
-                >
-                  <MoreHorizontal className="h-4.5 w-4.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}>
-                  <ImagePlus className="h-4 w-4" />
-                  {t("dashboard.slipUpload.title")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => openSlipUpload({ onSuccess: handleAfterTransactionChange })}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl border bg-[#FDFAF4] px-2 sm:px-3 py-2 sm:py-1.5 text-[#6B5E4E] transition-colors hover:bg-[#F5F0E8] dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:bg-stone-800"
+              aria-label={t("dashboard.slipUpload.title")}
+            >
+              <ImagePlus className="h-4.5 w-4.5 shrink-0" aria-hidden />
+            </button>
           </div>
 
           <TransactionsCalendar showNewTransactionButton={false} showQuickActions={false} />

@@ -52,7 +52,7 @@ Feature สำหรับ template รายการรายรับ/รา�
 | GET | /api/recurring-transactions/[id] | ดึง template เดียว |
 | PATCH | /api/recurring-transactions/[id] | แก้ไข template |
 | DELETE | /api/recurring-transactions/[id] | ลบ template |
-| GET | /api/recurring-transactions/[id]/link-candidates?dueYear=YYYY&dueMonth=M | รายการ Transaction ที่โพสต์แล้วในเดือนนั้น ประเภทเดียวกับ template ยังไม่มี recurringTransactionId และไม่ใช่แถว transfer (transferGroupId null) |
+| GET | /api/recurring-transactions/[id]/link-candidates?dueYear=YYYY&dueMonth=M | รายการ Transaction ที่โพสต์แล้วในเดือนนั้น ประเภทเดียวกับ template ยังไม่มี recurringTransactionId และไม่ใช่แถว transfer (transferGroupId null). Query เสริม: `q`/`search`, `onDate=YYYY-MM-DD`, `limit` (1–50), `timezone` (IANA — ใช้กับขอบวันของ `onDate` และการแสดงวันที่ใน picker; default `Asia/Bangkok`) |
 | POST | /api/recurring-transactions/[id]/confirm | สร้างหรือผูก Transaction: body ต้องมี `dueYear`, `dueMonth` (1–12), `amount`, `occurredAt`, `financialAccountId`, optional `categoryId`, `note`, optional `linkTransactionId` (เมื่อส่ง = ผูกแถวนั้นแทนการสร้างใหม่) |
 
 ทุก endpoint ต้อง authenticated; ข้อมูลเป็น user-scoped.
@@ -61,7 +61,7 @@ Feature สำหรับ template รายการรายรับ/รา�
 
 - **getCalendarMonthBounds(year, month):** คืน `periodStart` / `periodEnd` ตามปฏิทินใน timezone ของ runtime (ใช้ร่วมกับ due list, link-candidates, และการตรวจ `occurredAt` ตอน confirm)
 - **getDueRecurringTransactions(userId, year, month):** คืน template ที่ isActive, startDate ≤ สิ้นเดือน, endDate เป็น null หรือ ≥ ต้นเดือน; สำหรับ YEARLY กรอง monthOfYear = month; แต่ละรายการมี flag `isPaid` จากการตรวจว่ามี Transaction ในช่วงนั้นที่ผูก recurringTransactionId กับ template นี้หรือไม่
-- **listRecurringLinkCandidates:** รายการ POSTED ประเภทเดียวกับ template ในเดือนนั้น ที่ `recurringTransactionId` เป็น null และ `transferGroupId` เป็น null
+- **listRecurringLinkCandidates:** รายการ POSTED ประเภทเดียวกับ template ในเดือนนั้น ที่ `recurringTransactionId` เป็น null และ `transferGroupId` เป็น null; ถ้ามี `onDate` จะกรอง `occurredAt` เป็นช่วงวันนั้นใน `timezone` (default `Asia/Bangkok`)
 - **confirmRecurringTransaction:** ต้องมี `dueYear`/`dueMonth` และ `occurredAt` อยู่ในช่วงเดือนนั้น; ถ้ามีแถวผูก template นี้ในเดือนนั้นแล้วจะ throw (กัน double confirm); ถ้ามี `linkTransactionId` ให้ `updateTransaction` ตั้งฟิลด์และ `recurringTransactionId` (Activity Log TRANSACTION_UPDATED + `source: "recurring-link"`); ไม่เช่นนั้นให้ `create` แถวใหม่ (TRANSACTION_CREATED + `source: "recurring"`)
 
 ## 5. UI

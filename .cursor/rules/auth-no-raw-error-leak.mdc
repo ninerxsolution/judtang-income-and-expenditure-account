@@ -1,0 +1,45 @@
+---
+description: Auth must never show raw infrastructure errors (DB pool timeout, etc.) to the user
+globs: auth.ts,app/(auth)/sign-in/**,lib/auth-error-message.ts
+alwaysApply: false
+---
+
+# Auth: never leak raw infrastructure errors
+
+## ปัญหาที่เจอ / Problem
+
+- เข้าสู่ระบบตอน **database ไม่ได้เปิด** แล้วเด้งไปหน้า
+  `/api/auth/error?error=pool%20timeout%3A%20failed%20to%20retrieve%20a%20connection%20from%20pool...`
+- raw error ของ Prisma (connection-pool timeout) โผล่ทั้งใน URL และบนหน้า error เริ่มต้นของ NextAuth → บน production ลูกค้าเห็นแล้วหนีแน่นอน
+
+## สาเหตุ / Root cause
+
+1. `authorize` / callbacks (`signIn`, `jwt`) เรียก Prisma ตรง ๆ โดยไม่มี try/catch — เมื่อ DB ล่ม error ถูก throw ออกมาดิบ ๆ
+2. NextAuth credentials: ถ้า `authorize` **throw** จะ redirect ไปหน้า error พร้อมใส่ `error.message` ลง query
+3. ไม่ได้ตั้ง `pages.error` → ใช้หน้า error เริ่มต้นของ NextAuth ที่ echo ข้อความ error ดิบ
+
+## วิธีแก้ / Solution
+
+1. **`pages.error: "/sign-in"`** ใน `auth.ts` — ส่ง error ของ NextAuth มาหน้า sign-in ของเราเอง (ไม่ใช้หน้า default ที่ echo ข้อความดิบ)
+2. **ครอบ DB ทุกจุดใน callbacks ด้วย try/catch:**
+   - `authorize` / `signIn` (google): DB/turnstile ล่ม → log + `throw new Error("ServerError")` (โค้ดสะอาด ไม่ใช่ข้อความดิบ)
+   - `jwt` ตอน sign-in (`user?.id`): เขียน session ไม่สำเร็จ → log + `throw new Error("ServerError")`
+   - `jwt` ตอน validate ราย request (`t.sessionId`): DB ล่ม → **คืน token เดิม** (ข้าม validation รอบนี้) ไม่เตะ user ออก/ไม่เด้ง error — กลับมา validate เองเมื่อ DB ฟื้น
+   - แยกให้ชัด: credential ผิด/ถูกระงับ → `return null` (โชว์ "invalid credentials"); infra ล่ม → `throw new Error("ServerError")` (โชว์ "service unavailable")
+3. **map error code → ข้อความ friendly** ผ่าน `lib/auth-error-message.ts` (`authErrorMessageKey`) — โค้ดที่ไม่รู้จัก (รวมถึง raw string ใด ๆ) ตกไป generic เสมอ มี unit test ครอบ (`lib/__tests__/auth-error-message.test.ts`)
+4. **error boundaries** (`app/error.tsx`, `app/(dashboard)/error.tsx`): โชว์ `error.message` เฉพาะ `NODE_ENV === "development"` เท่านั้น; production โชว์ข้อความ generic
+
+## กันซ้ำ / Prevention
+
+- **Do:** ครอบ DB call ใน NextAuth callback ด้วย try/catch เสมอ; infra error ให้ throw โค้ดสะอาด (`ServerError`) ไม่ใช่ปล่อย raw
+- **Do:** map `?error=` ผ่าน whitelist (`authErrorMessageKey`) — default เป็น generic; อย่า render ค่า `?error=` ตรง ๆ
+- **Do:** ตอน validate session ราย request ถ้า DB ล่มชั่วคราว ให้ degrade (คืน token เดิม) แทนการ throw — กัน user ที่ login อยู่แล้วโดนเตะออก
+- **Don't:** อย่าตั้ง `pages` โดยไม่มี `error` (จะตกไปหน้า default ที่ echo ข้อความดิบ)
+- **Don't:** อย่า render `error.message` บน UI ใน production
+
+## อ้างอิง / Reference
+
+- `auth.ts` — `pages.error`, try/catch ใน authorize/signIn/jwt, `throw new Error("ServerError")`
+- `lib/auth-error-message.ts` + `lib/__tests__/auth-error-message.test.ts`
+- `app/(auth)/sign-in/page.tsx` — ใช้ `authErrorMessageKey`
+- `app/error.tsx`, `app/(dashboard)/error.tsx` — ซ่อน raw message ใน production

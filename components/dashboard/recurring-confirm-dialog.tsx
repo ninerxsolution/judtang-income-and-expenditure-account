@@ -26,6 +26,7 @@ import { useI18n } from "@/hooks/use-i18n";
 import type { AccountOption } from "@/components/dashboard/account-combobox";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
 import { formatAmount } from "@/lib/format";
+import { toDateStringInTimezone } from "@/lib/date-range";
 
 type RecurringItem = {
   id: string;
@@ -67,7 +68,8 @@ function todayString(): string {
 function occurredAtToDateString(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return todayString();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return toDateStringInTimezone(d, tz);
 }
 
 export function RecurringConfirmDialog({
@@ -281,12 +283,14 @@ export function RecurringConfirmDialog({
                       ? (() => {
                           const amt = formatAmount(linkedRowPreview.amount);
                           const d = new Date(linkedRowPreview.occurredAt);
+                          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
                           const dateLabel = Number.isNaN(d.getTime())
                             ? linkedRowPreview.occurredAt
                             : d.toLocaleDateString(dateLocale, {
                                 day: "numeric",
                                 month: "short",
                                 year: "numeric",
+                                timeZone: tz,
                               });
                           const acct = linkedRowPreview.financialAccount?.name ?? "—";
                           return `${dateLabel} · ${linkedRowPreview.currency} ${amt} · ${acct}`;

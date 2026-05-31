@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toDateStringInTimezone } from "@/lib/date-range";
 import { Search, ChevronLeft, ChevronRight, Check, CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/lib/format";
@@ -46,6 +47,35 @@ function parseYmd(value: string): Date | undefined {
 
 function formatToIso(date: Date): string {
   return format(date, "yyyy-MM-dd");
+}
+
+function startOfLocalCalendarDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function formatOccurredAtLabel(iso: string, displayLocale: string, timezone: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(displayLocale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: timezone,
+  });
+}
+
+/** Keep only rows whose occurredAt falls on the selected calendar day in the user's timezone. */
+function filterRowsByCalendarDay(
+  rows: RecurringLinkCandidateRow[],
+  ymd: string,
+  timezone: string,
+): RecurringLinkCandidateRow[] {
+  if (!ymd) return rows;
+  return rows.filter((row) => {
+    const d = new Date(row.occurredAt);
+    if (Number.isNaN(d.getTime())) return false;
+    return toDateStringInTimezone(d, timezone) === ymd;
+  });
 }
 
 export function RecurringLinkPickerTrigger({
@@ -124,10 +154,15 @@ export function RecurringLinkSlidePickerPanel({
   const [items, setItems] = useState<RecurringLinkCandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userTimezone = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    [],
+  );
+  const todayStart = useMemo(() => startOfLocalCalendarDay(new Date()), []);
   const defaultMonth = new Date(dueYear, dueMonth - 1, 1);
 
-  function isInDueMonth(d: Date): boolean {
-    return d.getFullYear() === dueYear && d.getMonth() + 1 === dueMonth;
+  function isDateSelectable(d: Date): boolean {
+    return startOfLocalCalendarDay(d).getTime() <= todayStart.getTime();
   }
 
   function formatChipDate(ymd: string): string {
@@ -146,31 +181,44 @@ export function RecurringLinkSlidePickerPanel({
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  const fetchCandidates = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        dueYear: String(dueYear),
-        dueMonth: String(dueMonth),
-        limit: "10",
-      });
-      if (debouncedSearch) params.set("q", debouncedSearch);
-      if (filterDate) params.set("onDate", filterDate);
-      const res = await fetch(
-        `/api/recurring-transactions/${recurringId}/link-candidates?${params.toString()}`,
-      );
-      const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [recurringId, dueYear, dueMonth, debouncedSearch, filterDate]);
-
   useEffect(() => {
-    void fetchCandidates();
-  }, [fetchCandidates]);
+    const controller = new AbortController();
+    const activeFilterDate = filterDate;
+
+    async function loadCandidates(): Promise<void> {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          dueYear: String(dueYear),
+          dueMonth: String(dueMonth),
+          limit: "10",
+        });
+        if (debouncedSearch) params.set("q", debouncedSearch);
+        if (activeFilterDate) params.set("onDate", activeFilterDate);
+        params.set("timezone", userTimezone);
+        const res = await fetch(
+          `/api/recurring-transactions/${recurringId}/link-candidates?${params.toString()}`,
+          { signal: controller.signal, cache: "no-store" },
+        );
+        if (controller.signal.aborted) return;
+        const data = (await res.json()) as unknown;
+        const list = Array.isArray(data) ? (data as RecurringLinkCandidateRow[]) : [];
+        setItems(
+          activeFilterDate
+            ? filterRowsByCalendarDay(list, activeFilterDate, userTimezone)
+            : list,
+        );
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (!controller.signal.aborted) setItems([]);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+
+    void loadCandidates();
+    return () => controller.abort();
+  }, [recurringId, dueYear, dueMonth, debouncedSearch, filterDate, userTimezone]);
 
   function handleBack() {
     setSearchInput("");
@@ -194,9 +242,9 @@ export function RecurringLinkSlidePickerPanel({
           selected={filterDate ? parseYmd(filterDate) : undefined}
           defaultMonth={filterDate ? parseYmd(filterDate) ?? defaultMonth : defaultMonth}
           captionLayout="dropdown"
-          disabled={(d) => !isInDueMonth(d)}
+          disabled={(d) => !isDateSelectable(d)}
           onSelect={(date) => {
-            if (date && isInDueMonth(date)) {
+            if (date && isDateSelectable(date)) {
               setFilterDate(formatToIso(date));
               setDatePopoverOpen(false);
             }
@@ -209,9 +257,9 @@ export function RecurringLinkSlidePickerPanel({
           defaultMonth={filterDate ? parseYmd(filterDate) ?? defaultMonth : defaultMonth}
           captionLayout="dropdown"
           locale={dateFnsLocale}
-          disabled={(d) => !isInDueMonth(d)}
+          disabled={(d) => !isDateSelectable(d)}
           onSelect={(date) => {
-            if (date && isInDueMonth(date)) {
+            if (date && isDateSelectable(date)) {
               setFilterDate(formatToIso(date));
               setDatePopoverOpen(false);
             }
@@ -303,14 +351,11 @@ export function RecurringLinkSlidePickerPanel({
             {items.map((row) => {
               const isSelected = selectedId === row.id;
               const amt = formatAmount(row.amount);
-              const d = new Date(row.occurredAt);
-              const dateLabel = Number.isNaN(d.getTime())
-                ? row.occurredAt
-                : d.toLocaleDateString(displayLocale, {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
+              const dateLabel = formatOccurredAtLabel(
+                row.occurredAt,
+                displayLocale,
+                userTimezone,
+              );
               const acct = row.financialAccount?.name ?? "—";
               const line = `${dateLabel} · ${row.currency} ${amt} · ${acct}`;
               const noteLine = row.note?.trim()

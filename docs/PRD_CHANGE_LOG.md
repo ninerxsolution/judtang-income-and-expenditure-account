@@ -5,6 +5,48 @@ All notable changes to docs (PRD and split documents) are recorded here.
 
 ---
 
+## 16/05/2026 (v0.9.42 — calendar month/year tooltips, view toolbar placement)
+
+- CHANGELOG.md, CHANGELOG.th.md — v0.9.42: month/year summary THB fields + hover tooltips; `viewModeToolbarPlacement` (inside card on home, outside on full calendar).
+- package.json — version `0.9.42`.
+- app/api/transactions/month-summary/route.ts, year-summary/route.ts — THB totals via `accumulateCalendarDaySummary`; cache key `thb-v1`.
+- components/dashboard/transactions-calendar.tsx — `CalendarViewModeControls`, `CalendarPeriodTooltipContent`, `viewModeToolbarPlacement` prop; default `embedded` → inside-card, `full` → outside-card.
+- docs/PRD.md — §18.3.4–18.3.5 month/year API response fields; §18.4.3 toolbar placement and month/year tooltips.
+- docs/structure/dashboard-responsive-ui.md — §6.2 home calendar toolbar; §8 calendar tooltips and toolbar placement.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
+## 16/05/2026 (v0.9.41 — dashboard combined summary card)
+
+- CHANGELOG.md, CHANGELOG.th.md — v0.9.41: single `DashboardSummaryCard` on home (balance + month income/expense); responsive stacked metrics on mobile.
+- package.json — version `0.9.41`.
+- components/dashboard/dashboard-summary-card.tsx — New shared component; olive-green unified surface; no internal borders or income/expense icons.
+- app/(dashboard)/dashboard/page.tsx — Replaces three separate summary cards with `DashboardSummaryCard`.
+- docs/PRD.md — §18.3.9 and §18.4 Dashboard summary (home): combined card, layout, balance visibility.
+- docs/structure/dashboard-responsive-ui.md — §6.1 Combined summary card; component table entry.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
+## 16/05/2026 (v0.9.40 — calendar THB summary, landing shell, recurring timezone)
+
+- CHANGELOG.md, CHANGELOG.th.md — v0.9.40: calendar-summary THB totals + day tooltips; `LandingPublicShell` / doodle background; recurring link-candidates `timezone`.
+- package.json — version `0.9.40`.
+- docs/PRD.md — §18.3.3 `calendar-summary`: timezone, account filter, THB fields in response, `lib/calendar-summary-thb.ts`.
+- docs/feature/recurring-transactions.md — `link-candidates` `timezone` query; `onDate` filtering in user timezone.
+- docs/feature/public-landing-page.md — §2 Public shell; `LandingPublicShell`, `LandingDoodleBackground`; component table; section renumber.
+- docs/structure/dashboard-responsive-ui.md — Entry/Reports nav; mobile bottom nav; updated date.
+- docs/PRD_CHANGE_LOG.md — This entry.
+
+---
+
+## 07/05/2026 (v0.9.39 — Entry/Reports tabs, transactions view switcher)
+
+- CHANGELOG.md, CHANGELOG.th.md — v0.9.39: `/dashboard/entry`, `/dashboard/reports`, transactions list/calendar switcher, sidebar/mobile nav (documented in release notes; nav details synced to dashboard-responsive-ui on 16/05).
+
+---
+
 ## 04/05/2026 (Recurring confirm — link existing transaction)
 
 - docs/feature/recurring-transactions.md — Document `getCalendarMonthBounds`, `listRecurringLinkCandidates`, `GET .../link-candidates`, confirm body (`dueYear`/`dueMonth`, optional `linkTransactionId`), UI dual mode, activity log for link vs create.

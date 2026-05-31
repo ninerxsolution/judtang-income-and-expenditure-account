@@ -46,6 +46,10 @@ export const enDictionary = {
       pending: "Signing in…",
       invalidCredentials: "Invalid email or password",
       genericError: "Something went wrong. Please try again.",
+      serverError:
+        "We're having trouble signing you in right now. Please try again in a moment.",
+      oauthNotLinked:
+        "This email is already registered with a different sign-in method. Please sign in the way you used before.",
       or: "or",
       google: "Sign in with Google",
       noAccount: "Don't have an account?",
@@ -878,9 +882,9 @@ export const enDictionary = {
       themeSystem: "System",
     },
     hero: {
-      headline: "Know where your money goes — every account, every card",
+      headline: "Let's Judtang.",
       subheadline:
-        "Track income & expenses, transfer between accounts, and manage credit cards with billing cycles — all in one place.",
+        "Easy to write down, see the big picture, manage your money well",
       primaryCta: "Get Started",
       secondaryCta: "See all features",
       previewLabel: "Dashboard preview",
@@ -1248,156 +1252,230 @@ export const enDictionary = {
     meta: {
       title: "Privacy Policy",
       description:
-        "Judtang Privacy Policy — what data we collect, how we use it, and your rights.",
+        "Judtang Privacy Policy — what data we collect, how we use it, your rights under PDPA / GDPR, and how to contact us.",
     },
     title: "Privacy Policy",
-    version: "Version 1.0",
-    effectiveDate: "Effective Date: March 2, 2026",
-    lastUpdated: "Last updated: March 2, 2026",
-    backToHome: "Back to Home",
+    version: "Version {version}",
+    effectiveDate: "Effective Date: May 16, 2026",
+    lastUpdated: "Last updated: May 16, 2026",
+    backToHome: "Back to home",
     sections: {
       introduction: {
         title: "1. Introduction",
-        body: 'Judtang ("we", "our") takes your privacy seriously. This policy explains what information we collect when you use the Judtang financial management application, how we use it, and your rights regarding your data.\n\nBy using our service, you agree to this policy. If you disagree with any part, please stop using the service.',
+        body: 'Judtang ("we", "us", "our") is a personal finance tracking application. We take your privacy seriously and aim to be transparent about what we collect, why, and how we protect it.\n\nThis policy applies to everyone who visits our website, registers an account, or submits a message through our public contact form. It is written to align with the Thai Personal Data Protection Act, B.E. 2562 (2019) ("PDPA") and, where applicable, with GDPR principles.\n\nBy creating an account or using the service, you consent to this policy. If you disagree, please stop using the service.',
       },
       dataCollected: {
         title: "2. Information We Collect",
         intro:
-          "We collect only the information necessary to provide our service.",
+          "We collect only what we need to operate the service. The list below reflects what is actually stored or processed by the current version of the app.",
         categories: [
           {
-            heading: "Account Information",
+            heading: "Account & Identity",
             items: [
               "Email address",
-              "Username",
-              "Password (hashed only — never stored in plain text)",
+              "Display name (optional)",
+              "Profile image (optional; when uploaded or supplied by Google)",
+              "Password — stored only as a bcrypt hash; never in plain text",
+              "Google account identifier when you sign in with Google",
+              "Email verification status and role (user / admin)",
+              "Acceptance of the Terms & Conditions (timestamp, version, IP)",
             ],
           },
           {
-            heading: "Financial Metadata",
+            heading: "Financial Records You Enter",
             items: [
-              "Account name",
-              "Account type (Bank, Wallet, Cash, Credit Card)",
-              "Credit limit",
-              "Statement cycle and due date",
-              "Last 4 digits of card number (credit card accounts only, if provided by user)",
+              "Financial accounts (bank, wallet, cash, credit card, debit-card-linked, other) — name, type, currency, initial balance",
+              "Bank name and last four digits of account / card number",
+              "Full account number — only when you choose the FULL storage mode for a bank or wallet account, in which case it is encrypted with AES-256-GCM before being stored",
+              "Credit card details — credit limit, statement closing day, due day, interest rate",
+              "Transactions — type, amount, currency, exchange rate (when non-THB), THB base amount, category, note, date, account, transfer destination, status",
+              "Categories, budgets, and budget templates",
+              "Recurring transaction templates",
+              "Credit card statements (period, closing date, balance, paid amount)",
+              "Balance reconciliation entries (stated balance, difference, note)",
             ],
           },
           {
-            heading: "Usage & Technical Data",
+            heading: "Sessions & Audit",
             items: [
-              "IP address",
-              "Device and browser information",
-              "Login timestamps",
-              "Basic audit logs",
-            ],
-          },
-          {
-            heading: "User Feedback & Reports",
-            items: [
-              "Report content (category, title, description)",
-              "Optional screenshot attachments",
-              "Submission metadata (route, app version, browser, timestamp)",
+              "Active session metadata — IP address, user-agent (device / browser), last-active timestamp, expiry, remember-me flag",
+              "Activity Log — record of business actions you take (sign-in, transaction edits, account changes, etc.), including before / after values where applicable",
+              "Public contact submissions — when someone (signed in or not) writes to us via the /contact form: email, optional name, topic, subject, message, IP, browser info",
+              "Bug reports and feedback — category, title, description, optional screenshots, current route, app version, browser info",
             ],
           },
         ],
         notCollected: {
           title: "Information We Do NOT Collect",
           intro:
-            "To minimize risk and protect you, our system does not store the following:",
+            "To reduce risk we deliberately avoid collecting any of the following:",
           items: [
-            "Full credit or debit card number",
-            "CVV code",
+            "Full credit or debit card numbers (we only ever store the last 4 digits for credit cards)",
+            "CVV / security code",
             "Card expiration date",
-            "Online banking credentials",
-            "National ID number",
+            "Online banking usernames or passwords",
+            "Thai National ID number",
             "Biometric data",
+            "Location data",
           ],
         },
       },
       dataUse: {
         title: "3. How We Use Information",
-        intro:
-          "We use the collected information solely for the following purposes.",
+        intro: "We use the data above only for the following purposes:",
         items: [
-          "Manage user accounts and authentication",
-          "Provide financial tracking and account management features",
-          "Send transactional emails (password reset, email verification)",
-          "Process and respond to feedback or bug reports",
-          "Improve the security and reliability of the service",
-          "Monitor and prevent unauthorized activity",
+          "Operate accounts and authentication (sign-in, sessions, remember-me)",
+          "Provide financial tracking features — recording transactions, computing running balances, managing budgets, statements, and recurring entries",
+          "Process credit-card payments and statement closing within the app (no real-money processing)",
+          "Convert non-THB transactions to approximate THB for dashboards and budgets",
+          "Process bank-slip images you upload through the slip OCR feature",
+          "Send transactional email (email verification, password reset, contact-form notifications, completion alerts)",
+          "Receive and respond to bug reports and public contact submissions",
+          "Detect, prevent, and investigate abuse, fraud, or unauthorized access",
+          "Improve reliability, performance, and security of the service",
+        ],
+      },
+      legalBasis: {
+        title: "4. Legal Basis for Processing",
+        intro:
+          "Under PDPA and GDPR-aligned principles, we rely on the following legal bases:",
+        items: [
+          "Contract performance — to provide the service you have asked for (your account, your records, the features you use)",
+          "Legitimate interest — to keep the service safe, prevent abuse, and improve quality, balanced against your privacy",
+          "Consent — for optional analytics cookies (Vercel Analytics, Speed Insights) and other clearly opt-in features",
+          "Legal obligation — when we are required to retain or disclose data by applicable law",
         ],
       },
       security: {
-        title: "4. Data Storage & Security",
+        title: "5. Data Storage & Security",
         intro:
-          "We implement several technical measures to protect your information.",
+          "We apply technical and organizational measures to protect your data:",
         items: [
-          "All data transmission encrypted with HTTPS",
-          "Passwords hashed using a secure algorithm (bcrypt/argon2)",
-          "Access control enforced on the principle of least privilege",
-          "Database access restricted and monitored",
-          "No sensitive data stored in plain text",
+          "All traffic between your browser and our service is encrypted (HTTPS / TLS)",
+          "Passwords are stored only as bcrypt hashes; the original password is never seen by our system after sign-in",
+          "Full bank / wallet account numbers (FULL storage mode) are encrypted at rest with AES-256-GCM using an application key",
+          "Sessions are tracked individually so you can review and revoke any active device from Settings → Sessions",
+          "Database access is restricted by least-privilege controls and is routinely monitored",
+          "Cloudflare Turnstile protects public auth and contact forms from bots",
         ],
-        note: "While we apply reasonable safeguards, no system is 100% secure. We recommend using a strong, unique password and keeping your login credentials private.",
+        note: "Even with these measures, no internet service is 100% secure. Please use a strong, unique password and keep it private.",
+      },
+      cookies: {
+        title: "6. Cookies & Local Storage",
+        intro:
+          "We use only cookies and browser storage that are necessary for the service to function, plus optional analytics that load only after you opt in.",
+        necessary: {
+          title: "Necessary (always on)",
+          items: [
+            "NextAuth session cookie — keeps you signed in",
+            "Language cookie (`lang`) — remembers Thai or English",
+            "Theme preference — remembers light, dark, or system",
+            "Consent record (localStorage `judtang_consent`) — remembers your cookie preference",
+          ],
+        },
+        functional: {
+          title: "Functional (browser-only)",
+          items: [
+            "Balance visibility toggle (`judtang_balance_visible`) — masks balances on the dashboard",
+            "Recent categories and accounts (`judtang_recent_*`) — speeds up pickers",
+            "Spending Efficiency daily target — your personal target",
+            "Announcement dismissal — remembers that you closed a home-page banner",
+            "Slip OCR drafts — keeps in-progress slip uploads if you refresh the page",
+          ],
+        },
+        optional: {
+          title: "Optional (opt-in only)",
+          items: [
+            "Vercel Analytics and Speed Insights — measure aggregate page performance and visits. They load only after you accept analytics on the cookie banner.",
+          ],
+        },
+        note: "You can change your analytics preference at any time by clearing site data or revisiting the cookie banner. Necessary cookies cannot be disabled because the site needs them to work.",
       },
       thirdParty: {
-        title: "5. Third-Party Services",
+        title: "7. Third-Party Services",
         intro:
-          "We use trusted third-party providers to operate our service. These providers may process your data under their own privacy policies.",
+          "We use the following third-party providers to operate the service. Each one processes data under its own privacy policy. We do not sell or share your personal information for marketing.",
         providers: [
           {
-            name: "Cloud Hosting Provider",
-            purpose: "Application infrastructure and hosting",
-          },
-          {
-            name: "Email Delivery Service",
-            purpose: "Sending transactional emails (verification, reset)",
+            name: "Google (OAuth)",
+            purpose: "Sign in with Google. Google receives your Google identifier; we receive your email, name, and avatar.",
           },
           {
             name: "Cloudflare Turnstile",
-            purpose: "Bot protection and CAPTCHA verification",
+            purpose: "Bot protection on public auth and contact forms.",
+          },
+          {
+            name: "Resend",
+            purpose: "Delivery of transactional email (verification, password reset, contact-form notifications). Falls back to SMTP if not configured.",
+          },
+          {
+            name: "OCR.space",
+            purpose: "Parses bank-slip images you upload through the slip OCR feature. Images are sent to OCR.space for text extraction and are not stored on our servers.",
+          },
+          {
+            name: "open.er-api.com",
+            purpose: "Public USD → THB foreign-exchange rate. No personal data is sent.",
+          },
+          {
+            name: "Vercel Analytics & Speed Insights",
+            purpose: "Aggregate page performance and visit metrics. Loaded only after you opt in via the cookie banner.",
+          },
+          {
+            name: "Cloud hosting provider",
+            purpose: "Underlying application and database infrastructure.",
           },
         ],
-        note: "We do not sell, trade, or share your personal information with third parties for marketing purposes.",
+        note: "Where a provider is based outside Thailand, your data may be transferred internationally — see the International Data Transfers section.",
+      },
+      internationalTransfer: {
+        title: "8. International Data Transfers",
+        body: "Some of our providers operate or process data outside Thailand (for example, Resend, OCR.space, Cloudflare, and Vercel are based in the United States and the European Union).\n\nWhen we use these providers, your data may be transferred and processed in those jurisdictions. We choose providers that operate under recognized data-protection frameworks and apply contractual protections where available.\n\nBy using the service you acknowledge that your data may be processed outside Thailand for the purposes described in this policy.",
+      },
+      children: {
+        title: "9. Children's Data",
+        body: "Judtang is intended for users aged 13 and over. We do not knowingly collect data from children under 13.\n\nUnder Thai law, individuals under 20 generally require parental or guardian consent to provide personal data in certain contexts. If you are under 20, please make sure you have your parent's or guardian's consent before using the service.\n\nIf you believe a child under 13 has registered, please contact us via the /contact form and we will take steps to remove the data.",
       },
       retention: {
-        title: "6. Data Retention",
-        body: "We retain your personal data for as long as your account is active or as needed to provide the service.\n\nWhen you delete your account, your personal data, financial accounts, and transaction history are permanently removed from our systems. Backup copies may persist until the scheduled backup rotation cycle completes.",
+        title: "10. Data Retention",
+        body: "We retain your personal data for as long as your account is active and for the time needed to deliver the service.\n\nWhen you choose to deactivate your account from Settings → Privacy, your account enters a grace period (default 30 days) during which it is suspended but not deleted. During this period you can restore the account from /restore-account.\n\nAt the end of the grace period, on the next sign-in attempt the account is finalized: your email is replaced with a placeholder so it can be reused for a new registration, all active sessions are revoked, and your status is marked as deleted. Some records (such as Activity Log entries that reference your user ID for audit) may be retained for a limited time after deletion for security and compliance.\n\nBackup copies may persist until the scheduled backup rotation cycle completes.",
       },
       rights: {
-        title: "7. Your Rights",
+        title: "11. Your Rights",
         intro:
-          "You have the following rights regarding your personal data (under PDPA and GDPR-aligned principles).",
+          "Under PDPA and GDPR-aligned principles, you have the following rights regarding your personal data:",
         items: [
           "Right of Access — request a copy of the data we hold about you",
-          "Right to Rectification — request correction of inaccurate data",
-          "Right to Erasure — request deletion of your data (right to be forgotten)",
+          "Right to Rectification — request correction of inaccurate or incomplete data",
+          "Right to Erasure — request deletion of your data ('right to be forgotten'), subject to limited exceptions for security and legal compliance",
           "Right to Object — object to processing in certain circumstances",
-          "Right to Data Portability — request your data in a portable format",
+          "Right to Data Portability — request your data in a structured, commonly used format (CSV export is available in-app)",
+          "Right to Withdraw Consent — for any processing that is based on your consent (such as analytics)",
+          "Right to Lodge a Complaint — with the Office of the Personal Data Protection Committee (PDPC) of Thailand",
         ],
-        note: "To exercise any of these rights, please contact us through the channels listed in the Contact section.",
+        note: "To exercise any of these rights, contact us through the channels listed in the Contact section. We aim to respond within a reasonable time.",
       },
       deletion: {
-        title: "8. Account Deletion",
-        body: "You may delete your account at any time through the Settings page. Deletion permanently removes your personal data from our active systems.",
-        removesTitle: "Data removed upon deletion",
+        title: "12. Account Deletion",
+        body: "You can deactivate your account at any time from Settings → Privacy. After a 30-day grace period, the account is finalized for deletion as described in the Data Retention section.",
+        removesTitle: "Data removed or anonymized on finalization",
         removes: [
-          "Profile and account information",
-          "All financial accounts",
-          "All transaction records",
-          "All statement records",
+          "Profile and account information (email replaced with a placeholder)",
+          "All financial accounts and account-number ciphertext",
+          "All transactions, statements, and reconciliation entries",
+          "All categories, budgets, budget templates, and recurring transactions",
+          "All in-app notifications",
+          "All active sessions are revoked",
         ],
         backupNote:
-          "Backup copies may persist until the scheduled backup rotation cycle completes.",
+          "Activity Log entries may be retained for a limited audit period; backup copies may persist until the scheduled backup rotation cycle completes.",
       },
       changes: {
-        title: "9. Changes to This Policy",
-        body: "We may update this policy from time to time. When material changes occur, we will notify you via email or an in-app notice. The updated effective date will be shown at the top of this page.\n\nContinued use of the service after changes constitutes acceptance of the updated policy.",
+        title: "13. Changes to This Policy",
+        body: "We may update this policy from time to time. When material changes occur, we will bump the version and effective date at the top of this page, and may notify signed-in users via email or an in-app banner.\n\nContinued use of the service after a change becomes effective indicates acceptance of the updated policy.",
       },
       contact: {
-        title: "10. Contact Information",
-        body: "If you have questions about this Privacy Policy or wish to exercise your rights, you may use the public contact form at /contact (no login required), the in-app Help & Feedback page in Settings (when signed in), or your account Settings page for account-related requests.\n\nWe process messages to respond to you and improve the service. Do not include passwords or full payment card numbers in messages.",
+        title: "14. Contact Information",
+        body: "If you have questions about this Privacy Policy or wish to exercise your rights, please use the public contact form at /contact (no sign-in required) or the in-app Help & Feedback page at Settings → Help & Feedback (when signed in).\n\nDo not include passwords or full payment card numbers in messages. For complaints, you may also contact the Office of the Personal Data Protection Committee (PDPC) of Thailand.",
       },
     },
   },
@@ -1405,43 +1483,48 @@ export const enDictionary = {
     meta: {
       title: "Terms & Conditions — Judtang",
       description:
-        "Read the Terms & Conditions governing your use of the Judtang financial tracking service.",
+        "Read the Terms & Conditions governing your use of the Judtang personal finance tracking service.",
     },
     title: "Terms & Conditions",
     version: "Version {version}",
-    effectiveDate: "Effective Date: March 2, 2026",
-    lastUpdated: "Last Updated: March 2, 2026",
+    effectiveDate: "Effective Date: May 16, 2026",
+    lastUpdated: "Last Updated: May 16, 2026",
     backToHome: "Back to home",
     sections: {
       acceptance: {
         title: "1. Acceptance of Terms",
-        body: "By creating an account or continuing to use Judtang, you agree to be bound by these Terms & Conditions. If you do not agree to these terms, please do not use this service.\n\nThese terms apply to all users of the Judtang financial tracking platform.",
+        body: "By creating an account or continuing to use Judtang, you agree to be bound by these Terms & Conditions. If you do not agree, please do not use the service.\n\nThese terms apply to all users of the Judtang personal finance tracking platform.",
+      },
+      eligibility: {
+        title: "2. Eligibility & Age",
+        body: "You must be at least 13 years old to use Judtang.\n\nIf you are under 20 and reside in Thailand, you must have the consent of a parent or guardian to use the service, as required by Thai law for the processing of personal data of minors in certain contexts.\n\nBy registering, you confirm that you meet these requirements.",
       },
       serviceDescription: {
-        title: "2. Description of Service",
-        body: "Judtang is a personal financial tracking tool that allows you to record, categorize, and review your income and expenses across multiple accounts.",
+        title: "3. Description of Service",
+        body: "Judtang is a personal financial tracking tool that allows you to record, categorize, and review your income and expenses across multiple accounts. It is intended for personal use only.",
         clarifications: [
           "Judtang does not process payments on your behalf",
           "Judtang does not provide financial, investment, or tax advice",
           "Judtang does not connect directly to your bank accounts",
           "Judtang is not a bank, financial institution, or payment service",
-          "All data you enter is self-reported and not verified by the system",
+          "All financial data you enter is self-reported and is not verified by the system",
+          "Multi-currency totals shown in THB use approximate exchange rates and are not a substitute for an official statement",
         ],
       },
       userResponsibilities: {
-        title: "3. User Responsibilities",
+        title: "4. User Responsibilities",
         intro: "By using this service, you agree to:",
         items: [
           "Provide accurate and complete information when creating your account",
           "Keep your account credentials secure and confidential",
           "Use the service in compliance with applicable laws and regulations",
-          "Not attempt to reverse-engineer, hack, or disrupt the system",
+          "Not attempt to reverse-engineer, hack, scrape, or otherwise disrupt the service",
           "Not use the service for unlawful, fraudulent, or abusive purposes",
           "Be solely responsible for the accuracy of all financial data you enter",
         ],
       },
       liability: {
-        title: "4. Limitation of Liability",
+        title: "5. Limitation of Liability",
         intro:
           'The service is provided "as is" and "as available" without warranties of any kind.',
         items: [
@@ -1451,12 +1534,12 @@ export const enDictionary = {
           "We do not guarantee uninterrupted or error-free service",
           "We are not liable for any indirect, incidental, or consequential damages",
         ],
-        note: "Your use of this service is entirely at your own risk. Always verify important financial information through your official bank or financial institution.",
+        note: "Use of this service is entirely at your own risk. Always verify important financial information through your official bank or financial institution.",
       },
       termination: {
-        title: "5. Account Termination",
+        title: "6. Account Termination",
         providerRights: {
-          title: "Service provider rights",
+          title: "Our rights",
           items: [
             "Suspend or terminate accounts that violate these terms",
             "Remove users engaging in abusive or unlawful behavior",
@@ -1466,18 +1549,31 @@ export const enDictionary = {
         userRights: {
           title: "Your rights",
           items: [
-            "Delete your account at any time through the Settings page",
-            "Upon deletion, your personal data is permanently removed from active systems",
+            "Deactivate your account at any time through Settings → Privacy",
+            "After deactivation, your account is suspended for a grace period (default 30 days) during which you can restore it from /restore-account",
+            "After the grace period the account is finalized for deletion: your email is replaced with a placeholder so it can be reused for a new registration, sessions are revoked, and personal data is removed as described in the Privacy Policy",
           ],
         },
       },
       intellectualProperty: {
-        title: "6. Intellectual Property",
+        title: "7. Intellectual Property",
         body: "The Judtang software, design, code, and branding are the intellectual property of the service provider. All rights are reserved.\n\nYou retain full ownership of the financial data you enter into the system. We do not claim any rights over your personal financial records.",
       },
+      governingLaw: {
+        title: "8. Governing Law & Jurisdiction",
+        body: "These Terms are governed by the laws of the Kingdom of Thailand, including the Personal Data Protection Act, B.E. 2562 (2019) (PDPA), and any related regulations.\n\nAny dispute arising out of or in connection with these Terms or your use of the service shall be subject to the exclusive jurisdiction of the competent courts of Thailand.",
+      },
+      severability: {
+        title: "9. Severability",
+        body: "If any provision of these Terms is found to be invalid or unenforceable by a court of competent jurisdiction, that provision shall be limited or eliminated to the minimum extent necessary; the remaining provisions shall remain in full force and effect.",
+      },
       changes: {
-        title: "7. Changes to Terms",
-        body: "We may update these Terms & Conditions from time to time. When material changes are made, the version number and effective date will be updated on this page.\n\nContinued use of the service after changes are posted constitutes acceptance of the updated terms.",
+        title: "10. Changes to Terms",
+        body: "We may update these Terms & Conditions from time to time. When material changes are made, the version number and effective date will be updated on this page, and we may notify signed-in users via email or an in-app banner.\n\nContinued use of the service after a change becomes effective constitutes acceptance of the updated terms.",
+      },
+      contact: {
+        title: "11. Contact",
+        body: "If you have questions about these Terms, please use the public contact form at /contact (no sign-in required) or the in-app Help & Feedback page at Settings → Help & Feedback (when signed in).",
       },
     },
   },
@@ -1616,6 +1712,26 @@ export const enDictionary = {
     validationAmountRequired: "Amount is required",
     validationAmountPositive: "Amount must be positive",
     day: "Day {day}",
+    selectRow: "Select row",
+    selectedCount: "{count} selected",
+    selectAll: "Select all ({count})",
+    deselectAll: "Deselect all",
+    setType: "Type:",
+    setCategory: "Set category",
+    setAccount: "Set account",
+    deleteSelected: "Delete",
+    clearSelection: "Clear selection",
+    invalidRowsHint: "{count} row(s) need attention before saving.",
+    validationTransferDestination:
+      "Transfer rows need a destination account different from the source.",
+    nothingToSave: "Enter an amount before saving.",
+    saveValidationFailed:
+      "{count} row(s) were rejected. Check the highlighted rows.",
+    saveServerError:
+      "Server error while saving. Your entries are kept — please try again.",
+    saveNetworkError:
+      "Network error. Your entries are kept — check your connection and try again.",
+    draftRestored: "Restored your unsaved entries.",
   },
   notifications: {
     title: "Notifications",

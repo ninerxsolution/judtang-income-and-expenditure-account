@@ -14,6 +14,7 @@ import { LandingNavbar } from "@/components/landing/landing-navbar";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LandingGoToTop } from "@/components/landing/landing-go-to-top";
+import { LandingPublicShell } from "@/components/landing/landing-public-shell";
 
 async function getLanguage(): Promise<Language> {
   const cookieStore = await cookies();
@@ -35,13 +36,13 @@ export default async function Home() {
   const latestVersion = versions[0]?.version ?? "0.0.0";
 
   return (
-    <div className="landing-page flex min-h-screen flex-col bg-[#F5F0E8] dark:bg-stone-950">
+    <LandingPublicShell>
       <LandingNavbar language={language} />
       <main className="flex flex-1 flex-col">
         <LandingHero language={language} />
         <LandingFooter language={language} version={latestVersion} />
       </main>
       <LandingGoToTop />
-    </div>
+    </LandingPublicShell>
   );
 }

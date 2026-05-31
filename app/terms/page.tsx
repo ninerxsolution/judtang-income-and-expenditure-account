@@ -14,6 +14,8 @@ import {
 } from "@/i18n";
 import { BulletList } from "@/components/ui/bullet-list";
 import { Button } from "@/components/ui/button";
+import { LandingGoToTop } from "@/components/landing/landing-go-to-top";
+import { LandingPublicShell } from "@/components/landing/landing-public-shell";
 import { TERMS_VERSION } from "@/lib/terms";
 
 async function getLanguage(): Promise<Language> {
@@ -47,10 +49,10 @@ export default async function TermsPage() {
     ));
 
   return (
-    <div className="landing-page min-h-screen bg-[#F5F0E8] dark:bg-stone-950">
+    <LandingPublicShell>
       {/* Sticky header */}
       <header className="sticky top-0 z-10 border-b border-[#D4C9B0] bg-[#FDFAF4]/95 backdrop-blur supports-backdrop-filter:bg-[#FDFAF4]/80 dark:border-stone-800 dark:bg-stone-950/95 dark:supports-backdrop-filter:bg-stone-950/80">
-        <div className="mx-auto flex min-h-[68px] max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex min-h-[68px] max-w-6xl items-center justify-between px-2 sm:px-6 py-2 sm:py-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/" className="gap-2 text-[#6B5E4E] hover:text-[#3D3020] dark:text-stone-400 dark:hover:text-stone-100">
               <ArrowLeft className="h-4 w-4" />
@@ -95,7 +97,21 @@ export default async function TermsPage() {
             </div>
           </section>
 
-          {/* 2. Description of Service */}
+          {/* 2. Eligibility & Age */}
+          <section aria-labelledby="s-eligibility">
+            <SectionAnchor id="eligibility" />
+            <h2
+              id="s-eligibility"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {t.sections.eligibility.title}
+            </h2>
+            <div className="space-y-3">
+              {bodyLines(t.sections.eligibility.body)}
+            </div>
+          </section>
+
+          {/* 3. Description of Service */}
           <section aria-labelledby="s-service">
             <SectionAnchor id="service" />
             <h2
@@ -114,7 +130,7 @@ export default async function TermsPage() {
             />
           </section>
 
-          {/* 3. User Responsibilities */}
+          {/* 4. User Responsibilities */}
           <section aria-labelledby="s-responsibilities">
             <SectionAnchor id="responsibilities" />
             <h2
@@ -133,7 +149,7 @@ export default async function TermsPage() {
             />
           </section>
 
-          {/* 4. Limitation of Liability */}
+          {/* 5. Limitation of Liability */}
           <section aria-labelledby="s-liability">
             <SectionAnchor id="liability" />
             <h2
@@ -166,7 +182,7 @@ export default async function TermsPage() {
             </div>
           </section>
 
-          {/* 5. Account Termination */}
+          {/* 6. Account Termination */}
           <section aria-labelledby="s-termination">
             <SectionAnchor id="termination" />
             <h2
@@ -199,7 +215,7 @@ export default async function TermsPage() {
             </div>
           </section>
 
-          {/* 6. Intellectual Property */}
+          {/* 7. Intellectual Property */}
           <section aria-labelledby="s-ip">
             <SectionAnchor id="intellectual-property" />
             <h2
@@ -213,7 +229,35 @@ export default async function TermsPage() {
             </div>
           </section>
 
-          {/* 7. Changes to Terms */}
+          {/* 8. Governing Law & Jurisdiction */}
+          <section aria-labelledby="s-governing-law">
+            <SectionAnchor id="governing-law" />
+            <h2
+              id="s-governing-law"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {t.sections.governingLaw.title}
+            </h2>
+            <div className="space-y-3">
+              {bodyLines(t.sections.governingLaw.body)}
+            </div>
+          </section>
+
+          {/* 9. Severability */}
+          <section aria-labelledby="s-severability">
+            <SectionAnchor id="severability" />
+            <h2
+              id="s-severability"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {t.sections.severability.title}
+            </h2>
+            <div className="space-y-3">
+              {bodyLines(t.sections.severability.body)}
+            </div>
+          </section>
+
+          {/* 10. Changes to Terms */}
           <section aria-labelledby="s-changes">
             <SectionAnchor id="changes" />
             <h2
@@ -224,6 +268,20 @@ export default async function TermsPage() {
             </h2>
             <div className="space-y-3">{bodyLines(t.sections.changes.body)}</div>
           </section>
+
+          {/* 11. Contact */}
+          <section aria-labelledby="s-contact">
+            <SectionAnchor id="contact" />
+            <h2
+              id="s-contact"
+              className="mb-3 text-base font-semibold text-[#3D3020] dark:text-stone-100"
+            >
+              {t.sections.contact.title}
+            </h2>
+            <div className="space-y-3">
+              {bodyLines(t.sections.contact.body)}
+            </div>
+          </section>
         </div>
 
         {/* Footer note */}
@@ -233,6 +291,7 @@ export default async function TermsPage() {
           </p>
         </div>
       </main>
-    </div>
+      <LandingGoToTop />
+    </LandingPublicShell>
   );
 }

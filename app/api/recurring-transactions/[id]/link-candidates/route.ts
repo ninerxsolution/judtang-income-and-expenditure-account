@@ -47,6 +47,11 @@ export async function GET(request: Request, { params }: RouteContext) {
     options.limit = lim;
   }
 
+  const timezoneParam = searchParams.get("timezone")?.trim();
+  if (timezoneParam && timezoneParam.length > 0) {
+    options.timezone = timezoneParam;
+  }
+
   try {
     const items = await listRecurringLinkCandidates(userId, id, year, month, options);
     return NextResponse.json(items);

@@ -2,6 +2,242 @@
 
 ---
 
+# v0.9.44 - 2026-05-31
+
+## Fixed
+
+- **Sign-in no longer exposes raw server errors** — When the database was unreachable, signing in redirected to a page showing the raw driver error (e.g. `pool timeout: failed to retrieve a connection from pool ...`) in both the URL and the page body. NextAuth callbacks now catch infrastructure failures and surface a clean, localized "we're having trouble signing you in right now" message instead; the raw error is logged server-side only. Unknown error codes always fall back to a generic message, so internal details can never reach the user.
+
+## Changed
+
+- **Auth resilience during a database blip** — An already-signed-in user is no longer forced out or shown an error if the database is briefly unavailable; per-request session validation degrades gracefully and resumes automatically once the database recovers.
+- **Error pages hide internals in production** — The global and dashboard error screens now show a generic message in production (the underlying message is shown only in development).
+
+---
+
+# v0.9.43 - 2026-05-31
+
+## Fixed
+
+- **Monthly entry no longer fails when saving large batches** — Saving many rows at once (e.g. 70–100+ at month-end) could return a 500 error. The bulk endpoint resolved every row's account and category with separate queries *inside* a single database transaction, which exceeded the database's 5-second interactive-transaction limit once the batch grew large. It now pre-resolves all accounts and categories up front and inserts with a single chunked batch write (with an explicit timeout), so hundreds of rows save reliably. The server also logs the real error instead of swallowing it into an opaque 500.
+
+## Added
+
+- **Multi-select bulk editing on the monthly entry page** — Select several unsaved rows (a per-day checkbox selects a whole day; "Select all" selects every entered row) and set their type, category, or account in one action — or delete them together — instead of editing one row at a time.
+- **Draft auto-save for monthly entry** — Unsaved rows are now kept in your browser per month, so a refresh or navigating away no longer loses what you typed. Drafts are restored automatically (with a confirmation) and cleared once you save.
+
+## Changed
+
+- **Clearer monthly entry validation** — Transfer rows missing a destination account are caught before saving and highlighted; rows the server rejects are highlighted and scrolled into view; and save errors now distinguish validation, server, and network problems.
+
+---
+
+# v0.9.42 - 2026-05-16
+
+## Added
+
+- **Calendar month/year tooltips** — `GET /api/transactions/month-summary` and `year-summary` now return approximate THB totals per month/year (`incomeSumThb`, `expenseSumThb`, `transferSumThb`) using the same logic as `calendar-summary`. Hovering a month or year tile shows income, expense, and transfer breakdown in THB (or “no records”).
+
+## Changed
+
+- **Calendar view-mode toolbar placement** — Day / Week / Month / Year / Today controls on the **dashboard home** calendar sit in the card header on the same row as prev/next and the period label. On **transactions calendar view** (`/dashboard/transactions?view=calendar`) and the full **calendar page** (`variant="full"`), those controls render **above** the calendar card (previous layout). Override with `viewModeToolbarPlacement` on `TransactionsCalendar` (`inside-card` | `outside-card`).
+
+---
+
+# v0.9.41 - 2026-05-16
+
+## Changed
+
+- **Dashboard summary card** — The home page now shows balance, monthly income, and monthly expense in a single combined card (`DashboardSummaryCard`) with one olive-green background instead of three separate cards. Income and expense use text color only (no icons or internal borders). On mobile, income and expense stack one per row; from `sm` breakpoint up they appear side by side. Balance visibility toggle still masks all three amounts on this card.
+
+---
+
+# v0.9.40 - 2026-05-16
+
+## Added
+
+- **Calendar day THB summaries** — `GET /api/transactions/calendar-summary` now returns per-day income, expense, and transfer counts plus approximate THB totals (`incomeSumThb`, `expenseSumThb`, `transferSumThb`). Shared logic lives in `lib/calendar-summary-thb.ts`. The transactions calendar shows a tooltip on each day with the breakdown.
+- **Landing public shell** — New `LandingPublicShell` wraps the home page and public information pages (Contact, Privacy, Terms, Releases) for a consistent layout. `LandingDoodleBackground` adds light floating doodle animations with `prefers-reduced-motion` support.
+
+## Changed
+
+- **Recurring link picker timezone** — `GET /api/recurring-transactions/[id]/link-candidates` accepts an optional `timezone` query param (used for `onDate` day bounds and date display in the link slide picker). Defaults to `Asia/Bangkok` when omitted.
+
+---
+
+# v0.9.39 - 2026-05-07
+
+## Added
+
+- **Entry page with tabs** — A new `/dashboard/entry` page groups Monthly entry and Recurring entry under tabs, so you can jump between the two flows without leaving the page.
+- **Reports page with tabs** — A new `/dashboard/reports` page groups Summary and Spending Efficiency under tabs.
+
+## Changed
+
+- **Transactions page view switcher** — The transactions page now lets you switch between list and calendar views from the same page.
+- **Sidebar and mobile nav** — Updated to include the new Entry and Reports links and to keep the most-used items reachable.
+
+---
+
+# v0.9.38 - 2026-05-06
+
+## Changed
+
+- **Landing hero refresh** — Updated layout and messaging on the home page hero. The responsive background curve is now stable across screen sizes (no more layout shift on narrow viewports).
+
+---
+
+# v0.9.37 - 2026-05-05
+
+## Added
+
+- **Balance reconciliation** — Record a snapshot of an account's actual balance (from your bank app or paper statement) against the app's calculated balance. The system stores the user-stated value, the app-calculated value, the difference, currency, and an optional note, so you can see drift over time.
+- **Reconciliation history** — Each account detail page now has a reconciliation history alongside the transaction list. Activity Log records each reconciliation event.
+
+## Migration
+
+- Added a new `BalanceReconciliation` table.
+
+---
+
+# v0.9.36 - 2026-05-04
+
+## Added
+
+- **Recurring link picker** — When confirming a recurring template for the current month, you can now link an existing transaction instead of creating a new one. A new slide picker shows candidate transactions (POSTED, same type, not already linked, not part of a transfer group) and supports search and date filter.
+- **Running balance after each transaction** — Transactions now carry `accountBalanceAfter` (and `transferAccountBalanceAfter` for same-currency transfers) — the account balance immediately after that posting. Snapshots are rebuilt automatically after any edit, delete, or import. Debit cards with a linked bank account get their snapshots from the combined chronological ledger.
+
+## Fixed
+
+- **Transactions list cache** — The transactions list endpoint is now cached at module level with a payload-version key. Bumping the version invalidates old cache entries whose JSON shape no longer matches the current response. Previously, stale cache entries could keep showing "—" in the balance column after a deploy.
+- **Transfer-group PATCH guards** — Edits to a transfer-group row that explicitly pass `categoryId: null` (clear) now behave correctly. Previously the guard could confuse "clear" with "no change" and reject the edit.
+- **Announcement API** — Returns `null` gracefully when the announcement table is unavailable, instead of throwing.
+
+## Migration
+
+- Added `accountBalanceAfter` and `transferAccountBalanceAfter` columns to the `Transaction` table.
+
+---
+
+# v0.9.35 - 2026-04-26
+
+## Added
+
+- **Average expense metrics** — The Summary page and Spending Efficiency page now show average monthly, weekly, and daily expenses next to the total — helpful for spotting whether the current period is above or below your usual pace.
+
+---
+
+# v0.9.34 - 2026-04-24
+
+## Added
+
+- **Spending Efficiency dashboard** — A new page at `/dashboard/spending-efficiency` compares your actual daily expenses (and interest) against a user-defined daily target. Shows day-by-day deltas so you can see which days went over.
+- **Excluded categories** — Specific categories can be excluded from the spending-efficiency calculation (e.g. you may want to exclude transfers or rent).
+- **API** — New `GET /api/spending-efficiency` with `from`, `to`, and `timezone` query params.
+- **Persisted target** — The daily target is saved in `localStorage` so it persists across sessions.
+
+---
+
+# v0.9.33 - 2026-04-22
+
+## Added
+
+- **Balance Visibility toggle** — A new eye-icon toggle in the dashboard header masks the balance card, income / expense cards, and budget spent / total on the dashboard home. The state persists across reloads (`localStorage` key `judtang_balance_visible`, default visible). Useful when showing the screen to someone else.
+
+---
+
+# v0.9.32 - 2026-04-22
+
+## Added
+
+- **Multi-currency transactions** — Each financial account and transaction now carries a `currency` (ISO 4217). THB remains the base currency for dashboards, summaries, and budgets, but non-THB legs are now tracked at their native amount and converted to THB using a stored `exchangeRate` (= THB per 1 unit of the row's currency) and `baseAmount` snapshot taken at posting time.
+- **Cross-currency transfers** — Transfers between accounts with different currencies are now recorded as a paired two-row group sharing a `transferGroupId` (OUT on source, IN on destination). Edit and delete act on the whole group. Same-currency transfers stay as a single row.
+- **FX rate suggestion API** — New `GET /api/fx/suggest` returns a suggested USD→THB rate (with a 32 THB/USD fallback when the upstream is unavailable).
+- **Dashboard approximate totals** — Dashboard and summary endpoints now report approximate THB for non-THB accounts so totals stay meaningful when you hold multiple currencies.
+
+## Changed
+
+- **Currency immutability** — After a financial account has its first POSTED transaction, its currency can no longer be changed.
+
+## Migration
+
+- Added `currency`, `exchangeRate`, `baseAmount`, `transferGroupId`, and `transferLeg` columns to the `Transaction` table; added `currency` to `FinancialAccount`.
+
+---
+
+# v0.9.31 - 2026-04-05
+
+## Added
+
+- **Spending Overview card on dashboard** — A new card on the dashboard home shows today's expenses and the weekly expense total at a glance. The data is included in the dashboard initialization response, so it loads with the rest of the home summary.
+
+---
+
+# v0.9.30 - 2026-04-04
+
+## Added
+
+- **Searchable account picker** — A new `AccountSelectorButton` in the transaction form lets you search accounts by name and prioritizes recently used accounts (MRU stored in `localStorage`).
+- **Account slide picker** — A drill-down `AccountSlidePicker` panel is now used for account selection inside the transaction form, credit-card payment dialog, financial-account form, and recurring transaction dialog — one consistent picker across the app.
+
+## Changed
+
+- **Picker reset on dialog close** — When a dialog containing the account picker closes, its navigation and search term reset, so the next open starts fresh.
+
+---
+
+# v0.9.29 - 2026-04-03
+
+## Changed
+
+- **Budget settings rebuild** — The budget settings page (`/dashboard/settings/budget`) is split into focused components for a cleaner experience:
+  - **Month toolbar** for switching year/month
+  - **Total budget card** with monthly limit input
+  - **Category budget grid** with inline edit per category
+  - **Coverage grid** showing which categories have a limit set
+  - **Template section** for creating, applying, editing, and deleting templates
+- **Shared progress indicator type** — `BudgetProgressIndicator` is now used across the dashboard summary and the budget pages for consistent thresholds (normal / warning / critical / full / over).
+- **Budget loading states** — Improved skeleton placement and user feedback while data loads.
+
+---
+
+# v0.9.28 - 2026-04-03
+
+## Added
+
+- **Recent categories (MRU)** — Category pickers now remember and prioritize categories you use most often, stored in `localStorage`. A new `CategoryRowSelect` component is used across the monthly entry page and category dropdowns for consistency.
+- **Safer auth redirects** — Signed-in users hitting `/sign-in`, `/register`, or `/restore-account` are now redirected to the dashboard. Post-login redirect respects the `callbackUrl` only when it points to a same-origin path and is not another auth page (protects against open-redirect loops).
+
+## Changed
+
+- **Silent dashboard refresh** — Quick actions, calendar interactions, and transaction invalidations no longer flicker the global loading skeleton. The dashboard refreshes data in the background while the previous content stays visible.
+- **Debit card validation** — `linkedAccountId` is now required when checking debit credit-card account completeness, preventing false "incomplete account" warnings.
+
+---
+
+# v0.9.27 - 2026-03-29
+
+## Added
+
+- **Public contact form** — A new public page at `/contact` lets anyone (signed-in or not) reach the team. Fields: topic (General / Account help / Product feedback / Partnership or Press / Other), email, optional name, subject, message. Protected by Cloudflare Turnstile and a per-IP rate limit.
+- **Admin contact inbox** — `/admin/contact-messages` lists submissions with search and pagination; detail view at `/admin/contact-messages/[id]`.
+- **Resend transactional email** — When `RESEND_API_KEY` is set, transactional email (verification, password reset, contact notification) is sent through Resend with `EMAIL_FROM`. Without it, the app falls back to Nodemailer over SMTP.
+
+## Changed
+
+- **Forgot / reset password** — Properly handles OAuth-only accounts and legacy email identifiers; response remains enumeration-safe.
+- **Email link base URL** — In development, `NEXTAUTH_URL` is preferred so verify/reset links stay on the local origin; in production, optional `APP_BASE_URL` can override.
+
+---
+
+# v0.9.26 - 2026-03-22
+
+## Added
+
+- **Announcement image upload** — Admins can attach an image (JPEG, PNG, or WebP) to the home page announcement from `/admin/settings/announcement`. The image renders inside the announcement modal on the landing page; URLs are stable under `/storage/announcement/image/<filename>`.
+
+---
+
 # v0.9.25 - 2026-03-21
 
 ## Changed
