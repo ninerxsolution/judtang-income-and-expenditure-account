@@ -1,7 +1,7 @@
 import "./load-env";
 import bcrypt from "bcrypt";
 import { subDays, addDays, subMonths, startOfDay } from "date-fns";
-import { TransactionType, TransactionStatus, RecurringFrequency } from "@prisma/client";
+import { TransactionType, TransactionStatus, RecurringFrequency, type NotificationType } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { THAI_BANKS, BANK_OTHER } from "../lib/thai-banks";
 import { CARD_NETWORKS } from "../lib/card-types";
@@ -1115,8 +1115,73 @@ async function seedBudgets(ctx: SeedContext): Promise<void> {
   console.log("Created 5 budget months.");
 }
 
+/**
+ * Seeds backdated in-app notifications so the bell panel has realistic history
+ * (today / earlier grouping, read + unread, varied severity).
+ *
+ * We seed EVENT_* types because the alert generator auto-resolves only *unread*
+ * ALERT_* rows whose condition no longer holds — so seeded unread alerts would
+ * vanish on the first dashboard load. Live alerts (recurring due, budget over,
+ * card due, …) are produced automatically by generateNotifications from Anna's
+ * seeded data. One *read* past-month budget alert is added as history.
+ *
+ * Requires the schema migration to be applied first (new NotificationType
+ * values); if it isn't, this logs a hint and skips rather than failing the seed.
+ */
+async function seedNotifications(userId: string): Promise<void> {
+  const now = Date.now();
+  const minsAgo = (m: number) => new Date(now - m * 60_000);
+  const hoursAgo = (h: number) => new Date(now - h * 3_600_000);
+  const daysAgo = (d: number) => new Date(now - d * 86_400_000);
+
+  const seeds: Array<{
+    type: NotificationType;
+    payload: Record<string, string | number | boolean>;
+    link: string | null;
+    createdAt: Date;
+    read: boolean;
+    dedupeKey?: string;
+  }> = [
+    { type: "EVENT_SLIP_DONE", payload: { createdCount: 3, totalCount: 3, hasErrors: false }, link: "/dashboard/transactions", createdAt: minsAgo(25), read: false },
+    { type: "EVENT_CARD_PAYMENT", payload: { accountName: "KBank Visa", last4: "4821", amount: 4500 }, link: "/dashboard/accounts", createdAt: hoursAgo(3), read: false },
+    { type: "EVENT_RECONCILE_MISMATCH", payload: { accountName: "บัญชีออมทรัพย์", difference: 320.5 }, link: "/dashboard/accounts", createdAt: hoursAgo(9), read: false },
+    { type: "EVENT_IMPORT_DONE", payload: { createdCount: 42, updatedCount: 6, totalRows: 48 }, link: "/dashboard/transactions", createdAt: daysAgo(1), read: true },
+    { type: "EVENT_CARD_STATEMENT_CLOSED", payload: { accountName: "KBank Visa", statementBalance: 18250, minimumPayment: 1000 }, link: "/dashboard/accounts", createdAt: daysAgo(2), read: false },
+    { type: "EVENT_CARD_INTEREST_APPLIED", payload: { accountName: "Citi Cashback", amount: 215.75 }, link: "/dashboard/accounts", createdAt: daysAgo(3), read: true },
+    { type: "EVENT_SECURITY_NEW_SIGN_IN", payload: { device: "Chrome on Windows" }, link: "/dashboard/settings/sessions", createdAt: daysAgo(4), read: true },
+    { type: "ALERT_BUDGET", payload: { categoryName: "อาหาร", progress: 1.12, isOver: true, indicator: "over" }, link: "/dashboard/settings/budget", createdAt: daysAgo(5), read: true, dedupeKey: "budget-cat:seed-history:last-month" },
+    { type: "EVENT_RECURRING_POSTED", payload: { name: "ค่าเช่าคอนโด" }, link: "/dashboard/recurring", createdAt: daysAgo(7), read: true },
+    { type: "EVENT_EXPORT_DONE", payload: { count: 320 }, link: "/dashboard/transactions", createdAt: daysAgo(11), read: true },
+    { type: "EVENT_REPORT_STATUS_CHANGED", payload: { status: "RESOLVED" }, link: "/dashboard/settings/feedback", createdAt: daysAgo(15), read: true },
+    { type: "EVENT_ANNOUNCEMENT", payload: { message: "ยินดีต้อนรับสู่ Judtang เวอร์ชันใหม่" }, link: null, createdAt: daysAgo(22), read: true },
+  ];
+
+  try {
+    for (const s of seeds) {
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: s.type,
+          payload: s.payload,
+          link: s.link,
+          dedupeKey: s.dedupeKey ?? null,
+          createdAt: s.createdAt,
+          readAt: s.read ? s.createdAt : null,
+        },
+      });
+    }
+    console.log(`Created ${seeds.length} backdated notifications.`);
+  } catch (e) {
+    console.warn(
+      "Skipped notification seed — run `npx prisma migrate dev` first so the new NotificationType values exist:",
+      e instanceof Error ? e.message : e,
+    );
+  }
+}
+
 async function resetSeedData(userId: string): Promise<void> {
   await prisma.transaction.deleteMany({ where: { userId } });
+  await prisma.notification.deleteMany({ where: { userId } });
   await prisma.activityLog.deleteMany({ where: { userId } });
   await prisma.recurringTransaction.deleteMany({ where: { userId } });
   await prisma.budgetTemplate.deleteMany({ where: { userId } });
@@ -1166,6 +1231,7 @@ async function main() {
   await seedTermsAcceptance(userId);
   await seedRecurringTransactions(ctx);
   await seedBudgets(ctx);
+  await seedNotifications(userId);
 
   console.log(
     `Seed done: ${totalTx} transactions over ${DAYS_BACK} days, budgets, recurring templates, terms.`,
