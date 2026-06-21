@@ -43,3 +43,4 @@ next-env.d.ts
 
 # Graphify (https://github.com/safishamsi/graphify) — generated knowledge graph
 /graphify-out/
+research/slip-ocr/README.md

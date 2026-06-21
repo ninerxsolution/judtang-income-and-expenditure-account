@@ -41,33 +41,83 @@ const THAI_MONTH_MAP: Record<string, number> = {
   "ธ.ค.": 11,
 };
 
+const THAI_FULL_MONTH_MAP: Record<string, number> = {
+  มกราคม: 0,
+  กุมภาพันธ์: 1,
+  มีนาคม: 2,
+  เมษายน: 3,
+  พฤษภาคม: 4,
+  มิถุนายน: 5,
+  กรกฎาคม: 6,
+  สิงหาคม: 7,
+  กันยายน: 8,
+  ตุลาคม: 9,
+  พฤศจิกายน: 10,
+  ธันวาคม: 11,
+};
+
+// Amount labels that PROMOTE a money figure (the actual transfer amount).
+const POSITIVE_AMOUNT_LABELS =
+  /จำนวนเงิน|จำนวน|ยอดเงินโอน|ยอดโอนเงิน|ยอดโอน|ยอดชำระ|ยอดเงิน|amount|transfer/i;
+// Labels that DISQUALIFY a money figure (balance, fee, tax — never the amount).
+const NEGATIVE_AMOUNT_LABELS =
+  /คงเหลือ|ค่าธรรมเนียม|ธรรมเนียม|fee|balance|remaining|bal\.|ภาษี|vat/i;
+
+/**
+ * Convert a Thai year token to a Gregorian year.
+ * 4-digit >= 2500 is พ.ศ.; 2-digit short form is treated as 25xx พ.ศ.
+ */
+function thaiYearToGregorian(yearRaw: number): number {
+  if (yearRaw >= 2500) return yearRaw - 543;
+  if (yearRaw < 100) return 2500 + yearRaw - 543;
+  return yearRaw;
+}
+
 /**
  * Extract amount from OCR text. Kasikorn format: "Amount:\n5,000.00 Baht"
  */
 function extractAmount(text: string): number | null {
-  const normalized = text.replace(/\r\n/g, "\n");
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
 
-  // English pattern: "Amount:\n5,000.00 Baht"
-  const englishMatch =
-    /Amount:\s*([\d,]+(?:\.\d+)?)\s*Baht/i.exec(normalized);
-  if (englishMatch) {
-    const amountNumber = Number.parseFloat(englishMatch[1].replace(/,/g, ""));
-    if (Number.isFinite(amountNumber) && amountNumber > 0) {
-      return amountNumber;
+  type Candidate = { value: number; score: number; index: number };
+  const candidates: Candidate[] = [];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    // Labels usually sit on the same line or the line just above the figure.
+    const context = `${lines[i - 1] ?? ""} ${line}`;
+    if (NEGATIVE_AMOUNT_LABELS.test(context)) continue; // fee / balance / tax line
+
+    const hasCurrency = /บาท|฿|baht|thb/i.test(line);
+    const isPositive = POSITIVE_AMOUNT_LABELS.test(context);
+
+    // Money figures: a number with decimals; an integer + 2 digits split by a
+    // space where OCR dropped the dot ("50 00 THB"); a number followed by a
+    // currency word; or a number preceded by ฿ ("฿1,500").
+    const moneyRe =
+      /([\d,]+\.\d{1,2})(?!\d)|([\d,]+)[ \t]+(\d{2})\s*(?:บาท|฿|baht|thb)|([\d,]+)\s*(?:บาท|฿|baht|thb)|฿\s*([\d,]+(?:\.\d{1,2})?)/gi;
+    let match: RegExpExecArray | null;
+    while ((match = moneyRe.exec(line)) !== null) {
+      const raw = (
+        match[1] ??
+        (match[2] != null ? `${match[2]}.${match[3]}` : match[4] ?? match[5]) ??
+        ""
+      ).replace(/,/g, "");
+      const value = Number.parseFloat(raw);
+      if (!Number.isFinite(value) || value <= 0) continue;
+
+      let score = 0;
+      if (isPositive) score += 10;
+      if (hasCurrency) score += 2;
+      if (/\.\d{2}\b/.test(match[0])) score += 1; // looks like a real money figure
+      candidates.push({ value, score, index: i });
     }
   }
 
-  // Thai Kasikorn pattern: "จำนวน: 888.00 บาท" or "จำนวน: | 888.00 บาท |"
-  const thaiMatch =
-    /จำนวน[^0-9]*([\d,]+(?:\.\d+)?)\s*บาท/i.exec(normalized);
-  if (thaiMatch) {
-    const amountNumber = Number.parseFloat(thaiMatch[1].replace(/,/g, ""));
-    if (Number.isFinite(amountNumber) && amountNumber > 0) {
-      return amountNumber;
-    }
-  }
-
-  return null;
+  if (candidates.length === 0) return null;
+  // Highest score wins; ties broken by earliest position (amount appears before balance).
+  candidates.sort((a, b) => b.score - a.score || a.index - b.index);
+  return candidates[0].value;
 }
 
 /**
@@ -101,16 +151,17 @@ function extractOccurredAt(text: string): Date | undefined {
     if (!Number.isNaN(d.getTime())) return d;
   }
 
-  // 2) Thai pattern: "25 ม.ค. 65 23:06 น."
+  // 2) Thai abbrev: "25 ม.ค. 65 23:06 น." / "11 พ.ค. 2567 - 02:57" / "28 ต.ค. 2566 17:41:13".
+  // Time is optional and may be separated by space or a dash; seconds are ignored.
   const thRegex =
-    /(\d{1,2})\s+(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)\s+(\d{2,4})\s+(\d{1,2}):(\d{2})(?:\s*น\s*[.,]?)?/;
+    /(\d{1,2})\s+(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)\s+(\d{2,4})(?:[\s\-–—]+(\d{1,2}):(\d{2})(?::\d{2})?)?(?:\s*น\s*[.,]?)?/;
   const thMatch = thRegex.exec(normalized);
   if (thMatch) {
     const day = Number.parseInt(thMatch[1], 10);
     const monthKey = thMatch[2] as keyof typeof THAI_MONTH_MAP;
     const yearRaw = Number.parseInt(thMatch[3], 10);
-    const hour24 = Number.parseInt(thMatch[4], 10);
-    const minute = Number.parseInt(thMatch[5], 10);
+    const hour24 = thMatch[4] ? Number.parseInt(thMatch[4], 10) : 0;
+    const minute = thMatch[5] ? Number.parseInt(thMatch[5], 10) : 0;
 
     const monthIndex = THAI_MONTH_MAP[monthKey];
     if (monthIndex === undefined || day < 1 || day > 31) {
@@ -127,6 +178,37 @@ function extractOccurredAt(text: string): Date | undefined {
     }
 
     const d = new Date(yearFull, monthIndex, day, hour24, minute, 0, 0);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+
+  // 3) Thai full month name: "26 มกราคม 2565 14:30"
+  const thFullRegex =
+    /(\d{1,2})\s+(มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม)\s+(\d{2,4})(?:[\s,]+(\d{1,2})[:.](\d{2}))?/;
+  const thFullMatch = thFullRegex.exec(normalized);
+  if (thFullMatch) {
+    const day = Number.parseInt(thFullMatch[1], 10);
+    const monthIndex = THAI_FULL_MONTH_MAP[thFullMatch[2]];
+    const yearFull = thaiYearToGregorian(Number.parseInt(thFullMatch[3], 10));
+    const hour = thFullMatch[4] ? Number.parseInt(thFullMatch[4], 10) : 0;
+    const minute = thFullMatch[5] ? Number.parseInt(thFullMatch[5], 10) : 0;
+    if (monthIndex !== undefined && day >= 1 && day <= 31) {
+      const d = new Date(yearFull, monthIndex, day, hour, minute, 0, 0);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+  }
+
+  // 4) Numeric: "26/01/2565", "26-01-2022", "26.01.65" (+ optional HH:MM)
+  const numRegex =
+    /(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})(?:[\s,]+(\d{1,2})[:.](\d{2}))?/g;
+  let numMatch: RegExpExecArray | null;
+  while ((numMatch = numRegex.exec(normalized)) !== null) {
+    const day = Number.parseInt(numMatch[1], 10);
+    const month = Number.parseInt(numMatch[2], 10);
+    if (day < 1 || day > 31 || month < 1 || month > 12) continue;
+    const yearFull = thaiYearToGregorian(Number.parseInt(numMatch[3], 10));
+    const hour = numMatch[4] ? Number.parseInt(numMatch[4], 10) : 0;
+    const minute = numMatch[5] ? Number.parseInt(numMatch[5], 10) : 0;
+    const d = new Date(yearFull, month - 1, day, hour, minute, 0, 0);
     if (!Number.isNaN(d.getTime())) return d;
   }
 
@@ -171,16 +253,42 @@ function extractNote(text: string): string | undefined {
 }
 
 /**
+ * Normalize raw OCR text so the extractors see consistent labels/numbers.
+ * Tesseract (tha) sprinkles spaces between Thai glyphs ("จ ํ า น ว น") and
+ * sometimes loses the decimal point ("50.00" → "50 00"); fix the recoverable ones.
+ */
+function normalizeOcrText(text: string): string {
+  let s = text.replace(/\r\n/g, "\n");
+
+  // Collapse spaces Tesseract inserts BETWEEN Thai glyphs (to fixpoint).
+  // Per-line ([ \t], not \s) so line structure (used for label context) survives.
+  let prev: string;
+  do {
+    prev = s;
+    s = s.replace(/([฀-๿])[ \t]+([฀-๿])/g, "$1$2");
+  } while (s !== prev);
+
+  return (
+    s
+      // Recompose สระอำ (ำ) that Tesseract splits into ◌ํ + า.
+      .replace(/ํา/g, "ำ")
+      // Thai numerals → Arabic.
+      .replace(/[๐-๙]/g, (d) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(d)))
+      // Decimal point lost to spaces: "000 . 02" → "000.02".
+      .replace(/(\d)[ \t]*\.[ \t]*(\d)/g, "$1.$2")
+      // Thai abbrev dots: "ต . ค . 2566" → "ต.ค. 2566".
+      .replace(/([฀-๿])[ \t]*\.[ \t]*(?=[฀-๿])/g, "$1.")
+      .replace(/([฀-๿])[ \t]*\./g, "$1.")
+      .trim()
+  );
+}
+
+/**
  * Parse OCR text from a bank slip into structured data.
  * Returns null if amount cannot be extracted.
  */
 export function parseSlipText(text: string): ParsedSlip | null {
-  const normalized = text
-    .replace(/\r\n/g, "\n")
-    // Some OCR engines (e.g. Tesseract) decompose สระอำ (ำ, U+0E33) into
-    // ◌ํ + า (U+0E4D U+0E32); recompose so labels like "จํานวน" match "จำนวน".
-    .replace(/ํา/g, "ำ")
-    .trim();
+  const normalized = normalizeOcrText(text);
   const amount = extractAmount(normalized);
   if (amount === null) return null;
 

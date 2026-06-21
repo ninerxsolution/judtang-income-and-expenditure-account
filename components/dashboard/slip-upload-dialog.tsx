@@ -40,6 +40,7 @@ import { recognizeSlipLocally } from "@/lib/slip-ocr-local";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB (on-device OCR, no cloud size limit)
 const MAX_FILES_PER_REQUEST = 10;
+const MAX_SLIP_RETRIES = 3;
 const SLIP_UPLOAD_STORAGE_KEY = "judtang:slip-upload:drafts:v1";
 
 type SlipProcessingStage =
@@ -130,6 +131,19 @@ function isValidDatePart(value: number): boolean {
   return Number.isFinite(value);
 }
 
+/** SHA-256 hex of file content, for de-duplicating uploads of the same slip. */
+async function hashFile(file: File): Promise<string | undefined> {
+  try {
+    const buffer = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest("SHA-256", buffer);
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return undefined;
+  }
+}
+
 type SlipDraft = {
   id: string;
   file: File | null;
@@ -142,6 +156,8 @@ type SlipDraft = {
   rawText?: string;
   error?: string;
   rawFileName: string;
+  fileHash?: string;
+  retryCount?: number;
   parseStatus: "loading" | "success" | "error";
   processingStage: SlipProcessingStage;
   compressionStatus: SlipStepStatus;
@@ -469,6 +485,13 @@ export function SlipUploadDialog({
     setEditingDraftIds((prev) => prev.filter((draftId) => draftId !== id));
   }
 
+  function retrySlip(id: string) {
+    const draft = drafts.find((d) => d.id === id);
+    if (!draft?.file || (draft.retryCount ?? 0) >= MAX_SLIP_RETRIES) return;
+    updateDraft(id, { retryCount: (draft.retryCount ?? 0) + 1, error: undefined });
+    void processSingleSlip(id, draft.file, processingSessionRef.current);
+  }
+
   function toggleDraftEditor(id: string) {
     setEditingDraftIds((prev) =>
       prev.includes(id) ? prev.filter((draftId) => draftId !== id) : [...prev, id]
@@ -697,13 +720,7 @@ export function SlipUploadDialog({
     if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
-    if (drafts.length + fileList.length > MAX_FILES_PER_REQUEST) {
-      setGlobalError(
-        t("dashboard.slipUpload.errorGeneric"),
-      );
-      setFileInputKey((k) => k + 1);
-      return;
-    }
+
     const tooLarge = fileList.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
     if (tooLarge.length > 0) {
       setGlobalError(t("dashboard.slipUpload.errorFileTooLarge"));
@@ -711,13 +728,45 @@ export function SlipUploadDialog({
       return;
     }
 
+    // De-dup by content hash: skip files already added (in current drafts) or
+    // repeated within this selection — the same slip should not upload twice.
+    const existingHashes = new Set(
+      drafts.map((d) => d.fileHash).filter((h): h is string => !!h),
+    );
+    const accepted: { file: File; hash: string | undefined }[] = [];
+    let duplicates = 0;
+    for (const file of fileList) {
+      const hash = await hashFile(file);
+      if (hash && (existingHashes.has(hash) || accepted.some((a) => a.hash === hash))) {
+        duplicates += 1;
+        continue;
+      }
+      accepted.push({ file, hash });
+    }
+
+    if (accepted.length === 0) {
+      setGlobalError(t("dashboard.slipUpload.errorDuplicate"));
+      setFileInputKey((k) => k + 1);
+      return;
+    }
+
+    if (drafts.length + accepted.length > MAX_FILES_PER_REQUEST) {
+      setGlobalError(t("dashboard.slipUpload.errorGeneric"));
+      setFileInputKey((k) => k + 1);
+      return;
+    }
+
     setGlobalError(null);
-    setRestoredMessage(null);
+    setRestoredMessage(
+      duplicates > 0
+        ? t("dashboard.slipUpload.duplicateSkipped", { count: duplicates })
+        : null,
+    );
     setBatchElapsedMs(null);
     setStep("preview");
 
     const sessionId = processingSessionRef.current;
-    const newDrafts: SlipDraft[] = fileList.map((file, index) => ({
+    const newDrafts: SlipDraft[] = accepted.map(({ file, hash }, index) => ({
       id: `${Date.now()}-${drafts.length + index}-${file.name}`,
       file,
       amount: "",
@@ -727,6 +776,8 @@ export function SlipUploadDialog({
       financialAccountId: defaultAccountId,
       categoryId: "",
       rawFileName: file.name,
+      fileHash: hash,
+      retryCount: 0,
       parseStatus: "loading",
       processingStage: "queued",
       compressionStatus: "pending",
@@ -746,9 +797,9 @@ export function SlipUploadDialog({
     setDrafts((prev) => [...prev, ...newDrafts]);
     setFileInputKey((k) => k + 1);
     void processSlipsQueue(
-      newDrafts.map((draft, index) => ({
+      newDrafts.map((draft) => ({
         draftId: draft.id,
-        file: fileList[index] ?? new File([], draft.rawFileName),
+        file: draft.file ?? new File([], draft.rawFileName),
       })),
       sessionId,
     );
@@ -1159,9 +1210,30 @@ export function SlipUploadDialog({
                           </div>
 
                           {draft.error && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400">
-                              {t("dashboard.slipUpload.parseWarning")}
-                            </p>
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-xs text-amber-600 dark:text-amber-400">
+                                {t("dashboard.slipUpload.parseWarning")}
+                              </p>
+                              {draft.file && draft.parseStatus === "error" ? (
+                                (draft.retryCount ?? 0) < MAX_SLIP_RETRIES ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 shrink-0 text-xs"
+                                    onClick={() => retrySlip(draft.id)}
+                                  >
+                                    {t("dashboard.slipUpload.retry", {
+                                      count: MAX_SLIP_RETRIES - (draft.retryCount ?? 0),
+                                    })}
+                                  </Button>
+                                ) : (
+                                  <span className="shrink-0 text-xs text-muted-foreground">
+                                    {t("dashboard.slipUpload.retryExhausted")}
+                                  </span>
+                                )
+                              ) : null}
+                            </div>
                           )}
 
 
