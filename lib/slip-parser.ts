@@ -103,7 +103,7 @@ function extractOccurredAt(text: string): Date | undefined {
 
   // 2) Thai pattern: "25 ม.ค. 65 23:06 น."
   const thRegex =
-    /(\d{1,2})\s+(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)\s+(\d{2,4})\s+(\d{1,2}):(\d{2})\s*น\./;
+    /(\d{1,2})\s+(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)\s+(\d{2,4})\s+(\d{1,2}):(\d{2})(?:\s*น\s*[.,]?)?/;
   const thMatch = thRegex.exec(normalized);
   if (thMatch) {
     const day = Number.parseInt(thMatch[1], 10);
@@ -175,7 +175,12 @@ function extractNote(text: string): string | undefined {
  * Returns null if amount cannot be extracted.
  */
 export function parseSlipText(text: string): ParsedSlip | null {
-  const normalized = text.replace(/\r\n/g, "\n").trim();
+  const normalized = text
+    .replace(/\r\n/g, "\n")
+    // Some OCR engines (e.g. Tesseract) decompose สระอำ (ำ, U+0E33) into
+    // ◌ํ + า (U+0E4D U+0E32); recompose so labels like "จํานวน" match "จำนวน".
+    .replace(/ํา/g, "ำ")
+    .trim();
   const amount = extractAmount(normalized);
   if (amount === null) return null;
 

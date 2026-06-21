@@ -35,11 +35,11 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import { saveRecentFinancialAccountId } from "@/lib/recent-financial-accounts";
+import { parseSlipText } from "@/lib/slip-parser";
+import { recognizeSlipLocally } from "@/lib/slip-ocr-local";
 
-const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB (on-device OCR, no cloud size limit)
 const MAX_FILES_PER_REQUEST = 10;
-const COMPRESS_IMAGE_MAX_DIMENSION = 768;
-const COMPRESS_IMAGE_QUALITY = 0.45;
 const SLIP_UPLOAD_STORAGE_KEY = "judtang:slip-upload:drafts:v1";
 
 type SlipProcessingStage =
@@ -107,10 +107,6 @@ function combineDateWithCurrentTime(dateStr: string): string {
   return combined.toISOString();
 }
 
-function replaceFileExtension(fileName: string, extension: string): string {
-  return fileName.replace(/\.[^.]+$/, extension);
-}
-
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) {
     return `${Math.round(bytes / 1024)} KB`;
@@ -132,68 +128,6 @@ function formatDuration(ms: number): string {
 
 function isValidDatePart(value: number): boolean {
   return Number.isFinite(value);
-}
-
-async function compressImage(file: File): Promise<File> {
-  if (
-    !file.type.startsWith("image/") ||
-    file.type === "image/gif"
-  ) {
-    return file;
-  }
-
-  return new Promise<File>((resolve) => {
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      const longestSide = Math.max(image.width, image.height);
-      const scale =
-        longestSide > COMPRESS_IMAGE_MAX_DIMENSION
-          ? COMPRESS_IMAGE_MAX_DIMENSION / longestSide
-          : 1;
-      const width = Math.max(1, Math.round(image.width * scale));
-      const height = Math.max(1, Math.round(image.height * scale));
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const context = canvas.getContext("2d");
-      if (!context) {
-        resolve(file);
-        return;
-      }
-
-      context.drawImage(image, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob || blob.size >= file.size) {
-            resolve(file);
-            return;
-          }
-
-          resolve(
-            new File([blob], replaceFileExtension(file.name, ".jpg"), {
-              type: "image/jpeg",
-              lastModified: file.lastModified,
-            })
-          );
-        },
-        "image/jpeg",
-        COMPRESS_IMAGE_QUALITY
-      );
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(file);
-    };
-
-    image.src = objectUrl;
-  });
 }
 
 type SlipDraft = {
@@ -228,29 +162,11 @@ type SlipDraft = {
 
 type PersistedSlipDraft = Omit<SlipDraft, "file">;
 
-type SlipParseItem = {
-  index: number;
-  rawFileName: string;
-  rawText?: string;
-  parsed?: { amount: number; occurredAt: string | null; note: string | null };
-  error?: string;
-};
-
-type SlipParseResponseBody = {
-  items?: SlipParseItem[];
-  error?: string;
-};
 
 type SlipResponseDetail = {
   status: number | null;
   ok: boolean;
   body: unknown;
-};
-
-type ParseSlipApiResult = {
-  status: number;
-  ok: boolean;
-  data: SlipParseResponseBody | { error: string };
 };
 
 function serializeSlipDraft(draft: SlipDraft): PersistedSlipDraft {
@@ -596,212 +512,82 @@ export function SlipUploadDialog({
     updateDraft(draftId, updates);
   }
 
-  async function sendParseRequest(
-    draftId: string,
-    formData: FormData,
-    controller: AbortController,
-    sessionId: number
-  ): Promise<ParseSlipApiResult> {
-    return new Promise<ParseSlipApiResult>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      let uploadStartedAtMs: number | null = null;
-
-      const handleAbort = () => {
-        xhr.abort();
-      };
-
-      controller.signal.addEventListener("abort", handleAbort, { once: true });
-
-      const cleanup = () => {
-        controller.signal.removeEventListener("abort", handleAbort);
-      };
-
-      xhr.open("POST", "/api/ocr/parse-slips");
-      xhr.responseType = "text";
-
-      xhr.upload.onloadstart = () => {
-        if (sessionId !== processingSessionRef.current) return;
-        uploadStartedAtMs = Date.now();
-        updateDraft(draftId, {
-          processingStage: "uploading",
-          uploadStatus: "active",
-          uploadStartedAtMs,
-        });
-      };
-
-      xhr.upload.onprogress = (event) => {
-        if (sessionId !== processingSessionRef.current) return;
-        const elapsedSec =
-          uploadStartedAtMs !== null ? (Date.now() - uploadStartedAtMs) / 1000 : 0;
-        const percent = event.lengthComputable
-          ? Math.round((event.loaded / event.total) * 100)
-          : null;
-        updateDraft(draftId, {
-          uploadedBytes: event.loaded,
-          uploadPercent: percent,
-          uploadSpeedBytesPerSec: elapsedSec > 0.05 ? event.loaded / elapsedSec : null,
-        });
-        if (percent === 100) {
-          setDraftStage(draftId, {
-            processingStage: "processing",
-            uploadStatus: "done",
-            ocrStatus: "active",
-          });
-        }
-      };
-
-      xhr.upload.onload = () => {
-        if (sessionId !== processingSessionRef.current) return;
-        setDraftStage(draftId, {
-          processingStage: "processing",
-          uploadStatus: "done",
-          ocrStatus: "active",
-        });
-      };
-
-      xhr.onload = () => {
-        cleanup();
-
-        let data: SlipParseResponseBody | { error: string };
-        try {
-          data = xhr.responseText
-            ? (JSON.parse(xhr.responseText) as SlipParseResponseBody | { error: string })
-            : { error: "Invalid response body" };
-        } catch {
-          data = { error: "Invalid response body" };
-        }
-
-        resolve({
-          status: xhr.status,
-          ok: xhr.status >= 200 && xhr.status < 300,
-          data,
-        });
-      };
-
-      xhr.onerror = () => {
-        cleanup();
-        reject(new Error("Network request failed"));
-      };
-
-      xhr.onabort = () => {
-        cleanup();
-        reject(new DOMException("The operation was aborted.", "AbortError"));
-      };
-
-      xhr.send(formData);
-    });
-  }
-
   async function processSingleSlip(draftId: string, file: File, sessionId: number) {
     const controller = new AbortController();
     requestControllersRef.current.set(draftId, controller);
-    let optimizedFile = file;
     const slipStart = Date.now();
 
     try {
       setDraftStage(draftId, {
         parseStatus: "loading",
-        processingStage: "compressing",
-        compressionStatus: "active",
-        uploadStatus: "pending",
-        ocrStatus: "pending",
+        processingStage: "processing",
+        compressionStatus: "skipped",
+        uploadStatus: "done",
+        ocrStatus: "active",
       });
-      updateDraft(draftId, { slipStartedAtMs: slipStart });
+      updateDraft(draftId, {
+        slipStartedAtMs: slipStart,
+        uploadFileSizeBytes: file.size,
+        uploadPercent: 0,
+      });
 
-      optimizedFile = await compressImage(file);
+      let text = "";
+      try {
+        text = await recognizeSlipLocally(file, (p) => {
+          if (sessionId !== processingSessionRef.current) return;
+          updateDraft(draftId, { uploadPercent: Math.round(p * 100) });
+        });
+      } catch (err) {
+        if (sessionId !== processingSessionRef.current) return;
+        console.error("[slip-ocr-local] recognize failed", err);
+        updateDraft(draftId, {
+          parseStatus: "error",
+          processingStage: "error",
+          compressionStatus: "skipped",
+          uploadStatus: "done",
+          ocrStatus: "error",
+          error: t("dashboard.slipUpload.errorGeneric"),
+          ocrResponse: {
+            status: null,
+            ok: false,
+            body: { error: err instanceof Error ? err.message : String(err) },
+          },
+          slipElapsedMs: Date.now() - slipStart,
+        });
+        return;
+      }
+
       if (controller.signal.aborted || sessionId !== processingSessionRef.current) {
         return;
       }
 
-      updateDraft(draftId, {
-        processingStage: "uploading",
-        compressionStatus: optimizedFile === file ? "skipped" : "done",
-        uploadStatus: "active",
-        uploadFileSizeBytes: optimizedFile.size,
-      });
-
-      const formData = new FormData();
-      formData.append("file", optimizedFile);
-
-      const { status, ok, data } = await sendParseRequest(draftId, formData, controller, sessionId);
-      if (sessionId !== processingSessionRef.current) return;
-
-      const responseDetail: SlipResponseDetail = {
-        status,
-        ok,
-        body: data,
-      };
-
-      if (!ok) {
-        const message =
-          status === 503
-            ? t("dashboard.slipUpload.errorNotConfigured")
-            : status === 429
-              ? t("dashboard.slipUpload.errorRateLimit")
-              : getResponseMessage(data) ?? t("dashboard.slipUpload.errorGeneric");
-
-        if (status === 503 || status === 429) {
-          setGlobalError(message);
-        }
-
-        updateDraft(draftId, {
-          parseStatus: "error",
-          processingStage: "error",
-          compressionStatus: optimizedFile === file ? "skipped" : "done",
-          uploadStatus: "done",
-          ocrStatus: "error",
-          error: message,
-          ocrResponse: responseDetail,
-          slipElapsedMs: Date.now() - slipStart,
-        });
-        return;
-      }
-
-      const item = "items" in data ? data.items?.[0] : undefined;
-      if (!item) {
-        updateDraft(draftId, {
-          parseStatus: "error",
-          processingStage: "error",
-          compressionStatus: optimizedFile === file ? "skipped" : "done",
-          uploadStatus: "done",
-          ocrStatus: "error",
-          error: t("dashboard.slipUpload.errorGeneric"),
-          ocrResponse: responseDetail,
-          slipElapsedMs: Date.now() - slipStart,
-        });
-        return;
-      }
-
-      const occurredAt = item.parsed?.occurredAt
-        ? formatDateToInput(item.parsed.occurredAt)
+      const parsed = parseSlipText(text);
+      const occurredAt = parsed?.occurredAt
+        ? formatDateToInput(parsed.occurredAt.toISOString())
         : formatTodayAsInputDate();
 
       updateDraft(draftId, {
-        amount: item.parsed ? String(item.parsed.amount) : "",
+        amount: parsed ? String(parsed.amount) : "",
         occurredAt,
-        note: item.parsed?.note ?? "",
-        rawText: item.rawText,
-        error: item.error,
-        rawFileName: item.rawFileName,
-        parseStatus: item.error ? "error" : "success",
-        processingStage: item.error ? "error" : "success",
-        compressionStatus: optimizedFile === file ? "skipped" : "done",
+        note: parsed?.note ?? "",
+        rawText: text,
+        error: parsed ? undefined : t("dashboard.slipUpload.errorGeneric"),
+        parseStatus: parsed ? "success" : "error",
+        processingStage: parsed ? "success" : "error",
+        compressionStatus: "skipped",
         uploadStatus: "done",
-        ocrStatus: "done",
-        ocrResponse: responseDetail,
+        ocrStatus: parsed ? "done" : "error",
         slipElapsedMs: Date.now() - slipStart,
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
-
       if (sessionId !== processingSessionRef.current) return;
-
       updateDraft(draftId, {
         parseStatus: "error",
         processingStage: "error",
-        compressionStatus: optimizedFile === file ? "skipped" : "done",
+        compressionStatus: "skipped",
         uploadStatus: "error",
         ocrStatus: "error",
         error: t("dashboard.slipUpload.errorGeneric"),
@@ -1200,6 +986,11 @@ export function SlipUploadDialog({
                       {t("dashboard.slipUpload.chooseImages")}
                     </Button>
                   </div>
+
+                  <p className="text-center text-[11px] text-muted-foreground">
+                    {t("dashboard.slipUpload.engineLocalHint")}
+                  </p>
+
                   {globalError && (
                     <p className="text-sm text-red-600 dark:text-red-400">{globalError}</p>
                   )}

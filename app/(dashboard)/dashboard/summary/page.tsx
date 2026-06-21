@@ -23,6 +23,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -207,11 +208,14 @@ export default function SummaryPage() {
     () =>
       monthData.map((d) => ({
         name: MONTH_NAMES[d.monthIndex] ?? "",
+        monthIndex: d.monthIndex,
         income: d.income,
         expense: d.expense,
       })),
     [monthData],
   );
+
+  const selectedMonthIndex = period === "month" ? month : -1;
 
   const { avgMonthlyIncome, avgMonthlyExpense, avgWeeklyExpense, avgDailyExpense } =
     useMemo(() => {
@@ -242,6 +246,11 @@ export default function SummaryPage() {
         value: d.amount,
       })),
     [categoryData, language],
+  );
+
+  const pieTotal = useMemo(
+    () => categoryData.reduce((s, d) => s + d.amount, 0),
+    [categoryData],
   );
 
   const netWorthChartData = useMemo(
@@ -475,8 +484,42 @@ export default function SummaryPage() {
                     contentStyle={{ fontSize: 12 }}
                   />
                   <Legend />
-                  <Bar dataKey="income" name={t("dashboard.summary.income")} fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expense" name={t("dashboard.summary.expense")} fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  {avgMonthlyIncome > 0 && (
+                    <ReferenceLine
+                      y={avgMonthlyIncome}
+                      stroke="#22c55e"
+                      strokeDasharray="4 4"
+                      strokeOpacity={0.55}
+                      label={{ value: t("summary.chart.average"), position: "insideTopLeft", fontSize: 10, fill: "#16a34a" }}
+                    />
+                  )}
+                  {avgMonthlyExpense > 0 && (
+                    <ReferenceLine
+                      y={avgMonthlyExpense}
+                      stroke="#ef4444"
+                      strokeDasharray="4 4"
+                      strokeOpacity={0.55}
+                      label={{ value: t("summary.chart.average"), position: "insideBottomLeft", fontSize: 10, fill: "#dc2626" }}
+                    />
+                  )}
+                  <Bar dataKey="income" name={t("dashboard.summary.income")} fill="#22c55e" radius={[4, 4, 0, 0]}>
+                    {barData.map((d) => (
+                      <Cell
+                        key={`i-${d.monthIndex}`}
+                        fill="#22c55e"
+                        fillOpacity={selectedMonthIndex < 0 || d.monthIndex === selectedMonthIndex ? 1 : 0.3}
+                      />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="expense" name={t("dashboard.summary.expense")} fill="#ef4444" radius={[4, 4, 0, 0]}>
+                    {barData.map((d) => (
+                      <Cell
+                        key={`e-${d.monthIndex}`}
+                        fill="#ef4444"
+                        fillOpacity={selectedMonthIndex < 0 || d.monthIndex === selectedMonthIndex ? 1 : 0.3}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -499,30 +542,36 @@ export default function SummaryPage() {
                 {t("summary.chart.noData")}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-                    }
-                  >
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number | undefined) => formatAmount(value ?? 0)}
-                    contentStyle={{ fontSize: 12 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="relative">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) =>
+                        `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+                      }
+                    >
+                      {pieData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number | undefined) => formatAmount(value ?? 0)}
+                      contentStyle={{ fontSize: 12 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-xs text-muted-foreground">{t("summary.chart.totalExpense")}</span>
+                  <span className="text-lg font-semibold tabular-nums">{formatAmount(pieTotal)}</span>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
