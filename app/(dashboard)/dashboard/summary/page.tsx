@@ -352,7 +352,7 @@ export default function SummaryPage() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <CardHeader className="flex flex-row items-center gap-2">
             <ArrowDownCircle className="min-w-4 min-h-4 w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <CardTitle className="text-sm font-medium text-nowrap">
               {t("dashboard.summary.income")}
@@ -372,7 +372,7 @@ export default function SummaryPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <CardHeader className="flex flex-row items-center gap-2">
             <ArrowUpCircle className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
             <CardTitle className="text-sm font-medium text-nowrap">
               {t("dashboard.summary.expense")}
@@ -392,7 +392,7 @@ export default function SummaryPage() {
           </CardContent>
         </Card>
         <Card className={cn(net < 0 && "border-red-500/40")}>
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
+          <CardHeader className="flex flex-row items-center gap-2">
             <Wallet className="min-w-4 min-h-4 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             <CardTitle className="text-sm font-medium text-nowrap">
               {t("summary.net")}
