@@ -1,6 +1,6 @@
 import "./load-env";
 import bcrypt from "bcrypt";
-import { subDays, addDays, subMonths, startOfDay, endOfDay } from "date-fns";
+import { subDays, addDays, subMonths, startOfDay } from "date-fns";
 import { TransactionType, TransactionStatus, RecurringFrequency } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { THAI_BANKS, BANK_OTHER } from "../lib/thai-banks";
@@ -14,7 +14,6 @@ import {
 import { ensureUserHasDefaultFinancialAccount } from "../lib/financial-accounts";
 import { DEFAULT_CATEGORY_NAMES } from "../lib/categories";
 import { createActivityLog } from "../lib/activity-log";
-import { getAccountBalance } from "../lib/balance";
 import { rebuildBalanceSnapshotsForFinancialAccountIds } from "../lib/transaction-balance-snapshot";
 
 const RESET_FLAG = process.argv.includes("--reset");
@@ -46,17 +45,22 @@ const CATEGORY_NAME_EN: Record<string, string> = {
 };
 
 const DAYS_BACK = 1000;
-const MIN_TX_PER_DAY = 4;
-const MAX_TX_PER_DAY = 8;
 
-const EXPENSE_RANGES = {
-  food: { min: 50, max: 150 },
-  transport: { min: 30, max: 120 },
-  housing: { min: 5000, max: 12000 },
-  utilities: { min: 500, max: 2000 },
-  shopping: { min: 200, max: 2000 },
-  other: { min: 50, max: 500 },
-  savings: { min: 500, max: 3000 },
+/** Realistic Thai note pools for an office-worker persona (Bangkok). */
+const NOTES = {
+  coffee: ["กาแฟร้าน Café Amazon", "Starbucks", "ชานมไข่มุก", "อเมริกาโน่เย็น", "กาแฟหน้าออฟฟิศ"],
+  brunch: ["บรันช์ร้านโปรด", "กาแฟคาเฟ่วันหยุด", "ติ่มซำเช้าวันหยุด"],
+  lunch: ["ข้าวกะเพราไก่ไข่ดาว", "ข้าวมันไก่", "ก๋วยเตี๋ยวเรือ", "ข้าวแกงโรงอาหาร", "ส้มตำไก่ย่าง", "ข้าวหมูกรอบ", "ข้าวผัดกุ้ง"],
+  dinner: ["ข้าวเย็น 7-11", "สั่ง Grab Food", "ก๋วยเตี๋ยวเย็น", "ข้าวต้มร้านประจำ", "หมูกระทะกับเพื่อน"],
+  grocery: ["ซื้อของเข้าบ้าน Tops", "Big C", "Lotus's", "ตลาดสดวันหยุด", "Makro"],
+  familyMeal: ["เลี้ยงข้าวพ่อแม่", "พาครอบครัวกินบุฟเฟต์", "ดินเนอร์กับครอบครัว"],
+  transport: ["ค่า BTS", "ค่า MRT", "Grab ไปทำงาน", "วินมอเตอร์ไซค์", "แท็กซี่กลับบ้าน"],
+  shopOnline: ["Shopee", "Lazada", "สั่งของออนไลน์", "TikTok Shop"],
+  shopStore: ["เสื้อผ้า Uniqlo", "รองเท้าผ้าใบ", "เครื่องสำอาง", "ของใช้ในบ้าน", "หูฟังใหม่"],
+  hobby: ["ดูหนัง Major", "ร้านหนังสือ", "เติมเกม Steam", "อุปกรณ์ออกกำลังกาย", "คาเฟ่ถ่ายรูป", "บอร์ดเกมคาเฟ่"],
+  travel: ["ที่พักต่างจังหวัด", "ตั๋วรถไฟไปเที่ยว", "ทริปสุดสัปดาห์", "ตั๋วเครื่องบินในประเทศ"],
+  medical: ["ซื้อยาที่ร้านขายยา", "หาหมอคลินิก", "ทำฟัน", "ตรวจสุขภาพประจำปี", "วิตามินอาหารเสริม"],
+  gift: ["ของขวัญวันเกิดเพื่อน", "ของฝากพ่อแม่", "ของขวัญปีใหม่", "ช่อดอกไม้"],
 } as const;
 
 type SeedContext = {
@@ -451,45 +455,6 @@ async function seedCategories(
   return categoryMap;
 }
 
-/**
- * After random transaction generation, asset accounts (BANK/WALLET/CASH/OTHER) can still
- * go negative (e.g. wallets drained by transfers). Add a small INCOME so demo balances stay >= 0.
- */
-async function ensureNonNegativeAssetBalances(ctx: Pick<SeedContext, "userId" | "categoryMap">): Promise<number> {
-  const categoryId = ctx.categoryMap["อื่นๆ"]?.id ?? null;
-  const accounts = await prisma.financialAccount.findMany({
-    where: { userId: ctx.userId, type: { not: "CREDIT_CARD" } },
-    select: { id: true },
-  });
-  let adjustments = 0;
-  const now = new Date();
-  for (const acc of accounts) {
-    const balance = await getAccountBalance(acc.id);
-    if (balance >= -0.005) continue;
-    const bump = Math.round(-balance * 100) / 100;
-    if (bump <= 0) continue;
-    await prisma.transaction.create({
-      data: {
-        userId: ctx.userId,
-        type: TransactionType.INCOME,
-        status: TransactionStatus.POSTED,
-        amount: bump,
-        financialAccountId: acc.id,
-        category: "อื่นๆ",
-        categoryId,
-        note: "ปรับยอดหลัง seed ให้ยอดบัญชีไม่ติดลบ",
-        occurredAt: now,
-        postedDate: now,
-      },
-    });
-    adjustments++;
-  }
-  if (adjustments > 0) {
-    console.log(`Topped up ${adjustments} asset account(s) so balances are not negative.`);
-  }
-  return adjustments;
-}
-
 /** Fills `accountBalanceAfter` / `transferAccountBalanceAfter` after bulk `prisma.transaction.create` in seed. */
 async function rebuildTransactionBalanceSnapshotsForUser(userId: string): Promise<void> {
   const accounts = await prisma.financialAccount.findMany({
@@ -507,195 +472,224 @@ async function rebuildTransactionBalanceSnapshotsForUser(userId: string): Promis
 async function seedTransactions(ctx: SeedContext): Promise<number> {
   const today = startOfDay(new Date());
   const startDate = subDays(today, DAYS_BACK);
-  const salaryAmount = randomAmount(25000, 45000);
-  const rentAmount = randomAmount(EXPENSE_RANGES.housing.min, EXPENSE_RANGES.housing.max);
 
-  /** Exclude default CASH (often 0 initial) — transfer out would drive it negative. */
-  const transferableAccounts = [
-    ...ctx.bankAccounts,
-    ...ctx.walletAccounts,
-    ...ctx.otherAccounts,
-  ].filter((a) => !ctx.disabledAccountIds.includes(a.id));
+  const bank = ctx.bankAccounts[0]!;
+  const savings = ctx.bankAccounts[1] ?? bank;
+  const wallet = ctx.walletAccounts[0];
+  const card = ctx.creditCards[0];
 
-  const primaryBank = ctx.bankAccounts[0]!;
-  const primaryCard = ctx.creditCards[0]!;
+  const salary = randomAmount(46000, 54000);
+  const rent = randomAmount(8500, 11000);
+
+  // Track asset balances in memory so demo accounts never go negative (no top-up rows needed).
+  const balRows = await prisma.financialAccount.findMany({
+    where: { userId: ctx.userId },
+    select: { id: true, initialBalance: true },
+  });
+  const bal: Record<string, number> = {};
+  for (const a of balRows) bal[a.id] = Number(a.initialBalance);
 
   let totalTx = 0;
-  const expenseCategories = ["อาหาร", "ค่าที่พัก", "ค่าน้ำค่าไฟ", "ค่าอินเทอร์เน็ต", "ช้อปปิ้ง", "ค่าอื่นๆ", "ของขวัญ", "ค่ารักษาพยาบาล", "เงินออม"] as const;
 
-  for (let d = 0; d <= DAYS_BACK; d++) {
-    const dayStart = addDays(startDate, d);
-    const dayEnd = endOfDay(dayStart);
-    const txCount = randomInt(MIN_TX_PER_DAY, MAX_TX_PER_DAY);
-    const dayOfMonth = dayStart.getDate();
+  type DayTx = {
+    type: "INCOME" | "EXPENSE" | "TRANSFER";
+    amount: number;
+    accountId: string;
+    transferAccountId?: string;
+    category: string | null;
+    note: string | null;
+    occurredAt: Date;
+    status: "PENDING" | "POSTED";
+  };
 
-    const txs: {
-      type: "INCOME" | "EXPENSE" | "TRANSFER";
-      amount: number;
-      financialAccountId: string;
-      transferAccountId?: string;
-      category: string;
-      note: string | null;
-      occurredAt: Date;
-      status: "PENDING" | "POSTED";
-    }[] = [];
+  const time = (day: Date, hour: number): Date => {
+    const d = new Date(day);
+    d.setHours(hour, randomInt(0, 59), randomInt(0, 59), 0);
+    return d;
+  };
 
-    const isSalaryDay = dayOfMonth === 15 || dayOfMonth === 25;
-    if (isSalaryDay && Math.random() < 0.7) {
-      txs.push({
-        type: "INCOME",
-        amount: salaryAmount,
-        financialAccountId: primaryBank.id,
-        category: "เงินเดือน",
-        note: "เงินเดือน",
-        occurredAt: dayStart,
-        status: "POSTED",
-      });
-    }
-
-    if (dayOfMonth === 1 && Math.random() < 0.8) {
-      txs.push({
-        type: "EXPENSE",
-        amount: rentAmount,
-        financialAccountId: primaryBank.id,
-        category: "ค่าที่พัก",
-        note: "ค่าเช่า",
-        occurredAt: dayStart,
-        status: "POSTED",
-      });
-    }
-
-    if (dayOfMonth === 5 && Math.random() < 0.7) {
-      txs.push({
-        type: "EXPENSE",
-        amount: randomAmount(EXPENSE_RANGES.utilities.min, EXPENSE_RANGES.utilities.max),
-        financialAccountId: primaryBank.id,
-        category: "ค่าน้ำค่าไฟ",
-        note: "ค่าน้ำค่าไฟ",
-        occurredAt: dayStart,
-        status: "POSTED",
-      });
-    }
-
-    if (dayOfMonth === 10 && d % 55 < 2 && Math.random() < 0.6) {
-      txs.push({
-        type: "INCOME",
-        amount: randomAmount(3000, 15000),
-        financialAccountId: primaryBank.id,
-        category: "เงินเดือน",
-        note: "รายได้พิเศษ/ฟรีแลนซ์",
-        occurredAt: dayStart,
-        status: "POSTED",
-      });
-    }
-
-    const remainingSlots = txCount - txs.length;
-    for (let i = 0; i < remainingSlots; i++) {
-      const roll = Math.random();
-      if (roll < 0.15 && transferableAccounts.length >= 2) {
-        const from = pick(transferableAccounts);
-        const to = transferableAccounts.find((a) => a.id !== from.id);
-        if (to) {
-          const amt = randomAmount(100, 2000);
-          txs.push({
-            type: "TRANSFER",
-            amount: amt,
-            financialAccountId: from.id,
-            transferAccountId: to.id,
-            category: "",
-            note: `โอนเงิน ${from.name} → ${to.name}`,
-            occurredAt: new Date(dayStart.getTime() + Math.random() * (dayEnd.getTime() - dayStart.getTime())),
-            status: "POSTED",
-          });
-        }
+  // Persist one tx, keeping asset balances >= 0 (reroute bank-funded spend to card if ever short).
+  const persist = async (tx: DayTx): Promise<void> => {
+    const targetIsCard = !!card && tx.accountId === card.id;
+    if (tx.type === "EXPENSE" && !targetIsCard && (bal[tx.accountId] ?? 0) < tx.amount) {
+      if (card) {
+        tx.accountId = card.id;
       } else {
-        const useCreditCard = Math.random() < 0.55 && ctx.creditCards.length > 0;
-        const accountId = useCreditCard ? primaryCard.id : primaryBank.id;
-        const categoryChoice = pick(expenseCategories);
-        const range =
-          categoryChoice === "อาหาร" ? EXPENSE_RANGES.food
-            : categoryChoice === "ช้อปปิ้ง" ? EXPENSE_RANGES.shopping
-            : categoryChoice === "เงินออม" ? EXPENSE_RANGES.savings
-            : EXPENSE_RANGES.other;
-        const status: "PENDING" | "POSTED" = Math.random() < 0.08 ? "PENDING" : "POSTED";
-        txs.push({
-          type: "EXPENSE",
-          amount: randomAmount(range.min, range.max),
-          financialAccountId: accountId,
-          category: categoryChoice,
-          note: Math.random() < 0.3 ? "บันทึกตัวอย่าง" : null,
-          occurredAt: new Date(dayStart.getTime() + Math.random() * (dayEnd.getTime() - dayStart.getTime())),
-          status,
-        });
+        return;
       }
     }
+    if (tx.type === "TRANSFER" && (bal[tx.accountId] ?? 0) < tx.amount) return;
 
-    for (const tx of txs) {
-      const txData = {
+    const onCard = !!card && tx.accountId === card.id;
+    if (tx.type === "INCOME") {
+      bal[tx.accountId] = (bal[tx.accountId] ?? 0) + tx.amount;
+    } else if (tx.type === "EXPENSE" && !onCard) {
+      bal[tx.accountId] = (bal[tx.accountId] ?? 0) - tx.amount;
+    } else if (tx.type === "TRANSFER") {
+      bal[tx.accountId] = (bal[tx.accountId] ?? 0) - tx.amount;
+      bal[tx.transferAccountId!] = (bal[tx.transferAccountId!] ?? 0) + tx.amount;
+    }
+
+    const created = await prisma.transaction.create({
+      data: {
         userId: ctx.userId,
         type: tx.type as TransactionType,
-        status: (tx.status === "PENDING" ? TransactionStatus.PENDING : TransactionStatus.POSTED) as TransactionStatus,
+        status: tx.status === "PENDING" ? TransactionStatus.PENDING : TransactionStatus.POSTED,
         amount: tx.amount,
-        financialAccountId: tx.financialAccountId,
+        financialAccountId: tx.accountId,
         transferAccountId: tx.type === "TRANSFER" ? tx.transferAccountId : null,
-        category: tx.category || null,
+        category: tx.category,
         categoryId: tx.category ? ctx.categoryMap[tx.category]?.id ?? null : null,
         note: tx.note,
         occurredAt: tx.occurredAt,
         postedDate: tx.status === "POSTED" ? tx.occurredAt : null,
-      };
-      const created = await prisma.transaction.create({ data: txData });
-      totalTx++;
-      if (totalTx <= 10 && tx.type !== "TRANSFER") {
-        void createActivityLog({
-          userId: ctx.userId,
-          action: "TRANSACTION_CREATED",
-          entityType: "transaction",
-          entityId: created.id,
-          details: {
-            type: tx.type,
-            amount: tx.amount,
-            category: tx.category,
-            occurredAt: tx.occurredAt.toISOString(),
-            accountName: primaryBank.name,
-          },
-        });
+      },
+    });
+    totalTx++;
+    if (totalTx <= 10 && tx.type !== "TRANSFER") {
+      void createActivityLog({
+        userId: ctx.userId,
+        action: "TRANSACTION_CREATED",
+        entityType: "transaction",
+        entityId: created.id,
+        details: {
+          type: tx.type,
+          amount: tx.amount,
+          category: tx.category,
+          occurredAt: tx.occurredAt.toISOString(),
+          accountName: bank.name,
+        },
+      });
+    }
+  };
+
+  for (let d = 0; d <= DAYS_BACK; d++) {
+    const dayStart = addDays(startDate, d);
+    const dayOfMonth = dayStart.getDate();
+    const dow = dayStart.getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const month = dayStart.getMonth();
+    const txs: DayTx[] = [];
+
+    const expense = (
+      category: string,
+      note: string,
+      min: number,
+      max: number,
+      hour: number,
+      accountId: string = bank.id,
+      status: "PENDING" | "POSTED" = "POSTED",
+    ): void => {
+      txs.push({
+        type: "EXPENSE",
+        amount: randomAmount(min, max),
+        accountId,
+        category,
+        note,
+        occurredAt: time(dayStart, hour),
+        status,
+      });
+    };
+    const smallSrc = (): string =>
+      wallet && (bal[wallet.id] ?? 0) > 300 && Math.random() < 0.4 ? wallet.id : bank.id;
+
+    // Income
+    if (dayOfMonth === 25) {
+      txs.push({ type: "INCOME", amount: salary, accountId: bank.id, category: "เงินเดือน", note: "เงินเดือน", occurredAt: time(dayStart, 9), status: "POSTED" });
+      if (month === 11) {
+        txs.push({ type: "INCOME", amount: randomAmount(salary * 0.8, salary * 1.5), accountId: bank.id, category: "เงินเดือน", note: "โบนัสประจำปี", occurredAt: time(dayStart, 9), status: "POSTED" });
       }
     }
+    if (dayOfMonth === randomInt(6, 24) && Math.random() < 0.3) {
+      txs.push({ type: "INCOME", amount: randomAmount(3000, 15000), accountId: bank.id, category: "เงินเดือน", note: pick(["รายได้ฟรีแลนซ์", "งานพิเศษนอกเวลา", "ขายของออนไลน์"]), occurredAt: time(dayStart, 20), status: "POSTED" });
+    }
+    if (dayOfMonth === 1 && (month === 5 || month === 11)) {
+      txs.push({ type: "INCOME", amount: randomAmount(80, 400), accountId: savings.id, category: "ดอกเบี้ย", note: "ดอกเบี้ยเงินฝาก", occurredAt: time(dayStart, 6), status: "POSTED" });
+    }
 
-    for (const card of ctx.creditCards) {
-      if (dayOfMonth === card.statementClosingDay) {
-        const closingDate = new Date(dayStart.getFullYear(), dayStart.getMonth(), card.statementClosingDay);
+    // Transfers
+    if (dayOfMonth === 26) {
+      txs.push({ type: "TRANSFER", amount: randomAmount(4000, 6000), accountId: bank.id, transferAccountId: savings.id, category: null, note: "ออมเงินประจำเดือน", occurredAt: time(dayStart, 10), status: "POSTED" });
+    }
+    if (dayOfMonth === 2 && wallet) {
+      txs.push({ type: "TRANSFER", amount: 1000, accountId: bank.id, transferAccountId: wallet.id, category: null, note: "เติมเงิน e-Wallet", occurredAt: time(dayStart, 8), status: "POSTED" });
+    }
+
+    // Monthly fixed expenses
+    if (dayOfMonth === 1) expense("ค่าที่พัก", "ค่าเช่าหอพัก", rent, rent, 8);
+    if (dayOfMonth === 5) {
+      expense("ค่าน้ำค่าไฟ", "ค่าไฟฟ้า", 900, 2200, 11);
+      expense("ค่าน้ำค่าไฟ", "ค่าน้ำประปา", 150, 380, 11);
+      if (card) expense("ค่าสมัครสมาชิก", "Spotify Premium", 149, 149, 7, card.id);
+    }
+    if (dayOfMonth === 8) expense("ค่าอินเทอร์เน็ต", "ค่าเน็ตบ้าน AIS Fibre", 599, 599, 12);
+    if (dayOfMonth === 12) expense("อื่นๆ", "ค่าโทรศัพท์มือถือ", 399, 699, 12);
+    if (dayOfMonth === 15) expense("อื่นๆ", "ค่าสมาชิกฟิตเนส", 1200, 1200, 18);
+    if (dayOfMonth === 20 && card) expense("ค่าสมัครสมาชิก", "Netflix", 419, 419, 21, card.id);
+    if (dayOfMonth === 28) expense("อื่นๆ", "เงินให้พ่อแม่", 5000, 5000, 19);
+
+    // Daily living
+    if (!isWeekend) {
+      if (Math.random() < 0.85) expense("อาหาร", pick(NOTES.coffee), 45, 130, 8, smallSrc());
+      if (Math.random() < 0.92) expense("อาหาร", pick(NOTES.lunch), 60, 160, 12);
+      if (Math.random() < 0.7) expense("อื่นๆ", pick(NOTES.transport), 30, 90, randomInt(17, 19));
+      if (Math.random() < 0.45) expense("อาหาร", pick(NOTES.dinner), 70, 280, 19);
+      if (Math.random() < 0.25) expense("อาหาร", pick(NOTES.coffee), 35, 90, 15, smallSrc());
+      if (Math.random() < 0.12) expense("ช้อปปิ้ง", pick(NOTES.shopOnline), 200, 1800, 22, card?.id ?? bank.id);
+    } else {
+      if (Math.random() < 0.75) expense("อาหาร", pick(NOTES.brunch), 80, 260, 10);
+      if (Math.random() < 0.5) expense("อาหาร", pick(NOTES.grocery), 350, 1600, 11);
+      if (Math.random() < 0.55) expense("อื่นๆ", pick(NOTES.hobby), 150, 900, randomInt(14, 20));
+      if (Math.random() < 0.35) expense("ช้อปปิ้ง", pick(NOTES.shopStore), 300, 2500, 16, card?.id ?? bank.id);
+      if (Math.random() < 0.2) expense("อาหาร", pick(NOTES.familyMeal), 400, 1800, 18);
+      if (Math.random() < 0.15) expense("อื่นๆ", pick(NOTES.transport), 80, 300, 13);
+    }
+
+    // Rare / lumpy
+    if (Math.random() < 0.015) expense("ค่ารักษาพยาบาล", pick(NOTES.medical), 200, 2500, 14);
+    if (Math.random() < 0.01) expense("อื่นๆ", pick(NOTES.travel), 1500, 9000, 9, card?.id ?? bank.id);
+    if (Math.random() < 0.012) expense("ของขวัญ", pick(NOTES.gift), 200, 1500, 17, card?.id ?? bank.id);
+    if (Math.random() < 0.02) expense("ช้อปปิ้ง", pick(NOTES.shopOnline), 300, 1500, 21, card?.id ?? bank.id, "PENDING");
+
+    txs.sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime());
+    for (const tx of txs) {
+      await persist(tx);
+    }
+
+    for (const c of ctx.creditCards) {
+      if (dayOfMonth === c.statementClosingDay) {
+        const closingDate = new Date(dayStart.getFullYear(), dayStart.getMonth(), c.statementClosingDay);
         try {
-          await closeStatement(card.id, closingDate);
+          await closeStatement(c.id, closingDate);
         } catch {
           // Statement may already exist
         }
       }
-      await recomputeOutstanding(card.id);
+      await recomputeOutstanding(c.id);
     }
   }
 
-  for (const card of ctx.creditCards) {
+  // Pay closed statements (85-100% of outstanding) from the main bank.
+  for (const c of ctx.creditCards) {
     const statements = await prisma.creditCardStatement.findMany({
-      where: { accountId: card.id, isClosed: true, isPaid: false },
+      where: { accountId: c.id, isClosed: true, isPaid: false },
       orderBy: { closingDate: "asc" },
     });
     for (const stmt of statements) {
       const paymentDate = addDays(stmt.closingDate, 2);
       if (paymentDate <= today) {
         try {
-          const outstanding = await getCurrentOutstanding(card.id);
+          const outstanding = await getCurrentOutstanding(c.id);
           if (outstanding > 0) {
-            const toPay = Math.round(outstanding * (0.8 + Math.random() * 0.2) * 100) / 100;
+            const toPay = Math.round(outstanding * (0.85 + Math.random() * 0.15) * 100) / 100;
             if (toPay >= 1) {
               await recordPayment({
                 userId: ctx.userId,
-                accountId: card.id,
+                accountId: c.id,
                 amount: toPay,
                 occurredAt: paymentDate,
-                fromAccountId: primaryBank.id,
-                note: "ชำระบัตรเครดิต",
+                fromAccountId: bank.id,
+                note: "ชำระค่าบัตรเครดิต",
               });
             }
           }
@@ -704,12 +698,13 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
         }
       }
     }
-    await recomputeOutstanding(card.id);
+    await recomputeOutstanding(c.id);
   }
 
-  if (primaryCard && ctx.creditCards.length > 0) {
+  // One interest charge last month.
+  if (card) {
     const interestTx = await prisma.transaction.findFirst({
-      where: { financialAccountId: primaryCard.id, type: "INTEREST" },
+      where: { financialAccountId: card.id, type: "INTEREST" },
     });
     if (!interestTx) {
       const lastMonth = subDays(today, 35);
@@ -719,7 +714,7 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
           type: TransactionType.INTEREST,
           status: TransactionStatus.POSTED,
           amount: randomAmount(50, 200),
-          financialAccountId: primaryCard.id,
+          financialAccountId: card.id,
           category: "ดอกเบี้ย",
           note: "ดอกเบี้ยบัตรเครดิต",
           occurredAt: lastMonth,
@@ -727,27 +722,29 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
         },
       });
       totalTx++;
-      await recomputeOutstanding(primaryCard.id);
+      await recomputeOutstanding(card.id);
     }
   }
 
+  // A refunded / cancelled purchase -> VOID.
   const voidCandidates = await prisma.transaction.findMany({
-    where: { userId: ctx.userId, type: "EXPENSE", status: TransactionStatus.POSTED },
-    take: 2,
-    orderBy: { occurredAt: "asc" },
+    where: { userId: ctx.userId, type: "EXPENSE", status: TransactionStatus.POSTED, category: "ช้อปปิ้ง" },
+    take: 3,
+    orderBy: { occurredAt: "desc" },
   });
   for (const tx of voidCandidates) {
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.4) {
       await prisma.transaction.update({
         where: { id: tx.id },
-        data: { status: TransactionStatus.VOID },
+        data: { status: TransactionStatus.VOID, note: "ยกเลิก/คืนเงินสินค้า" },
       });
     }
   }
 
-  if (primaryCard && ctx.creditCards.length > 0) {
+  // Card balance adjustment (e.g. dispute reversal).
+  if (card) {
     const hasAdjustment = await prisma.transaction.findFirst({
-      where: { financialAccountId: primaryCard.id, type: "ADJUSTMENT" },
+      where: { financialAccountId: card.id, type: "ADJUSTMENT" },
     });
     if (!hasAdjustment) {
       const adjDate = subDays(today, 60);
@@ -757,7 +754,7 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
           type: TransactionType.ADJUSTMENT,
           status: TransactionStatus.POSTED,
           amount: randomAmount(10, 50),
-          financialAccountId: primaryCard.id,
+          financialAccountId: card.id,
           category: "ปรับยอด",
           note: "ปรับยอดบัตรเครดิต",
           occurredAt: adjDate,
@@ -765,25 +762,26 @@ async function seedTransactions(ctx: SeedContext): Promise<number> {
         },
       });
       totalTx++;
-      await recomputeOutstanding(primaryCard.id);
+      await recomputeOutstanding(card.id);
     }
   }
 
+  // History on the now-closed account.
   if (ctx.disabledAccountIds.length > 0) {
     for (const accId of ctx.disabledAccountIds) {
       for (let i = 0; i < 3; i++) {
-        const d = addDays(startDate, randomInt(30, 100));
+        const when = addDays(startDate, randomInt(20, 90));
         await prisma.transaction.create({
           data: {
             userId: ctx.userId,
             type: TransactionType.EXPENSE,
             status: TransactionStatus.POSTED,
-            amount: randomAmount(50, 500),
+            amount: randomAmount(80, 600),
             financialAccountId: accId,
-            category: "ค่าอื่นๆ",
-            note: "รายการก่อนปิดบัญชี",
-            occurredAt: d,
-            postedDate: d,
+            category: "อาหาร",
+            note: pick(["ร้านอาหารตามสั่ง", "ซื้อของใช้", "ค่ากาแฟ"]),
+            occurredAt: when,
+            postedDate: when,
           },
         });
         totalTx++;
@@ -1163,16 +1161,14 @@ async function main() {
   };
 
   const totalTx = await seedTransactions(ctx);
-  const balanceTopUps = await ensureNonNegativeAssetBalances(ctx);
   await rebuildTransactionBalanceSnapshotsForUser(userId);
   await seedDisabledAccounts(ctx);
   await seedTermsAcceptance(userId);
   await seedRecurringTransactions(ctx);
   await seedBudgets(ctx);
 
-  const topUpNote = balanceTopUps > 0 ? `, ${balanceTopUps} non-negative balance top-up(s)` : "";
   console.log(
-    `Seed done: ${totalTx} transactions${topUpNote} over ${DAYS_BACK} days, budgets, recurring templates, terms.`,
+    `Seed done: ${totalTx} transactions over ${DAYS_BACK} days, budgets, recurring templates, terms.`,
   );
 }
 

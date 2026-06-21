@@ -554,7 +554,7 @@ export function FinancialAccountFormDialog({
                         <span
                           className={cn(
                             "font-medium break-words",
-                            isMobile ? "text-[10px] leading-tight text-center sm:text-left sm:text-sm" : "text-sm",
+                            isMobile ? "text-[12px] leading-tight text-center sm:text-left sm:text-sm" : "text-sm",
                             isSelected
                               ? "text-[#3D3020] dark:text-stone-100"
                               : "text-[#6B5E4E] dark:text-stone-400"

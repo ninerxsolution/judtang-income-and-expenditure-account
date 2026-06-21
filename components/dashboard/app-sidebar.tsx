@@ -90,8 +90,8 @@ function getInitials(name: string | null | undefined, email: string | null | und
 const navItems = [
   { key: "home", href: "/dashboard", icon: Home },
   { key: "accounts", href: "/dashboard/accounts", icon: Landmark },
-  { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
   { key: "entry", href: "/dashboard/entry", icon: ClipboardList },
+  { key: "transactions", href: "/dashboard/transactions", icon: Wallet },
   { key: "reports", href: "/dashboard/reports", icon: BarChart3 },
 ] as const;
 
@@ -137,7 +137,7 @@ export function AppSidebarLayout({
               <span className="text-sm font-semibold">
                 {t("common.appName")}
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[12px] text-muted-foreground">
                 {t("dashboard.pageTitle.dashboard")}
               </span>
             </div>

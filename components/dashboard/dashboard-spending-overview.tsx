@@ -33,13 +33,13 @@ export function DashboardSpendingOverview() {
               </div>
               <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:gap-4">
                 <div className="min-w-0 space-y-0.5">
-                  <p className="text-[11px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
+                  <p className="text-[12px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
                     {t("dashboard.spendingOverview.todayTitle")}
                   </p>
                   <Skeleton className="h-5 w-20" />
                 </div>
                 <div className="min-w-0 space-y-0.5 text-right sm:text-left">
-                  <p className="text-[11px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
+                  <p className="text-[12px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
                     {t("dashboard.spendingOverview.weekTitle")}
                   </p>
                   <Skeleton className="ml-auto h-5 w-24 sm:ml-0" />
@@ -79,7 +79,7 @@ export function DashboardSpendingOverview() {
             </div>
             <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:gap-4">
               <div className="min-w-0">
-                <p className="text-[11px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
+                <p className="text-[12px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
                   {t("dashboard.spendingOverview.todayTitle")}
                 </p>
                 <p className="text-base font-bold tabular-nums leading-tight text-[#3D3020] dark:text-stone-100 sm:text-[17px]">
@@ -87,7 +87,7 @@ export function DashboardSpendingOverview() {
                 </p>
               </div>
               <div className="min-w-0 text-right sm:text-left">
-                <p className="text-[11px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
+                <p className="text-[12px] font-medium leading-tight text-[#6B5E4E] dark:text-stone-400">
                   {t("dashboard.spendingOverview.weekTitle")}
                 </p>
                 <p className="text-base font-bold tabular-nums leading-tight text-[#3D3020] dark:text-stone-100 sm:text-[17px]">
@@ -119,7 +119,7 @@ export function DashboardSpendingOverview() {
                   </span>
                   <span
                     className={cn(
-                      "mt-0.5 text-[9px] font-semibold leading-none tabular-nums sm:text-[10px]",
+                      "mt-0.5 text-[9px] font-semibold leading-none tabular-nums sm:text-[12px]",
                       spent > 0
                         ? "text-[#3D3020] dark:text-stone-200"
                         : "text-[#C4B8A8] dark:text-stone-600",

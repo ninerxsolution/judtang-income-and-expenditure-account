@@ -237,7 +237,7 @@ export function ActivityHeatmap() {
                 return (
                   <div
                     key={`month-${col}`}
-                    className="text-[10px] text-[#A09080] dark:text-stone-400 whitespace-nowrap"
+                    className="text-[12px] text-[#A09080] dark:text-stone-400 whitespace-nowrap"
                   >
                     {labelForCol?.label ?? ""}
                   </div>
@@ -250,7 +250,7 @@ export function ActivityHeatmap() {
                 {WEEKDAY_LABELS.map((label) => (
                   <span
                     key={label}
-                    className="text-[10px] text-[#A09080] dark:text-stone-400"
+                    className="text-[12px] text-[#A09080] dark:text-stone-400"
                   >
                     {label}
                   </span>
@@ -310,7 +310,7 @@ export function ActivityHeatmap() {
               </div>
             </div>
             {/* Legend */}
-            <div className="flex items-center gap-1 pt-1 pl-10 text-[10px] text-[#A09080] dark:text-stone-400">
+            <div className="flex items-center gap-1 pt-1 pl-10 text-[12px] text-[#A09080] dark:text-stone-400">
               <span>{t("dashboard.activityHeatmap.less")}</span>
               {LEVEL_CLASSES.map((cls, i) => (
                 <div

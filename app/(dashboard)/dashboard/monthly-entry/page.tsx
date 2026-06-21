@@ -1156,6 +1156,9 @@ export default function MonthlyEntryPage() {
             day === now.getDate() &&
             month === now.getMonth() &&
             year === now.getFullYear();
+          const dayTotalExpense = existing.reduce((s, t) => t.type === "EXPENSE" ? s + t.amount : s, 0);
+          const dayTotalIncome = existing.reduce((s, t) => t.type === "INCOME" ? s + t.amount : s, 0);
+          const dayTotalTransfer = existing.reduce((s, t) => t.type === "TRANSFER" ? s + t.amount : s, 0);
 
           return (
             <div
@@ -1185,6 +1188,13 @@ export default function MonthlyEntryPage() {
                     {day}
                   </span>
                   <span className="text-xs text-muted-foreground">{dayOfWeek}</span>
+                  {(dayTotalExpense > 0 || dayTotalIncome > 0 || dayTotalTransfer > 0) && (
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
+                      {dayTotalExpense > 0 && <span className="text-red-500 dark:text-red-400">{formatAmount(dayTotalExpense)}</span>}
+                      {dayTotalIncome > 0 && <span className="text-emerald-600 dark:text-emerald-400">{formatAmount(dayTotalIncome)}</span>}
+                      {dayTotalTransfer > 0 && <span className="text-blue-500 dark:text-blue-400">{formatAmount(dayTotalTransfer)}</span>}
+                    </span>
+                  )}
                 </div>
                 <Button
                   variant="ghost"

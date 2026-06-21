@@ -196,7 +196,7 @@ export function TransactionsList({ initialData }: TransactionsListProps = {}) {
                     </div>
                     {amountSpan}
                   </div>
-                  <span className="text-[10px] text-[#A09080] dark:text-stone-400">
+                  <span className="text-[12px] text-[#A09080] dark:text-stone-400">
                     {formatDate(tx.occurredAt, locale)}
                   </span>
                 </li>

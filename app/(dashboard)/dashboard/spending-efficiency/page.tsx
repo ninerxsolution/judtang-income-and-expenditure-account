@@ -1,43 +1,53 @@
 "use client";
 
 /**
- * Spending efficiency: compare actual daily EXPENSE+INTEREST (approx THB) to a user-set daily target.
+ * Financial efficiency: how well income converts to savings, where spending goes,
+ * and whether it is improving. Replaces the old daily-target/calendar view.
  * URL: /dashboard/spending-efficiency
  */
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownCircle,
-  CalendarDays,
+  ArrowDownRight,
+  ArrowUpRight,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
-  CircleX,
-  Target,
-  Wallet,
+  Layers,
+  Minus,
+  PiggyBank,
+  Tags,
+  TrendingUp,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from "@/lib/format";
-import { useI18n } from "@/hooks/use-i18n";
 import { formatYearForDisplay } from "@/lib/format-year";
+import { useI18n } from "@/hooks/use-i18n";
 import { getCategoryDisplayName } from "@/lib/categories-display";
-import {
-  getRecentCategoryIds,
-  saveRecentCategoryId,
-  sortCategoriesByRecent,
-} from "@/lib/recent-categories";
 import { cn } from "@/lib/utils";
 
-const STORAGE_DAILY_TARGET = "judtang_spending_efficiency_daily_target";
+const STORAGE_NEED_IDS = "judtang_efficiency_need_category_ids";
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-type DayRow = { date: string; spent: number };
+type MonthItem = { monthIndex: number; income: number; expense: number };
 type CategoryItem = {
-  id: string;
-  name: string;
-  nameEn?: string | null;
+  categoryId: string | null;
+  categoryName: string;
+  categoryNameEn?: string | null;
+  amount: number;
 };
+type CategoryDef = { id: string; name: string; nameEn?: string | null };
 
 function getMonthRange(year: number, month: number): { from: string; to: string } {
   const lastDay = new Date(year, month + 1, 0).getDate();
@@ -46,20 +56,22 @@ function getMonthRange(year: number, month: number): { from: string; to: string 
   return { from, to };
 }
 
-const WEEKDAY_KEYS = [
-  "dayMon",
-  "dayTue",
-  "dayWed",
-  "dayThu",
-  "dayFri",
-  "daySat",
-  "daySun",
-] as const;
+function pct(n: number): string {
+  return `${Math.round(n * 100)}%`;
+}
 
-function parseTarget(raw: string): number {
-  const n = parseFloat(raw.replace(/,/g, "."));
-  if (Number.isNaN(n) || n < 0) return 0;
-  return n;
+function catKey(c: CategoryItem): string {
+  return c.categoryId ?? `name:${c.categoryName}`;
+}
+
+function bandInfo(rate: number) {
+  if (rate < 0)
+    return { key: "bandNegative", text: "text-red-600 dark:text-red-400", badge: "bg-red-500/10 text-red-700 dark:text-red-300" };
+  if (rate < 0.1)
+    return { key: "bandTight", text: "text-amber-600 dark:text-amber-400", badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300" };
+  if (rate < 0.2)
+    return { key: "bandOk", text: "text-blue-600 dark:text-blue-400", badge: "bg-blue-500/10 text-blue-700 dark:text-blue-300" };
+  return { key: "bandStrong", text: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" };
 }
 
 export default function SpendingEfficiencyPage() {
@@ -68,90 +80,80 @@ export default function SpendingEfficiencyPage() {
   const now = useMemo(() => new Date(), []);
   const [year, setYear] = useState(() => now.getFullYear());
   const [month, setMonth] = useState(() => now.getMonth());
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [excludedCategoryIds, setExcludedCategoryIds] = useState<string[]>([]);
-  const [categoryMruTick, setCategoryMruTick] = useState(0);
 
-  const [dailyTargetInput, setDailyTargetInput] = useState("0");
-  const dailyTarget = useMemo(() => parseTarget(dailyTargetInput), [dailyTargetInput]);
-
-  const [days, setDays] = useState<DayRow[] | null>(null);
+  const [monthData, setMonthData] = useState<MonthItem[] | null>(null);
+  const [catCurrent, setCatCurrent] = useState<CategoryItem[]>([]);
+  const [catPrev, setCatPrev] = useState<CategoryItem[]>([]);
+  const [categoryDefs, setCategoryDefs] = useState<CategoryDef[]>([]);
+  const [needIds, setNeedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
+  const { from, to } = useMemo(() => getMonthRange(year, month), [year, month]);
+  const prevRange = useMemo(
+    () => (month === 0 ? getMonthRange(year - 1, 11) : getMonthRange(year, month - 1)),
+    [year, month],
+  );
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const id = requestAnimationFrame(() => {
-      try {
-        const v = localStorage.getItem(STORAGE_DAILY_TARGET);
-        if (v != null && v !== "") setDailyTargetInput(v);
-      } catch {
-        // ignore
+    try {
+      const raw = localStorage.getItem(STORAGE_NEED_IDS);
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) setNeedIds(parsed.filter((x): x is string => typeof x === "string"));
       }
-    });
-    return () => cancelAnimationFrame(id);
+    } catch {
+      // ignore
+    }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const id = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_DAILY_TARGET, dailyTargetInput);
-      } catch {
-        // ignore
-      }
-    }, 300);
-    return () => clearTimeout(id);
-  }, [dailyTargetInput]);
-
-  const { from, to } = useMemo(() => getMonthRange(year, month), [year, month]);
+  function persistNeedIds(next: string[]) {
+    setNeedIds(next);
+    try {
+      localStorage.setItem(STORAGE_NEED_IDS, JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
-    setCategoriesLoading(true);
     fetch("/api/categories")
       .then((res) => (res.ok ? res.json() : []))
-      .then((rows: CategoryItem[]) => {
-        if (cancelled || !Array.isArray(rows)) return;
-        setCategories(rows.filter((x) => typeof x.id === "string" && x.id.length > 0));
+      .then((rows: CategoryDef[]) => {
+        if (!cancelled && Array.isArray(rows)) {
+          setCategoryDefs(rows.filter((x) => typeof x.id === "string" && x.id.length > 0));
+        }
       })
-      .catch(() => {
-        if (!cancelled) setCategories([]);
-      })
-      .finally(() => {
-        if (!cancelled) setCategoriesLoading(false);
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
 
   useEffect(() => {
-    if (!from || !to) {
-      return;
-    }
     let cancelled = false;
-    setLoadError(false);
     setLoading(true);
-    const params = new URLSearchParams();
-    params.set("from", from);
-    params.set("to", to);
-    params.set("timezone", timezone);
-    if (excludedCategoryIds.length > 0) {
-      params.set("excludedCategoryIds", excludedCategoryIds.join(","));
-    }
-    fetch(`/api/spending-efficiency?${params.toString()}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { days?: DayRow[] } | null) => {
+    setLoadError(false);
+    const byMonth = new URLSearchParams({ year: String(year), timezone });
+    const cur = new URLSearchParams({ from, to, timezone });
+    const prev = new URLSearchParams({ from: prevRange.from, to: prevRange.to, timezone });
+    Promise.all([
+      fetch(`/api/transactions/summary-by-month?${byMonth}`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`/api/transactions/summary-by-category?${cur}`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`/api/transactions/summary-by-category?${prev}`).then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([m, c, p]: [MonthItem[], CategoryItem[], CategoryItem[]]) => {
         if (cancelled) return;
-        if (data?.days) setDays(data.days);
-        else setDays([]);
+        setMonthData(Array.isArray(m) ? m : []);
+        setCatCurrent(Array.isArray(c) ? c : []);
+        setCatPrev(Array.isArray(p) ? p : []);
       })
       .catch(() => {
         if (!cancelled) {
           setLoadError(true);
-          setDays(null);
+          setMonthData([]);
         }
       })
       .finally(() => {
@@ -160,59 +162,80 @@ export default function SpendingEfficiencyPage() {
     return () => {
       cancelled = true;
     };
-  }, [from, to, timezone, excludedCategoryIds]);
+  }, [from, to, prevRange.from, prevRange.to, year, timezone]);
 
-  const dayByDate = useMemo(() => {
-    const m = new Map<string, number>();
-    (days ?? []).forEach((d) => {
-      m.set(d.date, d.spent);
-    });
-    return m;
-  }, [days]);
+  const needSet = useMemo(() => new Set(needIds), [needIds]);
 
-  const stats = useMemo(() => {
-    if (days == null || !days.length) {
-      return { total: 0, n: 0, targetTotal: 0, over: 0, notOver: 0, diff: 0 };
-    }
-    const n = days.length;
-    const total = days.reduce((s, d) => s + d.spent, 0);
-    const targetTotal = dailyTarget * n;
-    const over =
-      dailyTarget > 0 ? days.filter((d) => d.spent > dailyTarget).length : 0;
-    const notOver = dailyTarget > 0 ? n - over : n;
+  const curMonth = useMemo(
+    () => monthData?.find((m) => m.monthIndex === month) ?? { monthIndex: month, income: 0, expense: 0 },
+    [monthData, month],
+  );
+
+  const savings = useMemo(() => {
+    const income = curMonth.income;
+    const expense = curMonth.expense;
+    const saved = income - expense;
+    const rate = income > 0 ? saved / income : null;
+    const prev = month > 0 ? monthData?.find((m) => m.monthIndex === month - 1) : undefined;
+    const prevRate = prev && prev.income > 0 ? (prev.income - prev.expense) / prev.income : null;
+    const deltaPP = rate != null && prevRate != null ? rate - prevRate : null;
+    return { income, expense, saved, rate, deltaPP };
+  }, [curMonth, monthData, month]);
+
+  const structure = useMemo(() => {
+    const income = curMonth.income;
+    const expense = curMonth.expense;
+    const needs = catCurrent.reduce(
+      (s, c) => (c.categoryId && needSet.has(c.categoryId) ? s + c.amount : s),
+      0,
+    );
+    const wants = Math.max(0, expense - needs);
+    const saved = income - expense;
+    const denom = Math.max(income, expense, 1);
     return {
-      total,
-      n,
-      targetTotal,
-      diff: total - targetTotal,
-      over,
-      notOver,
+      income,
+      needs,
+      wants,
+      saved,
+      wNeeds: needs / denom,
+      wWants: wants / denom,
+      wSaved: Math.max(0, saved) / denom,
     };
-  }, [days, dailyTarget]);
+  }, [curMonth, catCurrent, needSet]);
 
-  /**
-   * Averages for the **selected month** (n = calendar days in that month) with the same
-   * excluded categories as the total. Not comparable to "รายจ่ายเฉลี่ย/เดือน" on Summary
-   * (which is year total ÷ 12). We do not show a third "per month" line: the main figure is
-   * already that month’s total.
-   */
-  const avgRunRates = useMemo(() => {
-    const { total, n } = stats;
-    if (n <= 0) {
-      return { daily: 0, weekly: 0 };
-    }
-    return {
-      daily: total / n,
-      weekly: (total * 7) / n,
-    };
-  }, [stats]);
+  const topCategories = useMemo(() => {
+    const totalCats = catCurrent.reduce((s, c) => s + c.amount, 0);
+    const prevMap = new Map(catPrev.map((c) => [catKey(c), c.amount]));
+    return [...catCurrent]
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 6)
+      .map((c) => {
+        const prevAmount = prevMap.get(catKey(c)) ?? 0;
+        const deltaPct = prevAmount > 0 ? (c.amount - prevAmount) / prevAmount : null;
+        return {
+          key: catKey(c),
+          name: getCategoryDisplayName(c.categoryName, language, c.categoryNameEn),
+          amount: c.amount,
+          share: totalCats > 0 ? c.amount / totalCats : 0,
+          deltaPct,
+          isNew: prevAmount <= 0,
+        };
+      });
+  }, [catCurrent, catPrev, language]);
+
+  const trend = useMemo(() => {
+    return (monthData ?? []).map((m) => ({
+      name: MONTH_SHORT[m.monthIndex] ?? "",
+      monthIndex: m.monthIndex,
+      rate: m.income > 0 ? Math.round(((m.income - m.expense) / m.income) * 100) : 0,
+    }));
+  }, [monthData]);
 
   const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => i), []);
   const yearOptions = useMemo(() => {
     const y = new Date().getFullYear();
     return Array.from({ length: 5 }, (_, k) => y - 2 + k);
   }, []);
-
   const periodLabel = useMemo(
     () => `${t(`summary.months.${month}` as const)} ${formatYearForDisplay(year, language)}`,
     [month, year, t, language],
@@ -226,7 +249,6 @@ export default function SpendingEfficiencyPage() {
       setMonth((m) => m - 1);
     }
   };
-
   const goNext = () => {
     if (month >= 11) {
       setMonth(0);
@@ -236,35 +258,8 @@ export default function SpendingEfficiencyPage() {
     }
   };
 
-  const sortedCategories = useMemo(() => {
-    const mru = getRecentCategoryIds();
-    return sortCategoriesByRecent(categories, mru);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-sort after toggle writes MRU
-  }, [categories, categoryMruTick]);
-
-  const monthGrid = useMemo(() => {
-    const first = new Date(year, month, 1);
-    const firstWeekday = first.getDay();
-    const leading = (firstWeekday + 6) % 7;
-    const lastD = new Date(year, month + 1, 0).getDate();
-    const cells: ({ date: string; spent: number } | null)[] = [];
-    for (let i = 0; i < leading; i += 1) {
-      cells.push(null);
-    }
-    for (let d = 1; d <= lastD; d += 1) {
-      const ymd = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const spent = dayByDate.get(ymd) ?? 0;
-      cells.push({ date: ymd, spent });
-    }
-    while (cells.length % 7 !== 0) {
-      cells.push(null);
-    }
-    const rows: (typeof cells)[] = [];
-    for (let i = 0; i < cells.length; i += 7) {
-      rows.push(cells.slice(i, i + 7));
-    }
-    return rows;
-  }, [year, month, dayByDate]);
+  const band = savings.rate != null ? bandInfo(savings.rate) : null;
+  const hasExpense = curMonth.expense > 0 || curMonth.income > 0;
 
   return (
     <div className="space-y-6">
@@ -273,30 +268,12 @@ export default function SpendingEfficiencyPage() {
         <p className="text-sm text-muted-foreground">{t("dashboard.spendingEfficiency.subtitle")}</p>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div className="min-w-48 space-y-2">
-          <Label htmlFor="daily-target">{t("dashboard.spendingEfficiency.dailyTargetLabel")}</Label>
-          <Input
-            id="daily-target"
-            type="number"
-            min={0}
-            step="1"
-            inputMode="numeric"
-            className="h-10"
-            value={dailyTargetInput}
-            onChange={(e) => setDailyTargetInput(e.target.value)}
-            aria-describedby="daily-target-hint"
-          />
-          
-        </div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="sr-only" htmlFor="se-year">
-            Year
-          </label>
           <select
-            id="se-year"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
+            aria-label="Year"
             className="flex h-10 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm font-inherit ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {yearOptions.map((y) => (
@@ -305,13 +282,10 @@ export default function SpendingEfficiencyPage() {
               </option>
             ))}
           </select>
-          <label className="sr-only" htmlFor="se-month">
-            Month
-          </label>
           <select
-            id="se-month"
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
+            aria-label="Month"
             className="flex h-10 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm font-inherit ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {monthOptions.map((m) => (
@@ -321,8 +295,8 @@ export default function SpendingEfficiencyPage() {
             ))}
           </select>
         </div>
-        <div className="flex flex-1 min-w-0 items-center justify-between gap-2 sm:justify-end">
-          <p className="text-sm text-muted-foreground tabular-nums sm:max-w-md sm:text-right">{periodLabel}</p>
+        <div className="flex items-center justify-between gap-2 sm:justify-end">
+          <p className="text-sm text-muted-foreground tabular-nums sm:text-right">{periodLabel}</p>
           <div className="flex shrink-0 items-center gap-1">
             <Button type="button" variant="outline" size="icon" onClick={goPrev} aria-label={t("dashboard.spendingEfficiency.periodPrev")}>
               <ChevronLeft className="h-4 w-4" />
@@ -334,263 +308,271 @@ export default function SpendingEfficiencyPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-base">
-              {t("dashboard.spendingEfficiency.excludeCategoriesLabel")}
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              {t("dashboard.spendingEfficiency.excludeCount", {
-                count: excludedCategoryIds.length,
-              })}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setExcludedCategoryIds(categories.map((c) => c.id))}
-              disabled={categoriesLoading || categories.length === 0}
-            >
-              {t("dashboard.spendingEfficiency.excludeAll")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setExcludedCategoryIds([])}
-              disabled={excludedCategoryIds.length === 0}
-            >
-              {t("dashboard.spendingEfficiency.clearExcluded")}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {categoriesLoading ? (
-            <div className="flex flex-wrap gap-2">
-              {["1", "2", "3", "4", "5"].map((x) => (
-                <Skeleton key={x} className="h-8 w-24 rounded-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {sortedCategories.map((cat) => {
-                const excluded = excludedCategoryIds.includes(cat.id);
-                const displayName = getCategoryDisplayName(cat.name, language, cat.nameEn);
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      saveRecentCategoryId(cat.id);
-                      setCategoryMruTick((v) => v + 1);
-                      setExcludedCategoryIds((prev) =>
-                        prev.includes(cat.id)
-                          ? prev.filter((id) => id !== cat.id)
-                          : [...prev, cat.id],
-                      );
-                    }}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all",
-                      excluded
-                        ? "border-destructive/40 bg-destructive/10 text-destructive"
-                        : "border-border bg-background text-foreground hover:bg-muted",
-                    )}
-                    aria-pressed={excluded}
-                  >
-                    {excluded ? <CircleX className="h-3.5 w-3.5" /> : null}
-                    {displayName}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-
       {loadError && (
         <p className="text-sm text-destructive" role="alert">
           {t("dashboard.spendingEfficiency.loadFailed")}
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {loading && !days ? (
-          <>
-            <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Wallet className="h-4 w-4 min-h-4 min-w-4 text-zinc-600 dark:text-zinc-400" />
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {t("dashboard.spendingEfficiency.totalSpent")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-0">
-                <Skeleton className="h-8 w-24" />
-                <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-                  {(["d", "w"] as const).map((row) => (
-                    <div
-                      key={row}
-                      className="flex items-baseline justify-between gap-2"
-                    >
-                      <span className="text-xs text-muted-foreground">
-                        {row === "d" && t("summary.avgDailyExpense")}
-                        {row === "w" && t("summary.avgWeeklyExpense")}
-                      </span>
-                      <Skeleton className="h-3.5 w-20" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            {["b", "c", "d"].map((k) => (
-              <Card key={k}>
-                <CardHeader>
-                  <Skeleton className="h-4 w-32" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-24" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
-        ) : (
-          <>
-            <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Wallet className="h-4 w-4 min-h-4 min-w-4 text-zinc-600 dark:text-zinc-400" />
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {t("dashboard.spendingEfficiency.totalSpent")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-0">
-                <p className="text-xl font-semibold tabular-nums">
-                  {formatAmount(stats.total)}
-                </p>
-                {stats.n > 0 ? (
-                  <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-                    <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-                      <span className="min-w-0 shrink">{t("summary.avgDailyExpense")}</span>
-                      <span className="tabular-nums text-foreground">
-                        {formatAmount(avgRunRates.daily)}
-                      </span>
-                    </div>
-                    <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-                      <span className="min-w-0 shrink">{t("summary.avgWeeklyExpense")}</span>
-                      <span className="tabular-nums text-foreground">
-                        {formatAmount(avgRunRates.weekly)}
-                      </span>
-                    </div>
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
-            <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <Target className="h-4 w-4 min-h-4 min-w-4 text-emerald-600 dark:text-emerald-400" />
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {t("dashboard.spendingEfficiency.totalIfOnTarget")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold tabular-nums">
-                  {dailyTarget > 0 ? formatAmount(stats.targetTotal) : "—"}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <ArrowDownCircle className="h-4 w-4 min-h-4 min-w-4 text-red-600 dark:text-red-400" />
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {t("dashboard.spendingEfficiency.difference")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold tabular-nums text-muted-foreground">
-                  {dailyTarget > 0 ? formatAmount(stats.diff) : "—"}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-row items-center justify-between gap-1 sm:block sm:flex-col">
-              <CardHeader className="flex flex-row items-center gap-2 pb-2">
-                <CalendarDays className="h-4 w-4 min-h-4 min-w-4 text-zinc-600 dark:text-zinc-400" />
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {t("dashboard.spendingEfficiency.daysOver")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-semibold tabular-nums">
-                  {dailyTarget > 0
-                    ? `${stats.over} / ${stats.n} — ${t("dashboard.spendingEfficiency.daysNotOver")}: ${stats.notOver}`
-                    : "—"}
-                </p>
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-
+      {/* Hero: savings rate */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("dashboard.spendingEfficiency.calendarTitle")}</CardTitle>
+        <CardContent className="pt-6">
+          {loading && !monthData ? (
+            <Skeleton className="h-20 w-full" />
+          ) : (
+            <>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <PiggyBank className="h-4 w-4" />
+                    {t("dashboard.spendingEfficiency.savingsRate")}
+                  </p>
+                  <div className="mt-1 flex items-baseline gap-3">
+                    <span className={cn("text-4xl font-semibold leading-none tabular-nums", band?.text)}>
+                      {savings.rate != null ? pct(savings.rate) : "—"}
+                    </span>
+                    {savings.deltaPP != null && (
+                      <span
+                        className={cn(
+                          "flex items-center gap-0.5 text-sm",
+                          savings.deltaPP >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+                        )}
+                      >
+                        {savings.deltaPP >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                        {t("dashboard.spendingEfficiency.vsPrevMonth", {
+                          delta: `${savings.deltaPP >= 0 ? "+" : "−"}${Math.abs(Math.round(savings.deltaPP * 100))}%`,
+                        })}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t("dashboard.spendingEfficiency.savingsRateSub", {
+                      saved: formatAmount(savings.saved),
+                      income: formatAmount(savings.income),
+                    })}
+                  </p>
+                </div>
+                <div className="text-right">
+                  {band && (
+                    <span className={cn("inline-block rounded-md px-3 py-1 text-xs", band.badge)}>
+                      {t(`dashboard.spendingEfficiency.${band.key}` as const)}
+                    </span>
+                  )}
+                  <p className="mt-2 text-xs text-muted-foreground">{t("dashboard.spendingEfficiency.targetHint")}</p>
+                </div>
+              </div>
+              <div className="relative mt-4 h-2 rounded-full bg-muted">
+                <div
+                  className="absolute left-0 top-0 h-2 rounded-full bg-emerald-500"
+                  style={{ width: `${Math.max(0, Math.min(100, (savings.rate ?? 0) * 100))}%` }}
+                />
+                <div className="absolute top-[-3px] h-3.5 w-0.5 bg-muted-foreground" style={{ left: "20%" }} />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("dashboard.spendingEfficiency.targetLine")}</p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Money structure 50/30/20 */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            {t("dashboard.spendingEfficiency.structureTitle")}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">{t("dashboard.spendingEfficiency.structureRef")}</p>
         </CardHeader>
         <CardContent>
-          {loading && !days ? (
-            <Skeleton className="h-56 w-full rounded-lg" />
+          {loading && !monthData ? (
+            <Skeleton className="h-12 w-full" />
+          ) : !hasExpense ? (
+            <p className="py-4 text-sm text-muted-foreground">{t("dashboard.spendingEfficiency.noExpense")}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <div
-                className="grid w-full min-w-[320px] overflow-hidden rounded-lg border border-border [&>div:nth-child(7n)]:border-r-0 [&>div:nth-last-child(-n+7)]:border-b-0"
-                style={{ gridTemplateColumns: "repeat(7, minmax(0,1fr))" }}
-              >
-                {WEEKDAY_KEYS.map((k) => (
-                  <div
-                    key={k}
-                    className="border-b border-r border-border bg-muted/50 px-2 py-2 text-center text-xs font-medium"
-                  >
-                    {t(`dashboard.spendingOverview.${k}` as const)}
-                  </div>
-                ))}
-                {monthGrid.flat().map((cell, idx) => {
-                  if (cell == null) {
-                    return (
-                      <div
-                        key={`p-${String(idx)}`}
-                        className="min-h-16 border-b border-r border-border bg-muted/20 p-2"
-                      />
-                    );
-                  }
-                  const diff = dailyTarget > 0 ? cell.spent - dailyTarget : 0;
-                  const isOver = dailyTarget > 0 && diff > 0;
-                  const isUnder = dailyTarget > 0 && diff <= 0;
-                  return (
-                    <div
-                      key={cell.date}
-                      className={cn(
-                        "min-h-16 border-b border-r border-border p-2 text-xs",
-                        isOver && "bg-destructive/5",
-                        isUnder && "bg-emerald-500/5",
-                      )}
-                    >
-                      <div className="text-muted-foreground">{Number(cell.date.slice(8, 10))}</div>
-                      <div className="mt-1 font-medium tabular-nums">{formatAmount(cell.spent)}</div>
-                      {dailyTarget > 0 ? (
-                        <div className={cn("mt-1 tabular-nums", isOver ? "text-destructive" : "text-emerald-700 dark:text-emerald-400")}>
-                          {isOver
-                            ? t("dashboard.spendingEfficiency.overBy", { amount: formatAmount(diff) })
-                            : t("dashboard.spendingEfficiency.underBy", {
-                                amount: formatAmount(Math.abs(diff)),
-                              })}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
+            <>
+              <div className="flex h-7 overflow-hidden rounded-md">
+                <div className="flex items-center justify-center bg-blue-400 text-xs text-blue-950" style={{ width: `${structure.wNeeds * 100}%` }}>
+                  {structure.wNeeds > 0.12 ? pct(structure.wNeeds) : ""}
+                </div>
+                <div className="flex items-center justify-center bg-amber-300 text-xs text-amber-950" style={{ width: `${structure.wWants * 100}%` }}>
+                  {structure.wWants > 0.12 ? pct(structure.wWants) : ""}
+                </div>
+                <div className="flex items-center justify-center bg-emerald-300 text-xs text-emerald-950" style={{ width: `${structure.wSaved * 100}%` }}>
+                  {structure.wSaved > 0.12 ? pct(structure.wSaved) : ""}
+                </div>
               </div>
+              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-blue-400" />
+                  {t("dashboard.spendingEfficiency.needs")} {formatAmount(structure.needs)}
+                  <span className="text-muted-foreground/60">({t("dashboard.spendingEfficiency.needsTarget")})</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-amber-300" />
+                  {t("dashboard.spendingEfficiency.wants")} {formatAmount(structure.wants)}
+                  <span className="text-muted-foreground/60">({t("dashboard.spendingEfficiency.wantsTarget")})</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-emerald-300" />
+                  {t("dashboard.spendingEfficiency.savings")} {formatAmount(structure.saved)}
+                  <span className="text-muted-foreground/60">({t("dashboard.spendingEfficiency.savingsTarget")})</span>
+                </span>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Top spending drivers */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            {t("dashboard.spendingEfficiency.topCategoriesTitle")}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">{t("dashboard.spendingEfficiency.topCategoriesSub")}</p>
+        </CardHeader>
+        <CardContent>
+          {loading && !monthData ? (
+            <div className="space-y-3">
+              {["a", "b", "c", "d"].map((k) => (
+                <Skeleton key={k} className="h-9 w-full" />
+              ))}
+            </div>
+          ) : topCategories.length === 0 ? (
+            <p className="py-4 text-sm text-muted-foreground">{t("dashboard.spendingEfficiency.noExpense")}</p>
+          ) : (
+            <div className="space-y-3">
+              {topCategories.map((c) => (
+                <div key={c.key}>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="min-w-0 truncate">{c.name}</span>
+                    <span className="flex shrink-0 items-center gap-2 text-muted-foreground tabular-nums">
+                      <span>{formatAmount(c.amount)} · {pct(c.share)}</span>
+                      {c.isNew ? (
+                        <span className="text-[11px] text-muted-foreground/70">{t("dashboard.spendingEfficiency.newBadge")}</span>
+                      ) : c.deltaPct == null || Math.abs(c.deltaPct) < 0.005 ? (
+                        <span className="flex items-center text-muted-foreground/70">
+                          <Minus className="h-3.5 w-3.5" />
+                        </span>
+                      ) : c.deltaPct > 0 ? (
+                        <span className="flex items-center text-red-600 dark:text-red-400">
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                          {Math.abs(Math.round(c.deltaPct * 100))}%
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-emerald-600 dark:text-emerald-400">
+                          <ArrowDownRight className="h-3.5 w-3.5" />
+                          {Math.abs(Math.round(c.deltaPct * 100))}%
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted">
+                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${Math.max(2, c.share * 100)}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Savings-rate trend */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            {t("dashboard.spendingEfficiency.trendTitle")}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">{t("dashboard.spendingEfficiency.trendSub")}</p>
+        </CardHeader>
+        <CardContent>
+          {loading && !monthData ? (
+            <Skeleton className="h-[200px] w-full rounded-lg" />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={trend} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} width={40} />
+                <Tooltip formatter={(v: number | undefined) => `${v ?? 0}%`} contentStyle={{ fontSize: 12 }} />
+                <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
+                  {trend.map((d) => (
+                    <Cell
+                      key={d.monthIndex}
+                      fill={d.rate < 0 ? "#ef4444" : d.monthIndex === month ? "#16a34a" : "#86efac"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Classify needs vs wants */}
+      <Card>
+        <CardHeader className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Tags className="h-4 w-4 text-muted-foreground" />
+              {t("dashboard.spendingEfficiency.classifyTitle")}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {t("dashboard.spendingEfficiency.needCount", { count: needIds.length })}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">{t("dashboard.spendingEfficiency.classifySub")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => persistNeedIds(categoryDefs.map((c) => c.id))}
+              disabled={categoryDefs.length === 0}
+            >
+              {t("dashboard.spendingEfficiency.classifyAllNeed")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => persistNeedIds([])}
+              disabled={needIds.length === 0}
+            >
+              {t("dashboard.spendingEfficiency.classifyReset")}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {categoryDefs.map((cat) => {
+              const isNeed = needSet.has(cat.id);
+              const displayName = getCategoryDisplayName(cat.name, language, cat.nameEn);
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() =>
+                    persistNeedIds(isNeed ? needIds.filter((id) => id !== cat.id) : [...needIds, cat.id])
+                  }
+                  aria-pressed={isNeed}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-all",
+                    isNeed
+                      ? "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {displayName}
+                  <span className="text-[11px] opacity-70">
+                    {isNeed ? t("dashboard.spendingEfficiency.needs") : t("dashboard.spendingEfficiency.wants")}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
     </div>

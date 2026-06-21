@@ -130,7 +130,7 @@ The dashboard layout adapts to different screen sizes with a responsive sidebar,
   - **Amount:** Shown with color (green income, red expense, blue transfer)
   - **Note:** Hidden
   - **Actions:** Tap row to open action menu dialog (shows date, account, amount; Edit/Delete options)
-- **Dashboard recent transactions (mobile):** Icon only (no type label); date on separate row with `text-[10px]`
+- **Dashboard recent transactions (mobile):** Icon only (no type label); date on separate row with `text-[12px]`
 
 ---
 

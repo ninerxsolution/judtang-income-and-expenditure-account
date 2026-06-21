@@ -255,11 +255,18 @@ export function RecurringTransactionFormDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
+          aria-describedby={undefined}
           className={cn(
             "max-h-[90vh] flex flex-col overflow-hidden sm:max-w-md",
             "max-md:inset-0 max-md:translate-none max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
           )}
         >
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <RepeatIcon className="h-4 w-4 text-muted-foreground" />
+              {r.form.titleEdit}
+            </DialogTitle>
+          </DialogHeader>
           <DialogBody>
             <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
               Loading…

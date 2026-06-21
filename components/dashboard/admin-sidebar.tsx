@@ -140,7 +140,7 @@ export function AdminSidebarLayout({
               <span className="text-sm font-semibold">
                 {t("common.appName")}
               </span>
-              <span className="text-[11px] text-primary">
+              <span className="text-[12px] text-primary">
                 {t("admin.mode.adminMode")}
               </span>
             </div>

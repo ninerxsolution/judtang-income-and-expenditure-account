@@ -1227,24 +1227,24 @@ export function TransactionsCalendar({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1">
                       {tx.category && (
-                        <span className="text-[11px] font-medium text-[#3D3020] dark:text-stone-100">
+                        <span className="text-[12px] font-medium text-[#3D3020] dark:text-stone-100">
                           {getCategoryDisplayName(tx.category, localeKey)}
                         </span>
                       )}
                       {isTransfer && tx.transferAccount && (
-                        <span className="text-[11px] font-medium text-[#3D3020] dark:text-stone-100">
+                        <span className="text-[12px] font-medium text-[#3D3020] dark:text-stone-100">
                           {t("transactions.list.transferTo", {
                             account: tx.transferAccount.name,
                           })}
                         </span>
                       )}
                       {tx.note && (
-                        <span className="text-[11px] text-[#6B5E4E] dark:text-stone-400">
+                        <span className="text-[12px] text-[#6B5E4E] dark:text-stone-400">
                           {tx.note}
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[10px] text-[#A09080] dark:text-stone-500">
+                    <p className="mt-0.5 text-[12px] text-[#A09080] dark:text-stone-500">
                       {new Date(tx.occurredAt).toLocaleTimeString(locale, {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -1417,11 +1417,11 @@ export function TransactionsCalendar({
                         .join(" ")}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1">
-                        <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${day.isToday ? "bg-[#5C6B52] text-center aspect-square text-white dark:bg-stone-100 dark:text-stone-900" : ""}`}>
+                        <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-semibold ${day.isToday ? "bg-[#5C6B52] text-center aspect-square text-white dark:bg-stone-100 dark:text-stone-900" : ""}`}>
                           {day.date.getDate()}
                         </span>
                         {/* {day.isToday && (
-                          <span className="rounded-full bg-[#5C6B52] px-1.5 py-0.5 text-[10px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
+                          <span className="rounded-full bg-[#5C6B52] px-1.5 py-0.5 text-[12px] font-medium text-white dark:bg-stone-100 dark:text-stone-900">
                             {t("calendar.today")}
                           </span>
                         )} */}
@@ -1439,7 +1439,7 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="hidden sm:block text-[10px] text-[#A09080] dark:text-stone-500">
+                          <span className="hidden sm:block text-[12px] text-[#A09080] dark:text-stone-500">
                             {day.count}
                           </span>
                         )}
@@ -1451,7 +1451,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between border-t border-[#D4C9B0] pt-3 dark:border-stone-700 text-[11px] text-[#A09080] dark:text-stone-500">
+            <div className="mt-3 flex flex-wrap items-center justify-between border-t border-[#D4C9B0] pt-3 dark:border-stone-700 text-[12px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1536,7 +1536,7 @@ export function TransactionsCalendar({
                         .join(" ")}
                     >
                       <div className="flex min-w-14 flex-col sm:min-w-16">
-                        <span className="text-[10px] font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
+                        <span className="text-[12px] font-medium uppercase tracking-wide text-[#A09080] dark:text-stone-500">
                           {t(`calendar.weekdays.${weekdayKey}`)}
                         </span>
                         <span className="text-sm font-semibold tabular-nums">
@@ -1559,12 +1559,12 @@ export function TransactionsCalendar({
                           )}
                         </div>
                         {hasData && (
-                          <span className="text-[11px] text-[#A09080] dark:text-stone-500">
+                          <span className="text-[12px] text-[#A09080] dark:text-stone-500">
                             {day.count}
                           </span>
                         )}
                         {day.isToday && (
-                          <span className="text-[10px] font-medium text-[#3D4A3A] dark:text-stone-300">
+                          <span className="text-[12px] font-medium text-[#3D4A3A] dark:text-stone-300">
                             {t("calendar.today")}
                           </span>
                         )}
@@ -1576,7 +1576,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[12px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1686,7 +1686,7 @@ export function TransactionsCalendar({
                       <span className="text-sm font-medium">
                         {getMonthShortLabel(idx)}
                       </span>
-                      <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
+                      <div className="mt-2 flex items-center justify-between gap-1 text-[12px]">
                         <div className="flex items-center gap-0.5">
                           {incomeCount > 0 && (
                             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -1711,7 +1711,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[12px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>
@@ -1809,7 +1809,7 @@ export function TransactionsCalendar({
                         .join(" ")}
                     >
                       <span className="text-sm font-medium">{formatYearForDisplay(y, language)}</span>
-                      <div className="mt-2 flex items-center justify-between gap-1 text-[11px]">
+                      <div className="mt-2 flex items-center justify-between gap-1 text-[12px]">
                         <div className="flex items-center gap-0.5">
                           {incomeCount > 0 && (
                             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -1834,7 +1834,7 @@ export function TransactionsCalendar({
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-[#A09080] dark:text-stone-500">
+            <div className="mt-3 flex flex-wrap items-center justify-between text-[12px] text-[#A09080] dark:text-stone-500">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 <span>{t("calendar.legend.income")}</span>

@@ -593,7 +593,7 @@ export default function AccountsPage() {
                     </div>
                     {(acc.bankName || acc.accountNumberMasked) && (
                       <div className="flex items-center gap-1">
-                        <p className="text-[11px] text-[#A09080] md:text-xs dark:text-stone-400">
+                        <p className="text-[12px] text-[#A09080] md:text-xs dark:text-stone-400">
                           {(() => {
                             const bankLabel =
                               getBankDisplayName(
@@ -831,18 +831,18 @@ export default function AccountsPage() {
                       >
                         ฿{formatAmount(acc.balance)}
                       </p>
-                      <CardDescription className="mt-0.5 text-[11px] md:mt-1 md:text-xs">
+                      <CardDescription className="mt-0.5 text-[12px] md:mt-1 md:text-xs">
                         {t("accounts.lastTransaction")}:{" "}
                         {formatDate(acc.lastTransactionDate, locale)}
                       </CardDescription>
                       {acc.lastCheckedAt && (
-                        <CardDescription className="text-[11px] md:text-xs">
+                        <CardDescription className="text-[12px] md:text-xs">
                           {t("accounts.lastChecked")}:{" "}
                           {formatDate(acc.lastCheckedAt, locale)}
                         </CardDescription>
                       )}
                       {acc.isDefault && (
-                        <span className="mt-1.5 inline-block rounded-full bg-[#D4C9B0] px-1.5 py-0.5 text-[10px] md:mt-2 md:px-2 md:text-xs dark:bg-stone-700">
+                        <span className="mt-1.5 inline-block rounded-full bg-[#D4C9B0] px-1.5 py-0.5 text-[12px] md:mt-2 md:px-2 md:text-xs dark:bg-stone-700">
                           {t("accounts.default")}
                         </span>
                       )}
@@ -852,14 +852,14 @@ export default function AccountsPage() {
                       <p className="hidden text-xl font-bold tabular-nums text-red-700 md:block md:text-2xl dark:text-red-300">
                         ฿{formatAmount(acc.currentOutstanding ?? Math.abs(acc.balance))}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-[#A09080] md:mt-1 md:text-xs dark:text-stone-400">
+                      <p className="mt-0.5 text-[12px] text-[#A09080] md:mt-1 md:text-xs dark:text-stone-400">
                         {t("accounts.currentOutstanding")}
                       </p>
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
                             type="button"
-                            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-md py-1 text-[11px] text-[#A09080] md:mt-2 md:py-1.5 md:text-xs transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
+                            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-md py-1 text-[12px] text-[#A09080] md:mt-2 md:py-1.5 md:text-xs transition-colors hover:bg-[#F5F0E8] hover:text-[#3D3020] dark:hover:bg-stone-800 dark:hover:text-stone-300"
                             title={t("accounts.showDetails")}
                           >
                             <span>{t("accounts.showDetails")}</span>
@@ -935,18 +935,18 @@ export default function AccountsPage() {
                       >
                         ฿{formatAmount(acc.balance)}
                       </p>
-                      <CardDescription className="mt-0.5 text-[11px] md:mt-1 md:text-xs">
+                      <CardDescription className="mt-0.5 text-[12px] md:mt-1 md:text-xs">
                         {t("accounts.lastTransaction")}:{" "}
                         {formatDate(acc.lastTransactionDate, locale)}
                       </CardDescription>
                       {acc.lastCheckedAt && (
-                        <CardDescription className="text-[11px] md:text-xs">
+                        <CardDescription className="text-[12px] md:text-xs">
                           {t("accounts.lastChecked")}:{" "}
                           {formatDate(acc.lastCheckedAt, locale)}
                         </CardDescription>
                       )}
                       {acc.isDefault && (
-                        <span className="mt-1.5 inline-block rounded-full bg-[#D4C9B0] px-1.5 py-0.5 text-[10px] md:mt-2 md:px-2 md:text-xs dark:bg-stone-700">
+                        <span className="mt-1.5 inline-block rounded-full bg-[#D4C9B0] px-1.5 py-0.5 text-[12px] md:mt-2 md:px-2 md:text-xs dark:bg-stone-700">
                           {t("accounts.default")}
                         </span>
                       )}

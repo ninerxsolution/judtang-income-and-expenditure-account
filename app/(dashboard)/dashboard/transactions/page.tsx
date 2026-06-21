@@ -623,7 +623,7 @@ function TransactionsListView() {
                             )}
                             {categoryDisplay ? ` · ${categoryDisplay}` : ""}
                             {balanceAfter != null && (
-                              <span className="block mt-0.5 text-[11px] tabular-nums text-[#6B5E4E] dark:text-stone-500">
+                              <span className="block mt-0.5 text-[12px] tabular-nums text-[#6B5E4E] dark:text-stone-500">
                                 {t("transactions.list.columns.balanceAfter")}:{" "}
                                 {balanceCurrency !== "THB"
                                   ? `${formatAmount(balanceAfter)} ${balanceCurrency}`

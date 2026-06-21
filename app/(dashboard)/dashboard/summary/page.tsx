@@ -7,12 +7,11 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   ArrowDownCircle,
+  ArrowDownRight,
   ArrowUpCircle,
+  ArrowUpRight,
   BarChart2,
-  Calendar,
-  CalendarRange,
   Wallet,
-  Percent,
 } from "lucide-react";
 import {
   BarChart,
@@ -40,6 +39,7 @@ import { formatYearForDisplay } from "@/lib/format-year";
 import { useI18n } from "@/hooks/use-i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCategoryDisplayName } from "@/lib/categories-display";
+import { cn } from "@/lib/utils";
 
 type Summary = { income: number; expense: number; totalBalance?: number } | null;
 type MonthItem = { monthIndex: number; income: number; expense: number };
@@ -192,11 +192,16 @@ export default function SummaryPage() {
     return () => { cancelled = true; };
   }, [year, timezone, accountId]);
 
-  const balance = summary ? summary.income - summary.expense : 0;
-  const expenseRatio =
-    summary && summary.income > 0
-      ? Math.round((summary.expense / summary.income) * 100)
-      : null;
+  const net = summary ? summary.income - summary.expense : 0;
+
+  const deltas = useMemo(() => {
+    if (period !== "month") return { income: null, expense: null };
+    const cur = monthData.find((m) => m.monthIndex === month);
+    const prev = month > 0 ? monthData.find((m) => m.monthIndex === month - 1) : undefined;
+    if (!cur || !prev) return { income: null, expense: null };
+    const calc = (c: number, p: number) => (p > 0 ? (c - p) / p : null);
+    return { income: calc(cur.income, prev.income), expense: calc(cur.expense, prev.expense) };
+  }, [period, monthData, month]);
 
   const barData = useMemo(
     () =>
@@ -260,6 +265,24 @@ export default function SummaryPage() {
     return Array.from({ length: 12 }, (_, i) => i);
   }, []);
 
+  const renderDelta = (value: number | null, goodWhenUp: boolean) => {
+    if (value == null || Math.abs(value) < 0.005) return null;
+    const up = value > 0;
+    const good = goodWhenUp ? up : !up;
+    const Arrow = up ? ArrowUpRight : ArrowDownRight;
+    return (
+      <p
+        className={cn(
+          "mt-1.5 flex items-center gap-0.5 text-xs",
+          good ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+        )}
+      >
+        <Arrow className="h-3.5 w-3.5" />
+        {t("summary.vsPrevMonth", { delta: `${Math.abs(Math.round(value * 100))}%` })}
+      </p>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -318,8 +341,8 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card>
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <ArrowDownCircle className="min-w-4 min-h-4 w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <CardTitle className="text-sm font-medium text-nowrap">
@@ -328,15 +351,18 @@ export default function SummaryPage() {
           </CardHeader>
           <CardContent>
             {summaryLoading ? (
-              <Skeleton className="h-7 w-24" />
+              <Skeleton className="h-8 w-28" />
             ) : (
-              <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-                {summary ? formatAmount(summary.income) : "0.00"}
-              </p>
+              <>
+                <p className="text-2xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                  {summary ? formatAmount(summary.income) : "0.00"}
+                </p>
+                {renderDelta(deltas.income, true)}
+              </>
             )}
           </CardContent>
         </Card>
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+        <Card>
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <ArrowUpCircle className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
             <CardTitle className="text-sm font-medium text-nowrap">
@@ -345,130 +371,77 @@ export default function SummaryPage() {
           </CardHeader>
           <CardContent>
             {summaryLoading ? (
-              <Skeleton className="h-7 w-24" />
+              <Skeleton className="h-8 w-28" />
             ) : (
-              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
-                {summary ? formatAmount(summary.expense) : "0.00"}
-              </p>
+              <>
+                <p className="text-2xl font-semibold tabular-nums text-red-700 dark:text-red-300">
+                  {summary ? formatAmount(summary.expense) : "0.00"}
+                </p>
+                {renderDelta(deltas.expense, false)}
+              </>
             )}
           </CardContent>
         </Card>
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
+        <Card className={cn(net < 0 && "border-red-500/40")}>
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
             <Wallet className="min-w-4 min-h-4 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             <CardTitle className="text-sm font-medium text-nowrap">
-              {t("dashboard.summary.balance")}
+              {t("summary.net")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {summaryLoading ? (
-              <Skeleton className="h-7 w-24" />
+              <Skeleton className="h-8 w-28" />
             ) : (
-              <p
-                className={`text-xl font-semibold tabular-nums ${
-                  balance >= 0
-                    ? "text-zinc-900 dark:text-zinc-50"
-                    : "text-red-700 dark:text-red-300"
-                }`}
-              >
-                {summary ? formatAmount(balance) : "0.00"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Percent className="min-w-4 min-h-4 w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-            <CardTitle className="text-sm font-medium text-nowrap">
-              {t("summary.expenseRatio")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {summaryLoading ? (
-              <Skeleton className="h-7 w-16" />
-            ) : expenseRatio !== null ? (
-              <p className="text-xl font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
-                {expenseRatio}%
-              </p>
-            ) : (
-              <p className="text-xl font-semibold text-muted-foreground">
-                N/A
-              </p>
+              <>
+                <p
+                  className={cn(
+                    "text-2xl font-semibold tabular-nums",
+                    net >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300",
+                  )}
+                >
+                  {summary ? formatAmount(net) : "0.00"}
+                </p>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {net >= 0 ? t("summary.netSurplus") : t("summary.netDeficit")}
+                </p>
+              </>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <BarChart2 className="min-w-4 min-h-4 w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <CardTitle className="text-sm font-medium text-nowrap">
-              {t("summary.avgMonthlyIncome")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {monthLoading ? (
-              <Skeleton className="h-7 w-24" />
-            ) : (
-              <p className="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
-                {formatAmount(avgMonthlyIncome)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <BarChart2 className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
-            <CardTitle className="text-sm font-medium text-nowrap">
-              {t("summary.avgMonthlyExpense")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {monthLoading ? (
-              <Skeleton className="h-7 w-24" />
-            ) : (
-              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
-                {formatAmount(avgMonthlyExpense)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <CalendarRange className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
-            <CardTitle className="text-sm font-medium text-nowrap">
-              {t("summary.avgWeeklyExpense")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {monthLoading ? (
-              <Skeleton className="h-7 w-24" />
-            ) : (
-              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
-                {formatAmount(avgWeeklyExpense)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="flex flex-row sm:block sm:flex-col items-center justify-between gap-1">
-          <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <Calendar className="min-w-4 min-h-4 w-4 h-4 text-red-600 dark:text-red-400" />
-            <CardTitle className="text-sm font-medium text-nowrap">
-              {t("summary.avgDailyExpense")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {monthLoading ? (
-              <Skeleton className="h-7 w-24" />
-            ) : (
-              <p className="text-xl font-semibold tabular-nums text-red-700 dark:text-red-300">
-                {formatAmount(avgDailyExpense)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <BarChart2 className="h-4 w-4" />
+            {t("summary.annualAverages", { year: formatYearForDisplay(year, language) })}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {(
+              [
+                { label: t("summary.avgMonthlyIncome"), value: avgMonthlyIncome, tone: "text-emerald-700 dark:text-emerald-300" },
+                { label: t("summary.avgMonthlyExpense"), value: avgMonthlyExpense, tone: "text-red-700 dark:text-red-300" },
+                { label: t("summary.avgWeeklyExpense"), value: avgWeeklyExpense, tone: "" },
+                { label: t("summary.avgDailyExpense"), value: avgDailyExpense, tone: "" },
+              ] as const
+            ).map((s) => (
+              <div key={s.label}>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+                {monthLoading ? (
+                  <Skeleton className="mt-1 h-6 w-20" />
+                ) : (
+                  <p className={cn("mt-0.5 text-lg font-semibold tabular-nums", s.tone)}>
+                    {formatAmount(s.value)}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

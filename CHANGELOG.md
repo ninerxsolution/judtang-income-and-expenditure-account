@@ -420,7 +420,7 @@
 
 ## Changed
 
-- **Dashboard recent transactions (mobile)** — Icon only (no income/expense label); date on separate row with `text-[10px]`
+- **Dashboard recent transactions (mobile)** — Icon only (no income/expense label); date on separate row with `text-[12px]`
 - **Transactions table (desktop)** — Edit/Delete buttons remain in table; compact layout and tap-to-menu only on tablet/mobile
 - **Transactions list i18n** — Added `dateAndAccount`, `tapToEditOrDelete`, `selectAction` keys
 
