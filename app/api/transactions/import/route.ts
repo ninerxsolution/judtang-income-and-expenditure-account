@@ -11,7 +11,7 @@ import {
 import { createActivityLog, ActivityLogAction } from "@/lib/activity-log";
 import { ensureUserHasDefaultFinancialAccount } from "@/lib/financial-accounts";
 import { revalidateTag } from "@/lib/cache";
-import { createNotification } from "@/lib/notifications";
+import { notify } from "@/lib/notifications";
 import { rebuildBalanceSnapshotsForFinancialAccountIds } from "@/lib/transaction-balance-snapshot";
 
 async function findOrCreateCategoryByName(
@@ -420,16 +420,14 @@ export async function POST(request: Request) {
       },
     });
 
-    void createNotification(
-      userId,
-      "EVENT_IMPORT_DONE",
-      {
+    void notify(userId, "EVENT_IMPORT_DONE", {
+      payload: {
         createdCount: result.createdCount,
         updatedCount: result.updatedCount,
         totalRows: valid.length,
       },
-      "/dashboard/transactions",
-    );
+      link: "/dashboard/transactions",
+    });
 
     revalidateTag("transactions", "max");
     revalidateTag("financial-accounts", "max");

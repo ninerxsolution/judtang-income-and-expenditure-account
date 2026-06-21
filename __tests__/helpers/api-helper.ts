@@ -22,7 +22,7 @@ export function createRequest(
     method,
     headers: { "Content-Type": "application/json", ...headers },
   };
-  if (body && (method === "POST" || method === "PATCH" || method === "PUT")) {
+  if (body && (method === "POST" || method === "PATCH" || method === "PUT" || method === "DELETE")) {
     init.body = JSON.stringify(body);
   }
   return new Request(url, init);

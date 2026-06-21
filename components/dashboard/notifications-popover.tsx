@@ -4,16 +4,34 @@ import {
   Bell,
   CheckCheck,
   MoreVertical,
+  Trash2,
   Receipt,
   Upload,
+  Download,
   CreditCard,
-  RepeatIcon,
+  FileText,
+  Percent,
+  Scale,
+  ArrowLeftRight,
+  Repeat,
   CalendarClock,
   PieChart,
+  PiggyBank,
+  Gauge,
+  TrendingDown,
   AlertTriangle,
+  LogIn,
+  KeyRound,
+  ShieldX,
+  ShieldAlert,
+  UserX,
+  Clock,
+  Flag,
+  MessageSquare,
+  Megaphone,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +56,7 @@ import { useI18n } from "@/hooks/use-i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/lib/format";
+import { NOTIFICATION_REGISTRY } from "@/lib/notification-registry";
 
 // ---------------------------------------------------------------------------
 // Types — mirrors API response shape
@@ -50,7 +69,6 @@ type NotificationItem = {
   link: string | null;
   readAt: string | null;
   createdAt: string;
-  kind: "persisted" | "virtual";
 };
 
 type NotificationsResponse = {
@@ -58,24 +76,38 @@ type NotificationsResponse = {
   unreadCount: number;
 };
 
-const DISMISSED_VIRTUAL_IDS_KEY = "notification.dismissedVirtualIds";
+/** How often to refresh while the tab is visible. */
+const POLL_INTERVAL_MS = 90_000;
 
-function getDismissedVirtualIdsFromStorage(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(DISMISSED_VIRTUAL_IDS_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
+// ---------------------------------------------------------------------------
+// Icon resolution (driven by the shared registry)
+// ---------------------------------------------------------------------------
+
+const ICONS = {
+  Receipt, Upload, Download, CreditCard, FileText, Percent, Scale,
+  ArrowLeftRight, Repeat, CalendarClock, PieChart, PiggyBank, Gauge,
+  TrendingDown, AlertTriangle, LogIn, KeyRound, ShieldX, ShieldAlert,
+  UserX, Clock, Flag, MessageSquare, Megaphone,
+} as const;
+
+function getIconElement(type: string) {
+  const meta = NOTIFICATION_REGISTRY[type as keyof typeof NOTIFICATION_REGISTRY];
+  const Icon = meta ? (ICONS[meta.icon as keyof typeof ICONS] ?? Bell) : Bell;
+  return <Icon className="h-4 w-4" />;
 }
 
-function saveDismissedVirtualIds(ids: string[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(DISMISSED_VIRTUAL_IDS_KEY, JSON.stringify(ids));
-  } catch {
-    // ignore
+/** Severity → accent classes for the icon bubble + unread dot. */
+function severityClasses(type: string, isUnread: boolean): { bubble: string; dot: string } {
+  const meta = NOTIFICATION_REGISTRY[type as keyof typeof NOTIFICATION_REGISTRY];
+  const severity = meta?.severity ?? "info";
+  if (!isUnread) return { bubble: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" };
+  switch (severity) {
+    case "critical":
+      return { bubble: "bg-destructive/15 text-destructive", dot: "bg-destructive" };
+    case "warning":
+      return { bubble: "bg-amber-500/15 text-amber-600 dark:text-amber-400", dot: "bg-amber-500" };
+    default:
+      return { bubble: "bg-primary/15 text-primary", dot: "bg-primary" };
   }
 }
 
@@ -83,43 +115,14 @@ function saveDismissedVirtualIds(ids: string[]): void {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getIconElement(type: string) {
-  switch (type) {
-    case "EVENT_SLIP_DONE":
-      return <Receipt className="h-4 w-4" />;
-    case "EVENT_IMPORT_DONE":
-      return <Upload className="h-4 w-4" />;
-    case "EVENT_CARD_PAYMENT":
-      return <CreditCard className="h-4 w-4" />;
-    case "ALERT_RECURRING_DUE":
-      return <RepeatIcon className="h-4 w-4" />;
-    case "ALERT_CARD_DUE":
-      return <CalendarClock className="h-4 w-4" />;
-    case "ALERT_BUDGET":
-      return <PieChart className="h-4 w-4" />;
-    case "ALERT_INCOMPLETE_ACCOUNT":
-      return <AlertTriangle className="h-4 w-4" />;
-    default:
-      return <Bell className="h-4 w-4" />;
-  }
-}
-
-function formatRelativeTime(
-  dateStr: string,
-  t: ReturnType<typeof useI18n>["t"],
-): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
+function formatRelativeTime(dateStr: string, t: ReturnType<typeof useI18n>["t"]): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
   const diffMins = Math.floor(diffMs / 60_000);
   const diffHours = Math.floor(diffMs / 3_600_000);
   const diffDays = Math.floor(diffMs / 86_400_000);
-
   if (diffMins < 1) return t("common.time.justNow");
-  if (diffMins < 60)
-    return t("common.time.minutesAgo").replace("{count}", String(diffMins));
-  if (diffHours < 24)
-    return t("common.time.hoursAgo").replace("{count}", String(diffHours));
+  if (diffMins < 60) return t("common.time.minutesAgo").replace("{count}", String(diffMins));
+  if (diffHours < 24) return t("common.time.hoursAgo").replace("{count}", String(diffHours));
   return t("common.time.daysAgo").replace("{count}", String(diffDays));
 }
 
@@ -138,76 +141,89 @@ function useNotificationBody(
   t: ReturnType<typeof useI18n>["t"],
 ): string {
   const p = item.payload ?? {};
+  const s = (k: string) => String(p[k] ?? "");
+  const n = (k: string) => Number(p[k] ?? 0);
   switch (item.type) {
-    case "EVENT_SLIP_DONE": {
-      if (p.hasErrors) {
-        return t("notifications.types.EVENT_SLIP_DONE_body_partial")
-          .replace("{createdCount}", String(p.createdCount ?? 0))
-          .replace("{totalCount}", String(p.totalCount ?? 0));
-      }
-      return t("notifications.types.EVENT_SLIP_DONE_body").replace(
-        "{createdCount}",
-        String(p.createdCount ?? 0),
-      );
-    }
+    case "EVENT_SLIP_DONE":
+      return p.hasErrors
+        ? t("notifications.types.EVENT_SLIP_DONE_body_partial")
+            .replace("{createdCount}", s("createdCount"))
+            .replace("{totalCount}", s("totalCount"))
+        : t("notifications.types.EVENT_SLIP_DONE_body").replace("{createdCount}", s("createdCount"));
     case "EVENT_IMPORT_DONE":
       return t("notifications.types.EVENT_IMPORT_DONE_body")
-        .replace("{createdCount}", String(p.createdCount ?? 0))
-        .replace("{updatedCount}", String(p.updatedCount ?? 0))
-        .replace("{totalRows}", String(p.totalRows ?? 0));
+        .replace("{createdCount}", s("createdCount"))
+        .replace("{updatedCount}", s("updatedCount"))
+        .replace("{totalRows}", s("totalRows"));
+    case "EVENT_EXPORT_DONE":
+      return t("notifications.types.EVENT_EXPORT_DONE_body").replace("{count}", s("count"));
     case "EVENT_CARD_PAYMENT":
       return t("notifications.types.EVENT_CARD_PAYMENT_body")
-        .replace("{amount}", formatAmount(Number(p.amount ?? 0)))
-        .replace("{accountName}", String(p.accountName ?? ""));
+        .replace("{amount}", formatAmount(n("amount")))
+        .replace("{accountName}", s("accountName"));
+    case "EVENT_CARD_STATEMENT_CLOSED":
+      return t("notifications.types.EVENT_CARD_STATEMENT_CLOSED_body")
+        .replace("{accountName}", s("accountName"))
+        .replace("{statementBalance}", formatAmount(n("statementBalance")))
+        .replace("{minimumPayment}", formatAmount(n("minimumPayment")));
+    case "EVENT_CARD_INTEREST_APPLIED":
+      return t("notifications.types.EVENT_CARD_INTEREST_APPLIED_body")
+        .replace("{accountName}", s("accountName"))
+        .replace("{amount}", formatAmount(n("amount")));
+    case "EVENT_RECONCILE_MISMATCH":
+      return t("notifications.types.EVENT_RECONCILE_MISMATCH_body")
+        .replace("{accountName}", s("accountName"))
+        .replace("{difference}", formatAmount(Math.abs(n("difference"))));
+    case "EVENT_CROSS_CURRENCY_TRANSFER":
+      return t("notifications.types.EVENT_CROSS_CURRENCY_TRANSFER_body")
+        .replace("{fromAccount}", s("fromAccount"))
+        .replace("{toAccount}", s("toAccount"));
+    case "EVENT_RECURRING_POSTED":
+      return t("notifications.types.EVENT_RECURRING_POSTED_body").replace("{name}", s("name"));
+    case "EVENT_SECURITY_NEW_SIGN_IN":
+      return t("notifications.types.EVENT_SECURITY_NEW_SIGN_IN_body").replace("{device}", s("device"));
+    case "EVENT_SECURITY_PASSWORD_CHANGED":
+      return t("notifications.types.EVENT_SECURITY_PASSWORD_CHANGED_body");
+    case "EVENT_SECURITY_SESSION_REVOKED":
+      return t("notifications.types.EVENT_SECURITY_SESSION_REVOKED_body");
+    case "EVENT_ACCOUNT_DEACTIVATED":
+      return t("notifications.types.EVENT_ACCOUNT_DEACTIVATED_body").replace("{date}", s("deleteAfter").slice(0, 10));
+    case "EVENT_ACCOUNT_STATUS_CHANGED":
+      return t("notifications.types.EVENT_ACCOUNT_STATUS_CHANGED_body").replace("{status}", s("status"));
+    case "EVENT_REPORT_SUBMITTED":
+      return t("notifications.types.EVENT_REPORT_SUBMITTED_body");
+    case "EVENT_REPORT_STATUS_CHANGED":
+      return t("notifications.types.EVENT_REPORT_STATUS_CHANGED_body").replace("{status}", s("status"));
+    case "EVENT_ANNOUNCEMENT":
+      return s("message");
     case "ALERT_RECURRING_DUE":
-      return t("notifications.types.ALERT_RECURRING_DUE_body").replace(
-        "{count}",
-        String(p.count ?? 0),
-      );
+      return t("notifications.types.ALERT_RECURRING_DUE_body").replace("{count}", s("count"));
     case "ALERT_CARD_DUE": {
-      const days = Number(p.daysRemaining ?? 0);
-      if (days < 0) {
-        return t("notifications.types.ALERT_CARD_DUE_body_overdue").replace(
-          "{accountName}",
-          String(p.accountName ?? ""),
-        );
-      }
-      if (days === 0) {
-        return t("notifications.types.ALERT_CARD_DUE_body_today").replace(
-          "{accountName}",
-          String(p.accountName ?? ""),
-        );
-      }
+      const days = n("daysRemaining");
+      if (days < 0) return t("notifications.types.ALERT_CARD_DUE_body_overdue").replace("{accountName}", s("accountName"));
+      if (days === 0) return t("notifications.types.ALERT_CARD_DUE_body_today").replace("{accountName}", s("accountName"));
       return t("notifications.types.ALERT_CARD_DUE_body")
-        .replace("{accountName}", String(p.accountName ?? ""))
+        .replace("{accountName}", s("accountName"))
         .replace("{daysRemaining}", String(days));
     }
     case "ALERT_BUDGET": {
-      const label = p.categoryName
-        ? String(p.categoryName)
-        : t("notifications.types.ALERT_BUDGET_label_total");
-      const pct = Math.round(Number(p.progress ?? 0) * 100);
-      if (p.isOver) {
-        return t("notifications.types.ALERT_BUDGET_body_over").replace(
-          "{label}",
-          label,
-        );
-      }
-      if (String(p.indicator ?? "") === "full") {
-        return t("notifications.types.ALERT_BUDGET_body_full").replace(
-          "{label}",
-          label,
-        );
-      }
+      const label = p.categoryName ? String(p.categoryName) : t("notifications.types.ALERT_BUDGET_label_total");
+      if (p.isOver) return t("notifications.types.ALERT_BUDGET_body_over").replace("{label}", label);
+      if (String(p.indicator ?? "") === "full") return t("notifications.types.ALERT_BUDGET_body_full").replace("{label}", label);
       return t("notifications.types.ALERT_BUDGET_body_near")
         .replace("{label}", label)
-        .replace("{pct}", String(pct));
+        .replace("{pct}", String(Math.round(n("progress") * 100)));
     }
+    case "ALERT_NO_BUDGET":
+      return t("notifications.types.ALERT_NO_BUDGET_body");
     case "ALERT_INCOMPLETE_ACCOUNT":
-      return t("notifications.types.ALERT_INCOMPLETE_ACCOUNT_body").replace(
-        "{accountName}",
-        String(p.accountName ?? ""),
-      );
+      return t("notifications.types.ALERT_INCOMPLETE_ACCOUNT_body").replace("{accountName}", s("accountName"));
+    case "ALERT_CREDIT_LIMIT":
+      return t("notifications.types.ALERT_CREDIT_LIMIT_body").replace("{accountName}", s("accountName"));
+    case "ALERT_NEGATIVE_BALANCE":
+      return t("notifications.types.ALERT_NEGATIVE_BALANCE_body").replace("{accountName}", s("accountName"));
+    case "ALERT_DELETION_PENDING":
+      return t("notifications.types.ALERT_DELETION_PENDING_body").replace("{date}", s("deleteAfter").slice(0, 10));
     default:
       return "";
   }
@@ -219,180 +235,140 @@ function useNotificationBody(
 
 export function NotificationsPopover() {
   const { t } = useI18n();
+  const router = useRouter();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"all" | "unread">("all");
   const [data, setData] = useState<NotificationsResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [dismissedVirtualIds, setDismissedVirtualIds] = useState<Set<string>>(
-    () => new Set(),
-  );
-  const fetchedRef = useRef(false);
+  const inFlight = useRef(false);
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
+  const fetchNotifications = useCallback(async (showSpinner = false) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    if (showSpinner) setLoading(true);
     try {
       const res = await fetch("/api/notifications?limit=50");
-      if (res.ok) {
-        const json = (await res.json()) as NotificationsResponse;
-        setData(json);
-        setDismissedVirtualIds(new Set(getDismissedVirtualIdsFromStorage()));
-      }
+      if (res.ok) setData((await res.json()) as NotificationsResponse);
     } catch {
-      // ignore
+      // ignore transient errors; next poll retries
     } finally {
-      setLoading(false);
+      inFlight.current = false;
+      if (showSpinner) setLoading(false);
     }
   }, []);
 
-  // Fetch on mount so badge (unread count) shows without opening the popover
+  // Initial load (badge) + visibility-gated polling + refetch on window focus.
   useEffect(() => {
     void fetchNotifications();
+    const id = setInterval(() => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") {
+        void fetchNotifications();
+      }
+    }, POLL_INTERVAL_MS);
+    const onFocus = () => void fetchNotifications();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [fetchNotifications]);
 
-  // Refetch when popover opens so list is fresh (and once per open)
+  // Refresh contents when the panel opens (with spinner).
   useEffect(() => {
-    if (open && !fetchedRef.current) {
-      fetchedRef.current = true;
-      void fetchNotifications();
-    }
-    if (!open) {
-      fetchedRef.current = false;
-    }
+    if (open) void fetchNotifications(true);
   }, [open, fetchNotifications]);
 
-  async function handleMarkAllRead() {
-    await fetch("/api/notifications/read", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ all: true }),
-    });
-    const virtualIds = (data?.items ?? [])
-      .filter((i) => i.kind === "virtual")
-      .map((i) => i.id);
-    if (virtualIds.length > 0) {
-      const next = new Set([
-        ...getDismissedVirtualIdsFromStorage(),
-        ...virtualIds,
-      ]);
-      saveDismissedVirtualIds([...next]);
-      setDismissedVirtualIds(next);
-    }
-    setData((prev) =>
-      prev
-        ? {
-            ...prev,
-            unreadCount: 0,
-            items: prev.items.map((item) =>
-              item.kind === "persisted" && !item.readAt
-                ? { ...item, readAt: new Date().toISOString() }
-                : item,
-            ),
-          }
-        : null,
-    );
-  }
-
-  async function handleItemClick(item: NotificationItem) {
-    if (item.kind === "persisted" && !item.readAt) {
+  const patchRead = useCallback(async (body: object) => {
+    try {
       await fetch("/api/notifications/read", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [item.id] }),
+        body: JSON.stringify(body),
       });
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              unreadCount: Math.max(0, prev.unreadCount - 1),
-              items: prev.items.map((n) =>
-                n.id === item.id
-                  ? { ...n, readAt: new Date().toISOString() }
-                  : n,
-              ),
-            }
-          : null,
-      );
+    } catch {
+      // ignore
     }
-    if (item.kind === "virtual" && !dismissedVirtualIds.has(item.id)) {
-      const next = new Set([...dismissedVirtualIds, item.id]);
-      saveDismissedVirtualIds([...next]);
-      setDismissedVirtualIds(next);
-    }
-    setOpen(false);
-  }
+  }, []);
 
-  async function handleMarkRead(item: NotificationItem) {
-    if (item.kind === "persisted" && !item.readAt) {
-      await fetch("/api/notifications/read", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [item.id] }),
-      });
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              items: prev.items.map((n) =>
-                n.id === item.id
-                  ? { ...n, readAt: new Date().toISOString() }
-                  : n,
-              ),
-            }
-          : null,
-      );
-    }
-    if (item.kind === "virtual" && !dismissedVirtualIds.has(item.id)) {
-      const next = new Set([...dismissedVirtualIds, item.id]);
-      saveDismissedVirtualIds([...next]);
-      setDismissedVirtualIds(next);
-    }
-  }
+  const setItems = useCallback(
+    (updater: (items: NotificationItem[]) => NotificationItem[]) =>
+      setData((prev) => {
+        if (!prev) return prev;
+        const items = updater(prev.items);
+        return { items, unreadCount: items.filter((i) => !i.readAt).length };
+      }),
+    [],
+  );
 
-  async function handleMarkUnread(item: NotificationItem) {
-    if (item.kind === "persisted" && item.readAt) {
-      await fetch("/api/notifications/read", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [item.id], unread: true }),
-      });
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              items: prev.items.map((n) =>
-                n.id === item.id ? { ...n, readAt: null } : n,
-              ),
-            }
-          : null,
-      );
-    }
-    if (item.kind === "virtual" && dismissedVirtualIds.has(item.id)) {
-      const next = new Set(dismissedVirtualIds);
-      next.delete(item.id);
-      saveDismissedVirtualIds([...next]);
-      setDismissedVirtualIds(next);
-    }
-  }
+  const handleMarkAllRead = useCallback(async () => {
+    const stamp = new Date().toISOString();
+    setItems((items) => items.map((i) => (i.readAt ? i : { ...i, readAt: stamp })));
+    await patchRead({ all: true });
+  }, [patchRead, setItems]);
 
-  const isMobile = useIsMobile();
+  const handleActivate = useCallback(
+    (item: NotificationItem) => {
+      if (!item.readAt) {
+        const stamp = new Date().toISOString();
+        setItems((items) => items.map((i) => (i.id === item.id ? { ...i, readAt: stamp } : i)));
+        void patchRead({ ids: [item.id] });
+      }
+      setOpen(false);
+      if (item.link) router.push(item.link);
+    },
+    [patchRead, router, setItems],
+  );
+
+  const handleMarkRead = useCallback(
+    (item: NotificationItem) => {
+      const stamp = new Date().toISOString();
+      setItems((items) => items.map((i) => (i.id === item.id ? { ...i, readAt: stamp } : i)));
+      void patchRead({ ids: [item.id] });
+    },
+    [patchRead, setItems],
+  );
+
+  const handleMarkUnread = useCallback(
+    (item: NotificationItem) => {
+      setItems((items) => items.map((i) => (i.id === item.id ? { ...i, readAt: null } : i)));
+      void patchRead({ ids: [item.id], unread: true });
+    },
+    [patchRead, setItems],
+  );
+
+  const handleDelete = useCallback(
+    async (item: NotificationItem) => {
+      setItems((items) => items.filter((i) => i.id !== item.id));
+      try {
+        await fetch("/api/notifications", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: [item.id] }),
+        });
+      } catch {
+        // ignore
+      }
+    },
+    [setItems],
+  );
+
   const allItems = data?.items ?? [];
-  const isItemUnread = (item: NotificationItem): boolean =>
-    item.kind === "persisted"
-      ? !item.readAt
-      : !dismissedVirtualIds.has(item.id);
-  const filteredItems =
-    tab === "unread" ? allItems.filter(isItemUnread) : allItems;
-  const unreadCount = allItems.filter(isItemUnread).length;
-
-  const todayItems = filteredItems.filter((item) => isToday(item.createdAt));
-  const earlierItems = filteredItems.filter((item) => !isToday(item.createdAt));
+  const unreadCount = data?.unreadCount ?? 0;
+  const filteredItems = tab === "unread" ? allItems.filter((i) => !i.readAt) : allItems;
+  const todayItems = filteredItems.filter((i) => isToday(i.createdAt));
+  const earlierItems = filteredItems.filter((i) => !isToday(i.createdAt));
 
   const triggerButton = (
     <Button
       variant="ghost"
       size="icon"
       className="relative h-8 w-8 rounded-full"
-      aria-label={t("notifications.title")}
+      aria-label={
+        unreadCount > 0
+          ? `${t("notifications.title")} (${unreadCount})`
+          : t("notifications.title")
+      }
     >
       <Bell className="h-4 w-4" />
       {unreadCount > 0 && (
@@ -405,13 +381,7 @@ export function NotificationsPopover() {
 
   const notificationContent = (
     <>
-      {/* Header — pr-10 on mobile for Sheet close button */}
-      <div
-        className={cn(
-          "flex shrink-0 items-center justify-between border-b px-4 py-3",
-          isMobile && "pr-10",
-        )}
-      >
+      <div className={cn("flex shrink-0 items-center justify-between border-b px-4 py-3", isMobile && "pr-10")}>
         <h2 className="font-semibold text-base">{t("notifications.title")}</h2>
         {unreadCount > 0 && (
           <Button
@@ -426,47 +396,34 @@ export function NotificationsPopover() {
         )}
       </div>
 
-      {/* Tabs */}
       <div className="flex shrink-0 gap-1 px-3 py-2 border-b">
-        <button
-          type="button"
-          onClick={() => setTab("all")}
-          className={cn(
-            "px-3 py-1 rounded-full text-sm font-medium transition-colors",
-            tab === "all"
-              ? "bg-gray-200 dark:text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-          )}
-        >
-          {t("notifications.tabAll")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("unread")}
-          className={cn(
-            "flex gap-2 px-2 py-1 rounded-full text-sm font-medium transition-colors",
-            tab === "unread"
-              ? "bg-gray-200 dark:text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-          )}
-        >
-          {t("notifications.tabUnread")}
-          {unreadCount > 0 && (
-            <span className="inline-flex items-center justify-center rounded-full text-white bg-destructive text-destructive-foreground text-[12px] font-bold min-w-5 h-5 px-1">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
-        </button>
+        {(["all", "unread"] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors",
+              tab === key
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            )}
+          >
+            {key === "all" ? t("notifications.tabAll") : t("notifications.tabUnread")}
+            {key === "unread" && unreadCount > 0 && (
+              <span className="inline-flex items-center justify-center rounded-full text-white bg-destructive text-destructive-foreground text-[12px] font-bold min-w-5 h-5 px-1">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Notification list */}
       <div
-        className={cn(
-          "min-h-0 overflow-y-auto",
-          isMobile ? "flex-1" : "max-h-[min(70vh,400px)]",
-        )}
+        className={cn("min-h-0 overflow-y-auto", isMobile ? "flex-1" : "max-h-[min(70vh,400px)]")}
+        aria-live="polite"
       >
-        {loading && (
+        {loading && allItems.length === 0 && (
           <div className="py-8 text-center text-sm text-muted-foreground">
             <Bell className="mx-auto mb-2 h-5 w-5 animate-pulse" />
           </div>
@@ -475,50 +432,31 @@ export function NotificationsPopover() {
         {!loading && filteredItems.length === 0 && (
           <div className="py-10 text-center text-sm text-muted-foreground">
             <Bell className="mx-auto mb-2 h-5 w-5 opacity-40" />
-            <p>
-              {tab === "unread"
-                ? t("notifications.emptyUnread")
-                : t("notifications.empty")}
-            </p>
+            <p>{tab === "unread" ? t("notifications.emptyUnread") : t("notifications.empty")}</p>
           </div>
         )}
 
-        {!loading && todayItems.length > 0 && (
-          <section>
-            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              {t("notifications.groupToday")}
-            </p>
-            {todayItems.map((item) => (
-              <NotificationRow
-                key={item.id}
-                item={item}
-                isUnread={isItemUnread(item)}
-                t={t}
-                onClick={handleItemClick}
-                onMarkRead={handleMarkRead}
-                onMarkUnread={handleMarkUnread}
-              />
-            ))}
-          </section>
+        {todayItems.length > 0 && (
+          <NotificationSection
+            label={t("notifications.groupToday")}
+            items={todayItems}
+            t={t}
+            onActivate={handleActivate}
+            onMarkRead={handleMarkRead}
+            onMarkUnread={handleMarkUnread}
+            onDelete={handleDelete}
+          />
         )}
-
-        {!loading && earlierItems.length > 0 && (
-          <section>
-            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              {t("notifications.groupEarlier")}
-            </p>
-            {earlierItems.map((item) => (
-              <NotificationRow
-                key={item.id}
-                item={item}
-                isUnread={isItemUnread(item)}
-                t={t}
-                onClick={handleItemClick}
-                onMarkRead={handleMarkRead}
-                onMarkUnread={handleMarkUnread}
-              />
-            ))}
-          </section>
+        {earlierItems.length > 0 && (
+          <NotificationSection
+            label={t("notifications.groupEarlier")}
+            items={earlierItems}
+            t={t}
+            onActivate={handleActivate}
+            onMarkRead={handleMarkRead}
+            onMarkUnread={handleMarkUnread}
+            onDelete={handleDelete}
+          />
         )}
       </div>
     </>
@@ -537,9 +475,7 @@ export function NotificationsPopover() {
             <SheetTitle>{t("notifications.title")}</SheetTitle>
             <SheetDescription>{t("notifications.tabAll")}</SheetDescription>
           </SheetHeader>
-          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-            {notificationContent}
-          </div>
+          <div className="flex flex-1 flex-col min-h-0 overflow-hidden">{notificationContent}</div>
         </SheetContent>
       </Sheet>
     );
@@ -560,97 +496,74 @@ export function NotificationsPopover() {
 }
 
 // ---------------------------------------------------------------------------
-// Single notification row
+// Section + Row
 // ---------------------------------------------------------------------------
+
+type RowHandlers = {
+  t: ReturnType<typeof useI18n>["t"];
+  onActivate: (item: NotificationItem) => void;
+  onMarkRead: (item: NotificationItem) => void;
+  onMarkUnread: (item: NotificationItem) => void;
+  onDelete: (item: NotificationItem) => void;
+};
+
+function NotificationSection({ label, items, ...handlers }: { label: string; items: NotificationItem[] } & RowHandlers) {
+  return (
+    <section>
+      <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+      {items.map((item) => (
+        <NotificationRow key={item.id} item={item} {...handlers} />
+      ))}
+    </section>
+  );
+}
 
 function NotificationRow({
   item,
-  isUnread,
   t,
-  onClick,
+  onActivate,
   onMarkRead,
   onMarkUnread,
-}: {
-  item: NotificationItem;
-  isUnread: boolean;
-  t: ReturnType<typeof useI18n>["t"];
-  onClick: (item: NotificationItem) => void | Promise<void>;
-  onMarkRead: (item: NotificationItem) => void | Promise<void>;
-  onMarkUnread: (item: NotificationItem) => void | Promise<void>;
-}) {
+  onDelete,
+}: { item: NotificationItem } & RowHandlers) {
   const body = useNotificationBody(item, t);
+  const isUnread = !item.readAt;
+  const { bubble, dot } = severityClasses(item.type, isUnread);
 
-  const typeKey = item.type as keyof ReturnType<
-    typeof useI18n
-  >["t"] extends never
-    ? string
-    : string;
-  const title = (() => {
-    try {
-      return t(`notifications.types.${typeKey}` as Parameters<typeof t>[0]);
-    } catch {
-      return item.type;
-    }
-  })();
+  let title = item.type;
+  const key = `notifications.types.${item.type}` as Parameters<typeof t>[0];
+  const resolved = t(key);
+  if (resolved && resolved !== key) title = resolved;
 
-  const content = (
+  return (
     <div
       className={cn(
         "relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors",
-        isUnread
-          ? "bg-primary/2 hover:bg-primary/5"
-          : "hover:bg-accent hover:text-accent-foreground",
+        isUnread ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-accent hover:text-accent-foreground",
       )}
-      onClick={() => void onClick(item)}
       role="button"
       tabIndex={0}
+      aria-label={isUnread ? `${title} (${t("notifications.tabUnread")})` : title}
+      onClick={() => onActivate(item)}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") void onClick(item);
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onActivate(item);
+        }
       }}
     >
-      {/* Icon */}
-      <div
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-          isUnread
-            ? "bg-primary/15 text-primary"
-            : "bg-muted text-muted-foreground",
-        )}
-      >
+      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", bubble)}>
         {getIconElement(item.type)}
       </div>
 
-      {/* Text */}
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            "text-sm leading-snug",
-            isUnread ? "font-semibold" : "font-medium",
-          )}
-        >
-          {title}
-        </p>
-        {body && (
-          <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">
-            {body}
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-1">
-          {formatRelativeTime(item.createdAt, t)}
-        </p>
+      <div className="flex-1 min-w-0 pr-8">
+        <p className={cn("text-sm leading-snug", isUnread ? "font-semibold" : "font-medium")}>{title}</p>
+        {body && <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">{body}</p>}
+        <p className="text-xs text-muted-foreground mt-1">{formatRelativeTime(item.createdAt, t)}</p>
       </div>
 
-      {/* Menu + unread dot — top right */}
-      <div
-        className="absolute right-3 top-3 flex items-center gap-1.5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isUnread && (
-          <span
-            className="h-2 w-2 shrink-0 rounded-full bg-destructive"
-            aria-hidden
-          />
-        )}
+      <div className="absolute right-3 top-3 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        {isUnread && <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} aria-hidden />}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -664,27 +577,17 @@ function NotificationRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {isUnread ? (
-              <DropdownMenuItem onClick={() => void onMarkRead(item)}>
-                {t("notifications.markAsRead")}
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMarkRead(item)}>{t("notifications.markAsRead")}</DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={() => void onMarkUnread(item)}>
-                {t("notifications.markAsUnread")}
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMarkUnread(item)}>{t("notifications.markAsUnread")}</DropdownMenuItem>
             )}
+            <DropdownMenuItem variant="destructive" onClick={() => void onDelete(item)}>
+              <Trash2 className="h-4 w-4" />
+              {t("notifications.delete")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </div>
   );
-
-  if (item.link) {
-    return (
-      <Link href={item.link} onClick={() => void onClick(item)} tabIndex={-1}>
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
 }

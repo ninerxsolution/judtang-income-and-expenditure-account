@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { recordPayment } from "@/lib/credit-card";
 import { revalidateTag } from "@/lib/cache";
 import { parseOccurredAt } from "@/lib/date-range";
-import { createNotification } from "@/lib/notifications";
+import { notify } from "@/lib/notifications";
 
 type SessionWithId = { user: { id?: string }; sessionId?: string };
 
@@ -61,18 +61,16 @@ export async function POST(
       note: body.note,
     });
 
-    void createNotification(
-      userId,
-      "EVENT_CARD_PAYMENT",
-      {
+    void notify(userId, "EVENT_CARD_PAYMENT", {
+      payload: {
         accountId: id,
         accountName: account.name,
         last4: account.accountNumber ? account.accountNumber.slice(-4) : null,
         amount,
         occurredAt: occurredAt.toISOString(),
       },
-      `/dashboard/accounts/${id}`,
-    );
+      link: `/dashboard/accounts/${id}`,
+    });
 
     revalidateTag("transactions", "max");
     revalidateTag("financial-accounts", "max");

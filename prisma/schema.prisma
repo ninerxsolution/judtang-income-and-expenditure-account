@@ -76,9 +76,47 @@ enum ContactTopic {
 }
 
 enum NotificationType {
+  // --- Discrete events (created server-side at the moment they happen) ---
   EVENT_SLIP_DONE
   EVENT_IMPORT_DONE
+  EVENT_EXPORT_DONE
   EVENT_CARD_PAYMENT
+  EVENT_CARD_STATEMENT_CLOSED
+  EVENT_CARD_INTEREST_APPLIED
+  EVENT_RECONCILE_MISMATCH
+  EVENT_CROSS_CURRENCY_TRANSFER
+  EVENT_RECURRING_POSTED
+  EVENT_SECURITY_NEW_SIGN_IN
+  EVENT_SECURITY_PASSWORD_CHANGED
+  EVENT_SECURITY_SESSION_REVOKED
+  EVENT_ACCOUNT_DEACTIVATED
+  EVENT_ACCOUNT_STATUS_CHANGED
+  EVENT_REPORT_SUBMITTED
+  EVENT_REPORT_STATUS_CHANGED
+  EVENT_ANNOUNCEMENT
+  // --- Alerts (recomputed idempotently from domain state; auto-resolved) ---
+  ALERT_RECURRING_DUE
+  ALERT_CARD_DUE
+  ALERT_BUDGET
+  ALERT_INCOMPLETE_ACCOUNT
+  ALERT_CREDIT_LIMIT
+  ALERT_NEGATIVE_BALANCE
+  ALERT_NO_BUDGET
+  ALERT_DELETION_PENDING
+}
+
+// Coarse grouping used for per-user notification preferences (toggle a whole
+// group on/off per channel). The registry in lib/notification-registry.ts maps
+// each NotificationType to exactly one category.
+enum NotificationCategory {
+  TRANSACTION
+  CARD
+  BUDGET
+  ACCOUNT
+  RECURRING
+  SECURITY
+  REPORT
+  ANNOUNCEMENT
 }
 
 // --- Auth.js required models ---
@@ -130,6 +168,8 @@ model User {
   budgetMonths           BudgetMonth[]
   recurringTransactions  RecurringTransaction[]
   notifications          Notification[]
+  notificationPreferences NotificationPreference[]
+  pushSubscriptions      PushSubscription[]
   deletionRequests       UserDeletionRequest[]
   balanceReconciliations BalanceReconciliation[]
 }
@@ -536,11 +576,50 @@ model Notification {
   type      NotificationType
   payload   Json?
   link      String?          @db.VarChar(500)
+  // Idempotency key for generated alerts and dedupable events
+  // (e.g. "budget-cat:<id>:2026-06"). Null for events that may legitimately
+  // repeat. Unique per user so generators can safely upsert.
+  dedupeKey String?          @db.VarChar(191)
   readAt    DateTime?
   createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, dedupeKey])
   @@index([userId, createdAt])
   @@index([userId, readAt])
+  @@index([userId, type])
+}
+
+// Per-user, per-category channel preferences. A missing row means "use the
+// registry default" for that category. Keyed by category so the settings UI
+// stays small (one row per group, not per type).
+model NotificationPreference {
+  id        String               @id @default(cuid())
+  userId    String
+  category  NotificationCategory
+  inApp     Boolean              @default(true)
+  email     Boolean              @default(false)
+  push      Boolean              @default(false)
+  updatedAt DateTime             @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+}
+
+// Web Push (VAPID) subscriptions. One row per browser/device endpoint.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @db.VarChar(512)
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([endpoint])
+  @@index([userId])
 }
